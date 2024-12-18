@@ -1,0 +1,1062 @@
+const { StatusCodes } = require('http-status-codes');
+const { SuccessRespnose, ErrorResponse } = require('../utils/common');
+const { Logger } = require('../config');
+const { NumbersRepository, DIDUserMappingRepository,UserJourneyRepository, NumberFileListRepository, NumberStatusRepository, UserRepository } = require('../repositories');
+const fs = require("fs");
+const {MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, USERS_ROLE, NUMBER_STATUS_LABLE, DID_ALLOCATION_LEVEL} = require('../utils/common/constants');
+const didUserMappingRepository = new DIDUserMappingRepository();
+const userJourneyRepo = new UserJourneyRepository();
+const numberRepo = new NumbersRepository();
+const numFileListRepo = new NumberFileListRepository();
+const numberStatusRepo = new NumberStatusRepository();
+const userRepo = new UserRepository();
+const { constants } = require("../utils/common");
+const numberStatusValues = constants.NUMBER_STATUS_VALUE;
+const stream = require('stream');
+const csv = require('csv-parser');
+
+async function create(req, res) {
+    const bodyReq = req.body;
+    try {
+      const responseData = {};
+      
+      const number = await numberRepo.create(bodyReq.number);
+
+      await didUserMappingRepository.create({
+        DID: number?._id,
+        allocated_to: req?.user?.id
+    })
+    Logger.info(
+      `Number -> Did Allocation created successfully: ${JSON.stringify(responseData)}`
+    );
+
+      responseData.number = number;
+
+      const userJourneyfields = {
+        module_name: MODULE_LABEL.NUMBERS,
+        action: ACTION_LABEL.ADD,
+        createdBy:  req?.user?.id
+      }
+  
+      const userJourney = await userJourneyRepo.create(userJourneyfields);
+      responseData.userJourney = userJourney
+  
+      SuccessRespnose.data = responseData;
+      SuccessRespnose.message = "Successfully created a new Number";
+  
+      Logger.info(
+        `Number -> created successfully: ${JSON.stringify(responseData)}`
+      );
+  
+      return res.status(StatusCodes.CREATED).json(SuccessRespnose);
+    } catch (error) {
+      Logger.error(
+        `Number -> unable to create Number: ${JSON.stringify(
+          bodyReq
+        )} error: ${JSON.stringify(error)}`
+      );
+  
+      let statusCode = error.statusCode;
+      let errorMsg = error.message;
+      if (error.name == "MongoServerError" || error.code == 11000) {
+        statusCode = StatusCodes.BAD_REQUEST;
+        if (error.codeName == "DuplicateKey")
+          errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
+      }
+  
+      ErrorResponse.message = errorMsg;
+      ErrorResponse.error = error;
+  
+      return res.status(statusCode).json(ErrorResponse);
+    }
+}
+
+async function update(req, res) {
+
+    const numberId = req.params.id;
+    const bodyReq = req.body;
+
+
+
+    let data = {};
+    try {
+
+        const numberData = await numberRepo.get({_id : numberId});
+        
+        // if status is updated by other then superadmin
+        if (numberData?.status !== bodyReq.number.status) {
+            if (req.user.role !== USERS_ROLE.SUPER_ADMIN) {
+                bodyReq.number.updated_status = bodyReq.number.status
+                bodyReq.number.status = 9 //  set Pending
+            }
+        }
+       
+        const responseData = {};
+        const number = await numberRepo.update(numberId, bodyReq.number);
+        if (!number) {
+            const error = new Error();
+            error.name = 'CastError';
+            throw error;
+        }
+        responseData.number = number;
+        const userJourneyfields = {
+            module_name: MODULE_LABEL.NUMBERS,
+            action: ACTION_LABEL.EDIT,
+            createdBy: req?.user?.id
+          }
+      
+        await userJourneyRepo.create(userJourneyfields);
+
+        SuccessRespnose.message = 'Updated successfully!';
+        SuccessRespnose.data = responseData;
+
+        Logger.info(`Number -> ${numberId} updated successfully`);
+
+        return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+    } catch (error) {
+        console.log(error);
+        Logger.error(`Numbers -> unable to Update: ${JSON.stringify(data)} error: ${JSON.stringify(error)}`);
+
+        let statusCode = error.statusCode;
+        let errorMsg = error.message;
+        if (error.name == 'MongoServerError' || error.code == 11000) {
+            statusCode = StatusCodes.BAD_REQUEST;
+            if (error.codeName == 'DuplicateKey') errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
+        }
+
+        ErrorResponse.message = errorMsg;
+        ErrorResponse.error = error;
+
+        return res.status(statusCode).json(ErrorResponse);
+    }
+
+}
+
+async function bulkUpdate(req, res) {
+    const file = req.file;
+    const bodyReq = Object.assign({}, req.body);
+    try {
+        if (!file) {
+            const errorResponse = {
+                message: 'File not found',
+                error: new Error('File not found')
+            };
+            Logger.error('File processing error:', errorResponse.error);
+            return res.status(StatusCodes.BAD_REQUEST).json(errorResponse);
+        }
+    
+        const records = [];
+        const dataPromises = [];
+        let headersSent = false;
+
+        const readableStream = new stream.PassThrough();
+        readableStream.end(file.buffer);  
+
+        readableStream
+        .pipe(csv())
+        .on('data', (row) => {
+          const dataPromise = (async () => {
+            records.push({
+              status: row.Status,
+              actual_number: Number(row['DID']),
+              category: row?.Category || null,
+              currency: row.Currency,
+              country_code: row['Country Code'],
+              state_code: row?.['State Code'] || null,
+              cost: row.Cost,
+              operator: row.Operator,
+              number_type: bodyReq.numberType
+            });
+          })();
+      
+          dataPromises.push(dataPromise);
+        })
+        .on('end', async () => {
+          await Promise.all(dataPromises);
+          try {
+            const insertedData = [];
+            const updatedData = [];
+            const DIDAlloctionInsertion = [];
+            for (let i = 0; i < records.length; i += 1) {
+              const numberRecord = records[i];
+              const numberDetails = await numberRepo.findOne({
+                actual_number: numberRecord.actual_number, number_type: bodyReq.numberType
+              });
+
+              if (!numberDetails) {  
+                
+                numberRecord.status = NUMBER_STATUS_LABLE[numberRecord.status];
+                numberRecord.createdBy = req.user.id;
+                numberRecord.createdAt = toIST(new Date());
+                DIDAlloctionInsertion.push({
+                    DID: numberRecord.actual_number,
+                    allocated_to: req?.user?.id
+                })
+                insertedData.push(numberRecord);
+              } else {
+
+                if (numberDetails.number_type !== numberRecord.number_type) {
+
+                  numberRecord.status = NUMBER_STATUS_LABLE[numberRecord.status];
+                  numberRecord.createdBy = req.user.id;
+                  numberRecord.createdAt = toIST(new Date());
+                  DIDAlloctionInsertion.push({
+                    DID: numberRecord.actual_number,
+                    allocated_to: req?.user?.id
+                })
+                  insertedData.push(numberRecord);
+                } else {
+                  if (numberDetails?.status !== NUMBER_STATUS_LABLE[numberRecord.status]) {
+                    if (req.user.role !== USERS_ROLE.SUPER_ADMIN) {
+                      numberRecord.updated_status = NUMBER_STATUS_LABLE[numberRecord.status];
+                      numberRecord.status = 9; 
+                    }
+                    numberRecord.status = NUMBER_STATUS_LABLE[numberRecord.status];
+                    numberRecord.updatedAt = toIST(new Date())
+                    updatedData.push(numberRecord);
+                  } else {
+                    numberRecord.status = NUMBER_STATUS_LABLE[numberRecord.status];
+                    numberRecord.updatedAt = toIST(new Date())
+
+                    updatedData.push(numberRecord);
+                  }
+                }
+              }
+            }
+
+            const bulkOps = [];
+            const insertedDocumentIds = []
+      
+            insertedData.forEach((doc) => {
+              bulkOps.push({
+                insertOne: {
+                  document: doc
+                }
+              });
+            });
+      
+            updatedData.forEach((doc) => {
+              bulkOps.push({
+                updateOne: {
+                  filter: { actual_number: doc.actual_number, number_type: bodyReq.numberType },
+                  update: { $set: doc }
+                }
+              });
+            });
+
+            if (bulkOps.length > 0) {
+              const result = await numberRepo.bulkWrite(bulkOps);
+              for (const key in result.insertedIds) {
+                if (result.insertedIds.hasOwnProperty(key)) {
+                    insertedDocumentIds.push(result.insertedIds[key].toString()); 
+                }
+            }
+            }
+
+            if (insertedDocumentIds.length > 0) {
+                const insertedDocuments = await numberRepo.model.find({ _id: { $in: insertedDocumentIds } });
+                const DIDAlloction = insertedDocuments.map(item => ({
+                    DID: item._id,
+                    allocated_to: req?.user?.id
+                  }));
+
+                await didUserMappingRepository.insertMany(DIDAlloction);
+            }
+      
+            if (!headersSent) {
+              const SuccessRespnose = {
+                message: 'Successfully Uploaded Numbers.',
+                data: bulkOps
+              };
+              Logger.info('Numbers uploaded successfully');
+              headersSent = true;
+      
+              const userJourneyfields = {
+                module_name: MODULE_LABEL.NUMBERS,
+                action: ACTION_LABEL.UPLOAD,
+                createdBy: req?.user?.id
+              };
+      
+              await userJourneyRepo.create(userJourneyfields);
+              return res.status(StatusCodes.CREATED).json(SuccessRespnose);
+            }
+          } catch (error) {
+            console.log(error);
+            if (!headersSent) {
+              const errorResponse = {
+                message: 'Error while saving numbers to the database.',
+                error: error
+              };
+              Logger.error('Database error:', error);
+              headersSent = true;
+              return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+            }
+          }
+        })
+        .on('error', (error) => {
+          if (!headersSent) {
+            const errorResponse = {
+              message: 'Error while processing the file.',
+              error: error
+            };
+            Logger.error('File processing error:', error);
+            headersSent = true;
+            return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+          }
+        });
+    } catch (error) {
+        console.log(error);
+        const errorResponse = {
+            message: 'Error while processing the file.',
+            error: error
+        };
+        Logger.error('File processing error:', error);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+    }
+}
+
+const toIST = (date) => {
+    const istOffset = 5.5 * 60 * 60 * 1000; 
+    return new Date(date.getTime() + istOffset);
+};
+
+async function uploadNumbers(req, res) {
+    const dest = req.file.path;
+    const bodyReq = Object.assign({}, req.body);
+    try {
+        if (!fs.existsSync(dest)) {
+            const errorResponse = {
+                message: 'File not foundd',
+                error: new Error('File not found')
+            };
+            Logger.error('File processing error:', errorResponse.error);
+            return res.status(StatusCodes.NOT_FOUND).json(errorResponse);
+        }
+
+        const file_name = req.file.name;
+        const file_url = `${BACKEND_API_BASE_URL}/assets/number/${req.user.id}/${file_name}`;
+
+        const uploadFile = await numFileListRepo.create({
+            user_id: req.user.id,
+            file_name: file_name,
+            file_url: file_url
+        });
+
+        const records = [];
+        const dataPromises = []
+        let headersSent = false;
+
+        fs.createReadStream(dest)
+            .pipe(csv())
+            .on('data', (row) => {
+                const dataPromise = (async () => {
+                records.push({
+                    status: 1,
+                    actual_number: Number(row['DID']),
+                    category: bodyReq.category,
+                    currency: bodyReq.currency,
+                    country_code: row['Country Code'],
+                    state_code: row?.['State Code'] || null,
+                    cost: row.Cost,
+                    operator: row.Operator,
+                    createdBy: req.user.id,
+                    number_type: bodyReq.numberType,
+                    uploaded_file_id: uploadFile._id,
+                    createdAt: toIST(new Date()),
+                    updatedAt: toIST(new Date())
+                });
+                })();
+
+                dataPromises.push(dataPromise);
+            })
+            .on('end', async () => {
+                await Promise.all(dataPromises);
+
+                try {
+                const batchSize = 100;
+                for (let i = 0; i < records.length; i += batchSize) {
+                    const batch = records.slice(i, i + batchSize);
+                    const insertedRecords = await numberRepo.insertMany(batch);
+                    // DID allocation
+                    const DIDAlloction = insertedRecords.map(item => ({
+                        DID: item._id,
+                        allocated_to: req?.user?.id
+                      }));
+                    await didUserMappingRepository.insertMany(DIDAlloction);
+                }
+
+                if (!headersSent) {
+                    const SuccessResponse = {
+                    message: 'Successfully Uploaded Numbers.',
+                    data: { file_destination: dest }
+                    };
+                    Logger.info('Numbers uploaded successfully');
+                    headersSent = true;
+
+                    const userJourneyfields = {
+                    module_name: MODULE_LABEL.NUMBERS,
+                    action: ACTION_LABEL.UPLOAD,
+                    createdBy: req?.user?.id
+                    };
+
+                    await userJourneyRepo.create(userJourneyfields);
+                    return res.status(StatusCodes.CREATED).json(SuccessResponse);
+                }
+                } catch (error) {
+                if (!headersSent) {
+                    const errorResponse = {
+                    message: 'Error while saving numbers to the database.',
+                    error: error
+                    };
+                    Logger.error('Database error:', error);
+                    headersSent = true;
+                    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+                }
+                }
+            })
+            .on('error', (error) => {
+                if (!headersSent) {
+                const errorResponse = {
+                    message: 'Error while processing the file.',
+                    error: error
+                };
+                Logger.error('File processing error:', error);
+                headersSent = true;
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+                }
+            });
+    } catch (error) {
+        const errorResponse = {
+            message: 'Error while processing the file.',
+            error: error
+        };
+        Logger.error('File processing error:', error);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+    }
+}
+
+async function getAll(req, res) {
+    try {
+        let data;
+        if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
+            data = await didUserMappingRepository.getForSuperadmin(req.user.id);
+        } else {
+            data = await didUserMappingRepository.getForOthers(req.user.id);
+        }
+
+        const uniqueDIDs = [...new Set(data.map(item => item.DID))];
+        data = await numberRepo.findMany(uniqueDIDs);
+
+        data = data.map(val => {
+            val['status'] = numberStatusValues[val['status']];
+            return val;
+          });
+
+        SuccessRespnose.data = data;
+        SuccessRespnose.message = 'Success';
+
+        return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+    } catch (error) {
+
+        ErrorResponse.message = error.message;
+        ErrorResponse.error = error;
+
+        Logger.error(`Call Centre -> unable to get call centres list, error: ${JSON.stringify(error)}`);
+
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+
+    }
+
+}
+
+async function get(req, res) {
+
+    const numberId = req.params.id;
+    try {
+
+        const data = await numberRepo.get(numberId);
+        SuccessRespnose.data = data;
+        if (data.is_deleted) {
+            let statusCode = StatusCodes.NOT_FOUND;
+            let errorMsg = `Numbers -> this Number ${numberId} deleted`;
+            ErrorResponse.message = errorMsg;
+            ErrorResponse.data = data;
+            return res.status(statusCode).json(ErrorResponse);
+        }
+
+        return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+    } catch (error) {
+
+        let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+        let errorMsg = error.message;
+
+        ErrorResponse.error = error;
+        if (error.name == 'CastError') {
+            statusCode = StatusCodes.BAD_REQUEST;
+            errorMsg = 'Numbers not found';
+        }
+        ErrorResponse.message = errorMsg;
+
+        Logger.error(`Numbers-> unable to get ${numberId}, error: ${JSON.stringify(error)}`);
+
+        return res.status(statusCode).json(ErrorResponse);
+
+    }
+
+}
+
+async function deleteNumber(req, res) {
+    const id = req.body.numberIds;
+
+    try {
+
+        const response = await numberRepo.deleteMany(id);
+        const userJourneyfields = {
+            module_name: MODULE_LABEL.NUMBERS,
+            action: ACTION_LABEL.DELETE,
+            createdBy: req?.user?.id
+          }
+      
+        await userJourneyRepo.create(userJourneyfields);
+        SuccessRespnose.message = 'Deleted successfully!';
+        SuccessRespnose.data = response;
+
+        Logger.info(`Number -> ${id} deleted successfully`);
+
+        return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+    } catch (error) {
+
+        let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+        let errorMsg = error.message;
+
+        ErrorResponse.error = error;
+        if (error.name == 'CastError') {
+            statusCode = StatusCodes.BAD_REQUEST;
+            errorMsg = 'Number not found';
+        }
+        ErrorResponse.message = errorMsg;
+
+        Logger.error(`Number -> unable to delete number: ${id}, error: ${JSON.stringify(error)}`);
+
+        return res.status(statusCode).json(ErrorResponse);
+
+    }
+
+}
+
+async function getDIDNumbers(req, res) {
+    const numberType = 'DID'
+    try {
+
+        const data = await numberRepo.getParticularTypeNumber(numberType);
+        SuccessRespnose.data = data;
+        SuccessRespnose.message = 'Succesfully Getting the DID Numbers.';
+
+        if (data.is_deleted) {
+            let statusCode = StatusCodes.NOT_FOUND;
+            let errorMsg = `Numbers -> this Number ${numberType} deleted`;
+            ErrorResponse.message = errorMsg;
+            ErrorResponse.data = data;
+            return res.status(statusCode).json(ErrorResponse);
+        }
+
+
+        return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+    } catch (error) {
+
+        let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+        let errorMsg = error.message;
+
+        ErrorResponse.error = error;
+        if (error.name == 'CastError') {
+            statusCode = StatusCodes.BAD_REQUEST;
+            errorMsg = 'Numbers not found';
+        }
+        ErrorResponse.message = errorMsg;
+
+        Logger.error(`Numbers-> unable to get ${numberType}, error: ${JSON.stringify(error)}`);
+
+        return res.status(statusCode).json(ErrorResponse);
+
+    }
+
+}
+
+async function getAllStatus(req, res) {
+    try {
+        const data = await numberStatusRepo.getAll();
+        const filteredData = data.filter(item => item.status_code !== 9 && item.status_code !== 10);
+        SuccessRespnose.data = filteredData;
+        SuccessRespnose.message = 'Success';
+
+        return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+    } catch (error) {
+
+        ErrorResponse.message = error.message;
+        ErrorResponse.error = error;
+
+        Logger.error(`Call Centre -> unable to get Numbers list, error: ${JSON.stringify(error)}`);
+
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+
+    }
+
+}
+
+const assignBulkDID = async (req, res) => {
+    const dest = req.file.path;
+    const bodyReq = req.body;
+    try {
+        if (!fs.existsSync(dest)) {
+            const errorResponse = {
+                message: 'File not found',
+                error: new Error('File not found')
+            };
+            Logger.error('File processing error:', errorResponse.error);
+            return res.status(StatusCodes.NOT_FOUND).json(errorResponse);
+        }
+
+        const records = [];
+        let headersSent = false;
+        let numberType;
+        if (bodyReq.type !== undefined && bodyReq.type === 'VMN') {
+            numberType = 'VMN'
+        } else {
+            numberType = 'TOLL FREE'
+        } 
+
+        fs.createReadStream(dest)
+            .pipe(csv())
+            .on('data', (row) => {
+                records.push(row);
+            })
+            .on('end', async () => {
+                try {
+                    for (const record of records) {
+                        const data = record[numberType];
+                        const did = record.DID
+                        const existingNumber = await numberRepo.findOne(
+                            { 
+                                actual_number: data,
+                                number_type: numberType 
+
+                            });
+                        if (existingNumber) {
+                            const numberId = existingNumber._id;
+                            const updatedFields = {
+                                status: NUMBER_STATUS_LABLE[record['STATUS']],
+                                routing_destination: Number(did),
+                                routing_type: numberType
+                            }
+                            await numberRepo.update(numberId, updatedFields);
+                        }
+                    }
+
+                    const userJourneyfields = {
+                        module_name: MODULE_LABEL.NUMBERS,
+                        action: ACTION_LABEL.ASSIGN_BULK_DID,
+                        createdBy: req?.user?.id
+                      }
+                  
+                    await userJourneyRepo.create(userJourneyfields);
+                    if (!headersSent) {
+                        const SuccessResponse = {
+                            message: 'Successfully assigned Bulk DID.',
+                            data: { file_destination: dest }
+                        };
+                        Logger.info('Bulk DID assigned successfully');
+                        headersSent = true;
+                        return res.status(StatusCodes.CREATED).json(SuccessResponse);
+                    }
+                } catch (error) {
+                    if (!headersSent) {
+                        const errorResponse = {
+                            message: 'Error while saving numbers to the database.',
+                            error: error
+                        };
+                        Logger.error('Database error:', error);
+                        headersSent = true;
+                        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+                    }
+                }
+            })
+            .on('error', (error) => {
+                if (!headersSent) {
+                    const errorResponse = {
+                        message: 'Error while processing assigning bulk DID file.',
+                        error: error
+                    };
+                    Logger.error('Assigning bulk DID file Error:', error);
+                    headersSent = true;
+                    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+                }
+            });
+    } catch (error) {
+        const errorResponse = {
+            message: 'Error while processing assigning bulk DID file.',
+            error: error
+        };
+        Logger.error('Assigning bulk DID file Error:', error);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+    }
+};
+
+const assignIndividualDID = async (req, res) => {
+    const bodyReq = req.body;
+    try {
+        const numberId = bodyReq._id
+        const updatedFields = {
+            status: bodyReq.status,
+            routing_destination: bodyReq.DID,
+            routing_type: bodyReq.numberType,
+            expiry_date: bodyReq?.expiryDate || null
+        }
+       
+        await numberRepo.update(numberId, updatedFields);
+
+        const userJourneyfields = {
+            module_name: MODULE_LABEL.NUMBERS,
+            action: ACTION_LABEL.ASSIGN_INDIVIDUAL_DID,
+            createdBy: req?.user?.id
+          }
+      
+        await userJourneyRepo.create(userJourneyfields);
+
+        SuccessRespnose.message = 'Successfully assigned Individual DID.';
+        return res.status(StatusCodes.OK).json(SuccessRespnose);
+    } catch (error) {
+        const errorResponse = {
+            message: 'Error while assigning Individual DID.',
+            error: error
+        };
+        Logger.error('Assigning Individual DID error:', error);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+    }
+};
+
+async function updateStatus(req, res) {
+    const bodyReq = req.body;
+
+    let params = {
+        status: Number(bodyReq.status),
+        updated_status: bodyReq.updated_status
+    };
+
+    try {
+
+        const responseData = {};
+        const number = await numberRepo.update(bodyReq.updateId, params);
+        if (!number) {
+            const error = new Error();
+            error.name = 'CastError';
+            throw error;
+        }
+        responseData.number = number;
+        const userJourneyfields = {
+            module_name: MODULE_LABEL.NUMBERS,
+            action: ACTION_LABEL.STATUS_ACTION_APPROVED,
+            createdBy: req?.user?.id
+        }
+
+        if (bodyReq.action === 'Reject') {
+            userJourneyfields.action = ACTION_LABEL.STATUS_ACTION_REJECT
+        }
+      
+        await userJourneyRepo.create(userJourneyfields);
+
+        SuccessRespnose.message = 'Status Changes Updated successfully!';
+        SuccessRespnose.data = responseData;
+
+        Logger.info(`Number -> ${bodyReq.updateId} updated successfully`);
+
+        return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+    } catch (error) {
+        Logger.error(`Numbers -> unable to Update: ${JSON.stringify(data)} error: ${JSON.stringify(error)}`);
+
+        let statusCode = error.statusCode;
+        let errorMsg = error.message;
+        if (error.name == 'MongoServerError' || error.code == 11000) {
+            statusCode = StatusCodes.BAD_REQUEST;
+            if (error.codeName == 'DuplicateKey') errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
+        }
+
+        ErrorResponse.message = errorMsg;
+        ErrorResponse.error = error;
+
+        return res.status(statusCode).json(ErrorResponse);
+    }
+
+}
+
+async function DIDUserMapping(req, res) {
+    const bodyReq = req.body;
+    try {
+        if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
+            // Iterate over the DID array
+            for (const did of bodyReq.DID) {
+                const availCheck = await didUserMappingRepository.findOne({
+                    DID: did,
+                    allocated_to: bodyReq.allocated_to,
+                });
+                
+                if (availCheck) {
+                    // update did user mapping
+                    await didUserMappingRepository.update(availCheck._id, {active: true});
+
+                    //update numbers
+                    await numberRepo.update(availCheck.DID, {allocated_to : availCheck.allocated_to})
+                } else {
+                    await didUserMappingRepository.create({
+                        DID: did,
+                        level: 1,
+                        allocated_to: bodyReq.allocated_to,
+                        parent_id: req.user.id
+                    });
+    
+                    // Update numbers for each DID
+                    await numberRepo.update(did, {
+                        allocated_to: bodyReq.allocated_to
+                    });
+                }
+                
+            }
+        } else {
+            for (const did of bodyReq.DID) {
+                const availCheck = await didUserMappingRepository.findOne({
+                    DID: did,
+                    allocated_to: bodyReq.allocated_to
+                });
+
+                if (availCheck) {
+                    // update did user mapping
+                    await didUserMappingRepository.update(availCheck._id, {active: true});
+
+                    //update numbers
+                    await numberRepo.update(availCheck.DID, {allocated_to : availCheck.allocated_to})
+                } else {
+
+                    const number = await didUserMappingRepository.findOne({
+                        DID: did,
+                        allocated_to: req.user.id,
+                        active: true
+                    });
+    
+                    const roleOfAllocateTo = await userRepo.get(bodyReq.allocated_to);
+                    let level;
+    
+                    // Validate if user is found
+                    if (!roleOfAllocateTo) {
+                        return res.status(StatusCodes.NOT_FOUND).json({
+                            message: 'User not found',
+                            error: 'User not found'
+                        });
+                    }
+    
+                    if (roleOfAllocateTo.role === USERS_ROLE.COMPANY_ADMIN) {
+                        const createdByRole = await userRepo.get(roleOfAllocateTo.createdBy);
+                        const isSame = createdByRole.role === USERS_ROLE.COMPANY_ADMIN;
+    
+                        level = isSame ? DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN : DID_ALLOCATION_LEVEL.COMPANY_ADMIN;
+    
+                    } else if (roleOfAllocateTo.role === USERS_ROLE.RESELLER) {
+                        level = DID_ALLOCATION_LEVEL.RESELLER;
+    
+                    } else {
+                        level = DID_ALLOCATION_LEVEL.CALLCENTER;
+                    }
+    
+                    await didUserMappingRepository.create({
+                        DID: did,
+                        level: level,
+                        allocated_to: bodyReq.allocated_to,
+                        parent_id: number._id
+                    });
+    
+                    // Update numbers for each DID
+                    await numberRepo.update(did, {
+                        allocated_to: bodyReq.allocated_to
+                    });
+                }
+            }
+        }
+
+        SuccessRespnose.message = 'Number(s) Allocated Successfully!';
+        Logger.info(`Numbers -> ${bodyReq.DID} updated successfully`);
+
+        return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+    } catch (error) {
+        console.log(error);
+        Logger.error(`Numbers -> unable to Allocate Number error: ${JSON.stringify(error)}`);
+
+        let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+        let errorMsg = error.message || 'An error occurred during allocation';
+
+        ErrorResponse.message = errorMsg;
+        ErrorResponse.error = error;
+
+        return res.status(statusCode).json(ErrorResponse);
+    }
+}
+
+
+async function getToAllocateNumbers(req, res) {
+    try {
+        const allocatedToId = req.params.id;
+        const roleToCheck = await userRepo.get(allocatedToId);
+        let data;
+        if (roleToCheck.role === USERS_ROLE.SUPER_ADMIN) {
+            data = await numberRepo.getAllocatedNumbers(null);
+        } else {
+            data = await numberRepo.getAllocatedNumbers(allocatedToId);
+        }
+        
+        SuccessRespnose.data = data;
+        SuccessRespnose.message = 'Success';
+
+        return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+    } catch (error) {
+
+        ErrorResponse.message = error.message;
+        ErrorResponse.error = error;
+
+        Logger.error(`To Allocated numbers -> unable to get To Allocated numbers list, error: ${JSON.stringify(error)}`);
+
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+
+    }
+
+}
+
+async function getAllocatedNumbers(req, res) {
+    try {
+        const allocatedToId = req.params.id;
+        let allocatedNumbers = await didUserMappingRepository.getForOthers(allocatedToId);
+
+        const allocatedTo = allocatedNumbers.length > 0 ? allocatedNumbers[0].allocated_to.username : null 
+        const allocatedBy = req.user.username
+
+        const uniqueDIDs = [...new Set(allocatedNumbers.map(item => item.DID))];
+        const data = await numberRepo.findMany(uniqueDIDs);
+        const updatedData = data.map((item) => {
+            return {
+              ...item,  
+              allocated_name: allocatedTo, 
+              allocated_by: allocatedBy  
+            };
+          });
+
+        const response = {};
+        response.data = updatedData
+
+        //Remove Button permission
+        const check = await numberRepo.getAllocatedNumbers(allocatedToId);
+        if (check.length > 0) {
+            response.is_removal_button = true
+        } else {
+            response.is_removal_button = false 
+        }
+        SuccessRespnose.data = response;
+        SuccessRespnose.message = 'Success';
+
+        return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+    } catch (error) {
+
+        ErrorResponse.message = error.message;
+        ErrorResponse.error = error;
+
+        Logger.error(`Allocated numbers -> unable to get Allocated numbers list, error: ${JSON.stringify(error)}`);
+
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+
+    }
+
+}
+
+async function removeAllocatedNumbers(req, res) {
+    try {
+        const { DID, user_id } = req.body;
+
+        for (const did of DID) {
+            let allocatedNumbers = await didUserMappingRepository.findOne({
+                DID: did,
+                allocated_to: user_id,
+            });
+
+            const childDetail = await didUserMappingRepository.findOne({
+                DID: did,
+                parent_id: allocatedNumbers._id,
+                active: true
+            })
+
+            if (childDetail) {
+                ErrorResponse.message = `DID(s) assigned to child. Remove from that first!`;
+                return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+            }
+
+            if (!allocatedNumbers) {
+                ErrorResponse.message = `DID ${did} not found or not allocated to user.`;
+                return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+            }
+
+            const superadminCheck = await userRepo.getByUserRole(USERS_ROLE.SUPER_ADMIN);
+            const isSame = allocatedNumbers.parent_id.toString() === superadminCheck._id.toString();
+
+            if (isSame) {
+                // update did user mapping
+                await didUserMappingRepository.update(allocatedNumbers._id, { active: false });
+
+                // update numbers
+                await numberRepo.update(did, { allocated_to: null });
+            } else {
+                const parentDetail = await didUserMappingRepository.get(allocatedNumbers.parent_id);
+                
+                // update did user mapping
+                await didUserMappingRepository.update(allocatedNumbers._id, { active: false });
+
+                // update numbers
+                await numberRepo.update(did, { allocated_to: parentDetail.allocated_to });
+            }
+        }
+
+        SuccessRespnose.message = 'Success';
+        return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+    } catch (error) {
+        ErrorResponse.message = error.message;
+        ErrorResponse.error = error;
+
+        Logger.error(`Remove DID -> unable to remove DID(s), error: ${JSON.stringify(error)}`);
+
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+    }
+}
+
+
+module.exports = {
+    create,
+    uploadNumbers,
+    getAll,
+    get,
+    deleteNumber,
+    update,
+    bulkUpdate,
+    getDIDNumbers,
+    getAllStatus,
+    assignBulkDID,
+    assignIndividualDID,
+    updateStatus,
+    DIDUserMapping,
+    getToAllocateNumbers,
+    getAllocatedNumbers,
+    removeAllocatedNumbers
+}

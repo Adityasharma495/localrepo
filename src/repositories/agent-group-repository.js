@@ -1,0 +1,98 @@
+const CrudRepository = require("./crud-repository");
+const agentGroupModel = require("../db/agent-group");
+const AppError = require("../utils/errors/app-error");
+const { StatusCodes } = require("http-status-codes");
+
+
+
+class AgentGroupRepository extends CrudRepository {
+  constructor() {
+    super(agentGroupModel);
+  }
+
+  async getAll(current_uid) {
+    try {
+        let response = await agentGroupModel
+            .find({ is_deleted: false, createdBy :  current_uid })
+            .populate('agent_id') 
+            .populate('createdBy')
+            .sort({ createdAt: -1 })
+            .lean();
+        return response;
+    } catch (error) {
+        throw error;
+    }
+}
+
+async get(data) {
+  try {
+      const response = await this.model
+          .findOne({ _id: data, is_deleted: false })
+          // .populate('agent_id') 
+          .lean();
+          
+      if (!response) {
+          throw new AppError('Not able to find the Agent Group', StatusCodes.NOT_FOUND);
+      }
+
+      return response;
+
+  } catch (error) {
+      throw error;
+  }
+}
+
+async create(data) {
+  try {
+      const newDocument = await this.model.create(data);
+      const response = await this.model.findById(newDocument._id).populate('agent_id');
+      
+      return response;            
+  } catch (error) {
+      throw error;
+  }
+}
+
+async update(id, data) {
+  const response = await this.model
+      .findOneAndUpdate({ _id: id, is_deleted: false }, data, { runValidators: true, new: true })
+      .populate('agent_id');
+  
+  return response;
+}
+
+  async delete(id) {
+
+    try {
+      const check = await this.model.find({ _id: id, is_deleted: false });
+      if (check.length == 0) {
+        const error = new Error();
+        error.name = 'Agent Group not found';
+        throw error;
+      }
+      const response = await this.update(id, { is_deleted: true });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+
+  }
+
+  async bulkUpdate(ids, data) {
+    console.log(ids, data)
+    const response = await this.model.updateMany(
+        { _id: { $in: ids }},
+        data,
+        { runValidators: true }
+    );
+    
+    if (response.matchedCount === 0) {
+        throw new AppError('No matching resources found to update', StatusCodes.NOT_FOUND);
+    }
+    
+    return response;
+}
+
+}
+
+module.exports = AgentGroupRepository;

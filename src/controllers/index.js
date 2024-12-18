@@ -1,0 +1,29 @@
+const { UserJourneyRepository } = require('../repositories');
+
+module.exports = {
+    UserController: require('./user-controller'),
+    CompanyController: require('./company-controller'),
+    CallCentreController: require('./call-centre-controller'),
+    CodecController: require('./codec-controller'),
+    TrunkController: require('./trunks-controller'),
+    CountryCodeController: require('./country-code-controller'),
+    NumbersController: require('./numbers-controller'),
+    IVRController: require('./ivr-controller'),
+    UtilityController: require('./utility-controller'),
+    OperatorController: require('./operator-controller'),
+    CallsController: require('./calls-controller'),
+    DataCenterController : require('./data-center-controller'),
+    ServerManagementController: require('./server-management-controller'),
+    ModuleController: require('./module-controller'),
+    AclSettingsController: require('./acl-setting-controller'),
+    UserJourneyController: require('./user-journey-controller'),
+    NumberFileListController: require('./number-filelist-controller'),
+    ExportListController: require('./export-list-controller'),
+    AgentController: require('./agent-controller'),
+    AgentGroupController: require('./agent-group-controller'),
+    ExtentionController: require('./extention-controller'),
+    QueueController: require('./queue-controller'),
+    MemberScheduleController:require('./member-schedule-controller'),
+    HandleFileSaveController:require("./handleFileSave-controller"),
+    PromptController:require("./prompt-controller")
+}

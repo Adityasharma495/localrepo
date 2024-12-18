@@ -1,0 +1,21 @@
+module.exports = {
+    UserMiddleware: require('./user-middleware'),
+    AuthMiddleware: require('./auth-middleware'),
+    CallCentreMiddleware: require('./call-centre-middleware'),
+    TrunksMiddleware: require('./trunk-middleware'),
+    CountryCodeMiddleware: require('./country-code-middleware'),
+    NumbersMiddleWare: require('./numbers-middleware'),
+    IVRMiddleWare: require('./ivr-middleware'),
+    OperatorMiddleware: require('./operator-middleware'),
+    CallsMiddleware: require('./calls-middleware'),
+    DataCenterMiddleware: require('./data-center-middleware'),
+    ServerManagementMiddleware: require('./server-management-middleware'),
+    ModuleMiddleware: require('./module-middleware'),
+    AclSettingsMiddleware: require('./acl-settings-middleware'),
+    NumberFileListMiddleware: require('./number-filelist-middleware'),
+    AgentMiddleware: require('./agent-middleware'),
+    AgentGroupMiddleware: require('./agent-group-middleware'),
+    ExtentionMiddleware: require('./extention-middleware'),
+    QueueMiddleware: require('./queue-middleware'),
+    MemberScheduleMiddleware:require('./member-schedule-middleware')
+}
