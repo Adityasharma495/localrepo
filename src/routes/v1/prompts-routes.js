@@ -5,6 +5,8 @@ const Router = express.Router();
 
 //get prompts
 Router.get('/',AuthMiddleware.validateUser,PromptController.getPromptDetails)
+
+//Update Routes
 Router.post('/:id',AuthMiddleware.validateUser,PromptController.updatePropmtStatus)
 
 // save/add prompts
