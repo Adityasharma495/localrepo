@@ -21,7 +21,7 @@ class MemberScheduleRepo extends CrudRepository {
 
   async memberUpdate(id,data){
     try {
-        const response = await this.model.findOneAndUpdate({group_id:id},data);
+        const response = await this.model.findOneAndUpdate({_id:id},data);
         return response;
       } catch (error) {
        throw error

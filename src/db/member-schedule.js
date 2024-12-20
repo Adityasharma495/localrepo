@@ -1,9 +1,5 @@
 const mongoose = require("mongoose")
 const MemberScheduleSchema = new mongoose.Schema({
-    group_id:{
-        type:String,
-        required:false,
-    },
     start_time:{
         type:String,
         required:false,

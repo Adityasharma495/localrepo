@@ -153,7 +153,6 @@ async function modifyAgentGroupCreateBodyRequest(req, res, next) {
         const inputData = await modifyAgentGroupBodyRequest(req);
         req.body = inputData;
 
-        console.log("INPUT DATA", inputData);
         next();
 
     } catch (error) {
@@ -174,6 +173,7 @@ async function modifyAgentGroupUpdateBodyRequest(req, res, next) {
     try {
         const inputData = await modifyAgentGroupBodyRequest(req, false);
         req.body =inputData;
+
 
         next();
 

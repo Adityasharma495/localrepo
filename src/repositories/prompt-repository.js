@@ -2,18 +2,21 @@ const CrudRepository = require("./crud-repository");
 const {PromptModel} = require("../db");
 
 class PromptRepository extends CrudRepository {
-
   constructor() {
     super(PromptModel);
   }
-  async get() {
+
+  // Accept a query condition to filter results
+  async get(conditions = {}) {
     try {
-      const response = await this.model.find();
+      const response = await this.model.find(conditions); // Apply the conditions
       return response;
     } catch (error) {
-     throw error
+      throw error;
     }
   }
 }
+
+
 
 module.exports = PromptRepository;
