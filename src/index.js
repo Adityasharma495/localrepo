@@ -16,10 +16,9 @@ app.use(cors({
 }))
 
 //Any request with /api
+app.use('/assets', express.static(path.join(__dirname, '../assets')));
 app.use('/api', apiRoutes);
 app.use('/api-docs', swaggerRoutes);
-
-
 
 
 app.listen(ServerConfig.PORT, async() => {

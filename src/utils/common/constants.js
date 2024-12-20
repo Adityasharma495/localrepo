@@ -90,8 +90,9 @@ const MODEL = {
     AGENTS_GROUP_MAPPING: 'agentgroupmapping',
     LICENCE : 'licence',
     QUEUE: 'queue',
-    PROMPT:'pro',
-    FLOWS_EDGES: 'flowedge'
+    PROMPT:'prompt',
+    FLOWS_EDGES: 'flowedge',
+
 }
 
 const AUTH_TYPES = {
@@ -199,7 +200,8 @@ const MODULE_LABEL = {
     AGENT: 'Agent',
     AGENT_GROUP: 'Agent Group',
     EXTENTION: 'extention',
-    QUEUE: 'queue'
+    QUEUE: 'queue',
+    PROMPTS: 'Prompts'
 }
 
 const ACTION_LABEL = {
@@ -214,15 +216,15 @@ const ACTION_LABEL = {
     LOGIN: 'Login',
     LOGOUT: 'Logout'
 }
-// const BACKEND_API_BASE_URL =
-//   process.env.NODE_ENV == "production"
-//     ? "https://voiceboxapi.nspl.cloud"
-//     : "http://localhost:3900";
-    
- const BACKEND_API_BASE_URL =
+const BACKEND_API_BASE_URL =
   process.env.NODE_ENV == "production"
-    ? "http://localhost:3900"
+    ? "https://voiceboxapi.nspl.cloud"
     : "http://localhost:3900";
+    
+//  const BACKEND_API_BASE_URL =
+//   process.env.NODE_ENV == "production"
+//     ? "http://localhost:3900"
+//     : "http://localhost:3900";
 
 const NUMBER_STATUS_VALUE = ['status','Available', 'Reserved ', 'Blocked', 'Archived', 'Terminated', 'Demo', 'Live', 'Delete', 'Pending', 'Reject']
 
@@ -281,6 +283,13 @@ const WEEK_DAYS = {
     DAYS:['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
 }
 
+const STORAGE_PATH =  "/home/dev/cloud-telephony/backend/"
+
+const SERVER ={
+    PROD:"production",
+    DEV:"development"
+}
+
 
 
 module.exports = {
@@ -322,5 +331,7 @@ module.exports = {
     ACCESS_CONTROL,
     AGENT_TYPE,
     AGENT_LOGIN_STATUS,
-    WEEK_DAYS
+    WEEK_DAYS,
+    STORAGE_PATH,
+    SERVER
 }

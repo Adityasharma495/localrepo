@@ -1,3 +1,5 @@
+const promptsMiddleware = require('./prompts-middleware');
+
 module.exports = {
     UserMiddleware: require('./user-middleware'),
     AuthMiddleware: require('./auth-middleware'),
@@ -17,5 +19,6 @@ module.exports = {
     AgentGroupMiddleware: require('./agent-group-middleware'),
     ExtentionMiddleware: require('./extention-middleware'),
     QueueMiddleware: require('./queue-middleware'),
-    MemberScheduleMiddleware:require('./member-schedule-middleware')
+    MemberScheduleMiddleware:require('./member-schedule-middleware'),
+    PromptsMiddleware: require('./prompts-middleware')
 }
