@@ -50,12 +50,14 @@ async function savePrompts(req, res) {
 
         const file_name = req.file.name;
 
-        console.log('process.env.NODE_ENV', process.env.NODE_ENV)
-
         if (process.env.NODE_ENV === SERVER.PROD) {
-            const fileAlias = file_name;
-            const cmd = `bash -c "${STORAGE_PATH}scripts/checkFormat.sh ${req.user.id} ${fileAlias} ${fileAlias}"`;
-    
+            let fileAlias;
+            if (file_name.endsWith('.mp3')) {
+                fileAlias = file_name.replace(/\.mp3$/, '.wav');
+            } else {
+                fileAlias = file_name
+            }
+            const cmd = `bash -c "${STORAGE_PATH}scripts/checkFormat.sh ${req.user.id} ${file_name} ${fileAlias}"`;
             Logger.info(`Executing script: ${cmd}`);
     
             const duration = await new Promise((resolve, reject) => {
@@ -71,8 +73,9 @@ async function savePrompts(req, res) {
                     resolve(stdout.trim());
                 });
             });
+
     
-            if (!duration || duration === '0') {
+            if (!duration || duration === '0'|| duration === 0) {
                 const errorResponse = {
                     message: 'Invalid or zero duration of Uploaded File',
                     error: new Error('File Duration Issue')
@@ -118,7 +121,6 @@ async function savePrompts(req, res) {
         return res.status(StatusCodes.CREATED).json(SuccessRespnose);
 
     } catch (error) {
-        console.log('errorerrorerrorerrorerror', error)
         const errorResponse = {
             message: 'Error while processing the Prompts file.',
             error: error
