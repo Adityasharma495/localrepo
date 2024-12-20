@@ -4,10 +4,82 @@ const {SuccessRespnose , ErrorResponse} = require("../utils/common");
 const AppError = require("../utils/errors/app-error");
 const {MODULE_LABEL, ACTION_LABEL} = require('../utils/common/constants');
 const { Logger } = require("../config");
+const mongoose = require('mongoose')
 
 const agentGroupRepo = new AgentGroupRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const memberScheduleRepo = new MemberScheduleRepository();
+
+// async function createAgentGroup(req, res) {
+//   const bodyReq = req.body;
+
+//   try {
+//     const responseData = {};
+
+//     const conditions = {
+//       group_name: bodyReq.agent.group_name
+//     };
+//     const checkDuplicate = await agentGroupRepo.findOne(conditions);
+//     if (checkDuplicate) {
+//       ErrorResponse.message = 'Group Name Already Exists';
+//       return res
+//         .status(StatusCodes.BAD_REQUEST)
+//         .json(ErrorResponse);
+//     }
+
+//     // Create the agent group
+//     const agent = await agentGroupRepo.create(bodyReq.agent);
+
+
+//     const memberData = {
+//       start_time:"",
+//       end_time:"",
+//       week_days:[],
+//     }
+
+//     await memberScheduleRepo.create(memberData)
+
+//     responseData.agent = agent;
+
+//     // Log user journey for this action
+//     const userJourneyfields = {
+//       module_name: MODULE_LABEL.AGENT_GROUP,
+//       action: ACTION_LABEL.ADD,
+//       createdBy: req?.user?.id
+//     };
+//     await userJourneyRepo.create(userJourneyfields);
+
+//     SuccessRespnose.data = responseData;
+//     SuccessRespnose.message = "Successfully created a new Agent Group";
+
+//     Logger.info(
+//       `Agent Group -> created successfully: ${JSON.stringify(responseData)}`
+//     );
+//     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
+//   } catch (error) {
+
+//     console.log("ERRORE HERE", error);
+//     Logger.error(
+//       `Agent Group -> unable to create Agent Group: ${JSON.stringify(
+//         bodyReq
+//       )} error: ${JSON.stringify(error)}`
+//     );
+
+//     let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+//     let errorMsg = error.message;
+
+//     if (error.name === "MongoServerError" || error.code === 11000) {
+//       statusCode = StatusCodes.BAD_REQUEST;
+//       errorMsg = "Duplicate key, record already exists.";
+//     }
+
+//     ErrorResponse.message = errorMsg;
+//     ErrorResponse.error = error;
+
+//     return res.status(statusCode).json(ErrorResponse);
+//   }
+// }
+
 
 async function createAgentGroup(req, res) {
   const bodyReq = req.body;
@@ -26,18 +98,25 @@ async function createAgentGroup(req, res) {
         .json(ErrorResponse);
     }
 
-    // Create the agent group
-    const agent = await agentGroupRepo.create(bodyReq.agent);
+    // Generate a shared _id
+    const sharedId = new mongoose.Types.ObjectId(); // Generate a new ObjectId
 
+    // Create the agent group with the shared _id
+    const agent = await agentGroupRepo.create({
+      ...bodyReq.agent,
+      _id: sharedId // Assign the shared _id here
+    });
 
+    // Create the member schedule with the same _id
     const memberData = {
-      group_id:agent._id,
-      start_time:"",
-      end_time:"",
-      week_days:[],
-    }
+      _id: sharedId, // Assign the shared _id here
+      start_time: "",
+      end_time: "",
+      week_days: [],
+    };
 
-     await memberScheduleRepo.create(memberData)
+    await memberScheduleRepo.create(memberData);
+
     responseData.agent = agent;
 
     // Log user journey for this action
@@ -56,7 +135,6 @@ async function createAgentGroup(req, res) {
     );
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
   } catch (error) {
-
     console.log("ERRORE HERE", error);
     Logger.error(
       `Agent Group -> unable to create Agent Group: ${JSON.stringify(
@@ -78,6 +156,7 @@ async function createAgentGroup(req, res) {
     return res.status(statusCode).json(ErrorResponse);
   }
 }
+
 
 
 async function getAll(req, res) {
@@ -138,6 +217,7 @@ async function getById(req, res) {
 async function updateAgentGroup(req, res) {
   const uid = req.params.id;
   const bodyReq =  req.body;
+
 
   try {
     const responseData = {};

@@ -5,6 +5,10 @@ const USER_MODEL_NAME = constants.MODEL.USERS;
 const AGENT_MODEL_NAME = constants.MODEL.AGENTS;
 
 const AgentsGroupSchema = new mongoose.Schema({
+    member_schedule_id:{
+        type:String,
+        require:false,
+    },
     group_name: {
         type: String,
         required: true,

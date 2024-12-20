@@ -51,7 +51,7 @@ async create(data) {
   } catch (error) {
       throw error;
   }
-}
+}z
 
 async update(id, data) {
   const response = await this.model

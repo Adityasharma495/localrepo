@@ -31,13 +31,6 @@ async function validateSchedule(req,res,next)
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
     }
-    else if (group_id == undefined || !group_id.trim()) {
-        ErrorResponse.message = 'Something went wrong while scheduling time';
-        ErrorResponse.error = new AppError(['group_id not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-        return res
-            .status(StatusCodes.BAD_REQUEST)
-            .json(ErrorResponse);
-    }
     else if (bodyReq.week_days == undefined) {
         ErrorResponse.message = 'Something went wrong while scheduling time';
         ErrorResponse.error = new AppError(['week_days not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
