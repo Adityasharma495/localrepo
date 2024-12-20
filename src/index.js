@@ -17,6 +17,8 @@ app.use(cors({
 
 //Any request with /api
 app.use('/assets', express.static(path.join(__dirname, '../assets')));
+app.use('/temp', express.static(path.join(__dirname, '../temp')));
+
 app.use('/api', apiRoutes);
 app.use('/api-docs', swaggerRoutes);
 

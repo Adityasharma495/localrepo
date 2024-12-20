@@ -50,7 +50,7 @@ if (!allowedFileTypes.includes(fileExtension)) {
     );
     return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
 }
-    req.folder = `../../assets/voice/${req?.user?.id.toString()}/prompts`
+    req.folder = `../../temp/voice/${req?.user?.id.toString()}/prompts`
     next();
 }
 
@@ -59,31 +59,32 @@ function saveFile(req, res, next) {
     const folder = req.folder;
     const destFolder = path.join(__dirname, folder);
     const originalFileName = path.basename(file.originalname);
+
+    let fileAlias;
+    if (file.mimetype === 'audio/mpeg') {
+        fileAlias = file.originalname.replace(/\.mp3$/, '.wav');
+    } else {
+        fileAlias = file.originalname;
+    }
+
+    req.fileAlias = fileAlias;
         
-        const filePath = path.join(destFolder, originalFileName);
-        req.file.path = filePath; 
-        req.file.name = originalFileName
+    const filePath = path.join(destFolder, originalFileName);
+    req.file.path = filePath; 
+    req.file.name = originalFileName
 
-        if (!fs.existsSync(destFolder)) {
-            fs.mkdirSync(destFolder, { recursive: true });
+    if (!fs.existsSync(destFolder)) {
+        fs.mkdirSync(destFolder, { recursive: true });
+    }
+
+    fs.writeFile(filePath, file.buffer, (err) => {
+        if (err) {
+            ErrorResponse.message = 'Error saving file';
+            ErrorResponse.error = new Error('Error saving file to disk');
+            return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
         }
-
-        if (fs.existsSync(filePath)) {
-            const ErrorResponse = {
-                message: 'File already exists',
-                error: new Error(`A file with the name '${originalFileName}' already exists.`),
-            };
-            return res.status(StatusCodes.CONFLICT).json(ErrorResponse);
-        }
-
-        fs.writeFile(filePath, file.buffer, (err) => {
-            if (err) {
-                ErrorResponse.message = 'Error saving file';
-                ErrorResponse.error = new Error('Error saving file to disk');
-                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
-            }
-        next();
-        });
+    next();
+    });
 }
 
 

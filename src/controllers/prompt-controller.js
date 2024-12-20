@@ -60,15 +60,35 @@ async function savePrompts(req, res) {
             return res.status(StatusCodes.NOT_FOUND).json(errorResponse);
         }
 
+        // check for duplicate file name
+        const conditions = {
+            createdBy: req.user.id, 
+            prompt_name: bodyReq.prompt_name 
+        }
+        const checkDuplicate = await PromptRepo.findOne(conditions);
+                
+        if (checkDuplicate && Object.keys(checkDuplicate).length !== 0) {
+            try {
+                fs.unlinkSync(dest);
+            } catch (unlinkError) {
+                Logger.error(`Failed to delete file at ${dest}: ${unlinkError.message}`);
+                const errorResponse = {
+                    message: 'File Name Already Exists and failed to delete uploaded file',
+                    error: new Error('Duplicate File Issue'),
+                };
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+            }
+
+            ErrorResponse.message = `File Name Already Exists`;
+                return res
+                .status(StatusCodes.BAD_REQUEST)
+                .json(ErrorResponse);
+        }
+
         const file_name = req.file.name;
+        const fileAlias = req.fileAlias
 
         if (process.env.NODE_ENV === SERVER.PROD) {
-            let fileAlias;
-            if (file_name.endsWith('.mp3')) {
-                fileAlias = file_name.replace(/\.mp3$/, '.wav');
-            } else {
-                fileAlias = file_name
-            }
             const cmd = `bash -c "${STORAGE_PATH}scripts/checkFormat.sh ${req.user.id} ${file_name} ${fileAlias}"`;
             Logger.info(`Executing script: ${cmd}`);
     
@@ -102,7 +122,7 @@ async function savePrompts(req, res) {
 
         
 
-        const file_url = `${BACKEND_API_BASE_URL}/assets/voice/${req.user.id}/prompts/${file_name}`;
+        const file_url = `${BACKEND_API_BASE_URL}/temp/voice/${req.user.id}/prompts/${file_name}`;
 
         const prompts = await PromptRepo.create({
             prompt_category: bodyReq.prompt_category,

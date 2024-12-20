@@ -9,6 +9,7 @@ dist/
 build/
 logs/
 assets/
+temp/
 
 # Compiled Java class files
 *.class

@@ -1,5 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
-const { IVRRepository, UserJourneyRepository,FLowRepository,FlowControlRepository, FlowEdgesRepository } = require("../repositories");
+const { UserJourneyRepository,FLowRepository,FlowControlRepository, FlowEdgesRepository } = require("../repositories");
 const {SuccessRespnose , ErrorResponse , Authentication } = require("../utils/common");
 const {MODULE_LABEL, ACTION_LABEL} = require('../utils/common/constants');
 const {IvrSettings} = require('../db')
@@ -8,7 +8,6 @@ const {IvrSettings} = require('../db')
 const { Logger } = require("../config");
 const AppError = require("../utils/errors/app-error");
 
-const ivrRepo = new IVRRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const flowsRepo = new FLowRepository();
 const flowsControlRepo = new FlowControlRepository();
@@ -19,8 +18,20 @@ async function createIVR(req, res) {
   const bodyReq = req.body;
 
   try {
-    
-    const FlowDataResponse = await flowsRepo.create(bodyReq.nodesData);
+    // check for duplicate Flow name
+    const conditions = {
+      createdBy: req.user.id, 
+      flowName: bodyReq.nodesData.flowName 
+    }
+    const checkDuplicate = await flowsRepo.findOne(conditions);
+        
+    if (checkDuplicate && Object.keys(checkDuplicate).length !== 0) {
+        ErrorResponse.message = `Flow Name Already Exists`;
+          return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+    }
+    const FlowDataResponse = await flowsRepo.create(bodyReq.nodesData, req?.user?.id);
 
     let FlowControlDataResponse;
     let FlowEdgesResponse;
@@ -85,7 +96,6 @@ async function getIVRSettings(req, res) {
   }
 }
 
-
 async function getAllIVR(req, res) {
   try {
     
@@ -111,6 +121,21 @@ async function updateIVR(req, res) {
     const bodyReq = req.body;
     
     try {
+      const currentData = await flowsRepo.getIVRByFlowId(id);
+      
+      // Check for duplicate flow Name
+      if (currentData.flowName !== bodyReq.nodesData.flowName) {
+        const nameCondition = {
+          createdBy: req.user.id,
+          flowName: bodyReq.nodesData.flowName
+        };
+      
+        const nameDuplicate = await flowsRepo.findOne(nameCondition);
+        if (nameDuplicate) {
+            ErrorResponse.message = 'Flow Name already exists';
+            return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+          }
+      }
   
       const responseData = {};
       // delete existing data
@@ -174,43 +199,6 @@ async function updateIVR(req, res) {
   
     }
 
-  }
-
-  
-async function deleteIvrFlows(req, res) {
-    const id = req.body.flowIds;
-
-    try {
-      const flowsRepoResponse = await flowsRepo.hardDeleteMany(id);
-      const flowsControlRepoResponse = await flowsControlRepo.hardDeleteMany(id);
-
-      if(flowsControlRepoResponse && flowsRepoResponse)
-      {
-        SuccessRespnose.message = "Deleted successfully!";
-        SuccessRespnose.data = flowsRepoResponse;
-        Logger.info(`ivr -> ${id} deleted successfully`);
-
-        return res.status(StatusCodes.OK).json(SuccessRespnose);
-      }
-
-    } catch (error) {
-  
-      let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
-      let errorMsg = error.message;
-  
-      ErrorResponse.error = error;
-      if (error.name == "CastError") {
-        statusCode = StatusCodes.BAD_REQUEST;
-        errorMsg = "ivr not found";
-      }
-      ErrorResponse.message = errorMsg;
-  
-      Logger.error(
-        `ivr -> unable to delete user: ${id}, error: ${JSON.stringify(error)}`
-      );
-  
-      return res.status(statusCode).json(ErrorResponse);
-    }
   }
   
   async function deleteIVR(req, res) {
