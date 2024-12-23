@@ -92,6 +92,7 @@ const MODEL = {
     QUEUE: 'queue',
     PROMPT:'prompt',
     FLOWS_EDGES: 'flowedge',
+    LANGUAGE: 'language'
 
 }
 

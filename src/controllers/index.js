@@ -1,3 +1,4 @@
+const languageData = require('../db/languages');
 const { UserJourneyRepository } = require('../repositories');
 
 module.exports = {
@@ -25,5 +26,6 @@ module.exports = {
     QueueController: require('./queue-controller'),
     MemberScheduleController:require('./member-schedule-controller'),
     HandleFileSaveController:require("./handleFileSave-controller"),
-    PromptController:require("./prompt-controller")
+    PromptController:require("./prompt-controller"),
+    LanguageController : require('./language-controller')
 }

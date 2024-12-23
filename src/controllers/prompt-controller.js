@@ -89,7 +89,7 @@ async function savePrompts(req, res) {
         const fileAlias = req.fileAlias
 
         if (process.env.NODE_ENV === SERVER.PROD) {
-            const cmd = `bash -c "${STORAGE_PATH}scripts/checkFormat.sh ${req.user.id} ${file_name} ${fileAlias}"`;
+            const cmd = `bash -c "${STORAGE_PATH}scripts/checkFormat.sh ${req.user.id} ${file_name} ${fileAlias} ${bodyReq.language}"`;
             Logger.info(`Executing script: ${cmd}`);
     
             const duration = await new Promise((resolve, reject) => {
@@ -122,7 +122,7 @@ async function savePrompts(req, res) {
 
         
 
-        const file_url = `${BACKEND_API_BASE_URL}/temp/voice/${req.user.id}/prompts/${file_name}`;
+        const file_url = `${BACKEND_API_BASE_URL}/temp/voice/${req.user.id}/prompts/${bodyReq.language}/${file_name}`;
 
         const prompts = await PromptRepo.create({
             prompt_category: bodyReq.prompt_category,

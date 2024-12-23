@@ -1,4 +1,3 @@
-
 module.exports = {
     UserRepository: require('./user-repository'),
     CompanyRepository: require('./company-repository'),
@@ -31,5 +30,6 @@ module.exports = {
     MemberScheduleRepository:require("./member-schedule-repository"),
     PromptRepository:require("./prompt-repository"),
     FLowRepository: require('./flows-repository'),
-    FlowEdgesRepository: require('./flow-edge-repository')
+    FlowEdgesRepository: require('./flow-edge-repository'),
+    LanguageRepository: require('./language-repository')
 }

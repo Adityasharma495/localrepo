@@ -30,6 +30,14 @@ async function validateCreatePrompts(req, res, next) {
             .json(ErrorResponse);
     }
 
+    else if (bodyReq.language == undefined || !bodyReq.language.trim()) {
+        ErrorResponse.message = 'Something went wrong while creating creating prompts';
+        ErrorResponse.error = new AppError(['language not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+    }
+
     const file = req.file;
     const allowedFileTypes = ['.wav', '.mp3'];
     
@@ -50,7 +58,7 @@ if (!allowedFileTypes.includes(fileExtension)) {
     );
     return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
 }
-    req.folder = `../../temp/voice/${req?.user?.id.toString()}/prompts`
+    req.folder = `../../temp/voice/${req?.user?.id.toString()}/prompts/${bodyReq.language}`
     next();
 }
 
