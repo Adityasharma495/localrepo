@@ -87,6 +87,11 @@ class FLowRepository extends CrudRepository {
       throw error;
     }
   }
+
+  async updateByFlowId(id, data) {
+    const response = await this.model.updateMany({flowId: id}, data, { runValidators: true, new: true });
+    return response;
+  }
 }
 
 module.exports = FLowRepository;

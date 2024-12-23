@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid')
+const { constants } = require('../utils/common');
+const MEMEBER_SCHEDULES_MODEL_NAME = constants.MODEL.MEMEBER_SCHEDULES;
 
 const FlowSchema = new mongoose.Schema(
   {
@@ -21,6 +23,11 @@ const FlowSchema = new mongoose.Schema(
     nodeId: {
       type: Number,
       required: true,
+    },
+    scheduleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: MEMEBER_SCHEDULES_MODEL_NAME,
+      default: null
     },
     flowJson: {
       type: Object, 

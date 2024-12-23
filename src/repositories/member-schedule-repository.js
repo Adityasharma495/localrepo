@@ -27,6 +27,24 @@ class MemberScheduleRepo extends CrudRepository {
        throw error
       }
   }
+
+  async deleteByModuleId(id) {
+    try {
+      let response = await this.model.deleteMany({ module_id: id });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getAll(id) {
+    try {
+      let response = await this.model.findOne({ module_id: id }).lean();
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = MemberScheduleRepo;

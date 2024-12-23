@@ -1,5 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
-const { UserJourneyRepository,FLowRepository,FlowControlRepository, FlowEdgesRepository } = require("../repositories");
+const { UserJourneyRepository,FLowRepository,FlowControlRepository, FlowEdgesRepository, MemberScheduleRepository } = require("../repositories");
 const {SuccessRespnose , ErrorResponse , Authentication } = require("../utils/common");
 const {MODULE_LABEL, ACTION_LABEL} = require('../utils/common/constants');
 const {IvrSettings} = require('../db')
@@ -12,7 +12,7 @@ const userJourneyRepo = new UserJourneyRepository();
 const flowsRepo = new FLowRepository();
 const flowsControlRepo = new FlowControlRepository();
 const flowEdgesRepo = new FlowEdgesRepository();
-
+const memberScheduleRepo = new MemberScheduleRepository();
 
 async function createIVR(req, res) {
   const bodyReq = req.body;
@@ -45,6 +45,18 @@ async function createIVR(req, res) {
         FlowControlDataResponse = await flowsControlRepo.create(bodyReq.nodesData, FlowDataResponse[0].flowId);
       }
     }
+
+    let scheduleData;
+    if (Object.keys(bodyReq.nodesData.scheduleData).length > 0) {
+      scheduleData = await memberScheduleRepo.create(
+        {
+          ... bodyReq.nodesData.scheduleData,
+          module_id : FlowDataResponse.length > 0 && FlowDataResponse[0].flowId
+        })
+
+      flowsRepo.updateByFlowId(FlowDataResponse[0].flowId, {scheduleId : scheduleData._id}) 
+    }
+
     
    
 
@@ -142,6 +154,8 @@ async function updateIVR(req, res) {
       await flowsRepo.deleteIVRByFlowId(id);
       await flowsControlRepo.deleteIVRByFlowId(id);
       await flowEdgesRepo.deleteIVRByFlowId(id);
+      await memberScheduleRepo.deleteByModuleId(id);
+
 
       //insert All data
       const FlowDataResponse = await flowsRepo.create(bodyReq.nodesData);
@@ -158,6 +172,17 @@ async function updateIVR(req, res) {
           FlowControlDataResponse = await flowsControlRepo.create(bodyReq.nodesData, FlowDataResponse[0].flowId);
         }
       }
+
+      let scheduleData;
+      if (Object.keys(bodyReq.nodesData.scheduleData).length > 0) {
+       scheduleData = await memberScheduleRepo.create(
+        {
+          ... bodyReq.nodesData.scheduleData,
+          module_id : FlowDataResponse.length > 0 && FlowDataResponse[0].flowId
+        })
+
+      flowsRepo.updateByFlowId(FlowDataResponse[0].flowId, {scheduleId : scheduleData._id}) 
+    }
 
       if (FlowDataResponse) {
 
@@ -208,8 +233,10 @@ async function updateIVR(req, res) {
       const FlowDataResponse = await flowsRepo.deleteIVRByFlowId(id);
       const FlowControlDataResponse = await flowsControlRepo.deleteIVRByFlowId(id);
       const FlowEdgesResponse = await flowEdgesRepo.deleteIVRByFlowId(id);
+      const IvrScheduleResponse = await memberScheduleRepo.deleteByModuleId(id);
 
-      if (FlowDataResponse && FlowControlDataResponse && FlowEdgesResponse) {
+
+      if (FlowDataResponse && FlowControlDataResponse && FlowEdgesResponse && IvrScheduleResponse) {
 
         const userJourneyfields = {
           module_name: MODULE_LABEL.IVR,
@@ -250,8 +277,9 @@ async function updateIVR(req, res) {
       const IvrId = req.params.id;
       const nodesData = await flowsRepo.getIVRByFlowId(IvrId);
       const edgeData = await flowEdgesRepo.getAll(IvrId);
+      const scheduleData = await memberScheduleRepo.getAll(IvrId);
 
-      SuccessRespnose.data = {nodesData,edgeData};
+      SuccessRespnose.data = {nodesData,edgeData,scheduleData};
       SuccessRespnose.message = "Success";
   
       return res.status(StatusCodes.OK).json(SuccessRespnose);

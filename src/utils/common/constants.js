@@ -92,7 +92,8 @@ const MODEL = {
     QUEUE: 'queue',
     PROMPT:'prompt',
     FLOWS_EDGES: 'flowedge',
-    LANGUAGE: 'language'
+    LANGUAGE: 'language',
+    MEMEBER_SCHEDULES: 'member_schedules'
 
 }
 
