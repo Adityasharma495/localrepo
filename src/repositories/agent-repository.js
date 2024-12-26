@@ -72,6 +72,15 @@ class AgentRepository extends CrudRepository {
     }
 
   }
+  async bulkUpdate(filter, updateData) {
+    try {
+        const result = await this.model.updateMany(filter, updateData);
+        return result;
+    } catch (error) {
+        throw new Error(`Failed to bulk update agents: ${error.message}`);
+    }
+}
+
 
   async findMany(ids) {
     try {

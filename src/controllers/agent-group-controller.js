@@ -1,14 +1,16 @@
 const { StatusCodes } = require("http-status-codes");
-const { AgentGroupRepository, UserJourneyRepository, MemberScheduleRepository} = require("../repositories");
+const { AgentGroupRepository, UserJourneyRepository, MemberScheduleRepository, AgentRepository} = require("../repositories");
 const {SuccessRespnose , ErrorResponse} = require("../utils/common");
 const AppError = require("../utils/errors/app-error");
 const {MODULE_LABEL, ACTION_LABEL} = require('../utils/common/constants');
 const { Logger } = require("../config");
 const mongoose = require('mongoose')
+const agentModel = require('../db/agents')
 
 const agentGroupRepo = new AgentGroupRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const memberScheduleRepo = new MemberScheduleRepository();
+const agentRepo = new AgentRepository();
 
 // async function createAgentGroup(req, res) {
 //   const bodyReq = req.body;
@@ -310,4 +312,51 @@ async function deleteAgentGroup(req, res) {
   }
 }
 
-module.exports = {createAgentGroup, getAll, getById, updateAgentGroup, deleteAgentGroup}
+async function getAssignedAgents(req, res) {
+  const groupId = req.params.id;
+
+  try {
+    if (!groupId) {
+      throw new AppError("Missing Agent Group Id", StatusCodes.BAD_REQUEST);
+    }
+
+    const agentGroup = await agentGroupRepo.get(groupId);
+
+    console.log("AGENT GROUP:", agentGroup);
+    const agents = await agentRepo.findMany(agentGroup.agent_id);
+
+    console.log("AGENTS FOUND:", agents);
+
+    SuccessRespnose.message = "Successfully fetched assigned agents";
+    SuccessRespnose.data = {
+      group_id: groupId,
+      group_name: agentGroup.group_name,
+      agents: agents
+    };
+
+    Logger.info(`Agent Group -> Successfully fetched assigned agents for Group ID: ${groupId}`);
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+  } catch (error) {
+    let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message || "An error occurred while fetching assigned agents";
+
+    if (error.name === 'CastError') {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Invalid Group ID";
+    }
+
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `Agent Group -> Unable to fetch assigned agents for Group ID: ${groupId}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+
+
+module.exports = {createAgentGroup, getAll, getById, updateAgentGroup, deleteAgentGroup,getAssignedAgents}

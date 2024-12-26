@@ -6,6 +6,7 @@ const AppError = require("../utils/errors/app-error");
 const {MODULE_LABEL, ACTION_LABEL} = require('../utils/common/constants');
 
 const { Logger } = require("../config");
+const { AgentGroupController } = require(".");
 
 const agentRepo = new AgentRepository();
 const userJourneyRepo = new UserJourneyRepository();
@@ -331,4 +332,70 @@ async function deleteAgent(req, res) {
   }
 }
 
-module.exports = {createAgent, getAll, getById, updateAgent, deleteAgent, toggleStatus}
+
+async function updateAllocation(req, res) {
+
+  console.log("DIRECT CAME HERE");
+  const { agentIds } = req.body;
+
+
+  console.log("IDS COMINGERE FOR ALLOCATION", agentIds );
+
+  try {
+    // Validate the input
+    if (!agentIds || !Array.isArray(agentIds) || agentIds.length === 0) {
+      throw new AppError("Invalid or empty agentIds array", StatusCodes.BAD_REQUEST);
+    }
+
+    // Perform the update on all matching agent IDs
+    const updatedResult = await agentRepo.bulkUpdate(
+      { _id: { $in: agentIds } }, // Filter for matching IDs
+      { isAllocated: 1 } // Set isAllocated to 1
+    );
+
+
+    console.log("UPDATED RESULT", updatedResult);
+
+    if (updatedResult.modifiedCount === 0) {
+      throw new AppError("No agents were updated. Please check the provided IDs.", StatusCodes.BAD_REQUEST);
+    }
+
+    // Log the update
+    Logger.info(`Agents allocation updated successfully for IDs: ${JSON.stringify(agentIds)}`);
+
+    // Create a user journey log
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.AGENT,
+      action: ACTION_LABEL.ALLOCATE,
+      createdBy: req?.user?.id,
+    };
+    await userJourneyRepo.create(userJourneyfields);
+
+    // Return success response
+    SuccessRespnose.message = "Agents successfully allocated.";
+    SuccessRespnose.data = { updatedCount: updatedResult.modifiedCount };
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    if (error.name === "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Invalid agent IDs provided.";
+    }
+
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `Agent -> failed to allocate agents, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+
+
+module.exports = {createAgent, getAll, getById, updateAgent, deleteAgent, toggleStatus, updateAllocation}

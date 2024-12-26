@@ -19,4 +19,6 @@ router.get("/", AuthMiddleware.validateUser, AgentGroupController.getAll);
 //agent-group getByid: /api/v1/agent-group/:id GET 
 router.get("/:id", AuthMiddleware.validateUser, AgentGroupController.getById);
 
+router.get("/:id/assigned-agents",AuthMiddleware.validateUser, AgentGroupController.getAssignedAgents)
+
 module.exports = router;

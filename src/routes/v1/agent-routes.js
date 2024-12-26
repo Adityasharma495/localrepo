@@ -21,4 +21,8 @@ router.post("/status/:id", AuthMiddleware.validateUser, AgentController.toggleSt
 //agent getByid: /api/v1/agent/:id GET 
 router.get("/:id", AuthMiddleware.validateUser, AgentController.getById);
 
+router.post("/allocate",AuthMiddleware.validateUser,(req,res)=>{
+    console.log("HERE");
+})
+
 module.exports = router;
