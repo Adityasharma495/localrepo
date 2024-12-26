@@ -11,7 +11,6 @@ async function validateUser(req, res, next){
         if(decodeJwt){
             req['user'] = decodeJwt;
 
-          
             next();
         }
 
