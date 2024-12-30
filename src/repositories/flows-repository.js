@@ -69,7 +69,7 @@ class FLowRepository extends CrudRepository {
           $replaceRoot: { newRoot: "$document" }
         },
         {
-          $sort: { flowId: 1 }
+          $sort: { createdAt: -1 }
         }
       ]);
   
