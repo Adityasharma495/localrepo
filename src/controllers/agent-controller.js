@@ -199,6 +199,7 @@ async function getById(req, res) {
 async function updateAgent(req, res) {
   const uid = req.params.id;
   const bodyReq = req.body;
+
   try {
     const responseData = {};
     const currentData = await agentRepo.get(uid);
@@ -334,12 +335,7 @@ async function deleteAgent(req, res) {
 
 
 async function updateAllocation(req, res) {
-
-  console.log("DIRECT CAME HERE");
   const { agentIds } = req.body;
-
-
-  console.log("IDS COMINGERE FOR ALLOCATION", agentIds );
 
   try {
     // Validate the input
@@ -353,28 +349,14 @@ async function updateAllocation(req, res) {
       { isAllocated: 1 } // Set isAllocated to 1
     );
 
-
-    console.log("UPDATED RESULT", updatedResult);
-
     if (updatedResult.modifiedCount === 0) {
       throw new AppError("No agents were updated. Please check the provided IDs.", StatusCodes.BAD_REQUEST);
     }
 
     // Log the update
     Logger.info(`Agents allocation updated successfully for IDs: ${JSON.stringify(agentIds)}`);
-
-    // Create a user journey log
-    const userJourneyfields = {
-      module_name: MODULE_LABEL.AGENT,
-      action: ACTION_LABEL.ALLOCATE,
-      createdBy: req?.user?.id,
-    };
-    await userJourneyRepo.create(userJourneyfields);
-
-    // Return success response
     SuccessRespnose.message = "Agents successfully allocated.";
     SuccessRespnose.data = { updatedCount: updatedResult.modifiedCount };
-
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
@@ -396,6 +378,68 @@ async function updateAllocation(req, res) {
   }
 }
 
+async function updateMemberScheduleAgent(req, res) {
+  const { id } = req.params; // Extract the agent's ID from request parameters
+  const { start_time, end_time, week_days } = req.body; // Extract schedule details from request body
+
+  try {
+    const agent = await agentRepo.get(id);
+    if (!agent) {
+      throw new AppError("Agent not found", StatusCodes.NOT_FOUND);
+    }
+
+    console.log("AGENT FROUNF", agent);
+
+    const timeSchedulePayload = {
+      time_schedule: {
+        start_time,
+        end_time,
+        week_days
+      }
+    };
+
+    console.log("TIME SHCEUL",timeSchedulePayload);
+
+    const updatedAgent = await agentRepo.update(id, timeSchedulePayload);
+
+    console.log("UPDATED AGENT", updateAgent);
+
+    if (!updatedAgent) {
+      throw new AppError(
+        "Failed to update agent time schedule.",
+        StatusCodes.BAD_REQUEST
+      );
+    }
+
+    // Log the update
+    Logger.info(
+      `Agent -> ${id} time schedule updated successfully: ${JSON.stringify(timeSchedulePayload)}`
+    );
+
+    // Success response
+    SuccessRespnose.message = "Agent time schedule updated successfully.";
+    SuccessRespnose.data = updatedAgent;
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    if (error.name === "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Invalid agent ID.";
+    }
+
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `Agent -> Failed to update time schedule for Agent ID: ${id}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
 
 
-module.exports = {createAgent, getAll, getById, updateAgent, deleteAgent, toggleStatus, updateAllocation}
+module.exports = {createAgent, getAll, getById, updateAgent, deleteAgent, toggleStatus, updateAllocation,updateMemberScheduleAgent}

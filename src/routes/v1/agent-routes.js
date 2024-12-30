@@ -1,14 +1,21 @@
 const express = require("express");
 const { AgentController } = require("../../controllers");
 const { AuthMiddleware, AgentMiddleware } = require("../../middlewares");
-
+const {MemberScheduleMiddleware} = require('../../middlewares')
 const router = express.Router();
 
+
+
+
+router.post("/schedule/:id", AuthMiddleware.validateUser,MemberScheduleMiddleware.validateSchedule,AgentController.updateMemberScheduleAgent);
+
+router.post("/allocate",AuthMiddleware.validateUser,AgentController.updateAllocation)
 //agent delete: /api/v1/agent/delete POST
-router.post("/delete", AuthMiddleware.validateUser, AgentMiddleware.validateDeleteRequest, AgentController.deleteAgent);
+router.post("/delete", AuthMiddleware.validateUser, AgentMiddleware.validateDeleteRequest,AgentController.deleteAgent);
 
 //agent create: /api/v1/agent POST
 router.post('/',AuthMiddleware.validateUser,AgentMiddleware.validateAgentCreate,AgentMiddleware.modifyAgentCreateBodyRequest,AgentController.createAgent);
+
 
 // agent update: /api/v1/agent POST
 router.post('/:id',AuthMiddleware.validateUser,AgentMiddleware.validateAgentCreate,AgentMiddleware.modifyAgentUpdateBodyRequest,AgentController.updateAgent);
@@ -21,8 +28,6 @@ router.post("/status/:id", AuthMiddleware.validateUser, AgentController.toggleSt
 //agent getByid: /api/v1/agent/:id GET 
 router.get("/:id", AuthMiddleware.validateUser, AgentController.getById);
 
-router.post("/allocate",AuthMiddleware.validateUser,(req,res)=>{
-    console.log("HERE");
-})
+
 
 module.exports = router;

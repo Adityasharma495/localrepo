@@ -320,12 +320,24 @@ async function getAssignedAgents(req, res) {
       throw new AppError("Missing Agent Group Id", StatusCodes.BAD_REQUEST);
     }
 
+    // Fetch agent group
     const agentGroup = await agentGroupRepo.get(groupId);
 
-    console.log("AGENT GROUP:", agentGroup);
-    const agents = await agentRepo.findMany(agentGroup.agent_id);
+    if (!agentGroup || !agentGroup.agent_id || agentGroup.agent_id.length === 0) {
+      // If agent_id is empty or not defined, return an empty agents array
+      SuccessRespnose.message = "No agents assigned to this group";
+      SuccessRespnose.data = {
+        group_id: groupId,
+        group_name: agentGroup?.group_name || "Unknown Group",
+        agents: []
+      };
 
-    console.log("AGENTS FOUND:", agents);
+      Logger.info(`Agent Group -> No agents assigned for Group ID: ${groupId}`);
+      return res.status(StatusCodes.OK).json(SuccessRespnose);
+    }
+
+    // Fetch agents only if agent_id array is not empty
+    const agents = await agentRepo.findMany(agentGroup.agent_id);
 
     SuccessRespnose.message = "Successfully fetched assigned agents";
     SuccessRespnose.data = {
@@ -356,6 +368,7 @@ async function getAssignedAgents(req, res) {
     return res.status(statusCode).json(ErrorResponse);
   }
 }
+
 
 
 
