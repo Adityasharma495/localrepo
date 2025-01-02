@@ -1,7 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
 const { SuccessRespnose, ErrorResponse } = require('../utils/common');
 const { Logger } = require('../config');
-const { NumbersRepository, DIDUserMappingRepository,UserJourneyRepository, NumberFileListRepository, NumberStatusRepository, UserRepository } = require('../repositories');
+const { NumbersRepository, DIDUserMappingRepository,UserJourneyRepository, NumberFileListRepository, NumberStatusRepository, UserRepository , MemberScheduleRepository} = require('../repositories');
 const fs = require("fs");
 const {MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, USERS_ROLE, NUMBER_STATUS_LABLE, DID_ALLOCATION_LEVEL} = require('../utils/common/constants');
 const didUserMappingRepository = new DIDUserMappingRepository();
@@ -10,6 +10,8 @@ const numberRepo = new NumbersRepository();
 const numFileListRepo = new NumberFileListRepository();
 const numberStatusRepo = new NumberStatusRepository();
 const userRepo = new UserRepository();
+const memberScheduleRepo = new MemberScheduleRepository();
+
 const { constants } = require("../utils/common");
 const numberStatusValues = constants.NUMBER_STATUS_VALUE;
 const stream = require('stream');
@@ -715,6 +717,7 @@ const assignIndividualDID = async (req, res) => {
             status: bodyReq.status,
             routing_destination: bodyReq.DID,
             routing_type: bodyReq.numberType,
+            routing_id : bodyReq.DID_id,
             expiry_date: bodyReq?.expiryDate || null
         }
        
@@ -1041,6 +1044,46 @@ async function removeAllocatedNumbers(req, res) {
     }
 }
 
+async function setInboundRouting(req, res) {
+    try {
+        const bodyReq = req.body;
+        if (bodyReq.numberType === 'DID') {
+          await numberRepo.update(bodyReq.number, {
+            routing_id: bodyReq.id,
+            routing_type: (bodyReq.action).toUpperCase(),
+            routing_destination : bodyReq.name
+          })
+        } else {
+            const getDetail = await numberRepo.get(bodyReq.number)
+            const getDID = await numberRepo.get(getDetail.routing_id)
+
+            await numberRepo.update(getDID._id, {
+                routing_id: bodyReq.id,
+                routing_type: (bodyReq.action).toUpperCase(),
+                routing_destination : bodyReq.name
+              })
+        }
+
+        if (bodyReq.action === 'agent') {
+            memberScheduleRepo.create({... bodyReq.agentSchedule, module_id : bodyReq.id})
+        }
+
+        SuccessRespnose.message = 'Success';
+        return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+    } catch (error) {
+
+        ErrorResponse.message = error.message;
+        ErrorResponse.error = error;
+
+        Logger.error(`Allocated numbers -> unable to get Allocated numbers list, error: ${JSON.stringify(error)}`);
+
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+
+    }
+
+}
+
 
 module.exports = {
     create,
@@ -1058,5 +1101,6 @@ module.exports = {
     DIDUserMapping,
     getToAllocateNumbers,
     getAllocatedNumbers,
-    removeAllocatedNumbers
+    removeAllocatedNumbers,
+    setInboundRouting
 }

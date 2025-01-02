@@ -6,6 +6,9 @@ const router = express.Router();
 //Numbers delete: /api/v1/numbers/delete POST
 router.post("/delete", AuthMiddleware.validateUser, NumbersMiddleWare.validateDeleteRequest, NumbersController.deleteNumber);
 
+//set the inbounding-routing /api/v1/numbers/inbound-routing POST
+router.post('/inbound-routing', AuthMiddleware.validateUser, NumbersController.setInboundRouting);
+
 //Numbers create: /api/v1/numbers POST
 router.post('/', AuthMiddleware.validateUser, NumbersMiddleWare.validateCreate, NumbersMiddleWare.modifyNumberCreateBodyRequest,
     NumbersController.create);
@@ -53,7 +56,5 @@ router.get('/to-allocate/:id', AuthMiddleware.validateUser, NumbersController.ge
 
 //get Allocated Numbers by id: /api/v1/numbers/allocated/:id GET
 router.get('/allocated/:id', AuthMiddleware.validateUser, NumbersController.getAllocatedNumbers);
-
-
 
 module.exports = router;

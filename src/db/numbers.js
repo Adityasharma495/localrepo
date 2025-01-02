@@ -24,7 +24,7 @@ const NumbersSchema = new mongoose.Schema({
         default: null
     },
     routing_destination: {
-        type: Number,
+        type: String,
         default: null
     },
     country_code: {
