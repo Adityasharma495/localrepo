@@ -310,12 +310,61 @@ async function updateUser(req, res) {
   }
 }
 
+async function blockUser(req, res) {
+  const uid = req.params.id;
+  const bodyReq = req.body;
+
+  try {
+    const responseData = {};
+    const user = await userRepo.get(uid);
+    // update status
+
+    if(user.status == 1){
+      user.status = 0;
+    }
+    // else{
+    //   user.status = 1;
+    // }
+
+    await userRepo.update(uid, { status: user.status });
+
+    SuccessRespnose.message = "User Status Updated Successfully!";
+    SuccessRespnose.data = responseData;
+
+    Logger.info(`User Status-> ${uid} updated successfully`);
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+  } catch (error) {
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    ErrorResponse.error = error;
+    if (error.name == "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "User not found";
+    } else if (error.name == "MongoServerError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      if(error.codeName == "DuplicateKey")
+        errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
+    }
+    ErrorResponse.message = errorMsg;
+
+    Logger.error(
+      `User -> unable to update user status of user ${uid}, data: ${JSON.stringify(
+        bodyReq
+      )}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
 async function deleteUser(req, res) {
   const userIds = req.body.userIds;
 
   try {
     const response = await userRepo.deleteMany(userIds, req.user);
-    
+     
     if (req.user.role !== USERS_ROLE.SUPER_ADMIN && req.user.role !== USERS_ROLE.SUB_SUPERADMIN) {
       //update licence for parent 
       const data = await licenceRepo.findOne({ user_id: req.user.id });
@@ -440,5 +489,6 @@ module.exports = {
   updateUser,
   deleteUser,
   switchUser,
-  logoutUser
+  logoutUser,
+  blockUser
 };
