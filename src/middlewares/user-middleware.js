@@ -409,11 +409,32 @@ function validateDeleteRequest (req, res, next) {
     next();
 }
 
+function validateUserStatusRequest (req, res, next) {
+    const bodyReq = req.body;
+
+    if(!req.is('application/json')) {
+        ErrorResponse.message = 'Something went wrong while updating user status';
+        ErrorResponse.error = new AppError(['Invalid content type, incoming request must be in application/json format'], StatusCodes.BAD_REQUEST);
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+    }
+    else if (bodyReq.status == undefined) {
+        ErrorResponse.message = 'Something went wrong while updating user status';
+        ErrorResponse.error = new AppError(['status not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+    }
+    next();
+}
+
 module.exports = {
     validateSignup,
     validateSignin,
     validateUpdateUser,
     modifyUserSignupBodyRequest,
     authenticateSuperAdmin,
-    validateDeleteRequest
+    validateDeleteRequest,
+    validateUserStatusRequest
 }

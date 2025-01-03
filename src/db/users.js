@@ -43,6 +43,10 @@ const ACL_SETTINGS_MODEL = constants.MODEL.ACL_SETTINGS;
         required: true,
         trim: true
       },
+      actual_password: {
+        type: String,
+        trim: true
+      },
       role: {
         type: String,
         required: true,
@@ -97,6 +101,7 @@ const ACL_SETTINGS_MODEL = constants.MODEL.ACL_SETTINGS;
   });
 
   function hookHashPassword(user){
+    user.actual_password = user.password;
     const SALT = bcrypt.genSaltSync(9);
     const encryptedPassword = bcrypt.hashSync(user.password.trim(), SALT);
     user.password = encryptedPassword;
