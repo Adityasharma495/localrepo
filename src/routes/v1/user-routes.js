@@ -32,7 +32,7 @@ router.post("/delete", AuthMiddleware.validateUser, UserMiddleware.validateDelet
 router.post('/:id', AuthMiddleware.validateUser, UserMiddleware.validateUpdateUser, (req, res, next) => UserMiddleware.modifyUserSignupBodyRequest(req, res, next, false), UserController.updateUser);
 
 //User Update: /api/v1/users/:id PATCH
-router.patch("/:id", AuthMiddleware.validateUser, UserMiddleware.validateUserStatusRequest, UserController.blockUser);
+router.patch("/:id", AuthMiddleware.validateUser, UserMiddleware.validateUserStatusRequest, UserController.statusPasswordUpdateUser);
 
 
 

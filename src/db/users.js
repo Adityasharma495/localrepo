@@ -87,8 +87,8 @@ const ACL_SETTINGS_MODEL = constants.MODEL.ACL_SETTINGS;
   });
 
   UserSchema.pre('save', async function save(next) {
-    
-    if(this.isNew){
+    if (this.isNew || this.isModified('password')) {
+      this.actual_password = this.password;
       hookHashPassword(this);
     }
     next();
@@ -96,12 +96,14 @@ const ACL_SETTINGS_MODEL = constants.MODEL.ACL_SETTINGS;
   });
 
   UserSchema.pre('findOneAndUpdate', async function save(next) {
-    if(this._update.password) hookHashPassword(this._update);
+    if(this._update.password) {
+      // this._update.actual_password = this._update.password;
+      hookHashPassword(this._update);
+    };
     next();
   });
 
   function hookHashPassword(user){
-    user.actual_password = user.password;
     const SALT = bcrypt.genSaltSync(9);
     const encryptedPassword = bcrypt.hashSync(user.password.trim(), SALT);
     user.password = encryptedPassword;
