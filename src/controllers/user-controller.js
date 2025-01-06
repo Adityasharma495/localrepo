@@ -213,6 +213,9 @@ async function get(req, res) {
     let userData = await user.generateUserData();
     userData.companies = user.companies 
 
+    const availLicence = await licenceRepo.findOne({user_id : uid})
+    userData.licence = availLicence?.total_licence
+
     SuccessRespnose.message = "Success";
     SuccessRespnose.data = userData;
 
