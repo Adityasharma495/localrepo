@@ -94,6 +94,21 @@ class AgentRepository extends CrudRepository {
     }
   }
 
+  async getAllActiveAgents() {
+    try {
+        // Fetch all agents where is_deleted is false
+        const agents = await this.model.find({ is_deleted: false })
+            .populate('extention')  // Populate extension details if referenced
+            .populate('createdBy')  // Populate createdBy user details if referenced
+            .sort({ createdAt: -1 }) // Sort by creation date in descending order
+            .lean(); // Return plain JavaScript objects instead of Mongoose documents
+
+        return agents;
+    } catch (error) {
+        throw new AppError(`Failed to fetch active agents: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+}
+
 }
 
 module.exports = AgentRepository;

@@ -2,6 +2,7 @@ const CrudRepository = require("./crud-repository");
 const agentGroupModel = require("../db/agent-group");
 const AppError = require("../utils/errors/app-error");
 const { StatusCodes } = require("http-status-codes");
+const mongoose = require("mongoose")
 
 
 
@@ -92,6 +93,52 @@ async update(id, data) {
     
     return response;
 }
+
+async updateGroup(id, data) {
+  console.log("ID AND DATA", id, data);
+
+  try {
+    // Fetch the existing agent group
+    const existingAgentGroup = await this.model.findOne({ _id: id, is_deleted: false });
+    if (!existingAgentGroup) {
+      throw new Error('Agent Group not found');
+    }
+
+    // Extract agent IDs correctly
+    let newAgentIds = Array.isArray(data.agent_id) ? data.agent_id : [data.agent_id];
+    
+    // Filter out invalid ObjectIds
+    newAgentIds = newAgentIds.filter(agentId => mongoose.Types.ObjectId.isValid(agentId));
+
+    if (newAgentIds.length === 0) {
+      throw new Error('No valid Agent IDs provided');
+    }
+
+    // Merge and remove duplicates
+    const updatedAgentIds = Array.from(
+      new Set([
+        ...(existingAgentGroup.agent_id || []), 
+        ...newAgentIds
+      ])
+    );
+
+    console.log("✅ UPDATED AGENT IDS:", updatedAgentIds);
+
+    // Update the agent group
+    const response = await this.model.findOneAndUpdate(
+      { _id: id, is_deleted: false },
+      { agent_id: updatedAgentIds },
+      { runValidators: true, new: true }
+    ).populate('agent_id');
+
+    return response;
+
+  } catch (error) {
+    throw new Error(`Failed to update agent group: ${error.message}`);
+  }
+}
+
+
 
 }
 

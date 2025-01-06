@@ -141,9 +141,9 @@ async function createAgent(req, res) {
 
 async function getAll(req, res) {
   const { data } = req.query || null;
-
   try {
-    const agentData = await agentRepo.getAll(req.user.id, data);
+    // const agentData = await agentRepo.getAll(req.user.id, data);
+    const agentData = await agentRepo.getAllActiveAgents();
     SuccessRespnose.data = agentData;
     SuccessRespnose.message = "Success";
 

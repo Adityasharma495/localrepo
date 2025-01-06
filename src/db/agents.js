@@ -82,13 +82,13 @@ const AgentsSchema = new mongoose.Schema({
     time_schedule: {
         start_time: {
             type: String,
-            default: "00:00",
-            match: [/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Please use a valid time format (HH:MM)']
+            default: "12:00:00 AM",
+            match: [/^(0[1-9]|1[0-2]):[0-5][0-9]:[0-5][0-9]\s?(AM|PM)$/, 'Please use a valid time format (HH:MM:SS AM/PM)']
         },
         end_time: {
             type: String,
-            default: "23:59",
-            match: [/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Please use a valid time format (HH:MM)']
+            default: "11:59:59 PM",
+            match: [/^(0[1-9]|1[0-2]):[0-5][0-9]:[0-5][0-9]\s?(AM|PM)$/, 'Please use a valid time format (HH:MM:SS AM/PM)']
         },
         week_days: {
             type: [String],
