@@ -162,6 +162,8 @@ async function createAgentGroup(req, res) {
 
 
 async function getAll(req, res) {
+
+  console.log("CAME TO GET ALL GROUPS",req.user.id);
   try {
     const data = await agentGroupRepo.getAll(req.user.id);
     SuccessRespnose.data = data;
@@ -217,6 +219,8 @@ async function getById(req, res) {
 }
 
 async function updateAgentGroup(req, res) {
+
+  console.log("CAME TO UPDATE AGETN");
   const uid = req.params.id;
   const bodyReq =  req.body;
 
@@ -224,7 +228,11 @@ async function updateAgentGroup(req, res) {
   try {
     const responseData = {};
     const agentGroup = await agentGroupRepo.get(uid);
-    const agent = await agentGroupRepo.update(uid,bodyReq.agent);
+
+    console.log("UID AND BODY REQUEST AGENT", uid,bodyReq.agent);
+    const agent = await agentGroupRepo.updateGroup(uid,bodyReq.agent);
+
+    console.log("UPDATED AGENT", agent);
 
     if (!agent) {
       const error = new Error();
