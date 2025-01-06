@@ -413,15 +413,15 @@ function validateUserStatusRequest (req, res, next) {
     const bodyReq = req.body;
 
     if(!req.is('application/json')) {
-        ErrorResponse.message = 'Something went wrong while updating user status';
+        ErrorResponse.message = 'Something went wrong while updating user data';
         ErrorResponse.error = new AppError(['Invalid content type, incoming request must be in application/json format'], StatusCodes.BAD_REQUEST);
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
     }
-    else if (bodyReq.status == undefined) {
-        ErrorResponse.message = 'Something went wrong while updating user status';
-        ErrorResponse.error = new AppError(['status not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+    else if (!bodyReq.hasOwnProperty('status') && !bodyReq.hasOwnProperty('newPassword')) {
+        ErrorResponse.message = 'Something went wrong while updating user status / password';
+        ErrorResponse.error = new AppError(['status / password not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);

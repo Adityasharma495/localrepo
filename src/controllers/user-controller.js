@@ -1,4 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
+const bcrypt = require('bcrypt');
 const { UserRepository, CompanyRepository,UserJourneyRepository, LicenceRepository } = require("../repositories");
 const {
   SuccessRespnose,
@@ -310,7 +311,7 @@ async function updateUser(req, res) {
   }
 }
 
-async function blockUser(req, res) {
+async function statusPasswordUpdateUser(req, res) {
   const uid = req.params.id;
   const bodyReq = req.body;
 
@@ -318,21 +319,38 @@ async function blockUser(req, res) {
     const responseData = {};
     const user = await userRepo.get(uid);
     // update status
+    if (bodyReq.hasOwnProperty("status")) {
+      if(user.status == 1){
+        user.status = 0;
+      }
+      else{
+        user.status = 1;
+      }
+      await userRepo.update(uid, { status: user.status });
+  
+      SuccessRespnose.message = "User Status Updated Successfully!";
+      SuccessRespnose.data = responseData;
+  
+      Logger.info(`User Status-> ${uid} updated successfully`);
+      return res.status(StatusCodes.OK).json(SuccessRespnose);
+    } else {
+      // update password
+      const newPassword = bodyReq.newPassword; 
+      const SALT = bcrypt.genSaltSync(9);
+      const encryptedPassword = bcrypt.hashSync(newPassword.trim(), SALT);
 
-    if(user.status == 1){
-      user.status = 0;
+      user.actual_password = newPassword;
+      await userRepo.update(uid, { actual_password: user.actual_password });
+
+      user.password = encryptedPassword;
+      await userRepo.update(uid, { password: user.password });
+
+      SuccessRespnose.message = "User Password Updated Successfully!";
+      SuccessRespnose.data = responseData;
+  
+      Logger.info(`User Password -> ${uid} updated successfully`);
+      return res.status(StatusCodes.OK).json(SuccessRespnose);
     }
-    // else{
-    //   user.status = 1;
-    // }
-
-    await userRepo.update(uid, { status: user.status });
-
-    SuccessRespnose.message = "User Status Updated Successfully!";
-    SuccessRespnose.data = responseData;
-
-    Logger.info(`User Status-> ${uid} updated successfully`);
-    return res.status(StatusCodes.OK).json(SuccessRespnose);
 
   } catch (error) {
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
@@ -350,7 +368,7 @@ async function blockUser(req, res) {
     ErrorResponse.message = errorMsg;
 
     Logger.error(
-      `User -> unable to update user status of user ${uid}, data: ${JSON.stringify(
+      `User -> unable to update user status / password of user ${uid}, data: ${JSON.stringify(
         bodyReq
       )}, error: ${JSON.stringify(error)}`
     );
@@ -490,5 +508,5 @@ module.exports = {
   deleteUser,
   switchUser,
   logoutUser,
-  blockUser
+  statusPasswordUpdateUser
 };
