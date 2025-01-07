@@ -118,7 +118,7 @@ class NumbersRepository extends CrudRepository {
         try {
             const response = await this.model.find({
                 is_deleted: false,
-                _id: { $in: ids } // Correct usage of $in operator
+                _id: { $in: ids }
             }).lean();
             return response;
         } catch (error) {

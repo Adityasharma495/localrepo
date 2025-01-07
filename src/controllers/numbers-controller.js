@@ -450,10 +450,12 @@ async function getAll(req, res) {
         const uniqueDIDs = [...new Set(data.map(item => item.DID))];
         data = await numberRepo.findMany(uniqueDIDs);
 
-        data = data.map(val => {
+        data = data
+        .map(val => {
             val['status'] = numberStatusValues[val['status']];
             return val;
-          });
+        })
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         SuccessRespnose.data = data;
         SuccessRespnose.message = 'Success';

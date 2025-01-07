@@ -97,14 +97,15 @@ async function signupUser(req, res) {
 
 async function licenceCreated(bodyReq, loggedUser, userCreated) {
   try {
-
+    console.log('userCreateduserCreated', userCreated)
     if (loggedUser.role !== USERS_ROLE.SUPER_ADMIN && loggedUser.role !== USERS_ROLE.SUB_SUPERADMIN) {
       // add licence for new user created
       const licenceData = {
         user_type: userCreated.role,
         user_id : userCreated._id,
         total_licence: bodyReq.user.licence,
-        availeble_licence: bodyReq.user.licence
+        availeble_licence: bodyReq.user.licence,
+        createdBy: loggedUser.id
       }
       await licenceRepo.create(licenceData)
 
@@ -118,7 +119,8 @@ async function licenceCreated(bodyReq, loggedUser, userCreated) {
         user_type: userCreated.role,
         user_id : userCreated._id,
         total_licence: bodyReq.user.licence,
-        availeble_licence: bodyReq.user.licence
+        availeble_licence: bodyReq.user.licence,
+        createdBy: loggedUser.id
       }
       await licenceRepo.create(licenceData)
     }
@@ -243,7 +245,6 @@ async function get(req, res) {
 async function updateUser(req, res) {
   const uid = req.params.id;
   const bodyReq = req.body;
-
   try {
     const responseData = {};
     const user = await userRepo.update(uid, bodyReq.user);
@@ -256,7 +257,7 @@ async function updateUser(req, res) {
             .json(ErrorResponse);
     }
     const licenceData = {
-      user_type: userCreated.role,
+      user_type: savedLicence.user_type,
       total_licence: bodyReq.user.licence,
       availeble_licence: bodyReq.user.licence - (savedLicence.total_licence - savedLicence.availeble_licence) 
     }
