@@ -20,8 +20,8 @@ async function exportData(req, res) {
       AclSetting: new AclSettingRepository(),
       NumberFileList: new NumberFileListRepository(),
       Agent: new AgentRepository(),
-      AgentGroup: AgentGroupRepository(),
-      Extension: ExtentionRepository()
+      AgentGroup: new AgentGroupRepository(),
+      Extension: new ExtentionRepository()
     };
   
     try {
