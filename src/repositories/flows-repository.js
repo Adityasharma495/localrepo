@@ -3,6 +3,7 @@ const { FlowModel } = require("../db");
 const { StatusCodes } = require('http-status-codes');
 const AppError = require('../utils/errors/app-error');
 const { v4: uuidv4 } = require('uuid');
+const mongoose = require('mongoose');
 
 class FLowRepository extends CrudRepository {
 
@@ -10,7 +11,7 @@ class FLowRepository extends CrudRepository {
     super(FlowModel);
   }
 
-  async create(data) {
+  async create(data, loggedId) {
     try {
       const { flowName, callCenterId, nodes } = data;
 
@@ -31,7 +32,8 @@ class FLowRepository extends CrudRepository {
           nodeId: parseInt(nodeId, 10), 
           flowJson: nodeData.flowJson,
           status: 1,
-          flowRender: nodeData.flowRender
+          flowRender: nodeData.flowRender,
+          createdBy: loggedId
         };
       });
 
@@ -56,9 +58,14 @@ class FLowRepository extends CrudRepository {
     }
   }
 
-  async getAll() {
+  async getAll(userId) {
     try {
       let response = await this.model.aggregate([
+        {
+          $match: {
+            createdBy: new mongoose.Types.ObjectId(userId)
+          }
+        },
         {
           $group: {
             _id: "$flowId",
@@ -75,6 +82,7 @@ class FLowRepository extends CrudRepository {
   
       return response;
     } catch (error) {
+      console.error("Error in getAll:", error);
       throw error;
     }
   }

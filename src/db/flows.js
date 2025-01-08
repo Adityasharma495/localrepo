@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid')
 const { constants } = require('../utils/common');
 const MEMEBER_SCHEDULES_MODEL_NAME = constants.MODEL.MEMEBER_SCHEDULES;
+const USER_MODEL_NAME = constants.MODEL.USERS;
 
 const FlowSchema = new mongoose.Schema(
   {
@@ -41,6 +42,11 @@ const FlowSchema = new mongoose.Schema(
     flowRender: {
       type: Object, 
       required: true,
+    },
+    createdBy: { 
+      type: mongoose.Schema.Types.ObjectId,
+      ref: USER_MODEL_NAME,
+      default: null 
     },
     createdAt: {
       type: Date,
