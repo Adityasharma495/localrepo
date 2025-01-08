@@ -340,13 +340,11 @@ async function statusPasswordUpdateUser(req, res) {
     } else {
       // update password
       const newPassword = bodyReq.newPassword; 
-      const SALT = bcrypt.genSaltSync(9);
-      const encryptedPassword = bcrypt.hashSync(newPassword.trim(), SALT);
 
       user.actual_password = newPassword;
       await userRepo.update(uid, { actual_password: user.actual_password });
 
-      user.password = encryptedPassword;
+      user.password = newPassword;
       await userRepo.update(uid, { password: user.password });
 
       SuccessRespnose.message = "User Password Updated Successfully!";
