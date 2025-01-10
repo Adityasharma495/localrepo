@@ -11,16 +11,22 @@ class CrudRepository {
             const response = await this.model.create(data);
             return response;            
         } catch (error) {
-            console.log(error)
-            if(error.name == 'ValidationError' || error.name == 'MongoServerError'){
-                if(error.code == 11000) error.message = `Duplicate key, record already exists`;
-                throw new AppError(error.message, StatusCodes.BAD_REQUEST);
-            }
-            throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
-        
+            throw error
+            // console.log(error);
+            // if (error.name === 'ValidationError' || (error.name === 'MongoServerError' && error.code === 11000)) {
+            //     let detailedErrorMessage = error.message;
+            //     if (error.code === 11000) {
+            //         // Adding detail to the error message about which key was duplicated
+            //         const duplicatedField = Object.keys(error.keyPattern)[0];
+            //         const duplicatedValue = error.keyValue[duplicatedField];
+            //         detailedErrorMessage = `Duplicate key error: ${duplicatedField} with value '${duplicatedValue}' already exists.`;
+            //     }
+            //     throw new AppError(detailedErrorMessage, StatusCodes.BAD_REQUEST);
+            // }
+            // throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
         }
-
     }
+    
 
     async get(data) {
         try {

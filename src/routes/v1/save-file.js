@@ -13,7 +13,6 @@ Router.use(express.json());
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         const agentId = req.params.id;
-        console.log("AGENT ID:", agentId);
 
         if (!agentId) {
             return cb(new Error('Agent ID is required in the request body'), null);

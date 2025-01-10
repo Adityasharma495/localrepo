@@ -110,7 +110,6 @@ async function getIVRSettings(req, res) {
 
 async function getAllIVR(req, res) {
   try {
-    console.log('req.user.id', req.user.id)
     const data = await flowsRepo.getAll(req.user.id);
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
