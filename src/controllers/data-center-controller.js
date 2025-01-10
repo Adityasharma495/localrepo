@@ -8,6 +8,8 @@ const { Logger } = require("../config");
 
 const dataCenterRepo = new DataCenterRepository();
 const userJourneyRepo = new UserJourneyRepository();
+
+
 async function createDataCenter(req, res) {
   const bodyReq = req.body;
   try {
@@ -19,39 +21,40 @@ async function createDataCenter(req, res) {
       module_name: MODULE_LABEL.DATA_CENTER,
       action: ACTION_LABEL.ADD,
       createdBy: req?.user?.id
-    }
+    };
 
     await userJourneyRepo.create(userJourneyfields);
 
-    SuccessRespnose.data = responseData;
-    SuccessRespnose.message = "Successfully created a new data Center";
+    const SuccessResponse = {
+      data: responseData,
+      message: "Successfully created a new data center."
+    };
 
-    Logger.info(
-      `Data Center -> created successfully: ${JSON.stringify(responseData)}`
-    );
-
-    return res.status(StatusCodes.CREATED).json(SuccessRespnose);
+    Logger.info(`Data Center -> created successfully: ${JSON.stringify(responseData)}`);
+    return res.status(StatusCodes.CREATED).json(SuccessResponse);
   } catch (error) {
-    Logger.error(
-      `Data Center -> unable to create Data Center: ${JSON.stringify(
-        bodyReq
-      )} error: ${JSON.stringify(error)}`
-    );
+    Logger.error(`Data Center -> unable to create: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
 
-    let statusCode = error.statusCode;
-    let errorMsg = error.message;
-    if (error.name == "MongoServerError" || error.code == 11000) {
+    let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = "Failed to create data center.";
+
+    if (error.name === "MongoServerError" && error.code === 11000) {
+      // Extracting the duplicated field and its value from the error object
+      const duplicatedField = Object.keys(error.keyValue)[0];
+      const duplicatedValue = error.keyValue[duplicatedField];
+      errorMsg = `Duplicate record: ${duplicatedField} ${duplicatedValue} already exists.`;
       statusCode = StatusCodes.BAD_REQUEST;
-      if (error.codeName == "DuplicateKey")
-        errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
     }
 
-    ErrorResponse.message = errorMsg;
-    ErrorResponse.error = error;
+    const ErrorResponse = {
+      message: errorMsg,
+      error: error
+    };
 
     return res.status(statusCode).json(ErrorResponse);
   }
 }
+
 
 async function getAll(req, res) {
   try {

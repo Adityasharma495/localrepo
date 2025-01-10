@@ -122,7 +122,6 @@ async updateGroup(id, data) {
       ])
     );
 
-    console.log("✅ UPDATED AGENT IDS:", updatedAgentIds);
 
     // Update the agent group
     const response = await this.model.findOneAndUpdate(

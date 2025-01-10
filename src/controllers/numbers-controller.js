@@ -481,6 +481,9 @@ async function get(req, res) {
     try {
 
         const data = await numberRepo.get(numberId);
+
+        console.log("DATAQ", data);
+
         SuccessRespnose.data = data;
         if (data.is_deleted) {
             let statusCode = StatusCodes.NOT_FOUND;

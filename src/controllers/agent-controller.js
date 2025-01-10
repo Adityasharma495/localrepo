@@ -388,8 +388,6 @@ async function updateMemberScheduleAgent(req, res) {
       throw new AppError("Agent not found", StatusCodes.NOT_FOUND);
     }
 
-    console.log("AGENT FROUNF", agent);
-
     const timeSchedulePayload = {
       time_schedule: {
         start_time,
@@ -398,11 +396,9 @@ async function updateMemberScheduleAgent(req, res) {
       }
     };
 
-    console.log("TIME SHCEUL",timeSchedulePayload);
 
     const updatedAgent = await agentRepo.update(id, timeSchedulePayload);
 
-    console.log("UPDATED AGENT", updateAgent);
 
     if (!updatedAgent) {
       throw new AppError(

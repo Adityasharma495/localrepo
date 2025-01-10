@@ -97,7 +97,7 @@ async function signupUser(req, res) {
 
 async function licenceCreated(bodyReq, loggedUser, userCreated) {
   try {
-    console.log('userCreateduserCreated', userCreated)
+    // console.log('userCreateduserCreated', userCreated)
     if (loggedUser.role !== USERS_ROLE.SUPER_ADMIN && loggedUser.role !== USERS_ROLE.SUB_SUPERADMIN) {
       // add licence for new user created
       const licenceData = {
