@@ -100,6 +100,15 @@ class FLowRepository extends CrudRepository {
     const response = await this.model.updateMany({flowId: id}, data, { runValidators: true, new: true });
     return response;
   }
+
+  async findOne(conditions) {
+    try {
+        const response = await this.model.findOne({...conditions});
+        return response;
+    } catch (error) {
+        throw error;
+    }
+}
 }
 
 module.exports = FLowRepository;
