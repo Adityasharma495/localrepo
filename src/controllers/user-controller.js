@@ -249,7 +249,7 @@ async function updateUser(req, res) {
     const responseData = {};
     const user = await userRepo.update(uid, bodyReq.user);
     // licence update
-    const savedLicence = await licenceRepo.findOne({createdBy: uid , is_deleted : false})
+    const savedLicence = await licenceRepo.findOne({user_id: uid , is_deleted : false});
     if (Number(bodyReq.user.licence) < Number(savedLicence.total_licence - savedLicence.availeble_licence)) {
       ErrorResponse.message = `Can't Set Licence Because used licence Are greater.`;
       return res
