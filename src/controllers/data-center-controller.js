@@ -42,7 +42,9 @@ async function createDataCenter(req, res) {
       // Extracting the duplicated field and its value from the error object
       const duplicatedField = Object.keys(error.keyValue)[0];
       const duplicatedValue = error.keyValue[duplicatedField];
-      errorMsg = `Duplicate record: ${duplicatedField} ${duplicatedValue} already exists.`;
+      // errorMsg = `Duplicate record: ${duplicatedField} ${duplicatedValue} already exists.`;
+
+      errorMsg = "Please use a different name for your data center.";
       statusCode = StatusCodes.BAD_REQUEST;
     }
 
