@@ -1,7 +1,11 @@
 const { StatusCodes } = require('http-status-codes');
 const { SuccessRespnose, ErrorResponse } = require('../utils/common');
 const { Logger } = require('../config');
-const { NumbersRepository, DIDUserMappingRepository,UserJourneyRepository, NumberFileListRepository, NumberStatusRepository, UserRepository , MemberScheduleRepository} = require('../repositories');
+const { State} = require('country-state-city');
+const { NumbersRepository, DIDUserMappingRepository,
+    UserJourneyRepository, NumberFileListRepository,
+    NumberStatusRepository, UserRepository ,
+    MemberScheduleRepository, CountryCodeRepository} = require('../repositories');
 const fs = require("fs");
 const {MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, USERS_ROLE, NUMBER_STATUS_LABLE, DID_ALLOCATION_LEVEL} = require('../utils/common/constants');
 const didUserMappingRepository = new DIDUserMappingRepository();
@@ -11,6 +15,7 @@ const numFileListRepo = new NumberFileListRepository();
 const numberStatusRepo = new NumberStatusRepository();
 const userRepo = new UserRepository();
 const memberScheduleRepo = new MemberScheduleRepository();
+const countryCodeRepository = new CountryCodeRepository();
 
 const { constants } = require("../utils/common");
 const numberStatusValues = constants.NUMBER_STATUS_VALUE;
@@ -159,6 +164,19 @@ async function bulkUpdate(req, res) {
         .pipe(csv())
         .on('data', (row) => {
           const dataPromise = (async () => {
+            if (row['Country Code'].length !== 2) {
+                const data = await countryCodeRepository.getAll();
+                const sanitizedInput = row['Country Code'].trim().toLowerCase();
+                const country = data.find(item => item.name.toLowerCase() === sanitizedInput);
+                row['Country Code'] = country ? country.code : null;
+             }
+
+             if (row?.['State Code'] && row['State Code'].length !== 2) {
+                 const states = State.getStatesOfCountry(row['Country Code']);
+                 const sanitizedInput = row['State Code'].trim().toLowerCase();
+                 const state = states.find(item => item.name.toLowerCase() === sanitizedInput);
+                 row['State Code'] = state ? state.isoCode : null;
+              }
             records.push({
               status: row.Status,
               actual_number: Number(row['DID']),
@@ -167,7 +185,7 @@ async function bulkUpdate(req, res) {
               country_code: row['Country Code'],
               state_code: row?.['State Code'] || null,
               cost: row.Cost,
-              operator: row.Operator,
+              operator: row.Operator.toUpperCase(),
               number_type: bodyReq.numberType
             });
           })();
@@ -353,6 +371,20 @@ async function uploadNumbers(req, res) {
             .pipe(csv())
             .on('data', (row) => {
                 const dataPromise = (async () => {
+                    if (row['Country Code'].length !== 2) {
+                       const data = await countryCodeRepository.getAll();
+                       const sanitizedInput = row['Country Code'].trim().toLowerCase();
+                       const country = data.find(item => item.name.toLowerCase() === sanitizedInput);
+                       row['Country Code'] = country ? country.code : null;
+                    }
+
+                    if (row?.['State Code'] && row['State Code'].length !== 2) {
+                        const states = State.getStatesOfCountry(row['Country Code']);
+                        const sanitizedInput = row['State Code'].trim().toLowerCase();
+                        const state = states.find(item => item.name.toLowerCase() === sanitizedInput);
+                        row['State Code'] = state ? state.isoCode : null;
+                     }
+
                 records.push({
                     status: 1,
                     actual_number: Number(row['DID']),
@@ -361,7 +393,7 @@ async function uploadNumbers(req, res) {
                     country_code: row['Country Code'],
                     state_code: row?.['State Code'] || null,
                     cost: row.Cost,
-                    operator: row.Operator,
+                    operator: row.Operator.toUpperCase(),
                     createdBy: req.user.id,
                     number_type: bodyReq.numberType,
                     uploaded_file_id: uploadFile._id,
@@ -481,9 +513,6 @@ async function get(req, res) {
     try {
 
         const data = await numberRepo.get(numberId);
-
-        console.log("DATAQ", data);
-
         SuccessRespnose.data = data;
         if (data.is_deleted) {
             let statusCode = StatusCodes.NOT_FOUND;
