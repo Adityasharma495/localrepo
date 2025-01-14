@@ -14,6 +14,24 @@ async function createDataCenter(req, res) {
   const bodyReq = req.body;
   try {
     const responseData = {};
+
+    const existingDataCenter = await dataCenterRepo.findOne({
+      name: bodyReq.data_center.name,
+      is_deleted: false
+    });
+
+    if (existingDataCenter) {
+      Logger.error(`Data Center -> unable to create: Duplicate Data Center Name Found`);
+      let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+      let errorMsg = "Duplicate Data Center Name Found. Please use a different name";
+
+      let errorResp = {
+        message: errorMsg,
+        error: "Data center create request failed"
+      };
+      return res.status(statusCode).json(errorResp);
+    }
+      
     const dataCenter = await dataCenterRepo.create(bodyReq.data_center);
     responseData.dataCenter = dataCenter;
 
@@ -117,9 +135,27 @@ async function updateDataCenter(req, res) {
   const uid = req.params.id;
   const bodyReq = req.body;
   try {
+    const existingDataCenter = await dataCenterRepo.findOne({
+      name: bodyReq.data_center.name,
+      contact_person: bodyReq.data_center.contact_person,
+      is_deleted: true
+    });
 
+    if (!existingDataCenter) {
+      Logger.error(`Data Center -> unable to create: Duplicate Data Center Name Found`);
+      let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+      let errorMsg = "Duplicate Data Center Name Found. Please use a different name";
+
+      let errorResp = {
+        message: errorMsg,
+        error: "Data center update request failed"
+      };
+      return res.status(statusCode).json(errorResp);
+    }
+    
     const responseData = {};
     const dataCenter = await dataCenterRepo.update(uid, bodyReq.data_center);
+
     if (!dataCenter) {
       const error = new Error();
       error.name = 'CastError';
@@ -142,6 +178,8 @@ async function updateDataCenter(req, res) {
     return res.status(StatusCodes.OK).json(SuccessRespnose);
 
   } catch (error) {
+
+    let statusCode;
 
     if (error.name == 'CastError') {
       statusCode = StatusCodes.BAD_REQUEST;
