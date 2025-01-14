@@ -32,6 +32,15 @@ class DataCenterRepository extends CrudRepository {
 
   }
 
+  async getDataCenterById(dataId) {
+    try {
+      let response = await this.model.find({ _id: dataId }).lean();
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async get(data) {
 
     try {
