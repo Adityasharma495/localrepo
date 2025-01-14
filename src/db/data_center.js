@@ -14,7 +14,7 @@ const dataCenterSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true,
-        index: { unique: true }
+        index: { unique: false }
     },
     type: {
         type: Number,
