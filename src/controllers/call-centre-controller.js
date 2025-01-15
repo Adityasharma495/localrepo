@@ -68,7 +68,7 @@ async function getAll(req, res) {
 
     try {
 
-        const data = await callCentreRepository.getAll();
+        const data = await callCentreRepository.getAll(req.user.id);
         SuccessRespnose.data = data;
         SuccessRespnose.message = 'Success';
 

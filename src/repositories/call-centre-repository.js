@@ -7,10 +7,10 @@ class CallCentreRepository extends CrudRepository{
         super(callCentreModel);
     }
 
-    async getAll(){
+    async getAll(id){
 
         try {
-            const response = await this.model.find().sort({createdAt: -1});
+            const response = await this.model.find({createdBy: id}).sort({createdAt: -1});
             return response;            
         } catch (error) {
             throw error;
