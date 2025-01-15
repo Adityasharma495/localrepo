@@ -105,7 +105,15 @@ class CrudRepository {
 
     async find(conditions) {
         try {
-            const response = await this.model.findOne({ is_deleted: false, ...conditions});
+            let { is_deleted } = conditions;
+            let isDeletedValue;
+            if (is_deleted) {
+                isDeletedValue = is_deleted;
+            }
+            else {
+                isDeletedValue = false;
+            }
+            const response = await this.model.findOne({ is_deleted: isDeletedValue, ...conditions});
             return response;
         } catch (error) {
             throw error;

@@ -135,22 +135,26 @@ async function updateDataCenter(req, res) {
   const uid = req.params.id;
   const bodyReq = req.body;
   try {
-    const existingDataCenter = await dataCenterRepo.findOne({
-      name: bodyReq.data_center.name,
-      contact_person: bodyReq.data_center.contact_person,
-      is_deleted: true
-    });
+    const currentData = await dataCenterRepo.getDataCenterById(id);
 
-    if (!existingDataCenter) {
-      Logger.error(`Data Center -> unable to create: Duplicate Data Center Name Found`);
-      let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
-      let errorMsg = "Duplicate Data Center Name Found. Please use a different name";
-
-      let errorResp = {
-        message: errorMsg,
-        error: "Data center update request failed"
-      };
-      return res.status(statusCode).json(errorResp);
+    if (currentData.name !== bodyReq.data_center.name) {
+        const nameCondition = {
+          name: bodyReq.data_center.name,
+          is_deleted: false
+        };
+          
+        const nameDuplicate = await dataCenterRepo.findOne(nameCondition);
+        if (nameDuplicate) {
+          Logger.error(`Data Center -> unable to create: Duplicate Data Center Name Found`);
+          let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+          let errorMsg = "Duplicate Data Center Name Found. Please use a different name";
+    
+          let errorResp = {
+            message: errorMsg,
+            error: "Data center update request failed"
+          };
+          return res.status(statusCode).json(errorResp);
+        }
     }
     
     const responseData = {};
