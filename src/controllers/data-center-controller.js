@@ -135,7 +135,7 @@ async function updateDataCenter(req, res) {
   const uid = req.params.id;
   const bodyReq = req.body;
   try {
-    const currentData = await dataCenterRepo.getDataCenterById(id);
+    const currentData = await dataCenterRepo.getDataCenterById(uid);
 
     if (currentData.name !== bodyReq.data_center.name) {
         const nameCondition = {
@@ -146,8 +146,8 @@ async function updateDataCenter(req, res) {
         const nameDuplicate = await dataCenterRepo.findOne(nameCondition);
         if (nameDuplicate) {
           Logger.error(`Data Center -> unable to create: Duplicate Data Center Name Found`);
-          let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
-          let errorMsg = "Duplicate Data Center Name Found. Please use a different name";
+          var statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+          var errorMsg = "Duplicate Data Center Name Found. Please use a different name";
     
           let errorResp = {
             message: errorMsg,
@@ -182,8 +182,8 @@ async function updateDataCenter(req, res) {
     return res.status(StatusCodes.OK).json(SuccessRespnose);
 
   } catch (error) {
-
-    let statusCode;
+    var statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    var errorMsg = error.message;
 
     if (error.name == 'CastError') {
       statusCode = StatusCodes.BAD_REQUEST;
@@ -224,8 +224,8 @@ async function deleteDataCenter(req, res) {
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
 
-    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
-    let errorMsg = error.message;
+    var statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    var errorMsg = error.message;
 
     ErrorResponse.error = error;
     if (error.name == "CastError") {
