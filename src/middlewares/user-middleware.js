@@ -325,8 +325,14 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
             inputData.user.status = Number(bodyReq.status);
         }
 
+        let ifValidateCompany
+        if (is_create) {
+            ifValidateCompany = Authentication.ifAssociateCompany(bodyReq.role);
+        } else {
+            ifValidateCompany = Authentication.ifAssociateCompany(inputData.user.role);
+        }
 
-        const ifValidateCompany = Authentication.ifAssociateCompany(bodyReq.role);
+
 
 
         //If company is to be associated with the user, then append company user details
