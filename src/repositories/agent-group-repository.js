@@ -80,7 +80,6 @@ async update(id, data) {
   }
 
   async bulkUpdate(ids, data) {
-    console.log(ids, data)
     const response = await this.model.updateMany(
         { _id: { $in: ids }},
         data,

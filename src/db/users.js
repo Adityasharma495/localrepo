@@ -11,6 +11,7 @@ const USERS_ROLE = constants.USERS_ROLE;
 const USER_MODEL_NAME = constants.MODEL.USERS;
 const COMPANY_MODEL_NAME = constants.MODEL.COMPANIES;
 const ACL_SETTINGS_MODEL = constants.MODEL.ACL_SETTINGS;
+const SUB_USER_LICENCE_MODEL = constants.MODEL.SUB_USER_LICENCE;
 
   const validateEmail = function(email) {
     var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
@@ -71,6 +72,11 @@ const ACL_SETTINGS_MODEL = constants.MODEL.ACL_SETTINGS;
         type: Number,
         required: false,
         default: null
+      },
+      sub_user_licence_id: { 
+        type: mongoose.Schema.Types.ObjectId,
+        ref: SUB_USER_LICENCE_MODEL,
+        default: null 
       },
       is_deleted: {
         type: Boolean,

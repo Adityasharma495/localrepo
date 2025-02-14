@@ -1,9 +1,9 @@
 const { StatusCodes } = require("http-status-codes");
-const { AgentRepository, UserJourneyRepository, ExtentionRepository } = require("../repositories");
+const { AgentRepository, UserJourneyRepository, ExtentionRepository , SubUserLicenceRepository, UserRepository} = require("../repositories");
 const {SuccessRespnose , ErrorResponse} = require("../utils/common");
 const AppError = require("../utils/errors/app-error");
 
-const {MODULE_LABEL, ACTION_LABEL} = require('../utils/common/constants');
+const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE} = require('../utils/common/constants');
 
 const { Logger } = require("../config");
 const { AgentGroupController } = require(".");
@@ -11,6 +11,8 @@ const { AgentGroupController } = require(".");
 const agentRepo = new AgentRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const extentionRepo = new ExtentionRepository();
+const subUserLicenceRepo = new SubUserLicenceRepository();
+const userRepo = new UserRepository();
 
 async function toggleStatus(req, res) {
   const { id } = req.params; // The agent's ID
@@ -74,9 +76,10 @@ module.exports = { createAgent, getAll, getById, updateAgent, deleteAgent, toggl
 async function createAgent(req, res) {
 
   const bodyReq = req.body;
+  const responseData = {};
 
   try {
-    const responseData = {};
+   
     const conditions = {
       createdBy: req.user.id,
       $or: [
@@ -92,6 +95,30 @@ async function createAgent(req, res) {
       return res
         .status(StatusCodes.BAD_REQUEST)
         .json(ErrorResponse);
+    }
+
+    if (req.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
+      //fetch logged in user sub licence data
+      const loggedInData = await userRepo.getForLicence(req.user.id)
+
+      //fetch logged in user sub licence data(available_licence)
+      const subLicenceData = loggedInData.sub_user_licence_id.available_licence
+      
+      // if available_licence are 0 then return
+      if (Number(subLicenceData.agent) === 0) {
+         ErrorResponse.message = 'Licence is not available';
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+      }
+
+      // if available_licence are not 0 then update sub user licence
+      const updatedData = {
+        ...subLicenceData, 
+        agent: Number(subLicenceData.agent || 0) - 1
+      };
+      await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
+
     }
     const agent = await agentRepo.create(bodyReq.agent);
     responseData.agent = agent;
@@ -118,6 +145,7 @@ async function createAgent(req, res) {
 
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
   } catch (error) {
+    console.log(error)
     Logger.error(
       `Agent -> unable to create Agent: ${JSON.stringify(
         bodyReq
@@ -293,6 +321,7 @@ async function deleteAgent(req, res) {
   const id = req.body.agentIds;
 
   try {
+
     const agents = await agentRepo.findMany(id);
     const extentionIds = agents.flatMap(agent => agent.extention || []);
     if (extentionIds.length > 0) {
@@ -300,6 +329,16 @@ async function deleteAgent(req, res) {
     }
 
     const response = await agentRepo.deleteMany(id);
+    if (req.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
+      const loggedInData = await userRepo.getForLicence(req.user.id);
+      const availableLicence = loggedInData.sub_user_licence_id.available_licence;
+      let updatedData = { ...availableLicence };
+      for (const _ of id) {
+          updatedData.agent = (updatedData.agent || 0) + 1;
+      }
+
+      await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
+    }
     const userJourneyfields = {
       module_name: MODULE_LABEL.AGENT,
       action: ACTION_LABEL.DELETE,

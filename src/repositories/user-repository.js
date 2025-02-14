@@ -164,6 +164,20 @@ class UserRepository extends CrudRepository{
             throw error;
         }
     }
+
+    async getForLicence(id) {
+
+        try {
+            const response = await this.model.findById(id).populate('sub_user_licence_id').exec();
+            if (!response) {
+                throw new AppError('Not able to find the resource', StatusCodes.NOT_FOUND);
+            }
+            return response;         
+        } catch (error) {
+            throw error;
+        }
+
+    }
     
 
 }

@@ -31,5 +31,6 @@ module.exports = {
     PromptRepository:require("./prompt-repository"),
     FLowRepository: require('./flows-repository'),
     FlowEdgesRepository: require('./flow-edge-repository'),
-    LanguageRepository: require('./language-repository')
+    LanguageRepository: require('./language-repository'),
+    SubUserLicenceRepository: require('./sub-user-licence-repository')
 }

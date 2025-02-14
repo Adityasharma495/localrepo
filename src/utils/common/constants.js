@@ -39,6 +39,16 @@ const USERS_ROLE = {
     SUB_SUPERADMIN: "role_sub_superadmin"
 }
 
+const USER_ROLE_VALUE = {
+    role_sadmin: 'Super Admin',
+    role_reseller: 'Reseller',
+    role_cadmin: 'Campany Admin',
+    role_ccadmin: 'Callcenter Admin',
+    role_ccteamlead: 'Callcenter Team Lead',
+    role_ccagent: 'Callcenter Agent',
+    role_sub_superadmin: 'Sub Superadmin'
+}
+
 const COMPANY_TYPES = {
     RESELLER: 'type_reseller',
     CADMIN: 'type_cadmin',
@@ -93,8 +103,8 @@ const MODEL = {
     PROMPT:'prompt',
     FLOWS_EDGES: 'flowedge',
     LANGUAGE: 'language',
-    MEMEBER_SCHEDULES: 'member_schedules'
-
+    MEMEBER_SCHEDULES: 'member_schedules',
+    SUB_USER_LICENCE: 'subuserlicence'
 }
 
 const AUTH_TYPES = {
@@ -292,6 +302,8 @@ const SERVER ={
     DEV:"development"
 }
 
+const SUB_LICENCE_ROLE = ["role_cadmin", "role_ccadmin", "role_ccagent", "role_ccteamlead"];
+
 
 
 module.exports = {
@@ -335,5 +347,7 @@ module.exports = {
     AGENT_LOGIN_STATUS,
     WEEK_DAYS,
     STORAGE_PATH,
-    SERVER
+    SERVER,
+    SUB_LICENCE_ROLE,
+    USER_ROLE_VALUE
 }

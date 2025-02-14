@@ -310,7 +310,8 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
                 email: bodyReq.email.trim(),
                 module: bodyReq.module,
                 acl_settings: bodyReq.acl_settings,
-                licence: bodyReq.licence
+                licence: bodyReq?.licence || 0,
+                sub_licence: bodyReq?.sub_licence || {}
             }
         };
 

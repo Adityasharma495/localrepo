@@ -1,29 +1,35 @@
 const { StatusCodes } = require("http-status-codes");
 const bcrypt = require('bcrypt');
-const { UserRepository, CompanyRepository,UserJourneyRepository, LicenceRepository } = require("../repositories");
+const { UserRepository, CompanyRepository,UserJourneyRepository, LicenceRepository , SubUserLicenceRepository} = require("../repositories");
 const {
   SuccessRespnose,
   ErrorResponse,
 } = require("../utils/common");
 const { Logger } = require("../config");
 const AppError = require("../utils/errors/app-error");
-const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE, PREFIX_VALUE} = require('../utils/common/constants');
+const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE, PREFIX_VALUE, SUB_LICENCE_ROLE, USER_ROLE_VALUE} = require('../utils/common/constants');
 
 const userRepo = new UserRepository();
 const companyRepo = new CompanyRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const licenceRepo = new LicenceRepository();
+const subUserLicenceRepo = new SubUserLicenceRepository();
+
 
 async function signupUser(req, res) {
   const bodyReq = req.body;
-  
+   
   try {
     const responseData = {};
     let user;
+    let subUserLicenceId;
 
-    if (req.user.role !== USERS_ROLE.SUPER_ADMIN && req.user.role !== USERS_ROLE.SUB_SUPERADMIN) {
+    // licence check only for reseller
+    // if (req.user.role !== USERS_ROLE.SUPER_ADMIN && req.user.role !== USERS_ROLE.SUB_SUPERADMIN) {
+    if (req.user.role === USERS_ROLE.RESELLER) {
+
       const availLicence = await licenceRepo.findOne({user_id : req.user.id})
-
+      
       if (availLicence && availLicence.availeble_licence === 0) {
         ErrorResponse.message = 'Licence is not available';
         return res
@@ -32,22 +38,64 @@ async function signupUser(req, res) {
       }
     }
 
-     
+    //sub user licence
+    if (SUB_LICENCE_ROLE.includes(req.user.role)) {
+      //fetch logged in user sub licence data
+      const loggedInData = await userRepo.getForLicence(req.user.id)
+
+      //fetch logged in user sub licence data(available_licence)
+      const subLicenceData = loggedInData.sub_user_licence_id.available_licence
+      
+      // if available_licence are 0 then return
+      if (Number(subLicenceData[req.user.role]) === 0) {
+         ErrorResponse.message = 'Licence is not available';
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+      }
+
+      // if available_licence are not 0 then update sub user licence
+      const updatedData = {
+        ...subLicenceData, 
+        [req.user.role]: Number(subLicenceData[req.user.role] || 0) - 1
+      };
+      bodyReq.user.sub_user_licence_id = loggedInData.sub_user_licence_id._id
+      await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
+
+    }
+
     if (req.user.role === USERS_ROLE.COMPANY_ADMIN && bodyReq.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
       const campanyAdmin = await userRepo.get(req.user.id)
       const prefix = campanyAdmin.prefix + PREFIX_VALUE
       bodyReq.user.prefix = prefix
 
       user = await userRepo.create(bodyReq.user);
-      await licenceCreated(bodyReq, req.user, user);
+      // await licenceCreated(bodyReq, req.user, user);
       await userRepo.update(req.user.id, {prefix: prefix})
-
-
     } else {
       user = await userRepo.create(bodyReq.user);
+      // await licenceCreated(bodyReq, req.user, user);
+    }
+
+    // licence is created only when superadmin creates a reseller
+    if (req.user.role === USERS_ROLE.SUPER_ADMIN || req.user.role === USERS_ROLE.SUB_SUPERADMIN) {
       await licenceCreated(bodyReq, req.user, user);
     }
-    
+
+    // insert sub user licence when user created by reseller
+    if (req.user.role === USERS_ROLE.RESELLER) {
+      const data = await subUserLicenceRepo.create({
+        user_id : user._id,
+        total_licence: bodyReq.user.sub_licence,
+        available_licence: bodyReq.user.sub_licence,
+        createdBy: req.user.id
+      })
+
+      subUserLicenceId = data._id
+      await userRepo.update(user._id, {sub_user_licence_id: subUserLicenceId})
+    }
+
+       
     responseData.user = await user.generateUserData();
 
     if (bodyReq.company) {
@@ -97,7 +145,6 @@ async function signupUser(req, res) {
 
 async function licenceCreated(bodyReq, loggedUser, userCreated) {
   try {
-    // console.log('userCreateduserCreated', userCreated)
     if (loggedUser.role !== USERS_ROLE.SUPER_ADMIN && loggedUser.role !== USERS_ROLE.SUB_SUPERADMIN) {
       // add licence for new user created
       const licenceData = {
@@ -219,6 +266,11 @@ async function get(req, res) {
     const availLicence = await licenceRepo.findOne({user_id : uid})
     userData.licence = availLicence?.total_licence
 
+    if (req.user.role === USERS_ROLE.RESELLER) {
+      const subUserLicence = await subUserLicenceRepo.findOne({user_id : uid})
+      userData.sub_licence = subUserLicence
+    }
+
     SuccessRespnose.message = "Success";
     SuccessRespnose.data = userData;
 
@@ -245,27 +297,70 @@ async function get(req, res) {
 async function updateUser(req, res) {
   const uid = req.params.id;
   const bodyReq = req.body;
+ 
   try {
     const responseData = {};
-    const user = await userRepo.update(uid, bodyReq.user);
-    // licence update
-    const savedLicence = await licenceRepo.findOne({user_id: uid , is_deleted : false});
-    if (Number(bodyReq.user.licence) < Number(savedLicence.total_licence - savedLicence.availeble_licence)) {
-      ErrorResponse.message = `Can't Set Licence Because used licence Are greater.`;
-      return res
-            .status(StatusCodes.BAD_REQUEST)
-            .json(ErrorResponse);
-    }
-    const licenceData = {
-      user_type: savedLicence.user_type,
-      total_licence: bodyReq.user.licence,
-      availeble_licence: bodyReq.user.licence - (savedLicence.total_licence - savedLicence.availeble_licence) 
+    
+    // only update licence in case if reseller (reseller only update by superadmin or subsuperadmin)
+    if (req.user.role === USERS_ROLE.SUPER_ADMIN || req.user.role === USERS_ROLE.SUB_SUPERADMIN) {
+      // licence update
+      const savedLicence = await licenceRepo.findOne({user_id: uid , is_deleted : false});
+      if (Number(bodyReq.user.licence) < Number(savedLicence.total_licence - savedLicence.availeble_licence)) {
+        ErrorResponse.message = `Can't Set Licence Because used licence Are greater.`;
+        return res
+              .status(StatusCodes.BAD_REQUEST)
+              .json(ErrorResponse);
+      }
+      const licenceData = {
+        user_type: savedLicence.user_type,
+        total_licence: bodyReq.user.licence,
+        availeble_licence: bodyReq.user.licence - (savedLicence.total_licence - savedLicence.availeble_licence) 
+      }
+
+      const data = await licenceRepo.findOne({user_id : uid}) 
+      if (data) {
+        await licenceRepo.updateByUserId(uid, licenceData)
+      }
     }
 
-    const data = await licenceRepo.findOne({user_id : uid}) 
-    if (data) {
-      await licenceRepo.updateByUserId(uid, licenceData)
+    // if reseller update the sub licence values
+    if (req.user.role === USERS_ROLE.RESELLER) {
+      const loggedInData = await userRepo.getForLicence(uid)
+      const total_licence = loggedInData.sub_user_licence_id.total_licence
+      const available_licence = loggedInData.sub_user_licence_id.available_licence
+
+      const used_licence = Object.keys(total_licence).reduce((acc, key) => {
+        if (key !== "agent") { 
+            acc[key] = total_licence[key] - (available_licence[key] || 0);
+        }
+        return acc;
+      }, {});
+
+
+      const updated_licence = bodyReq.user.sub_licence
+
+      // Compare each role and return immediately if an error is found
+      for (const key of Object.keys(used_licence)) {
+        if (used_licence[key] > (updated_licence[key] || 0)) {
+          ErrorResponse.message = `Can't Set ${USER_ROLE_VALUE[key]} Licence Because used licence Are greater.`;
+          return res
+                .status(StatusCodes.BAD_REQUEST)
+                .json(ErrorResponse);
+        }
+      }
+
+      const updatedData = {
+        total_licence : bodyReq.user.sub_licence,
+        available_licence: Object.keys(bodyReq.user.sub_licence).reduce((acc, key) => {
+              acc[key] = bodyReq.user.sub_licence[key] - (used_licence[key] || 0);
+          return acc;
+        }, {})
+      }
+
+      await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, updatedData)
     }
+
+    const user = await userRepo.update(uid, bodyReq.user);
     responseData.user = await user.generateUserData();
     
     if (bodyReq.company) {
@@ -381,34 +476,43 @@ async function statusPasswordUpdateUser(req, res) {
 
 async function deleteUser(req, res) {
   const userIds = req.body.userIds;
+  let response
 
   try {
-    const response = await userRepo.deleteMany(userIds, req.user);
-     
-    if (req.user.role !== USERS_ROLE.SUPER_ADMIN && req.user.role !== USERS_ROLE.SUB_SUPERADMIN) {
-      //update licence for parent 
-      const data = await licenceRepo.findOne({ user_id: req.user.id });
-      if (data) {
-            await licenceRepo.updateByUserId(req.user.id, {
-                availeble_licence: data.availeble_licence + 1
-            });
+    
+    if (req.user.role === USERS_ROLE.SUPER_ADMIN || req.user.role === USERS_ROLE.SUB_SUPERADMIN) {
+      //Delete for current users
+      for (const userId of userIds) {
+        const data = await licenceRepo.findOne({ user_id: userId });
+        if (data) {
+            await licenceRepo.updateByUserId(userId, {is_deleted: true});
+        }
       }
 
-      //Delete for current users
+      // Check if reseller has any child if yes don't delete reseller
       for (const userId of userIds) {
-        const data = await licenceRepo.findOne({ user_id: userId });
+        const data = await userRepo.findOne({ createdBy: userId });
         if (data) {
-            await licenceRepo.updateByUserId(userId, {is_deleted: true});
+          ErrorResponse.message = `Child Present, Reseller Can't Deleted`;
+          return res
+                .status(StatusCodes.BAD_REQUEST)
+                .json(ErrorResponse);
+        } else {
+          response = await userRepo.deleteMany(userIds, req.user);
         }
-      }
+      } 
     } else {
-      //Delete for current users
-      for (const userId of userIds) {
-        const data = await licenceRepo.findOne({ user_id: userId });
-        if (data) {
-            await licenceRepo.updateByUserId(userId, {is_deleted: true});
-        }
+      await userRepo.deleteMany(userIds, req.user);
+
+      const loggedInData = await userRepo.getForLicence(req.user.id);
+      const availableLicence = loggedInData.sub_user_licence_id.available_licence;
+      const data = await userRepo.findOne({ _id: req.user.id });
+      let updatedData = { ...availableLicence };
+      for (const _ of userIds) {
+          updatedData[data.role] = (updatedData[data.role] || 0) + 1;
       }
+
+      await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
     }
 
     const userJourneyfields = {
@@ -426,6 +530,7 @@ async function deleteUser(req, res) {
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
+    console.log(error)
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg = error.message;
 
