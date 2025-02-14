@@ -503,16 +503,15 @@ async function deleteUser(req, res) {
       } 
     } else {
       await userRepo.deleteMany(userIds, req.user);
-
-      const loggedInData = await userRepo.getForLicence(req.user.id);
-      const availableLicence = loggedInData.sub_user_licence_id.available_licence;
-      const data = await userRepo.findOne({ _id: req.user.id });
-      let updatedData = { ...availableLicence };
-      for (const _ of userIds) {
-          updatedData[data.role] = (updatedData[data.role] || 0) + 1;
+      for (const userId of userIds) {
+        const loggedInData = await userRepo.getForLicence(userId);
+        const availableLicence = loggedInData.sub_user_licence_id.available_licence;
+        const data = await userRepo.findOne({ _id: userId });
+        console.log('datadtadatadad', data)
+        let updatedData = { ...availableLicence };
+        updatedData[data.role] = (updatedData[data.role] || 0) + 1;
+        await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
       }
-
-      await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
     }
 
     const userJourneyfields = {
