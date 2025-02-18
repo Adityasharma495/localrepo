@@ -1,5 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
-const { UserJourneyRepository,FLowRepository,FlowControlRepository, FlowEdgesRepository, MemberScheduleRepository } = require("../repositories");
+const { UserJourneyRepository,FLowRepository,FlowControlRepository, FlowEdgesRepository, MemberScheduleRepository, FlowAsteriskRepository } = require("../repositories");
 const {SuccessRespnose , ErrorResponse , Authentication } = require("../utils/common");
 const {MODULE_LABEL, ACTION_LABEL} = require('../utils/common/constants');
 const {IvrSettings} = require('../db')
@@ -13,6 +13,7 @@ const flowsRepo = new FLowRepository();
 const flowsControlRepo = new FlowControlRepository();
 const flowEdgesRepo = new FlowEdgesRepository();
 const memberScheduleRepo = new MemberScheduleRepository();
+const flowAsteriskRepository = new FlowAsteriskRepository();
 
 async function createIVR(req, res) {
   const bodyReq = req.body;
@@ -56,6 +57,15 @@ async function createIVR(req, res) {
 
       flowsRepo.updateByFlowId(FlowDataResponse[0].flowId, {scheduleId : scheduleData._id}) 
     }
+
+    // data insert into flow-astrisk
+    await flowAsteriskRepository.create({
+      callcenterId: bodyReq.nodesData.callCenterId,
+      flowName: bodyReq.nodesData.flowName,
+      flowId: FlowDataResponse.length > 0 && FlowDataResponse[0].flowId,
+      nodesData : bodyReq.nodesData,
+      createdBy: req.user.id
+    })
 
     
    
@@ -154,6 +164,7 @@ async function updateIVR(req, res) {
       await flowsControlRepo.deleteIVRByFlowId(id);
       await flowEdgesRepo.deleteIVRByFlowId(id);
       await memberScheduleRepo.deleteByModuleId(id);
+      await flowAsteriskRepository.deleteIVRByFlowId(id)
 
 
       //insert All data
@@ -181,7 +192,17 @@ async function updateIVR(req, res) {
         })
 
       flowsRepo.updateByFlowId(FlowDataResponse[0].flowId, {scheduleId : scheduleData._id}) 
-    }
+      }
+
+      // data insert into flow-astrisk
+      await flowAsteriskRepository.create({
+        callcenterId: bodyReq.nodesData.callCenterId,
+        flowName: bodyReq.nodesData.flowName,
+        flowId: FlowDataResponse.length > 0 && FlowDataResponse[0].flowId,
+        nodesData : bodyReq.nodesData,
+        createdBy: req.user.id
+      }) 
+
 
       if (FlowDataResponse) {
 
@@ -233,6 +254,7 @@ async function updateIVR(req, res) {
       const FlowControlDataResponse = await flowsControlRepo.deleteIVRByFlowId(id);
       const FlowEdgesResponse = await flowEdgesRepo.deleteIVRByFlowId(id);
       const IvrScheduleResponse = await memberScheduleRepo.deleteByModuleId(id);
+      await flowAsteriskRepository.deleteIVRByFlowId(id)
 
 
       if (FlowDataResponse && FlowControlDataResponse && FlowEdgesResponse && IvrScheduleResponse) {

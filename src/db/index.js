@@ -9,6 +9,7 @@ const IvrSettings= require('./ivr-settings')
 const {CallStrategy,VoiceCategory} = require('./call-stratergy')
 const MemberSchedule = require('./member-schedule')
 const PromptModel = require('./prompt')
+const FlowsAsteriskModel = require('./flows-asterisk')
 
 module.exports = {
     userModel,
@@ -23,5 +24,6 @@ module.exports = {
     CallStrategy,
     VoiceCategory,
     MemberSchedule,
-    PromptModel
+    PromptModel,
+    FlowsAsteriskModel
 }

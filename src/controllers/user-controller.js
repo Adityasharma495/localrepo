@@ -507,7 +507,6 @@ async function deleteUser(req, res) {
         const loggedInData = await userRepo.getForLicence(userId);
         const availableLicence = loggedInData.sub_user_licence_id.available_licence;
         const data = await userRepo.findOne({ _id: userId });
-        console.log('datadtadatadad', data)
         let updatedData = { ...availableLicence };
         updatedData[data.role] = (updatedData[data.role] || 0) + 1;
         await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})

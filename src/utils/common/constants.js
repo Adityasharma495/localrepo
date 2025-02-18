@@ -104,7 +104,8 @@ const MODEL = {
     FLOWS_EDGES: 'flowedge',
     LANGUAGE: 'language',
     MEMEBER_SCHEDULES: 'member_schedules',
-    SUB_USER_LICENCE: 'subuserlicence'
+    SUB_USER_LICENCE: 'subuserlicence',
+    FLOW_ASTERISK: 'flows_asterisk'
 }
 
 const AUTH_TYPES = {
