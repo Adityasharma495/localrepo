@@ -86,7 +86,11 @@ const SUB_USER_LICENCE_MODEL = constants.MODEL.SUB_USER_LICENCE;
         type: mongoose.Schema.Types.ObjectId,
         ref: USER_MODEL_NAME,
         default: null 
-      }
+      },
+      flow_type: {
+        type: Number,
+        default: null
+      },
   },{
     versionKey: false,
     timestamps: true
