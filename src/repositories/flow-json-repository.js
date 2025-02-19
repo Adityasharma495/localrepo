@@ -1,13 +1,13 @@
 const CrudRepository = require("./crud-repository");
-const { FlowsAsteriskModel } = require("../db");
+const { FlowsJsonModel } = require("../db");
 const { StatusCodes } = require('http-status-codes');
 const AppError = require('../utils/errors/app-error');
 const { v4: uuidv4 } = require('uuid');
 
-class FlowAsteriskRepository extends CrudRepository {
+class FlowJsonRepository extends CrudRepository {
 
   constructor() {
-    super(FlowsAsteriskModel);
+    super(FlowsJsonModel);
   }
 
   async updateByFlowId(id, data) {
@@ -24,6 +24,24 @@ class FlowAsteriskRepository extends CrudRepository {
     }
   }
 
+  async findOne(conditions) {
+    try {
+        const response = await this.model.findOne({...conditions});
+        return response;
+    } catch (error) {
+        throw error;
+    }
+  }
+
+  async getIVRByFlowId(flowId) {
+    try {
+      let response = await this.model.findOne({ flowId: flowId }).lean();
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
+
 }
 
-module.exports = FlowAsteriskRepository;
+module.exports = FlowJsonRepository;

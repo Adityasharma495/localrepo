@@ -33,5 +33,5 @@ module.exports = {
     FlowEdgesRepository: require('./flow-edge-repository'),
     LanguageRepository: require('./language-repository'),
     SubUserLicenceRepository: require('./sub-user-licence-repository'),
-    FlowAsteriskRepository: require('./flow-asterisk-repository')
+    FlowJsonRepository: require('./flow-json-repository')
 }

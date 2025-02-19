@@ -2,7 +2,6 @@ const CrudRepository = require("./crud-repository");
 const { FlowModel } = require("../db");
 const { StatusCodes } = require('http-status-codes');
 const AppError = require('../utils/errors/app-error');
-const { v4: uuidv4 } = require('uuid');
 const mongoose = require('mongoose');
 
 class FLowRepository extends CrudRepository {
@@ -11,14 +10,13 @@ class FLowRepository extends CrudRepository {
     super(FlowModel);
   }
 
-  async create(data, loggedId) {
+  async create(data, loggedId, flowId) {
     try {
       const { flowName, callCenterId, nodes } = data;
 
       if (!nodes || typeof nodes !== 'object' || Object.keys(nodes).length === 0) {
         throw new AppError('Nodes data is missing or invalid', StatusCodes.BAD_REQUEST);
       }
-      const flowId = uuidv4();
       
       const nodesArray = Object.keys(nodes).map((nodeId) => {
         if (!nodeId || isNaN(parseInt(nodeId))) {

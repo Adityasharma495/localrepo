@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
-const { v4: uuidv4 } = require('uuid')
 const { constants } = require('../utils/common');
 const { MODEL } = require('../utils/common/constants')
 const USER_MODEL_NAME = constants.MODEL.USERS;
+const MEMEBER_SCHEDULES_MODEL_NAME = constants.MODEL.MEMEBER_SCHEDULES;
 
-const FlowAsteriskSchema = new mongoose.Schema(
+const FlowJsonSchema = new mongoose.Schema(
   {
     callcenterId: {
       type: String,
@@ -23,6 +23,24 @@ const FlowAsteriskSchema = new mongoose.Schema(
     nodesData: {
       type: Object, 
       required: true,
+    },
+    edgesData: {
+      type: Object, 
+      required: true,
+    },
+    type: {
+      type: Number, 
+      required: true,
+    },
+    status: {
+      type: Number, 
+      required: true,
+      default: 0,
+    },
+    scheduleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: MEMEBER_SCHEDULES_MODEL_NAME,
+      default: null
     },
     createdBy: { 
       type: mongoose.Schema.Types.ObjectId,
@@ -44,6 +62,6 @@ const FlowAsteriskSchema = new mongoose.Schema(
   }
 );
 
-const FlowsAsteriskModel = mongoose.model(MODEL.FLOW_ASTERISK, FlowAsteriskSchema);
-module.exports = FlowsAsteriskModel
+const FlowsJsonModel = mongoose.model(MODEL.FLOW_JSON, FlowJsonSchema);
+module.exports = FlowsJsonModel
  

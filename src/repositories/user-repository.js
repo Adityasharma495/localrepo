@@ -83,7 +83,7 @@ class UserRepository extends CrudRepository{
     async get(id) {
 
         try {
-            const response = await this.model.findById(id).populate('companies._id').exec();
+            const response = await this.model.findById(id).lean();
             if (!response) {
                 throw new AppError('Not able to find the resource', StatusCodes.NOT_FOUND);
             }

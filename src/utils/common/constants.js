@@ -105,7 +105,7 @@ const MODEL = {
     LANGUAGE: 'language',
     MEMEBER_SCHEDULES: 'member_schedules',
     SUB_USER_LICENCE: 'subuserlicence',
-    FLOW_ASTERISK: 'flows_asterisk'
+    FLOW_JSON: 'flows_json'
 }
 
 const AUTH_TYPES = {
