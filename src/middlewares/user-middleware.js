@@ -311,7 +311,8 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
                 module: bodyReq.module,
                 acl_settings: bodyReq.acl_settings,
                 licence: bodyReq?.licence || 0,
-                sub_licence: bodyReq?.sub_licence || {}
+                sub_licence: bodyReq?.sub_licence || {},
+                flow_type: bodyReq?.flow_type
             }
         };
 
