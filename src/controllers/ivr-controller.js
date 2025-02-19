@@ -158,13 +158,14 @@ async function getIVRSettings(req, res) {
 
 async function getAllIVR(req, res) {
   try {
-    const userDetail = await userRepository.get(req.user.id)
-    let data;
-    if (userDetail?.flow_type == 1) {
-      data = await flowsRepo.getAll(req.user.id);
-    } else {
-      data = await flowJsonRepository.getAll({createdBy: req.user.id});
-    }
+    // const userDetail = await userRepository.get(req.user.id)
+    const data = await flowJsonRepository.getAll({createdBy: req.user.id});
+    
+    // if (userDetail?.flow_type == 1) {
+    //   data = await flowsRepo.getAll(req.user.id);
+    // } else {
+    //   data = await flowJsonRepository.getAll({createdBy: req.user.id});
+    // }
 
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
@@ -283,6 +284,7 @@ async function updateIVR(req, res) {
 
         flowJsonRepository.updateByFlowId(id,
           {
+            type: userDetail?.flow_type,
             flowName: bodyReq.nodesData.flowName,
             nodesData : bodyReq.nodesData,
             edgesData: bodyReq.edges,
@@ -331,16 +333,22 @@ async function updateIVR(req, res) {
   async function deleteIVR(req, res) {
     const id = req.body.ivrIds;
     try {
-      const userDetail = await userRepository.get(req.user.id)
-      if (userDetail?.flow_type == 1) {
-        // delete existing data
-        await flowsRepo.deleteIVRByFlowId(id);
-        await flowsControlRepo.deleteIVRByFlowId(id);
-        await flowEdgesRepo.deleteIVRByFlowId(id);
-        await memberScheduleRepo.deleteByModuleId(id);
-      } else {
-        await flowJsonRepository.deleteIVRByFlowId(id)
-      }
+      // const userDetail = await userRepository.get(req.user.id)
+      await flowsRepo.deleteIVRByFlowId(id);
+      await flowsControlRepo.deleteIVRByFlowId(id);
+      await flowEdgesRepo.deleteIVRByFlowId(id);
+      await memberScheduleRepo.deleteByModuleId(id);
+      await flowJsonRepository.deleteIVRByFlowId(id)
+
+      // if (userDetail?.flow_type == 1) {
+      //   // delete existing data
+      //   await flowsRepo.deleteIVRByFlowId(id);
+      //   await flowsControlRepo.deleteIVRByFlowId(id);
+      //   await flowEdgesRepo.deleteIVRByFlowId(id);
+      //   await memberScheduleRepo.deleteByModuleId(id);
+      // } else {
+      //   await flowJsonRepository.deleteIVRByFlowId(id)
+      // }
 
         const userJourneyfields = {
           module_name: MODULE_LABEL.IVR,
@@ -378,24 +386,27 @@ async function updateIVR(req, res) {
   async function getIVRByFlowId(req, res) {
     try {
       const IvrId = req.params.id;
-      const userDetail = await userRepository.get(req.user.id)
+      // const userDetail = await userRepository.get(req.user.id)
 
-      let nodesData = {};
-      let edgeData = {};
-      let scheduleData = {};
-
-      if (userDetail?.flow_type == 1) {
-        nodesData = await flowsRepo.getIVRByFlowId(IvrId);
-        edgeData = await flowEdgesRepo.getAll(IvrId);
-        scheduleData = await memberScheduleRepo.getAll(IvrId);
-      } else {
-        const data = await flowJsonRepository.getIVRByFlowId(IvrId);
-        nodesData = transformData(data)
-        edgeData = {
+      const data = await flowJsonRepository.getIVRByFlowId(IvrId);
+      const nodesData = transformData(data)
+      const edgeData = {
           edgeJson : data.edgesData
         };
-        scheduleData = await memberScheduleRepo.getAll(IvrId);
-      }
+      const scheduleData = await memberScheduleRepo.getAll(IvrId);
+
+      // if (userDetail?.flow_type == 1) {
+      //   nodesData = await flowsRepo.getIVRByFlowId(IvrId);
+      //   edgeData = await flowEdgesRepo.getAll(IvrId);
+      //   scheduleData = await memberScheduleRepo.getAll(IvrId);
+      // } else {
+      //   const data = await flowJsonRepository.getIVRByFlowId(IvrId);
+      //   nodesData = transformData(data)
+      //   edgeData = {
+      //     edgeJson : data.edgesData
+      //   };
+      //   scheduleData = await memberScheduleRepo.getAll(IvrId);
+      // }
       SuccessRespnose.data = {nodesData,edgeData,scheduleData};
       SuccessRespnose.message = "Success";
 
