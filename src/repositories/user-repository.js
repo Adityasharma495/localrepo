@@ -50,13 +50,13 @@ class UserRepository extends CrudRepository{
             if (current_user_role === 'role_sadmin') {
                 data = await userModel.find({
                     is_deleted: false,
-                }).sort({ createdAt: -1 }).lean();
+                }).sort({ createdAt: -1 });
             } else {
                 data = await userModel.find({
 
                     is_deleted: false,
                     createdBy: current_uid
-                }).sort({ createdAt: -1 }).lean();
+                }).sort({ createdAt: -1 });
             }
             
             
@@ -83,7 +83,7 @@ class UserRepository extends CrudRepository{
     async get(id) {
 
         try {
-            const response = await this.model.findById(id).lean();
+            const response = await this.model.findById(id);
             if (!response) {
                 throw new AppError('Not able to find the resource', StatusCodes.NOT_FOUND);
             }
@@ -104,7 +104,7 @@ class UserRepository extends CrudRepository{
             
             let data = await this.model.find({
                 createdBy: call_centre_id, is_deleted: false
-            }).sort({ createdAt: -1 }).lean();
+            }).sort({ createdAt: -1 }) ;
 
             //TODO: Make it dynamic (modular)
             //Remove password field and convert status to its corresponding label
