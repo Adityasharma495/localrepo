@@ -91,6 +91,10 @@ const SUB_USER_LICENCE_MODEL = constants.MODEL.SUB_USER_LICENCE;
         type: Number,
         default: null
       },
+      credits_available:{
+        type: Number,
+        default: 0,
+      }
   },{
     versionKey: false,
     timestamps: true

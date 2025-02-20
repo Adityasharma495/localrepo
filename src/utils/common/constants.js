@@ -105,7 +105,8 @@ const MODEL = {
     LANGUAGE: 'language',
     MEMEBER_SCHEDULES: 'member_schedules',
     SUB_USER_LICENCE: 'subuserlicence',
-    FLOW_JSON: 'flows_json'
+    FLOW_JSON: 'flows_json',
+    CREDITS: 'credit_history'
 }
 
 const AUTH_TYPES = {
@@ -132,6 +133,11 @@ const OPERATOR_TYPES = {
     AIRTEL: 1,
     JIO: 2
 }
+
+const USER_CREDITS_ACTION = {
+    ADD: "addition",
+    DEDUCT: "deduction"
+  }
 
 const OPERATOR_TYPES_LABEL = {
     [OPERATOR_TYPES.AIRTEL]: 'Airtel',
@@ -350,5 +356,6 @@ module.exports = {
     STORAGE_PATH,
     SERVER,
     SUB_LICENCE_ROLE,
-    USER_ROLE_VALUE
+    USER_ROLE_VALUE,
+    USER_CREDITS_ACTION
 }

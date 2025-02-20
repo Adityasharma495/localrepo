@@ -31,6 +31,7 @@ const saveFile = require('./save-file.js')
 const memberSchedule = require('./member-schedule-routes')
 const promptRoute = require('./prompts-routes.js')
 const languageRoute = require('./language-routes.js')
+const creditRoute = require('./credit-routes.js')
 
 
 
@@ -64,5 +65,6 @@ router.use('/saveFile', saveFile)
 router.use('/member-schedule',memberSchedule)
 router.use('/prompt',promptRoute)
 router.use('/language', languageRoute)
+router.use('/credits', creditRoute)
 
 module.exports = router;
