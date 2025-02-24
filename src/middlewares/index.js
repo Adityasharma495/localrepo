@@ -20,5 +20,6 @@ module.exports = {
     ExtentionMiddleware: require('./extention-middleware'),
     QueueMiddleware: require('./queue-middleware'),
     MemberScheduleMiddleware:require('./member-schedule-middleware'),
-    PromptsMiddleware: require('./prompts-middleware')
+    PromptsMiddleware: require('./prompts-middleware'),
+    CreditMiddleware: require('./credit-middleware')
 }

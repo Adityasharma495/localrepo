@@ -10,6 +10,7 @@ const {CallStrategy,VoiceCategory} = require('./call-stratergy')
 const MemberSchedule = require('./member-schedule')
 const PromptModel = require('./prompt')
 const FlowsJsonModel = require('./flows-json')
+const CreditModel = require('./credits')
 
 module.exports = {
     userModel,
@@ -25,5 +26,6 @@ module.exports = {
     VoiceCategory,
     MemberSchedule,
     PromptModel,
-    FlowsJsonModel
+    FlowsJsonModel,
+    CreditModel
 }

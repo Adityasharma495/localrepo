@@ -27,5 +27,6 @@ module.exports = {
     MemberScheduleController:require('./member-schedule-controller'),
     HandleFileSaveController:require("./handleFileSave-controller"),
     PromptController:require("./prompt-controller"),
-    LanguageController : require('./language-controller')
+    LanguageController : require('./language-controller'),
+    CreditController : require('./credit-controller')
 }
