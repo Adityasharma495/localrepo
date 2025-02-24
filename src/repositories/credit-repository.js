@@ -1,5 +1,6 @@
 const CrudRepository = require("./crud-repository");
 const CreditModel = require("../db/credits");
+const UserModel = require("../db/users");
 
 class CreditRepository extends CrudRepository {
   constructor() {
@@ -8,49 +9,34 @@ class CreditRepository extends CrudRepository {
 
   async getAll(id) {
     try {
-      let response;
+      let userIds = [];
       if (id) {
-        response = await CreditModel.find({ user_id: id })
+        const users = await UserModel.find({ createdBy: id }).select('_id');
+        userIds = users.map(user => user._id.toString());
+      }
+
+      const query = id
+        ? {
+            $or: [
+              { user_id: id }, 
+              { fromUser: id },
+              { toUser: id },
+              { actionUser: id },
+              { user_id: { $in: userIds } },
+              { fromUser: { $in: userIds } },
+              { toUser: { $in: userIds } },
+              { actionUser: { $in: userIds } }
+            ]
+          }
+        : {};
+
+      const response = await CreditModel.find(query)
         .populate('fromUser', ["fromUser", "username"])
+        .populate('actionUser', ["actionUser", "username"])
         .populate('toUser', ["toUser", "username"])
         .sort({ createdAt: -1 })
         .lean();
-      }
-      else {
-        response = await CreditModel.find()
-        .populate('fromUser', ["fromUser", "username"])
-        .populate('toUser', ["toUser", "username"])
-        .sort({ createdAt: -1 })
-        .lean();
-      }
-      return response;
-    } catch (error) {
-      throw error;
-    }
-  }
 
-  async findAllData() {
-    const response = await this.model.find().lean();
-    return response;
-}
-
-  async update(id, data) {
-    const response = await this.model.findOneAndUpdate({ _id: id }, data, {
-      runValidators: true,
-      new: true,
-    });
-    return response;
-  }
-
-  async get(data) {
-    try {
-      const response = await this.model.findById(data);
-      if (!response) {
-        throw new AppError(
-          "Not able to find the resource",
-          StatusCodes.NOT_FOUND
-        );
-      }
       return response;
     } catch (error) {
       throw error;

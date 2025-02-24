@@ -13,6 +13,7 @@ async function updateCredit(req, res) {
   const bodyReq = req.body;
 
   try {
+    let userRole = req.user.role;
     const responseData = {};
     let user;
     let fromUser;
@@ -22,90 +23,166 @@ async function updateCredit(req, res) {
     const fromUpdatedUser = await userRepo.get(bodyReq.fromUser);
 
     if (fromUpdatedUser._id.equals(parentUser._id)) {
-      if (bodyReq.action == USER_CREDITS_ACTION.ADD) {
-        let updatedValue =
-          Number(updatedUser.credits_available) + Number(bodyReq.updatedCredit);
+      if (userRole == USERS_ROLE.SUPER_ADMIN) {
+        if (bodyReq.action == USER_CREDITS_ACTION.ADD) {
+          let updatedValue =
+            Number(updatedUser.credits_available) + Number(bodyReq.updatedCredit);
 
-        let updatedValueForFromUser =
-          Number(fromUpdatedUser.credits_available) -
-          Number(bodyReq.updatedCredit);
-        user = await userRepo.update(bodyReq.id, {
-          credits_available: updatedValue,
-        });
-        if (updatedValueForFromUser < 0) {
-          let errorMessage =
-            "Your account has not enough credits to contribute.";
-          return res
-            .status(StatusCodes.BAD_REQUEST)
-            .json({ message: errorMessage });
-        } else {
+          user = await userRepo.update(bodyReq.id, {
+            credits_available: updatedValue,
+          });
+  
+          let balanceCredits = user.credits_available.toFixed(2);
+          await creditRepo.create({
+            user_id: bodyReq.id,
+            fromUser: bodyReq.fromUser,
+            toUser: bodyReq.id,
+            credits: Number(updatedUser.credits_available).toFixed(2),
+            credits_rupees: Number(bodyReq.updatedCredit).toFixed(2),
+            action: USER_CREDITS_ACTION.ADD,
+            balance: balanceCredits,
+            actionUser: bodyReq.id
+          });
+  
+          await creditRepo.create({
+            user_id: bodyReq.id,
+            fromUser: bodyReq.fromUser,
+            toUser: bodyReq.id,
+            credits: Number(fromUpdatedUser.credits_available).toFixed(2),
+            credits_rupees: Number(bodyReq.updatedCredit).toFixed(2),
+            action: USER_CREDITS_ACTION.DEDUCT,
+            balance: balanceCredits,
+            actionUser: bodyReq.fromUser
+          });
+        } else if (bodyReq.action == USER_CREDITS_ACTION.DEDUCT) {
+          let updatedValue =
+            Number(updatedUser.credits_available) - Number(bodyReq.updatedCredit);
+
+          if (updatedValue < 0) {
+            let errorMessage = "Updated Credits Cannot be less than 0";
+            return res
+              .status(StatusCodes.BAD_REQUEST)
+              .json({ message: errorMessage });
+          }
+          user = await userRepo.update(bodyReq.id, {
+            credits_available: updatedValue,
+          });
+  
+          let balanceCredits = user.credits_available.toFixed(2);
+
+          await creditRepo.create({
+            user_id: bodyReq.fromUser,
+            fromUser: bodyReq.fromUser,
+            toUser: bodyReq.id,
+            credits: Number(updatedUser.credits_available).toFixed(2),
+            credits_rupees: Number(bodyReq.updatedCredit).toFixed(2),
+            action: USER_CREDITS_ACTION.DEDUCT,
+            balance: balanceCredits,
+            actionUser: bodyReq.id
+          });
+  
+          await creditRepo.create({
+            user_id: bodyReq.id,
+            fromUser: bodyReq.fromUser,
+            toUser: bodyReq.id,
+            credits: Number(fromUpdatedUser.credits_available).toFixed(2),
+            credits_rupees: Number(bodyReq.updatedCredit).toFixed(2),
+            action: USER_CREDITS_ACTION.ADD,
+            balance: balanceCredits,
+            actionUser: bodyReq.fromUser
+          });
+        }
+      }
+      else {
+        if (bodyReq.action == USER_CREDITS_ACTION.ADD) {
+          let updatedValue =
+            Number(updatedUser.credits_available) + Number(bodyReq.updatedCredit);
+  
+          let updatedValueForFromUser =
+            Number(fromUpdatedUser.credits_available) -
+            Number(bodyReq.updatedCredit);
+          user = await userRepo.update(bodyReq.id, {
+            credits_available: updatedValue,
+          });
+          if (updatedValueForFromUser < 0) {
+            let errorMessage =
+              "Your account has not enough credits to contribute.";
+            return res
+              .status(StatusCodes.BAD_REQUEST)
+              .json({ message: errorMessage });
+          } else {
+            fromUser = await userRepo.update(bodyReq.fromUser, {
+              credits_available: updatedValueForFromUser,
+            });
+          }
+  
+          let balanceCredits = user.credits_available.toFixed(2);
+          let balanceCreditOfFromUser = fromUser.credits_available.toFixed(2);
+          await creditRepo.create({
+            user_id: bodyReq.id,
+            fromUser: bodyReq.fromUser,
+            toUser: bodyReq.id,
+            credits: Number(updatedUser.credits_available).toFixed(2),
+            credits_rupees: Number(bodyReq.updatedCredit).toFixed(2),
+            action: USER_CREDITS_ACTION.ADD,
+            balance: balanceCredits,
+            actionUser: bodyReq.id
+          });
+  
+          await creditRepo.create({
+            user_id: bodyReq.id,
+            fromUser: bodyReq.fromUser,
+            toUser: bodyReq.id,
+            credits: Number(fromUpdatedUser.credits_available).toFixed(2),
+            credits_rupees: Number(bodyReq.updatedCredit).toFixed(2),
+            action: USER_CREDITS_ACTION.DEDUCT,
+            balance: balanceCreditOfFromUser,
+            actionUser: bodyReq.fromUser
+          });
+        } else if (bodyReq.action == USER_CREDITS_ACTION.DEDUCT) {
+          let updatedValue =
+            Number(updatedUser.credits_available) - Number(bodyReq.updatedCredit);
+          let updatedValueForFromUser =
+            Number(fromUpdatedUser.credits_available) +
+            Number(bodyReq.updatedCredit);
+          if (updatedValue < 0) {
+            let errorMessage = "Updated Credits Cannot be less than 0";
+            return res
+              .status(StatusCodes.BAD_REQUEST)
+              .json({ message: errorMessage });
+          }
+          user = await userRepo.update(bodyReq.id, {
+            credits_available: updatedValue,
+          });
+  
           fromUser = await userRepo.update(bodyReq.fromUser, {
             credits_available: updatedValueForFromUser,
           });
+  
+          let balanceCredits = user.credits_available.toFixed(2);
+          let balanceCreditOfFromUser = fromUser.credits_available.toFixed(2);
+          await creditRepo.create({
+            user_id: bodyReq.fromUser,
+            fromUser: bodyReq.fromUser,
+            toUser: bodyReq.id,
+            credits: Number(updatedUser.credits_available).toFixed(2),
+            credits_rupees: Number(bodyReq.updatedCredit).toFixed(2),
+            action: USER_CREDITS_ACTION.DEDUCT,
+            balance: balanceCredits,
+            actionUser: bodyReq.fromUser
+          });
+  
+          await creditRepo.create({
+            user_id: bodyReq.id,
+            fromUser: bodyReq.fromUser,
+            toUser: bodyReq.id,
+            credits: Number(fromUpdatedUser.credits_available).toFixed(2),
+            credits_rupees: Number(bodyReq.updatedCredit).toFixed(2),
+            action: USER_CREDITS_ACTION.ADD,
+            balance: balanceCreditOfFromUser,
+            actionUser: bodyReq.id
+          });
         }
-
-        let balanceCredits = user.credits_available.toFixed(2);
-        let balanceCreditOfFromUser = fromUser.credits_available.toFixed(2);
-        await creditRepo.create({
-          user_id: bodyReq.id,
-          fromUser: bodyReq.fromUser,
-          toUser: bodyReq.id,
-          credits: Number(updatedUser.credits_available).toFixed(2),
-          credits_rupees: Number(bodyReq.updatedCredit).toFixed(2),
-          action: USER_CREDITS_ACTION.ADD,
-          balance: balanceCredits,
-        });
-
-        await creditRepo.create({
-          user_id: bodyReq.id,
-          fromUser: bodyReq.fromUser,
-          toUser: bodyReq.id,
-          credits: Number(fromUpdatedUser.credits_available).toFixed(2),
-          credits_rupees: Number(bodyReq.updatedCredit).toFixed(2),
-          action: USER_CREDITS_ACTION.DEDUCT,
-          balance: balanceCreditOfFromUser,
-        });
-      } else if (bodyReq.action == USER_CREDITS_ACTION.DEDUCT) {
-        let updatedValue =
-          Number(updatedUser.credits_available) - Number(bodyReq.updatedCredit);
-        let updatedValueForFromUser =
-          Number(fromUpdatedUser.credits_available) +
-          Number(bodyReq.updatedCredit);
-        if (updatedValue < 0) {
-          let errorMessage = "Updated Credits Cannot be less than 0";
-          return res
-            .status(StatusCodes.BAD_REQUEST)
-            .json({ message: errorMessage });
-        }
-        user = await userRepo.update(bodyReq.id, {
-          credits_available: updatedValue,
-        });
-
-        fromUser = await userRepo.update(bodyReq.fromUser, {
-          credits_available: updatedValueForFromUser,
-        });
-
-        let balanceCredits = user.credits_available.toFixed(2);
-        let balanceCreditOfFromUser = fromUser.credits_available.toFixed(2);
-        await creditRepo.create({
-          user_id: bodyReq.fromUser,
-          fromUser: bodyReq.fromUser,
-          toUser: bodyReq.id,
-          credits: Number(updatedUser.credits_available).toFixed(2),
-          credits_rupees: Number(bodyReq.updatedCredit).toFixed(2),
-          action: USER_CREDITS_ACTION.DEDUCT,
-          balance: balanceCredits,
-        });
-
-        await creditRepo.create({
-          user_id: bodyReq.id,
-          fromUser: bodyReq.id,
-          toUser: bodyReq.fromUser,
-          credits: Number(fromUpdatedUser.credits_available).toFixed(2),
-          credits_rupees: Number(bodyReq.updatedCredit).toFixed(2),
-          action: USER_CREDITS_ACTION.ADD,
-          balance: balanceCreditOfFromUser,
-        });
       }
 
       SuccessRespnose.data = responseData;
