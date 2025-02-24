@@ -3,6 +3,8 @@ const { constants } = require('../utils/common');
 const { MODEL } = require('../utils/common/constants')
 const USER_MODEL_NAME = constants.MODEL.USERS;
 const MEMEBER_SCHEDULES_MODEL_NAME = constants.MODEL.MEMEBER_SCHEDULES;
+const PROMPTS_MODEL_NAME = constants.MODEL.PROMPT;
+
 
 const FlowJsonSchema = new mongoose.Schema(
   {
@@ -37,6 +39,16 @@ const FlowJsonSchema = new mongoose.Schema(
       required: true,
       default: 0,
     },
+    rePrompt: {
+      type: String,
+      required:false,
+    },
+    fileData: [
+      {
+        name: { type: String, required: false },
+        value: { type:  mongoose.Schema.Types.ObjectId, ref: PROMPTS_MODEL_NAME, default: null, required: false  },
+      },
+    ],
     scheduleId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: MEMEBER_SCHEDULES_MODEL_NAME,

@@ -20,7 +20,7 @@ const userRepository = new UserRepository();
 
 async function createIVR(req, res) {
   const bodyReq = req.body;
-
+  
   try {
     const flowId = uuidv4();
 
@@ -72,7 +72,9 @@ async function createIVR(req, res) {
         edgesData: bodyReq.edges,
         type: userDetail.flow_type,
         createdBy: req.user.id,
-        scheduleId: scheduleData ? scheduleData?._id : null
+        scheduleId: scheduleData ? scheduleData?._id : null,
+        fileData: bodyReq.nodesData.fileData,
+        rePrompt: bodyReq.nodesData.rePrompt
       })
     } else {
       const conditions = {
@@ -107,7 +109,9 @@ async function createIVR(req, res) {
         edgesData: bodyReq.edges,
         type: userDetail.flow_type,
         createdBy: req.user.id,
-        scheduleId: scheduleData ? scheduleData?._id : null
+        scheduleId: scheduleData ? scheduleData?._id : null,
+        fileData: bodyReq.nodesData.fileData,
+        rePrompt: bodyReq.nodesData.rePrompt
       })
     }
 
@@ -252,7 +256,9 @@ async function updateIVR(req, res) {
           edgesData: bodyReq.edges,
           type: userDetail.flow_type,
           createdBy: req.user.id,
-          scheduleId: scheduleData ? scheduleData?._id : null
+          scheduleId: scheduleData ? scheduleData?._id : null,
+          fileData: bodyReq.nodesData.fileData,
+          rePrompt: bodyReq.nodesData.rePrompt
         })
       } else {
         const currentData = await flowJsonRepository.getIVRByFlowId(id);
@@ -288,7 +294,9 @@ async function updateIVR(req, res) {
             flowName: bodyReq.nodesData.flowName,
             nodesData : bodyReq.nodesData,
             edgesData: bodyReq.edges,
-            scheduleId: scheduleData ? scheduleData?._id : null
+            scheduleId: scheduleData ? scheduleData?._id : null,
+            fileData: bodyReq.nodesData.fileData,
+            rePrompt: bodyReq.nodesData.rePrompt
           }) 
       }
         const userJourneyfields = {
@@ -387,13 +395,16 @@ async function updateIVR(req, res) {
     try {
       const IvrId = req.params.id;
       // const userDetail = await userRepository.get(req.user.id)
-
       const data = await flowJsonRepository.getIVRByFlowId(IvrId);
+      console.log('datadtadatdatdatadatdtdatad', data)
       const nodesData = transformData(data)
       const edgeData = {
           edgeJson : data.edgesData
         };
       const scheduleData = await memberScheduleRepo.getAll(IvrId);
+      const fileData = data.fileData;
+      const rePrompt = data.rePrompt;
+
 
       // if (userDetail?.flow_type == 1) {
       //   nodesData = await flowsRepo.getIVRByFlowId(IvrId);
@@ -407,7 +418,7 @@ async function updateIVR(req, res) {
       //   };
       //   scheduleData = await memberScheduleRepo.getAll(IvrId);
       // }
-      SuccessRespnose.data = {nodesData,edgeData,scheduleData};
+      SuccessRespnose.data = {nodesData,edgeData,scheduleData, fileData, rePrompt };
       SuccessRespnose.message = "Success";
 
       return res.status(StatusCodes.OK).json(SuccessRespnose);
