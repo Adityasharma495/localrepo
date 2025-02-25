@@ -122,7 +122,7 @@ async function savePrompts(req, res) {
 
         
 
-        const file_url = `${BACKEND_API_BASE_URL}/temp/voice/${req.user.id}/prompts/${bodyReq.language}/${file_name}`;
+        const file_url = `${BACKEND_API_BASE_URL}/assets/voice/${req.user.id}/prompts/${bodyReq.language}/${file_name}`;
 
         const prompts = await PromptRepo.create({
             prompt_category: bodyReq.prompt_category,
