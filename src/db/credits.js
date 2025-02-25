@@ -19,6 +19,11 @@ const CREDITS = constants.MODEL.CREDITS;
         required: true,
         ref: USER_MODEL_NAME
     },
+    actionUser: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: USER_MODEL_NAME
+    },
     credits: {
         type: mongoose.Schema.Types.Decimal128,
         min: 0,
