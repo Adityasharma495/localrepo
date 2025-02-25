@@ -27,58 +27,44 @@ class UserRepository extends CrudRepository{
         
     }
 
-    async getAllByRoles(current_uid, current_user_role, given_user_role){
-        
-
-        //Get user status as {0: 'Inactive', 1: 'Active'}
+    async getAllByRoles(current_uid, current_user_role, given_user_role) {
+        // Get user status as {0: 'Inactive', 1: 'Active'}
         const userStatusValues = constants.USERS_STATUS_VALUES_LABEL;
-
-        //Get role specified as the param
-        if(given_user_role){
-            var currentUserReadAccessRoles = given_user_role;
-        }
-        //If role is not specified, get user roles which can be READ by the current user
-        else{
-            const PERMISSION_TYPE_READ = constants.PERMISSION_TYPES.READ;
-            var [currentUserReadAccessRoles] = Authentication.getUserAccessRoles(current_user_role, PERMISSION_TYPE_READ);
-        }
-
-
+    
+        // Get role specified as the param
+        let currentUserReadAccessRoles = given_user_role || 
+            (await Authentication.getUserAccessRoles(current_user_role, constants.PERMISSION_TYPES.READ))[0];
+    
         try {
             let data;
-            // If role is "Superadmin show all the users"
+            // If role is "Superadmin", show all users
             if (current_user_role === 'role_sadmin') {
-                data = await userModel.find({
-                    is_deleted: false,
-                }).sort({ createdAt: -1 });
+                data = await userModel.find({ is_deleted: false })
+                    .populate('createdBy', 'username')
+                    .sort({ createdAt: -1 });
             } else {
-                data = await userModel.find({
-
-                    is_deleted: false,
-                    createdBy: current_uid
-                }).sort({ createdAt: -1 });
+                data = await userModel.find({ 
+                        is_deleted: false, 
+                        createdBy: current_uid 
+                    })
+                    .populate('createdBy', 'username')
+                    .sort({ createdAt: -1 });
             }
-            
-            
-            
-            //Remove password field and convert status to its corresponding label
-            //{0: 'Inactive', 1: 'Active'}
-            data = data.map( val => {
-                val['status'] = userStatusValues[ val['status'] ];
+    
+            // Remove password field and convert status to labels
+            data = data.map(val => {
+                val['status'] = userStatusValues[val['status']];
                 val['password'] = undefined;
                 return val;
-            } );
-            
+            });
+    
             return data;
-
+    
         } catch (error) {
-
             throw error;
-
         }
-
     }
-
+    
 
     async get(id) {
 

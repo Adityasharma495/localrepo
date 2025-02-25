@@ -10,7 +10,12 @@ class CreditRepository extends CrudRepository {
   async getAll(id) {
     try {
       let userIds = [];
+      let notIncludeThisUser = null;
+
       if (id) {
+        const targetUser = await UserModel.find({ _id: id });
+        notIncludeThisUser = targetUser[0]?.createdBy;
+
         const users = await UserModel.find({ createdBy: id }).select('_id');
         userIds = users.map(user => user._id.toString());
       }
@@ -26,7 +31,8 @@ class CreditRepository extends CrudRepository {
               { fromUser: { $in: userIds } },
               { toUser: { $in: userIds } },
               { actionUser: { $in: userIds } }
-            ]
+            ],
+            ...(notIncludeThisUser && { actionUser: { $ne: notIncludeThisUser } })
           }
         : {};
 
