@@ -54,6 +54,10 @@ const FlowJsonSchema = new mongoose.Schema(
       ref: MEMEBER_SCHEDULES_MODEL_NAME,
       default: null
     },
+    isGatherNode: {
+      type: Number, 
+      default: 0,
+    },
     createdBy: { 
       type: mongoose.Schema.Types.ObjectId,
       ref: USER_MODEL_NAME,

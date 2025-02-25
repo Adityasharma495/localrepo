@@ -74,7 +74,8 @@ async function createIVR(req, res) {
         createdBy: req.user.id,
         scheduleId: scheduleData ? scheduleData?._id : null,
         fileData: bodyReq.nodesData.fileData,
-        rePrompt: bodyReq.nodesData.rePrompt
+        rePrompt: bodyReq.nodesData.rePrompt,
+        isGatherNode: bodyReq.nodesData.isGatherNode
       })
     } else {
       const conditions = {
@@ -111,7 +112,8 @@ async function createIVR(req, res) {
         createdBy: req.user.id,
         scheduleId: scheduleData ? scheduleData?._id : null,
         fileData: bodyReq.nodesData.fileData,
-        rePrompt: bodyReq.nodesData.rePrompt
+        rePrompt: bodyReq.nodesData.rePrompt,
+        isGatherNode: bodyReq.nodesData.isGatherNode
       })
     }
 
@@ -258,7 +260,8 @@ async function updateIVR(req, res) {
           createdBy: req.user.id,
           scheduleId: scheduleData ? scheduleData?._id : null,
           fileData: bodyReq.nodesData.fileData,
-          rePrompt: bodyReq.nodesData.rePrompt
+          rePrompt: bodyReq.nodesData.rePrompt,
+          isGatherNode: bodyReq.nodesData.isGatherNode
         })
       } else {
         const currentData = await flowJsonRepository.getIVRByFlowId(id);
@@ -296,7 +299,8 @@ async function updateIVR(req, res) {
             edgesData: bodyReq.edges,
             scheduleId: scheduleData ? scheduleData?._id : null,
             fileData: bodyReq.nodesData.fileData,
-            rePrompt: bodyReq.nodesData.rePrompt
+            rePrompt: bodyReq.nodesData.rePrompt,
+            isGatherNode: bodyReq.nodesData.isGatherNode
           }) 
       }
         const userJourneyfields = {
@@ -404,6 +408,7 @@ async function updateIVR(req, res) {
       const scheduleData = await memberScheduleRepo.getAll(IvrId);
       const fileData = data.fileData;
       const rePrompt = data.rePrompt;
+      const isGatherNode = data.isGatherNode
 
 
       // if (userDetail?.flow_type == 1) {
@@ -418,7 +423,7 @@ async function updateIVR(req, res) {
       //   };
       //   scheduleData = await memberScheduleRepo.getAll(IvrId);
       // }
-      SuccessRespnose.data = {nodesData,edgeData,scheduleData, fileData, rePrompt };
+      SuccessRespnose.data = {nodesData,edgeData,scheduleData, fileData, rePrompt,isGatherNode };
       SuccessRespnose.message = "Success";
 
       return res.status(StatusCodes.OK).json(SuccessRespnose);
