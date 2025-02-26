@@ -152,6 +152,8 @@ async function getIVRSettings(req, res) {
     SuccessRespnose.data = ivrSettings;
     SuccessRespnose.message = "Successfully fetched IVR settings";
 
+    Logger.info(`IVR -> created successfully`);
+
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     console.log(error)
@@ -175,6 +177,8 @@ async function getAllIVR(req, res) {
 
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
+
+    Logger.info(`IVR -> recieved all successfully`);
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -425,6 +429,8 @@ async function updateIVR(req, res) {
       // }
       SuccessRespnose.data = {nodesData,edgeData,scheduleData, fileData, rePrompt,isGatherNode };
       SuccessRespnose.message = "Success";
+
+      Logger.info(`IVR -> recieved ivr of flow ${IvrId} successfully`);
 
       return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {

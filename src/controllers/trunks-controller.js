@@ -64,6 +64,10 @@ async function getAll(req, res) {
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
+    Logger.info(
+      `Trunk -> recieved all successfully`
+    );
+
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     ErrorResponse.message = error.message;
@@ -90,6 +94,10 @@ async function get(req, res) {
     }
     SuccessRespnose.message = "Success";
     SuccessRespnose.data = trunkData;
+
+    Logger.info(
+      `Trunk -> recieved ${id} successfully`
+    );
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -184,6 +192,7 @@ async function updateTrunk(req, res) {
   } catch (error) {
 
     if (error.name == 'CastError') {
+      let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
       statusCode = StatusCodes.BAD_REQUEST;
       errorMsg = 'Trunk not found';
     }

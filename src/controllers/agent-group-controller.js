@@ -167,6 +167,10 @@ async function getAll(req, res) {
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
+    Logger.info(
+      `Agent Group -> recieved all successfully`
+    );
+
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     ErrorResponse.message = error.message;
@@ -195,6 +199,10 @@ async function getById(req, res) {
     }
     SuccessRespnose.message = "Success";
     SuccessRespnose.data = agentData;
+
+    Logger.info(
+      `Agent Group -> recieved ${id} successfully`
+    );
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {

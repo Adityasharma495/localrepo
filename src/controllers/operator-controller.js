@@ -64,6 +64,10 @@ async function getAll(req, res) {
         SuccessRespnose.data = data;
         SuccessRespnose.message = "Success";
 
+        Logger.info(
+            `Operator -> recieved all successfully`
+        );
+
         return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {
         ErrorResponse.message = error.message;
@@ -90,6 +94,10 @@ async function get(req, res) {
         }
         SuccessRespnose.message = "Success";
         SuccessRespnose.data = operatorData;
+
+        Logger.info(
+            `Operator -> recieved ${id} successfully`
+        );
 
         return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {
@@ -182,6 +190,7 @@ async function updateOperator(req, res) {
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
     } catch (error) {
+        let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
 
         if (error.name == 'CastError') {
             statusCode = StatusCodes.BAD_REQUEST;

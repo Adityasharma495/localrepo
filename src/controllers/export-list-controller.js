@@ -4,6 +4,8 @@ const { UserRepository, CallCentreRepository, TrunksRepository, NumbersRepositor
  AgentRepository, AgentGroupRepository, ExtentionRepository, CreditRepository} = require("../repositories");
 const { Parser } = require('json2csv');
 
+const { Logger } = require("../config");
+
 async function exportData(req, res) {
     const { model } = req.params;
 
@@ -44,6 +46,8 @@ async function exportData(req, res) {
       res.header('Content-Type', 'text/csv');
       res.attachment(`${model}.csv`);
       res.data = csv;
+
+      Logger.error(`Export List -> data exported successfully for ${model}`);
   
       return res.status(StatusCodes.OK).json({
         message: `${model} data exported successfully`,

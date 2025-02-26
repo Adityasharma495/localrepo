@@ -61,6 +61,10 @@ async function getAll(req, res) {
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
+    Logger.info(
+      `Acl Settings -> recieved all successfully`
+    );
+
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     ErrorResponse.message = error.message;
@@ -87,6 +91,10 @@ async function get(req, res) {
     }
     SuccessRespnose.message = "Success";
     SuccessRespnose.data = aclData;
+
+    Logger.info(
+      `Acl Settings -> recieved successfully`
+    );
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -178,6 +186,7 @@ async function updateAclSettings(req, res) {
     return res.status(StatusCodes.OK).json(SuccessRespnose);
 
   } catch (error) {
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
 
     if (error.name == 'CastError') {
       statusCode = StatusCodes.BAD_REQUEST;

@@ -492,6 +492,10 @@ async function getAll(req, res) {
         SuccessRespnose.data = data;
         SuccessRespnose.message = 'Success';
 
+        Logger.info(
+            `Number -> recieved all successfully`
+        );
+
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
     } catch (error) {
@@ -521,6 +525,10 @@ async function get(req, res) {
             ErrorResponse.data = data;
             return res.status(statusCode).json(ErrorResponse);
         }
+
+        Logger.info(
+            `Number -> recieved ${numberId} successfully`
+        );
 
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
@@ -600,6 +608,9 @@ async function getDIDNumbers(req, res) {
             return res.status(statusCode).json(ErrorResponse);
         }
 
+        Logger.info(
+            `Number -> recieved ${numberType} number successfully`
+        );
 
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
@@ -629,6 +640,10 @@ async function getAllStatus(req, res) {
         const filteredData = data.filter(item => item.status_code !== 9 && item.status_code !== 10);
         SuccessRespnose.data = filteredData;
         SuccessRespnose.message = 'Success';
+
+        Logger.info(
+            `Number -> recieved number with all status successfully`
+        );
 
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
@@ -764,6 +779,10 @@ const assignIndividualDID = async (req, res) => {
           }
       
         await userJourneyRepo.create(userJourneyfields);
+
+        Logger.info(
+            `Number -> successfully assigned individual DID`
+        );
 
         SuccessRespnose.message = 'Successfully assigned Individual DID.';
         return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -958,6 +977,8 @@ async function getToAllocateNumbers(req, res) {
         SuccessRespnose.data = data;
         SuccessRespnose.message = 'Success';
 
+        Logger.info(`Numbers -> to allocated numbers recieved successfully`);
+
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
     } catch (error) {
@@ -1003,6 +1024,8 @@ async function getAllocatedNumbers(req, res) {
         }
         SuccessRespnose.data = response;
         SuccessRespnose.message = 'Success';
+
+        Logger.info(`Numbers -> allocated numbers recieved successfully`);
 
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
@@ -1066,6 +1089,7 @@ async function removeAllocatedNumbers(req, res) {
         }
 
         SuccessRespnose.message = 'Success';
+        Logger.info(`Numbers -> removed allocated numbers successfully`);
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
     } catch (error) {
@@ -1103,6 +1127,8 @@ async function setInboundRouting(req, res) {
         }
 
         SuccessRespnose.message = 'Success';
+
+        Logger.info(`Numbers -> set up inbound routing on ${bodyReq.number} successfully`);
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
     } catch (error) {

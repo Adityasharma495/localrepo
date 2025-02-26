@@ -242,6 +242,10 @@ async function getAll(req, res) {
     SuccessRespnose.message = "Success";
     SuccessRespnose.data = response;
 
+    Logger.info(
+      `User -> recieved all successfully`
+    );
+
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     ErrorResponse.message = error.message;
@@ -273,6 +277,10 @@ async function get(req, res) {
 
     SuccessRespnose.message = "Success";
     SuccessRespnose.data = userData;
+
+    Logger.info(
+      `User -> recieved ${uid} successfully`
+    );
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {

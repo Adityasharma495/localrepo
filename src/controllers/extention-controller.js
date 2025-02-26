@@ -78,6 +78,10 @@ async function getAll(req, res) {
     SuccessRespnose.data = extentionData;
     SuccessRespnose.message = "Success";
 
+    Logger.info(
+      `Extention -> recieved all successfully`
+    );
+
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     ErrorResponse.message = error.message;
@@ -106,6 +110,10 @@ async function getById(req, res) {
     }
     SuccessRespnose.message = "Success";
     SuccessRespnose.data = extentionData;
+
+    Logger.info(
+      `Extention -> recieved ${id} successfully`
+    );
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {

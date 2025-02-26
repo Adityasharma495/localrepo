@@ -82,6 +82,10 @@ async function getAll(req, res) {
     SuccessRespnose.data = queueData;
     SuccessRespnose.message = "Success";
 
+    Logger.info(
+      `Queue -> recieved all successfully`
+    );
+
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     ErrorResponse.message = error.message;
@@ -110,6 +114,10 @@ async function getById(req, res) {
     }
     SuccessRespnose.message = "Success";
     SuccessRespnose.data = queueData;
+
+    Logger.info(
+      `Queue -> recieved ${id} successfully`
+    );
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {

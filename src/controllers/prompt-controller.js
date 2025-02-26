@@ -22,11 +22,13 @@ async function getPromptDetails(req, res) {
       if (response && response.length > 0) {
         SuccessRespnose.data = response;
         SuccessRespnose.message = "Prompt fetched successfully";
+        Logger.info(`Get Prompt Details -> Prompt fetched successfully`);
         return res.status(StatusCodes.OK).json(SuccessRespnose);
       } else {
         // Handle no results
         SuccessRespnose.data = [];
         SuccessRespnose.message = "No prompts found";
+        Logger.info(`Get Prompt Details -> No prompts found`);
         return res.status(StatusCodes.OK).json(SuccessRespnose);
       }
     } catch (error) {
@@ -174,13 +176,16 @@ async function updatePropmtStatus(req, res) {
       if (response) {
         SuccessRespnose.data = response; // The updated document or metadata from the repository
         SuccessRespnose.message = "Prompt status updated successfully";
+        Logger.info(`Get Prompt Details -> Prompt status updated successfully`);
         return res.status(StatusCodes.OK).json(SuccessRespnose);
       } else {
         // Handle case where no document is updated
         ErrorResponse.message = "Prompt not found or update failed";
+        Logger.info(`Get Prompt Details -> Prompt not found or update failed`);
         return res.status(StatusCodes.NOT_FOUND).json(ErrorResponse);
       }
     } catch (error) {
+      Logger.info(`Get Prompt Details -> error updating prompt status`);
       let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
       let errorMsg = error.message;
   

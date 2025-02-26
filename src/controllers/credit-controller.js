@@ -217,7 +217,7 @@ async function updateCredit(req, res) {
   } catch (error) {
     console.log("Error updating user credits", error);
     Logger.error(
-      `Credit -> unable to create Credit: ${JSON.stringify(
+      `Credit -> unable to update Credit: ${JSON.stringify(
         bodyReq
       )} error: ${JSON.stringify(error)}`
     );
@@ -248,6 +248,10 @@ async function getAll(req, res) {
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
+    Logger.info(
+      `Credit -> recieved all successfully`
+    );
+
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     ErrorResponse.message = error.message;
@@ -266,14 +270,18 @@ async function get(req, res) {
   const id = req.params.id;
 
   try {
-    const aclData = await creditRepo.get(id);
-    if (aclData.length == 0) {
+    const creditsData = await creditRepo.get(id);
+    if (creditsData.length == 0) {
       const error = new Error();
       error.name = "CastError";
       throw error;
     }
     SuccessRespnose.message = "Success";
-    SuccessRespnose.data = aclData;
+    SuccessRespnose.data = creditsData;
+
+    Logger.info(
+      `Credit -> recieved ${id} successfully`
+    );
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {

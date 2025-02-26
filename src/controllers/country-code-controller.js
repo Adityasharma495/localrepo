@@ -62,6 +62,8 @@ async function getAll(req, res) {
         SuccessRespnose.data = data;
         SuccessRespnose.message = 'Success';
 
+        Logger.info(`Country Code -> recieved all successfully`);
+
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
     } catch (error) {
@@ -93,6 +95,8 @@ async function get(req, res) {
             ErrorResponse.data = data;
             return res.status(statusCode).json(ErrorResponse);
         }
+
+        Logger.info(`Country Code -> recieved ${countryCodeId} successfully`);
 
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
