@@ -18,6 +18,8 @@ const subUserLicenceRepo = new SubUserLicenceRepository();
 
 async function signupUser(req, res) {
   const bodyReq = req.body;
+
+  console.log("CAME HERE TO SIGNUP USER", bodyReq);
    
   try {
     const responseData = {};
@@ -177,6 +179,7 @@ async function licenceCreated(bodyReq, loggedUser, userCreated) {
 }
 
 async function signinUser(req, res) {
+  console.log("INTERNAL SIGNIN USER", req.body);
   const bodyReq = req.body;
   const username = bodyReq.username;
 

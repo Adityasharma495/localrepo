@@ -8,9 +8,9 @@ async function validateUser(req, res, next){
     try {
         const token = req.headers['authorization'];
         const decodeJwt = await Authentication.verifyJWToken(token);
+        console.log("Came here to decode",decodeJwt);
         if(decodeJwt){
             req['user'] = decodeJwt;
-
             next();
         }
 

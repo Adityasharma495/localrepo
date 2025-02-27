@@ -1,10 +1,14 @@
 const express = require('express');
-const cors = require('cors');
-const path = require('path');
-
+const sequelize = require('./config/sequelize');
 const { ServerConfig, Mongodb, Logger } = require('./config');
 const apiRoutes = require('./routes');
 const swaggerRoutes = require('./routes/swagger');
+
+const cors = require('cors');
+const path = require('path');
+
+
+
 
 const app = express();
 
@@ -15,26 +19,44 @@ app.use(cors({
     origin: '*'
 }))
 
-//Any request with /api
+// Serve static files
 app.use('/assets', express.static(path.join(__dirname, '../assets')));
 app.use('/temp', express.static(path.join(__dirname, '../temp')));
 
+// API routes
 app.use('/api', apiRoutes);
 app.use('/api-docs', swaggerRoutes);
 
+// Initialize the server **only after** DB connections succeed
+const startServer = async () => {
+  try {
+    // Test CockroachDB connection
+    await sequelize.authenticate();
+    console.log('✅ Successfully connected to CockroachDB!');
+    Logger.info('CockroachDB -> Successfully connected');
 
-app.listen(ServerConfig.PORT, async() => {
+    // Sync Sequelize models
+    await sequelize.sync({ alter: true }); // Use { force: true } only in development if needed
+    console.log('✅ Database synchronized successfully!');
+    Logger.info('CockroachDB -> Database synchronized');
 
-    Logger.info('\n\nxxxxxxxxxxxxxxxxxxxxxxx');
-    Logger.info(`Server -> Successfully started on PORT : ${ServerConfig.PORT}`);
-    console.log(`Server -> Successfully started on PORT : ${ServerConfig.PORT}`);
+    // Connect to MongoDB
+    await Mongodb.connectMongo();
+    console.log('✅ Successfully connected to MongoDB!');
+    Logger.info('MongoDB -> Successfully connected');
 
-    try {
-        await Mongodb.connectMongo();
-        Logger.info(`Mongodb -> Successfully connected`);
-        console.log(`Mongodb -> Successfully connected`);
-    } catch (error) {
-        Logger.error(`Mongodb -> Error while connecting: ${ JSON.stringify(error) }`)
-    }
+    // Start Express server
+    app.listen(ServerConfig.PORT, () => {
+      Logger.info(`Server -> Successfully started on PORT : ${ServerConfig.PORT}`);
+      console.log(`🚀 Server running on PORT: ${ServerConfig.PORT}`);
+    });
 
-});
+  } catch (error) {
+    console.error('❌ Connection failed:', error);
+    Logger.error(`Connection Error: ${JSON.stringify(error)}`);
+    process.exit(1); // Exit if DB connections fail
+  }
+};
+
+
+startServer();

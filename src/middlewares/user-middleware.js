@@ -6,6 +6,9 @@ const AppError = require('../utils/errors/app-error');
 function validateSignup(req, res, next){
     const bodyReq = req.body;
     const createrRole = req['user'].role
+
+    console.log("createrRole",createrRole);
+
     const userRole = bodyReq.role;
     const permission = Authentication.checkPermission(createrRole,userRole);
 
@@ -145,6 +148,8 @@ function validateSignup(req, res, next){
 
 function validateSignin(req, res, next){
 
+
+    console.log("CAME TO SIGN IN HERE", req.body);
     const bodyReq = req.body;
 
     if(!req.is('application/json')){
