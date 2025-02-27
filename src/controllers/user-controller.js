@@ -18,6 +18,9 @@ const subUserLicenceRepo = new SubUserLicenceRepository();
 
 async function signupUser(req, res) {
   const bodyReq = req.body;
+
+  console.log('bodyReq', bodyReq)
+  // process.exit(0)
    
   try {
     const responseData = {};
@@ -43,11 +46,13 @@ async function signupUser(req, res) {
       //fetch logged in user sub licence data
       const loggedInData = await userRepo.getForLicence(req.user.id)
 
+      console.log('loggedInData', loggedInData)
+
       //fetch logged in user sub licence data(available_licence)
       const subLicenceData = loggedInData.sub_user_licence_id.available_licence
       
       // if available_licence are 0 then return
-      if (Number(subLicenceData[req.user.role]) === 0) {
+      if (Number(subLicenceData[bodyReq.user.role]) === 0) {
          ErrorResponse.message = 'Licence is not available';
         return res
             .status(StatusCodes.BAD_REQUEST)
@@ -57,7 +62,7 @@ async function signupUser(req, res) {
       // if available_licence are not 0 then update sub user licence
       const updatedData = {
         ...subLicenceData, 
-        [req.user.role]: Number(subLicenceData[req.user.role] || 0) - 1
+        [bodyReq.user.role]: Number(subLicenceData[bodyReq.user.role] || 0) - 1
       };
       bodyReq.user.sub_user_licence_id = loggedInData.sub_user_licence_id._id
       await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
@@ -514,7 +519,7 @@ async function deleteUser(req, res) {
       for (const userId of userIds) {
         const loggedInData = await userRepo.getForLicence(userId);
         const availableLicence = loggedInData.sub_user_licence_id.available_licence;
-        const data = await userRepo.findOne({ _id: userId });
+        const data = await userRepo.getForLicence(userId);
         let updatedData = { ...availableLicence };
         updatedData[data.role] = (updatedData[data.role] || 0) + 1;
         await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
