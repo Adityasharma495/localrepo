@@ -28,15 +28,15 @@ const serverManagementSchema = new mongoose.Schema({
             required: true
         },
         cpu_cores: {
-            type: String,
+            type: Number,
             required: true
         },
         ram: {
-            type: String,
+            type: Number,
             required: true
         },
         hard_disk: {
-            type: String,
+            type: Number,
             required: true
         },
         is_deleted: {

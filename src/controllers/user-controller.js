@@ -19,9 +19,6 @@ const subUserLicenceRepo = new SubUserLicenceRepository();
 async function signupUser(req, res) {
   const bodyReq = req.body;
 
-  console.log('bodyReq', bodyReq)
-  // process.exit(0)
-   
   try {
     const responseData = {};
     let user;
@@ -45,8 +42,6 @@ async function signupUser(req, res) {
     if (SUB_LICENCE_ROLE.includes(req.user.role)) {
       //fetch logged in user sub licence data
       const loggedInData = await userRepo.getForLicence(req.user.id)
-
-      console.log('loggedInData', loggedInData)
 
       //fetch logged in user sub licence data(available_licence)
       const subLicenceData = loggedInData.sub_user_licence_id.available_licence
