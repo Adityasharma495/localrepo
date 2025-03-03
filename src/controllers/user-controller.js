@@ -179,7 +179,6 @@ async function licenceCreated(bodyReq, loggedUser, userCreated) {
 }
 
 async function signinUser(req, res) {
-  console.log("INTERNAL SIGNIN USER", req.body);
   const bodyReq = req.body;
   const username = bodyReq.username;
 

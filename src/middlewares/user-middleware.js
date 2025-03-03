@@ -147,9 +147,6 @@ function validateSignup(req, res, next){
 }
 
 function validateSignin(req, res, next){
-
-
-    console.log("CAME TO SIGN IN HERE", req.body);
     const bodyReq = req.body;
 
     if(!req.is('application/json')){

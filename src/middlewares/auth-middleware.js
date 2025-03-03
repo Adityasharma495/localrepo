@@ -5,10 +5,17 @@ const AppError = require('../utils/errors/app-error');
 const { Authentication } = require('../utils/common');
 
 async function validateUser(req, res, next){
+
+    console.log("CAME HERE TO VALIDATE USER");
     try {
         const token = req.headers['authorization'];
+
+        console.log("TOKEN HERE", token);
         const decodeJwt = await Authentication.verifyJWToken(token);
-        console.log("Came here to decode",decodeJwt);
+
+        console.log("DECODED JWT",
+        decodeJwt);
+        
         if(decodeJwt){
             req['user'] = decodeJwt;
             next();

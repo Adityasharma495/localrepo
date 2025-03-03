@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const User = require('../../c_db/User');
-const { AuthMiddleware, UserMiddleware } = require("../../middlewares");
-const { UserController } = require("../../c_controllers");
+const { AuthMiddleware, UserMiddleware, CreditMiddleware} = require("../../middlewares");
+const { UserController, CreditController } = require("../../c_controllers");
 
 
 router.post('/signup',async (req, res) => {
@@ -19,11 +19,16 @@ router.post('/signup',async (req, res) => {
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
-
   });
 
 
+  // SIGN IN USER ROUTE
   router.post('/signin', UserMiddleware.validateSignin, UserController.signinUser);
+
+  
+  // LOGOUT USER ROUTE
+  // router.post("/logout", AuthMiddleware.validateUser, UserController.logoutUser);
+
   router.get('/',UserController.getAll);
 
 module.exports = router;

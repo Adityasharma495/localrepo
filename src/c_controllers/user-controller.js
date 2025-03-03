@@ -13,35 +13,33 @@ const userRepo = new UserRepository();
 
 
 async function signinUser(req, res) {
-    console.log("INTERNAL SIGNIN USER MAIN !", req.body);
+
     const bodyReq = req.body;
     const username = bodyReq.username;
-
-    console.log("USERNAME HERE", username);
   
     try {
       //Fetch user via username
       const user = await userRepo.getByUsername(username);
-
-      console.log("USERE HERE", user);
       if (user) {
-        if (user.isValidLogin() == false)
-          throw new AppError("Inactive or deleted user", StatusCodes.FORBIDDEN);
+        // if (user.isValidLogin() == false)
+        //   throw new AppError("Inactive or deleted user", StatusCodes.FORBIDDEN);
         const isPasswordMatch = await user.comparePassword(bodyReq.password);
+
+
         if (isPasswordMatch) {
-          //If the passwords match, then create token and return it
+          
           const userData = await user.generateUserData(true);
   
           SuccessRespnose.message = "Successfully signed in";
           SuccessRespnose.data = userData;
   
-          const userJourneyfields = {
-            module_name: MODULE_LABEL.USERS,
-            action: ACTION_LABEL.LOGIN,
-            createdBy:  userData._id
-          }
+          // const userJourneyfields = {
+          //   module_name: MODULE_LABEL.USERS,
+          //   action: ACTION_LABEL.LOGIN,
+          //   createdBy:  userData._id
+          // }
       
-          await userJourneyRepo.create(userJourneyfields);
+          // await userJourneyRepo.create(userJourneyfields);
   
           Logger.info(`User -> ${userData._id} login successfully`);
   

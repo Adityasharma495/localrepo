@@ -3,6 +3,7 @@ const sequelize = require('../config/sequelize');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { ServerConfig } = require('../config');
+const {Authentication} = require('../utils/common');
 
 const User = sequelize.define(
   'users',
@@ -97,6 +98,35 @@ User.prototype.createToken = function () {
     throw new Error("Token generation failed");
   }
 };
+
+
+User.prototype.generateUserData = async function (tokenGenerate = false) {
+  try {
+    const user = await User.findByPk(this.id, {
+      attributes: { exclude: ['password'] }, // Exclude password for security reasons
+      // Here, you should include any related entities, like ACL settings or company details
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const userData = user.toJSON();
+
+    if (tokenGenerate) {
+      userData.token = await this.createToken();
+    }
+
+    // Assume getUserAccessRoles is a method that you define to get role access based on the user's role
+    userData.rolesAccess = Authentication.getUserAccessRoles(this.role);
+
+    return userData;
+  } catch (error) {
+    console.error('Error generating user data:', error);
+    throw error;
+  }
+};
+
 
 
 module.exports = User;
