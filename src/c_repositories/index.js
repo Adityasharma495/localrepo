@@ -1,3 +1,4 @@
-module.exports={
-    UserRepository:require("./user-repository")
-}
+module.exports = {
+  UserRepository: require("./user-repository"),
+  CreditsRepository: require("./credits-repository"),
+};
