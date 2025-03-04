@@ -69,6 +69,8 @@ const User = sequelize.define(
   }
 );
 
+
+
 // Hash password before saving
 User.beforeCreate(async (user) => {
   const salt = await bcrypt.genSalt(9);
