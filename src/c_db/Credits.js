@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/sequelize");
 
 const Credit = sequelize.define(
-  "credit_histories",
+  "credit_history",
   {
     id: {
       type: DataTypes.UUID,
@@ -18,7 +18,7 @@ const Credit = sequelize.define(
         key: "id",
       },
     },
-    fromUser: {
+    from_user: {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
@@ -26,7 +26,7 @@ const Credit = sequelize.define(
         key: "id",
       },
     },
-    toUser: {
+    to_user: {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
@@ -34,7 +34,7 @@ const Credit = sequelize.define(
         key: "id",
       },
     },
-    actionUser: {
+    action_user: {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
@@ -79,8 +79,7 @@ const Credit = sequelize.define(
       validate: {
         isIn: [['addition', 'deduction']] 
       }
-    }
-    ,    
+    },    
     created_at: {
       type: DataTypes.DATE,
       allowNull: false,
