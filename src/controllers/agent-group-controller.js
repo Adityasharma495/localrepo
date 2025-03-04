@@ -47,7 +47,7 @@ const agentRepo = new AgentRepository();
 //     const userJourneyfields = {
 //       module_name: MODULE_LABEL.AGENT_GROUP,
 //       action: ACTION_LABEL.ADD,
-//       createdBy: req?.user?.id
+//       created_by: req?.user?.id
 //     };
 //     await userJourneyRepo.create(userJourneyfields);
 
@@ -125,7 +125,7 @@ async function createAgentGroup(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.AGENT_GROUP,
       action: ACTION_LABEL.ADD,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     };
     await userJourneyRepo.create(userJourneyfields);
 
@@ -248,7 +248,7 @@ async function updateAgentGroup(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.AGENT_GROUP,
       action: ACTION_LABEL.EDIT,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     };
 
     await userJourneyRepo.create(userJourneyfields);
@@ -294,7 +294,7 @@ async function deleteAgentGroup(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.AGENT_GROUP,
       action: ACTION_LABEL.DELETE,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);

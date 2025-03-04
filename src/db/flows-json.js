@@ -8,25 +8,25 @@ const PROMPTS_MODEL_NAME = constants.MODEL.PROMPT;
 
 const FlowJsonSchema = new mongoose.Schema(
   {
-    callcenterId: {
+    call_center_id: {
       type: String,
       required: true,
       trim: true,
     },
-    flowName: {
+    flow_name: {
       type: String,
       required: true,
       trim: true,
     },
-    flowId: {
+    flow_id: {
       type: String,
       required:true,
     },
-    nodesData: {
+    nodes_data: {
       type: Object, 
       required: true,
     },
-    edgesData: {
+    edges_data: {
       type: Object, 
       required: true,
     },
@@ -39,35 +39,35 @@ const FlowJsonSchema = new mongoose.Schema(
       required: true,
       default: 0,
     },
-    rePrompt: {
+    re_prompt: {
       type: String,
       required:false,
     },
-    fileData: [
+    file_data: [
       {
         name: { type: String, required: false },
         value: { type:  mongoose.Schema.Types.ObjectId, ref: PROMPTS_MODEL_NAME, default: null, required: false  },
       },
     ],
-    scheduleId: {
+    schedule_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: MEMEBER_SCHEDULES_MODEL_NAME,
       default: null
     },
-    isGatherNode: {
+    is_gather_node: {
       type: Number, 
       default: 0,
     },
-    createdBy: { 
+    created_by: { 
       type: mongoose.Schema.Types.ObjectId,
       ref: USER_MODEL_NAME,
       default: null 
     },
-    createdAt: {
+    created_at: {
       type: Date,
       default: Date.now
     },
-    updatedAt: {
+    updated_at: {
         type: Date,
         default: Date.now
    }
@@ -78,6 +78,6 @@ const FlowJsonSchema = new mongoose.Schema(
   }
 );
 
-const FlowsJsonModel = mongoose.model(MODEL.FLOW_JSON, FlowJsonSchema);
+const FlowsJsonModel = mongoose.model(MODEL.FLOW_JSON, FlowJsonSchema, MODEL.FLOW_JSON);
 module.exports = FlowsJsonModel
  

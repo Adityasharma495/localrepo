@@ -88,7 +88,7 @@ async function signupUser(req, res) {
         user_id : user._id,
         total_licence: bodyReq.user.sub_licence,
         available_licence: bodyReq.user.sub_licence,
-        createdBy: req.user.id
+        created_by: req.user.id
       })
 
       subUserLicenceId = data._id

@@ -89,22 +89,22 @@ const AgentsGroupSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
-    createdBy: {
+    created_by: {
         type: mongoose.Schema.Types.ObjectId,
         ref: USER_MODEL_NAME,
         default: null,
     },
-    createdAt: {
+    created_at: {
         type: Date,
         default: Date.now,
     },
-    updatedAt: {
+    updated_at: {
         type: Date,
         default: Date.now,
     },
 }, {
     versionKey: false,
-    timestamps: true,
+    // timestamps: true,
 });
 
 // Pre-save middleware to set timestamps
@@ -114,9 +114,9 @@ AgentsGroupSchema.pre('save', function (next) {
     const istDate = new Date(now.getTime() + istOffset);
 
     if (this.isNew) {
-        this.createdAt = istDate;
+        this.created_at = istDate;
     }
-    this.updatedAt = istDate;
+    this.updated_at = istDate;
 
     next();
 });
@@ -127,7 +127,7 @@ AgentsGroupSchema.pre('findOneAndUpdate', function (next) {
     const istOffset = 5.5 * 60 * 60 * 1000;
     const istDate = new Date(now.getTime() + istOffset);
 
-    this._update.updatedAt = istDate;
+    this._update.updated_at = istDate;
 
     next();
 });

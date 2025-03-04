@@ -14,7 +14,7 @@ async function getPromptDetails(req, res) {
       const { prompt_status, user_id } = req.query;
   
       // Define query conditions based on the presence of `prompt_status and user_id`
-      const conditions = (prompt_status || user_id) ? { prompt_status: parseInt(prompt_status), createdBy: user_id } : {};
+      const conditions = (prompt_status || user_id) ? { prompt_status: parseInt(prompt_status), created_by: user_id } : {};
   
       // Fetch prompts based on conditions
       const response = await PromptRepo.get(conditions);
@@ -64,7 +64,7 @@ async function savePrompts(req, res) {
 
         // check for duplicate file name
         const conditions = {
-            createdBy: req.user.id, 
+            created_by: req.user.id, 
             prompt_name: bodyReq.prompt_name 
         }
         const checkDuplicate = await PromptRepo.findOne(conditions);
@@ -130,7 +130,7 @@ async function savePrompts(req, res) {
             prompt_category: bodyReq.prompt_category,
             prompt_name: bodyReq.prompt_name,
             prompt_url: file_url,
-            createdBy: req.user.id,
+            created_by: req.user.id,
             prompt_duration : bodyReq.duration || 0
         });
 
@@ -139,7 +139,7 @@ async function savePrompts(req, res) {
         const userJourneyfields = {
           module_name: MODULE_LABEL.PROMPTS,
           action: ACTION_LABEL.ADD,
-          createdBy:  req?.user?.id
+          created_by:  req?.user?.id
         }
     
         const userJourney = await userJourneyRepo.create(userJourneyfields);

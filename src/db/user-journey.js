@@ -57,6 +57,6 @@ UserJourneySchema.pre('findOneAndUpdate', function (next) {
 });
 
   
-  const userJourneySchema = mongoose.model(USER_JOURNEY_NAME, UserJourneySchema);
+  const userJourneySchema = mongoose.model(USER_JOURNEY_NAME, UserJourneySchema, USER_JOURNEY_NAME);
 
   module.exports = userJourneySchema;

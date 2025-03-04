@@ -19,7 +19,7 @@ async function createServerManagement(req, res) {
       const userJourneyfields = {
         module_name: MODULE_LABEL.SERVER_MANAGEMENT,
         action: ACTION_LABEL.ADD,
-        createdBy:  req?.user?.id
+        created_by:  req?.user?.id
       }
   
       const userJourney = await userJourneyRepo.create(userJourneyfields);
@@ -135,7 +135,7 @@ async function updateServerManagement(req, res) {
       const userJourneyfields = {
         module_name: MODULE_LABEL.SERVER_MANAGEMENT,
         action: ACTION_LABEL.EDIT,
-        createdBy:  req?.user?.id
+        created_by:  req?.user?.id
       }
   
       const userJourney = await userJourneyRepo.create(userJourneyfields);
@@ -175,7 +175,7 @@ async function deleteServerManagement(req, res) {
       const userJourneyfields = {
         module_name: MODULE_LABEL.SERVER_MANAGEMENT,
         action: ACTION_LABEL.DELETE,
-        createdBy: req?.user?.id
+        created_by: req?.user?.id
       }
   
       await userJourneyRepo.create(userJourneyfields);

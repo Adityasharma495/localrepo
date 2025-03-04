@@ -81,7 +81,7 @@ async function createAgent(req, res) {
   try {
    
     const conditions = {
-      createdBy: req.user.id,
+      created_by: req.user.id,
       $or: [
         { agent_number: bodyReq.agent.agent_number },
         { agent_name: bodyReq.agent.agent_name}
@@ -131,7 +131,7 @@ async function createAgent(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.AGENT,
       action: ACTION_LABEL.ADD,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
@@ -242,7 +242,7 @@ async function updateAgent(req, res) {
     // Check for duplicate agent_number if it is being changed
     if (currentData.agent_number !== bodyReq.agent.agent_number) {
       const numberCondition = {
-        createdBy: req.user.id,
+        created_by: req.user.id,
         agent_number: bodyReq.agent.agent_number
       };
       const numberDuplicate = await agentRepo.findOne(numberCondition);
@@ -255,7 +255,7 @@ async function updateAgent(req, res) {
     // Check for duplicate agent_name if it is being changed
     if (currentData.agent_name !== bodyReq.agent.agent_name) {
       const nameCondition = {
-        createdBy: req.user.id,
+        created_by: req.user.id,
         agent_name: bodyReq.agent.agent_name
       };
 
@@ -294,7 +294,7 @@ async function updateAgent(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.AGENT,
       action: ACTION_LABEL.EDIT,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
@@ -349,7 +349,7 @@ async function deleteAgent(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.AGENT,
       action: ACTION_LABEL.DELETE,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);

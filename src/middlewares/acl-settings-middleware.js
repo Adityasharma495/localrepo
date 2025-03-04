@@ -85,7 +85,7 @@ function modifyAclSettingsRequest(req, is_create = true) {
             }
         }
 
-        if (is_create) inputData.acl_settings.createdBy = req.user.id
+        if (is_create) inputData.acl_settings.created_by = req.user.id
 
         return inputData;
 

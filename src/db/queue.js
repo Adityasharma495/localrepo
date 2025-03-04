@@ -43,22 +43,22 @@ const QueueSchema = new mongoose.Schema({
         type: Boolean,
         default: false 
     },
-    createdBy: { 
+    created_by: { 
         type: mongoose.Schema.Types.ObjectId,
         ref: USER_MODEL_NAME,
         default: null 
     },
-    createdAt: {
+    created_at: {
         type: Date,
         default: Date.now
     },
-    updatedAt: {
+    updated_at: {
         type: Date,
         default: Date.now
     }
 }, {
     versionKey: false,
-    timestamps: true
+    // timestamps: true
 });
 
 // Pre-save middleware for timestamps and hashing password
@@ -68,9 +68,9 @@ QueueSchema.pre('save', async function (next) {
     // Convert timestamps to IST
     const istDate = convertToIST(now);
     if (this.isNew) {
-        this.createdAt = istDate; 
+        this.created_at = istDate; 
     }
-    this.updatedAt = istDate;
+    this.updated_at = istDate;
 
     next();
 });
@@ -79,9 +79,9 @@ QueueSchema.pre('save', async function (next) {
 QueueSchema.pre('findOneAndUpdate', async function (next) {
     const now = new Date();
 
-    // Convert updatedAt to IST
+    // Convert updated_at to IST
     const istDate = convertToIST(now);
-    this._update.updatedAt = istDate;
+    this._update.updated_at = istDate;
 
     next();
 });

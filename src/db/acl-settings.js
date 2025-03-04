@@ -18,18 +18,22 @@ const ACL_SETTINGS_MODEL_NAME = constants.MODEL.ACL_SETTINGS;
         type: Boolean,
         default: false
       },
-      createdBy: { 
+      created_by: { 
         type: mongoose.Schema.Types.ObjectId,
         ref: USER_MODEL_NAME,
         default: null 
       },
-      createdAt: {
+      created_at: {
           type: Date,
           default: Date.now
-      }
+      },
+      updated_at: {
+        type: Date,
+        default: Date.now
+    }
   },{
     versionKey: false,
-    timestamps: true
+    // timestamps: true
   });
 
   // Pre-save middleware to convert timestamps to IST
@@ -38,11 +42,11 @@ const ACL_SETTINGS_MODEL_NAME = constants.MODEL.ACL_SETTINGS;
     const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
     const istDate = new Date(now.getTime() + istOffset);
 
-    // Set createdAt and updatedAt fields to IST
+    // Set created_at and updatedAt fields to IST
     if (this.isNew) {
-        this.createdAt = istDate;
+        this.created_at = istDate;
     }
-    this.updatedAt = istDate;
+    this.updated_at = istDate;
 
     next();
   });
@@ -53,11 +57,11 @@ const ACL_SETTINGS_MODEL_NAME = constants.MODEL.ACL_SETTINGS;
     const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
     const istDate = new Date(now.getTime() + istOffset);
 
-    this._update.updatedAt = istDate;
+    this._update.updated_at = istDate;
 
     next();
   });
 
-  const aclSettingsSchema = mongoose.model(ACL_SETTINGS_MODEL_NAME, AclSettingsSchema);
+  const aclSettingsSchema = mongoose.model(ACL_SETTINGS_MODEL_NAME, AclSettingsSchema, ACL_SETTINGS_MODEL_NAME);
 
   module.exports = aclSettingsSchema;

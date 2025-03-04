@@ -24,14 +24,14 @@ class FLowRepository extends CrudRepository {
         }
         const nodeData = nodes[nodeId];
         return {
-          flowName,
-          callcenterId: callCenterId,
-          flowId, 
-          nodeId: parseInt(nodeId, 10), 
-          flowJson: nodeData.flowJson,
+          flow_name: flowName,
+          call_center_id: callCenterId,
+          flow_id: flowId, 
+          node_id: parseInt(nodeId, 10), 
+          flow_json: nodeData.flowJson,
           status: 1,
-          flowRender: nodeData.flowRender,
-          createdBy: loggedId
+          flow_render: nodeData.flowRender,
+          created_by: loggedId
         };
       });
 
@@ -49,7 +49,7 @@ class FLowRepository extends CrudRepository {
 
   async getIVRByFlowId(flowId) {
     try {
-      let response = await this.model.find({ flowId: flowId }).sort({ nodeId: 1 }).lean();
+      let response = await this.model.find({ flow_id: flowId }).sort({ node_id: 1 }).lean();
       return response;
     } catch (error) {
       throw error;
@@ -61,12 +61,12 @@ class FLowRepository extends CrudRepository {
       let response = await this.model.aggregate([
         {
           $match: {
-            createdBy: new mongoose.Types.ObjectId(userId)
+            created_by: new mongoose.Types.ObjectId(userId)
           }
         },
         {
           $group: {
-            _id: "$flowId",
+            _id: "$flow_id",
             document: { $first: "$$ROOT" }
           }
         },
@@ -74,7 +74,7 @@ class FLowRepository extends CrudRepository {
           $replaceRoot: { newRoot: "$document" }
         },
         {
-          $sort: { createdAt: -1 }
+          $sort: { created_at: -1 }
         }
       ]);
   
@@ -87,7 +87,7 @@ class FLowRepository extends CrudRepository {
 
   async deleteIVRByFlowId(flowId) {
     try {
-      let response = await this.model.deleteMany({ flowId: flowId });
+      let response = await this.model.deleteMany({ flow_id: flowId });
       return response;
     } catch (error) {
       throw error;
@@ -95,7 +95,7 @@ class FLowRepository extends CrudRepository {
   }
 
   async updateByFlowId(id, data) {
-    const response = await this.model.updateMany({flowId: id}, data, { runValidators: true, new: true });
+    const response = await this.model.updateMany({flow_id: id}, data, { runValidators: true, new: true });
     return response;
   }
 

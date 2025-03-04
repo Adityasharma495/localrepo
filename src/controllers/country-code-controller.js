@@ -23,7 +23,7 @@ async function create(req, res) {
         const userJourneyfields = {
             module_name: MODULE_LABEL.COUNTRY_CODE,
             action: ACTION_LABEL.ADD,
-            createdBy: req?.user?.id
+            created_by: req?.user?.id
           }
       
         await userJourneyRepo.create(userJourneyfields);
@@ -137,7 +137,7 @@ async function updateCountryCode(req, res) {
         const userJourneyfields = {
             module_name: MODULE_LABEL.COUNTRY_CODE,
             action: ACTION_LABEL.EDIT,
-            createdBy: req?.user?.id
+            created_by: req?.user?.id
           }
       
         await userJourneyRepo.create(userJourneyfields);
@@ -180,7 +180,7 @@ async function deleteCountryCode(req, res) {
         const userJourneyfields = {
             module_name: MODULE_LABEL.COUNTRY_CODE,
             action: ACTION_LABEL.DELETE,
-            createdBy: req?.user?.id
+            created_by: req?.user?.id
           }
       
         await userJourneyRepo.create(userJourneyfields);

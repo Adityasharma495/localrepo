@@ -9,7 +9,7 @@ class PromptRepository extends CrudRepository {
   // Accept a query condition to filter results
   async get(conditions = {}) {
     try {
-      const response = await this.model.find(conditions).sort({ createdAt: -1 }); // Apply the conditions
+      const response = await this.model.find(conditions).sort({ created_at: -1 }); // Apply the conditions
       return response;
     } catch (error) {
       throw error;

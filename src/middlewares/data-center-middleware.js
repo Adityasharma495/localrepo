@@ -155,7 +155,7 @@ function modifyDataCenterRequest(req, is_create = true) {
             }
         }
 
-        if (is_create) inputData.data_center.createdBy = req.user.id
+        if (is_create) inputData.data_center.created_by = req.user.id
 
         if (bodyReq.type == DATA_CENTER_TYPE.DOMESTIC) {
             inputData.data_center.domestic_details = bodyReq.domestic_details;

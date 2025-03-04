@@ -108,7 +108,7 @@ function modifyServerManagementRequest(req, is_create = true) {
             }
         }
 
-        if (is_create) inputData.server.createdBy = req.user.id
+        if (is_create) inputData.server.created_by = req.user.id
 
         return inputData;
 

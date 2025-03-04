@@ -14,10 +14,10 @@ class AgentGroupRepository extends CrudRepository {
   async getAll(current_uid) {
     try {
         let response = await agentGroupModel
-            .find({ is_deleted: false, createdBy :  current_uid })
+            .find({ is_deleted: false, created_by :  current_uid })
             .populate('agent_id') 
-            .populate('createdBy')
-            .sort({ createdAt: -1 })
+            .populate('created_by')
+            .sort({ created_at: -1 })
             .lean();
         return response;
     } catch (error) {

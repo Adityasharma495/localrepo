@@ -5,7 +5,7 @@ module.exports = {
     CodecRepository: require('./codec-repository'),
     TrunksRepository: require('./trunk-repository'),
     CountryCodeRepository: require('./country-code-repository'),
-    NumbersRepository: require('./numbersRepository'),
+    NumbersRepository: require('./numbers-repository'),
     IVRRepository: require('./ivr-repository'),
     OperatorsRepository: require('./operator-repository'),
     CallsRepository: require('./calls-repository'),

@@ -26,11 +26,11 @@ const NumberStatusSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    createdAt: {
+    created_at: {
         type: Date,
         default: Date.now
     },
-    updatedAt: {
+    updated_at: {
         type: Date,
         default: Date.now
     }
@@ -45,26 +45,26 @@ const NumberStatusSchema = new mongoose.Schema({
         const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
         const istDate = new Date(now.getTime() + istOffset);
 
-        // Set createdAt and updatedAt fields to IST
+        // Set created_at and updated_at fields to IST
         if (this.isNew) {
-            this.createdAt = istDate;
+            this.created_at = istDate;
         }
-        this.updatedAt = istDate;
+        this.updated_at = istDate;
 
         next();
     });
 
-    // Pre-update middleware to convert updatedAt to IST
+    // Pre-update middleware to convert updated_at to IST
     NumberStatusSchema.pre('findOneAndUpdate', function (next) {
         const now = new Date();
         const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
         const istDate = new Date(now.getTime() + istOffset);
 
-        this._update.updatedAt = istDate;
+        this._update.updated_at = istDate;
 
         next();
     });
 
-const moduleData = mongoose.model(MODEL.NUMBER_STATUS, NumberStatusSchema);
+const moduleData = mongoose.model(MODEL.NUMBER_STATUS, NumberStatusSchema, MODEL.NUMBER_STATUS);
 
 module.exports = moduleData;

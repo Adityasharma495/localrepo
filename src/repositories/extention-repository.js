@@ -15,7 +15,7 @@ class ExtentionRepository extends CrudRepository {
     try {
       let conditions = {
         is_deleted: false,
-        createdBy: current_uid,
+        created_by: current_uid,
       };
   
       // Add additional condition if `check` is 'all'
@@ -23,7 +23,7 @@ class ExtentionRepository extends CrudRepository {
         conditions.isAllocated = 0;
       }
 
-      let response = await extentionModel.find(conditions).populate('createdBy').sort({ createdAt: -1 }).lean();
+      let response = await extentionModel.find(conditions).populate('created_by').sort({ created_at: -1 }).lean();
       return response;
 
     } catch (error) {

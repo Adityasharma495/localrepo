@@ -20,7 +20,7 @@ async function createAclSettings(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.ACL_SETTINGS,
       action: ACTION_LABEL.ADD,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
@@ -125,7 +125,7 @@ async function deleteAclSettings(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.ACL_SETTINGS,
       action: ACTION_LABEL.DELETE,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
@@ -176,7 +176,7 @@ async function updateAclSettings(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.ACL_SETTINGS,
       action: ACTION_LABEL.EDIT,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
