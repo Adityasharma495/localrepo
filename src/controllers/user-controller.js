@@ -78,9 +78,9 @@ async function signupUser(req, res) {
     }
 
     // licence is created only when superadmin creates a reseller
-    if (req.user.role === USERS_ROLE.SUPER_ADMIN || req.user.role === USERS_ROLE.SUB_SUPERADMIN) {
-      await licenceCreated(bodyReq, req.user, user);
-    }
+    // if (req.user.role === USERS_ROLE.SUPER_ADMIN || req.user.role === USERS_ROLE.SUB_SUPERADMIN) {
+    //   await licenceCreated(bodyReq, req.user, user);
+    // }
 
     // insert sub user licence when user created by reseller
     if (req.user.role === USERS_ROLE.RESELLER) {
@@ -310,26 +310,26 @@ async function updateUser(req, res) {
     const responseData = {};
     
     // only update licence in case if reseller (reseller only update by superadmin or subsuperadmin)
-    if (req.user.role === USERS_ROLE.SUPER_ADMIN || req.user.role === USERS_ROLE.SUB_SUPERADMIN) {
-      // licence update
-      const savedLicence = await licenceRepo.findOne({user_id: uid , is_deleted : false});
-      if (Number(bodyReq.user.licence) < Number(savedLicence.total_licence - savedLicence.availeble_licence)) {
-        ErrorResponse.message = `Can't Set Licence Because used licence Are greater.`;
-        return res
-              .status(StatusCodes.BAD_REQUEST)
-              .json(ErrorResponse);
-      }
-      const licenceData = {
-        user_type: savedLicence.user_type,
-        total_licence: bodyReq.user.licence,
-        availeble_licence: bodyReq.user.licence - (savedLicence.total_licence - savedLicence.availeble_licence) 
-      }
+    // if (req.user.role === USERS_ROLE.SUPER_ADMIN || req.user.role === USERS_ROLE.SUB_SUPERADMIN) {
+    //   // licence update
+    //   const savedLicence = await licenceRepo.findOne({user_id: uid , is_deleted : false});
+    //   if (Number(bodyReq.user.licence) < Number(savedLicence.total_licence - savedLicence.availeble_licence)) {
+    //     ErrorResponse.message = `Can't Set Licence Because used licence Are greater.`;
+    //     return res
+    //           .status(StatusCodes.BAD_REQUEST)
+    //           .json(ErrorResponse);
+    //   }
+    //   const licenceData = {
+    //     user_type: savedLicence.user_type,
+    //     total_licence: bodyReq.user.licence,
+    //     availeble_licence: bodyReq.user.licence - (savedLicence.total_licence - savedLicence.availeble_licence) 
+    //   }
 
-      const data = await licenceRepo.findOne({user_id : uid}) 
-      if (data) {
-        await licenceRepo.updateByUserId(uid, licenceData)
-      }
-    }
+    //   const data = await licenceRepo.findOne({user_id : uid}) 
+    //   if (data) {
+    //     await licenceRepo.updateByUserId(uid, licenceData)
+    //   }
+    // }
 
     // if reseller update the sub licence values
     if (req.user.role === USERS_ROLE.RESELLER) {
