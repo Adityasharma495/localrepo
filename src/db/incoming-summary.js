@@ -1,0 +1,66 @@
+const mongoose = require('mongoose');
+const { constants } = require('../utils/common');
+const INCOMING_SUMMARY_MODEL = constants.MODEL.INCOMING_SUMMARY; // Replace with actual collection name
+
+const YourSchema = new mongoose.Schema(
+  {
+    did: { type: Number, required: true },
+    user_id: { type: mongoose.Schema.Types.ObjectId, ref: constants.MODEL.USERS, required: true },
+    schedule_date: { type: Date, required: true },
+    nos_processed: { type: Number, default: 0 },
+    total_nos: { type: Number, default: 0 },
+    dnd_count: { type: Number, default: 0 },
+    pulses: { type: Number, default: 0 },
+    connected_calls: { type: Number, default: 0 },
+    dtmf_count: { type: Number, default: 0 },
+    dtmf1_count: { type: Number, default: 0 },
+    dtmf2_count: { type: Number, default: 0 },
+    retry_count: { type: Number, default: 0 },
+    parent_id: { type: mongoose.Schema.Types.ObjectId, ref: constants.MODEL.USERS, required: true },
+    parent_pulse_duration: { type: Number, default: 0 },
+    s_parent_id: { type: mongoose.Schema.Types.ObjectId, ref: constants.MODEL.USERS, required: true },
+    s_parent_pulse_duration: { type: Number, default: 0 },
+    pulse_duration: { type: Number, default: 0 },
+    auto_retry_count: { type: Number, default: 0 },
+    sms_count: { type: Number, default: 0 },
+    parent_pulses: { type: Number, default: 0 },
+    s_parent_pulses: { type: Number, default: 0 },
+    parent_refund: { type: Number, default: 0 },
+    s_parent_refund: { type: Number, default: 0 },
+    billing_duration: { type: Number, default: 0 },
+    tts_count: { type: Number, default: 0 },
+    webhook_count: { type: Number, default: 0 },
+    created_at: { type: Date, default: Date.now },
+    updated_at: { type: Date, default: Date.now }
+  },
+  {
+    versionKey: false
+  }
+);
+
+// Pre-save middleware to convert timestamps to IST
+YourSchema.pre('save', function (next) {
+  const now = new Date();
+  const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
+  const istDate = new Date(now.getTime() + istOffset);
+
+  if (this.isNew) {
+    this.created_at = istDate;
+  }
+  this.updated_at = istDate;
+  next();
+});
+
+// Pre-update middleware to update `updated_at` to IST
+YourSchema.pre('findOneAndUpdate', function (next) {
+  const now = new Date();
+  const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
+  const istDate = new Date(now.getTime() + istOffset);
+
+  this._update.updated_at = istDate;
+  next();
+});
+
+const YourModel = mongoose.model(INCOMING_SUMMARY_MODEL, YourSchema, INCOMING_SUMMARY_MODEL);
+
+module.exports = YourModel;

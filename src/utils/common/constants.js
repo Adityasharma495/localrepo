@@ -106,7 +106,8 @@ const MODEL = {
     MEMEBER_SCHEDULES: 'member_schedules',
     SUB_USER_LICENCE: 'sub_user_licence',
     FLOW_JSON: 'flows_json',
-    CREDITS: 'credit_history'
+    CREDITS: 'credit_history',
+    INCOMING_SUMMARY: 'incoming_summary'
 }
 
 const AUTH_TYPES = {

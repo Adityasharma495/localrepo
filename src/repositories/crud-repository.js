@@ -8,10 +8,14 @@ class CrudRepository {
 
     async create(data) {
         try {
+            console.log('dtaa', data)
             const response = await this.model.create(data);
             return response;            
         } catch (error) {
+            console.log('dtaa', error)
+
             throw error
+
             // console.log(error);
             // if (error.name === 'ValidationError' || (error.name === 'MongoServerError' && error.code === 11000)) {
             //     let detailedErrorMessage = error.message;
