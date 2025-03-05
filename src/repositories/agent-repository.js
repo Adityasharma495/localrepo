@@ -94,14 +94,14 @@ class AgentRepository extends CrudRepository {
     }
   }
 
-  async getAllActiveAgents() {
+  async getAllActiveAgents(userId) {
     try {
         // Fetch all agents where is_deleted is false
-        const agents = await this.model.find({ is_deleted: false })
-            .populate('extention')  // Populate extension details if referenced
-            .populate('created_by')  // Populate created_by user details if referenced
-            .sort({ created_at: -1 }) // Sort by creation date in descending order
-            .lean(); // Return plain JavaScript objects instead of Mongoose documents
+        const agents = await this.model.find({ is_deleted: false, created_by :  userId})
+            .populate('extention') 
+            .populate('created_by') 
+            .sort({ created_at: -1 })
+            .lean();
 
         return agents;
     } catch (error) {

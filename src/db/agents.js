@@ -64,6 +64,14 @@ const AgentsSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    call_status: {
+        type: Number,
+        default: 0,
+    },
+    last_call: {
+        type: Date,
+        default: null
+    },
     created_by: { 
         type: mongoose.Schema.Types.ObjectId,
         ref: USER_MODEL_NAME,
