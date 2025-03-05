@@ -14,9 +14,9 @@ class CreditRepository extends CrudRepository {
 
       if (id) {
         const targetUser = await UserModel.find({ _id: id });
-        notIncludeThisUser = targetUser[0]?.createdBy;
+        notIncludeThisUser = targetUser[0]?.created_by;
 
-        const users = await UserModel.find({ createdBy: id }).select('_id');
+        const users = await UserModel.find({ created_by: id }).select('_id');
         userIds = users.map(user => user._id.toString());
       }
 

@@ -13,7 +13,7 @@ const NumberStatusSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    createdBy: {
+    created_by: {
         type: mongoose.Schema.Types.ObjectId,
         ref: USER_MODEL_NAME,
         required: true

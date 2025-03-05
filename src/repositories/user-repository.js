@@ -40,15 +40,15 @@ class UserRepository extends CrudRepository{
             // If role is "Superadmin", show all users
             if (current_user_role === 'role_sadmin') {
                 data = await userModel.find({ is_deleted: false })
-                    .populate('createdBy', 'username')
-                    .sort({ createdAt: -1 });
+                    .populate('created_by', 'username')
+                    .sort({ created_at: -1 });
             } else {
                 data = await userModel.find({ 
                         is_deleted: false, 
-                        createdBy: current_uid 
+                        created_by: current_uid 
                     })
-                    .populate('createdBy', 'username')
-                    .sort({ createdAt: -1 });
+                    .populate('created_by', 'username')
+                    .sort({ created_at: -1 });
             }
     
             // Remove password field and convert status to labels
@@ -89,8 +89,8 @@ class UserRepository extends CrudRepository{
             const userStatusValues = constants.USERS_STATUS_VALUES_LABEL;
             
             let data = await this.model.find({
-                createdBy: call_centre_id, is_deleted: false
-            }).sort({ createdAt: -1 }) ;
+                created_by: call_centre_id, is_deleted: false
+            }).sort({ created_at: -1 }) ;
 
             //TODO: Make it dynamic (modular)
             //Remove password field and convert status to its corresponding label
@@ -130,14 +130,14 @@ class UserRepository extends CrudRepository{
             if (loggedUser.role === USERS_ROLE.SUPER_ADMIN || loggedUser.role === USERS_ROLE.SUB_SUPERADMIN) {
                 for (const userId of idArray) {
                     const userData = await this.get(userId);
-                    if (userData.createdBy.toString() !== loggedUser.id.toString()) {
+                    if (userData.created_by.toString() !== loggedUser.id.toString()) {
                         throw new Error("One or more users were not created by the logged-in superadmin, so deletion is not allowed.");
                     }
                 }
             }
     
             for (const userId of idArray) {
-                const parentDetail = await this.findOne({ createdBy: userId });
+                const parentDetail = await this.findOne({ created_by: userId });
 
                 if (parentDetail !== null) {
                     throw new Error("One or more records cannot be deleted as they have child records.");

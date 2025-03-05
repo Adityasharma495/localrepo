@@ -107,7 +107,7 @@ async function signupUser(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.USERS,
       action: ACTION_LABEL.ADD,
-      createdBy:  req?.user?.id
+      created_by:  req?.user?.id
     }
 
     const userJourney = await userJourneyRepo.create(userJourneyfields);
@@ -152,7 +152,7 @@ async function licenceCreated(bodyReq, loggedUser, userCreated) {
         user_id : userCreated._id,
         total_licence: bodyReq.user.licence,
         availeble_licence: bodyReq.user.licence,
-        createdBy: loggedUser.id
+        created_by: loggedUser.id
       }
       await licenceRepo.create(licenceData)
 
@@ -167,7 +167,7 @@ async function licenceCreated(bodyReq, loggedUser, userCreated) {
         user_id : userCreated._id,
         total_licence: bodyReq.user.licence,
         availeble_licence: bodyReq.user.licence,
-        createdBy: loggedUser.id
+        created_by: loggedUser.id
       }
       await licenceRepo.create(licenceData)
     }
@@ -197,7 +197,7 @@ async function signinUser(req, res) {
         const userJourneyfields = {
           module_name: MODULE_LABEL.USERS,
           action: ACTION_LABEL.LOGIN,
-          createdBy:  userData._id
+          created_by:  userData._id
         }
     
         await userJourneyRepo.create(userJourneyfields);
@@ -381,7 +381,7 @@ async function updateUser(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.USERS,
       action: ACTION_LABEL.EDIT,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     const userJourney = await userJourneyRepo.create(userJourneyfields);
@@ -499,7 +499,7 @@ async function deleteUser(req, res) {
 
       // Check if reseller has any child if yes don't delete reseller
       for (const userId of userIds) {
-        const data = await userRepo.findOne({ createdBy: userId });
+        const data = await userRepo.findOne({ created_by: userId });
         if (data) {
           ErrorResponse.message = `Child Present, Reseller Can't Deleted`;
           return res
@@ -524,7 +524,7 @@ async function deleteUser(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.USERS,
       action: ACTION_LABEL.DELETE,
-      createdBy:  req?.user?.id
+      created_by:  req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
@@ -586,7 +586,7 @@ async function logoutUser(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.USERS,
       action: ACTION_LABEL.LOGOUT,
-      createdBy:  req.user.id
+      created_by:  req.user.id
     }
 
     await userJourneyRepo.create(userJourneyfields);

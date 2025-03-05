@@ -15,12 +15,12 @@ const UserJourneySchema = new mongoose.Schema({
         type: String,
         required: true
       },
-      createdBy: { 
+      created_by: { 
         type: mongoose.Schema.Types.ObjectId,
         ref: USER_MODEL_NAME,
         default: null 
       },
-      createdAt: {
+      created_at: {
         type: Date,
         default: Date.now
       },
@@ -36,9 +36,9 @@ const UserJourneySchema = new mongoose.Schema({
   const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
   const istDate = new Date(now.getTime() + istOffset);
 
-  // Set createdAt and updatedAt fields to IST
+  // Set created_at and updatedAt fields to IST
   if (this.isNew) {
-      this.createdAt = istDate;
+      this.created_at = istDate;
   }
   this.updatedAt = istDate;
 

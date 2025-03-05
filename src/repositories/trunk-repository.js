@@ -13,10 +13,10 @@ class TrunksRepository extends CrudRepository {
   async getAll(current_uid) {
 
     try {
-      let response = await trunksModel.find({ is_deleted: false, createdBy: current_uid })
+      let response = await trunksModel.find({ is_deleted: false, created_by: current_uid })
       .populate('operator', ["_id", "name"]) 
       .populate('server', ["_id", "server_name"])
-      .sort({ createdAt: -1 })
+      .sort({ created_at: -1 })
       .lean();
       response = response.map(val => {
         val['status'] = trunkStatusValues[val['status']];

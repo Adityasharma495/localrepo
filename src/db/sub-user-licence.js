@@ -38,7 +38,7 @@ const SubUserLicenceSchema = new mongoose.Schema({
     }
 }, {
     versionKey: false,
-    timestamps: true
+    // timestamps: true
 });
 
 // Pre-save middleware to convert timestamps to IST

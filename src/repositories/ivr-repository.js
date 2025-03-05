@@ -25,7 +25,7 @@ class IVRRepository extends CrudRepository {
 
     try {
 
-      let response = await ivrModel.find({ is_deleted: false, createdBy: current_uid }).select({data:0, input_action_data: 0, config: 0}).sort({ createdAt: -1 }).lean();
+      let response = await ivrModel.find({ is_deleted: false, created_by: current_uid }).select({data:0, input_action_data: 0, config: 0}).sort({ created_at: -1 }).lean();
 
       return response;
 
