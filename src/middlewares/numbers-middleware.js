@@ -136,7 +136,7 @@ function modifyNumberRequest(req, is_create = true) {
         }
 
         if (is_create) {
-            inputData.number.createdBy = req.user.id
+            inputData.number.created_by = req.user.id
             inputData.number.status = Number(1) // default status is Available(1)
         }
         return inputData;

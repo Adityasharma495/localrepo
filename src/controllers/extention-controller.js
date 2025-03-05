@@ -15,7 +15,7 @@ async function createExtention(req, res) {
   try {
     const responseData = {}
     const conditions = {
-      createdBy: req.user.id,
+      created_by: req.user.id,
       $or: [
         { extention: bodyReq.extention.extention },
         { username: bodyReq.extention.username}
@@ -36,7 +36,7 @@ async function createExtention(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.EXTENTION,
       action: ACTION_LABEL.ADD,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
@@ -145,7 +145,7 @@ async function updateExtention(req, res) {
 
     if (currentData.extention !== bodyReq.extention.extention) {
       const extentionCondition = {
-        createdBy: req.user.id,
+        created_by: req.user.id,
         extention: bodyReq.extention.extention
       };
       const extentionDuplicate = await extentionRepo.findOne(extentionCondition);
@@ -158,7 +158,7 @@ async function updateExtention(req, res) {
     // Check for duplicate username if it is being changed
     if (currentData.username !== bodyReq.extention.username) {
       const nameCondition = {
-        createdBy: req.user.id,
+        created_by: req.user.id,
         username: bodyReq.extention.username
       };
       const nameDuplicate = await extentionRepo.findOne(nameCondition);
@@ -177,7 +177,7 @@ async function updateExtention(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.EXTENTION,
       action: ACTION_LABEL.EDIT,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
@@ -227,7 +227,7 @@ async function deleteExtention(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.EXTENTION,
       action: ACTION_LABEL.DELETE,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);

@@ -96,7 +96,7 @@ function modifyQueueBodyRequest(req, is_create = true) {
             }
         }
 
-        if (is_create) inputData.queue.createdBy = req.user.id
+        if (is_create) inputData.queue.created_by = req.user.id
         return inputData;
 
     } catch (error) {

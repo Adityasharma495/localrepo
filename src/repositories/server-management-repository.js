@@ -13,7 +13,8 @@ class ServerManagementRepository extends CrudRepository {
 
     try {
 
-      let response = await serverManagementModel.find({ is_deleted: false }).populate('data_center', ["_id", "name"]).sort({ createdAt: -1 }).lean();
+      let response = await serverManagementModel.find({ is_deleted: false }).populate('data_center', ["_id", "name"]).sort({ created_at: -1 }).lean();
+      console.log('response',response)
       response = response.map(val => {
         val['type'] = dataCenterLabelType[val['type']];
         return val;
@@ -22,6 +23,7 @@ class ServerManagementRepository extends CrudRepository {
       return response;
 
     } catch (error) {
+      console.log('error',error)
 
       throw error;
 

@@ -12,7 +12,7 @@ class LicenceRepository extends CrudRepository {
 
     try {
 
-      let response = await licenceModel.find({ is_deleted: false, createdBy :  current_uid}).sort({ createdAt: -1 }).lean();
+      let response = await licenceModel.find({ is_deleted: false, created_by :  current_uid}).sort({ created_at: -1 }).lean();
       return response;
 
     } catch (error) {

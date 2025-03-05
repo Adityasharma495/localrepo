@@ -13,7 +13,7 @@ class QueueRepository extends CrudRepository {
 
     try {
 
-      let response = await queueModel.find({ is_deleted: false, createdBy :  current_uid }).populate('extention').populate('createdBy').sort({ createdAt: -1 }).lean();
+      let response = await queueModel.find({ is_deleted: false, created_by :  current_uid }).populate('extention').populate('created_by').sort({ created_at: -1 }).lean();
       return response;
     } catch (error) {
       throw error;

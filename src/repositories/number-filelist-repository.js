@@ -10,7 +10,7 @@ class NumberFileListRepository extends CrudRepository {
 
   async getAll() {
     try {
-      let response = await numberFileListModel.find({ is_deleted: false }).populate('user_id', ["_id", "username"]).sort({ createdAt: -1 }).lean();
+      let response = await numberFileListModel.find({ is_deleted: false }).populate('user_id', ["_id", "username"]).sort({ created_at: -1 }).lean();
       return response;
     } catch (error) {
       throw error;

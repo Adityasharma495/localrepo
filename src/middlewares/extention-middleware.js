@@ -70,7 +70,7 @@ function modifyExtentionBodyRequest(req, is_create = true) {
             }
         }
 
-        if (is_create) inputData.extention.createdBy = req.user.id
+        if (is_create) inputData.extention.created_by = req.user.id
 
 
         return inputData;

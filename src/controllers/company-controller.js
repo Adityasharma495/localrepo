@@ -10,7 +10,7 @@ const userJourneyRepo = new UserJourneyRepository();
 async function create(req, res){
 
     const bodyReq = req.body;
-    const data = { name: bodyReq.name, createdBy: req.user.id }
+    const data = { name: bodyReq.name, created_by: req.user.id }
 
     try {
 
@@ -19,7 +19,7 @@ async function create(req, res){
         const userJourneyfields = {
             module_name: MODULE_LABEL.COMPANY,
             action: ACTION_LABEL.ADD,
-            createdBy: req?.user?.id
+            created_by: req?.user?.id
           }
       
         await userJourneyRepo.create(userJourneyfields);
@@ -128,7 +128,7 @@ async function updateCompany(req, res){
         const userJourneyfields = {
             module_name: MODULE_LABEL.COMPANY,
             action: ACTION_LABEL.EDIT,
-            createdBy: req?.user?.id
+            created_by: req?.user?.id
           }
       
         await userJourneyRepo.create(userJourneyfields);

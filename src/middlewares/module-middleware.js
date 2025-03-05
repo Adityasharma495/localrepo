@@ -45,7 +45,7 @@ function modifyModuleBodyRequest(req, is_create = true) {
             }
         }
 
-        if (is_create) inputData.module.createdBy = req.user.id
+        if (is_create) inputData.module.created_by = req.user.id
 
 
         return inputData;

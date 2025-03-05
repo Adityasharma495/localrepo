@@ -126,7 +126,7 @@ async function modifyAgentGroupBodyRequest(req, is_create = true) {
                     manager: bodyReq.manager.trim(),
                 },
             };
-            inputData.agent.createdBy = req.user.id;
+            inputData.agent.created_by = req.user.id;
         }
 
         if (!is_create) {

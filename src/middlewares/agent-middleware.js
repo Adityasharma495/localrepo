@@ -98,7 +98,7 @@ function modifyAgentBodyRequest(req, is_create = true) {
             }
         }
 
-        if (is_create) inputData.agent.createdBy = req.user.id
+        if (is_create) inputData.agent.created_by = req.user.id
         return inputData;
 
     } catch (error) {

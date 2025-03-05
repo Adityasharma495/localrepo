@@ -320,7 +320,7 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
         if(is_create){
             inputData.user.role = bodyReq.role;
             inputData.user.password = bodyReq.password.trim();
-            inputData.user.createdBy =  bodyReq.createdBy ?? req.user.id;
+            inputData.user.created_by =  bodyReq.created_by ?? req.user.id;
         }
         //In case of user update
         else{
@@ -351,7 +351,7 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
             }
 
             if(is_create){
-                inputData.company.createdBy = req.user.id;
+                inputData.company.created_by = req.user.id;
                 inputData.company.category = associatedCompanyCategory;
             }else{
                 inputData.company.id = bodyReq.company.id;

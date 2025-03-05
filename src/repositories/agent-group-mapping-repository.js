@@ -14,7 +14,7 @@ class AgentGroupMappingRepository extends CrudRepository {
 
     try {
 
-      let response = await agentGroupMappingModel.find({ is_deleted: false }).sort({ createdAt: -1 }).lean();
+      let response = await agentGroupMappingModel.find({ is_deleted: false }).sort({ created_at: -1 }).lean();
       return response;
 
     } catch (error) {

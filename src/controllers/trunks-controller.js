@@ -19,7 +19,7 @@ async function createTrunk(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.TRUNKS,
       action: ACTION_LABEL.ADD,
-      createdBy:  req?.user?.id
+      created_by:  req?.user?.id
     }
 
     const userJourney = await userJourneyRepo.create(userJourneyfields);
@@ -128,7 +128,7 @@ async function deleteTrunk(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.TRUNKS,
       action: ACTION_LABEL.DELETE,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
@@ -176,7 +176,7 @@ async function updateTrunk(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.TRUNKS,
       action: ACTION_LABEL.EDIT,
-      createdBy:  req?.user?.id
+      created_by:  req?.user?.id
     }
 
     const userJourney = await userJourneyRepo.create(userJourneyfields);

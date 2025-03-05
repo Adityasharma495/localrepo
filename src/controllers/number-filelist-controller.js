@@ -41,7 +41,7 @@ async function deleteNumberFile(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.NUMBER_FILE_LIST,
       action: ACTION_LABEL.DELETE,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);

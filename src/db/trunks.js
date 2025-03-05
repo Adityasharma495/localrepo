@@ -85,7 +85,7 @@ const TrunksSchema = new mongoose.Schema({
             },
         }
     },
-    createdBy: {
+    created_by: {
         type: mongoose.Schema.Types.ObjectId,
         ref: USER_MODEL_NAME,
         required: true
@@ -99,10 +99,18 @@ const TrunksSchema = new mongoose.Schema({
         ref: SERVER_MODEL,
         required: true
     },
+    created_at: {
+        type: Date,
+        default: Date.now
+    },
+    updated_at: {
+        type: Date,
+        default: Date.now
+    }
 
 }, {
     versionKey: false,
-    timestamps: true
+    // timestamps: true
 });
 
 const trunksSchema = mongoose.model(TRUNKS_MODEL_NAME, TrunksSchema);
