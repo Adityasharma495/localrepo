@@ -46,6 +46,16 @@ const User = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    // companies: {
+    //   type: DataTypes.JSONB,
+    //   defaultValue: [],
+    //   allowNull: true,
+    // },   
+    credits_available: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false 
+    }, 
     created_at: {
       type: DataTypes.DATE,
       allowNull: false,

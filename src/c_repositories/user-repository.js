@@ -15,7 +15,6 @@ class UserRepository extends CrudRepository{
     async getByUsername(username){
         try {
             const user = await User.findOne({ where: { username } });
-            console.log("RETURING USER", user);
             return user;    
 
         } catch (error) {

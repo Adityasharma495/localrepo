@@ -7,7 +7,7 @@ const sequelize = new Sequelize('cloud-telephony','admin', 'RxKs%926', {
   dialectOptions: {
     ssl: false 
   },
-  logging: console.log,
+  logging: false,
 });
 
 
