@@ -16,6 +16,7 @@ const flowEdgesRepo = new FlowEdgesRepository();
 const memberScheduleRepo = new MemberScheduleRepository();
 const flowJsonRepository = new FlowJsonRepository();
 const userRepository = new UserRepository();
+const amqp = require("amqplib");
 
 
 async function createIVR(req, res) {
@@ -115,6 +116,9 @@ async function createIVR(req, res) {
         re_prompt: bodyReq.nodesData.rePrompt,
         is_gather_node: bodyReq.nodesData.isGatherNode
       })
+      Logger.info(`Publishing message to queue`);
+      publishIVRUpdate();
+
     }
 
       const lastResponse = "Successfully created a new IVR"
@@ -141,6 +145,28 @@ async function createIVR(req, res) {
     ErrorResponse.error = error;
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse); 
   }
+}
+async function publishIVRUpdate() {
+	Logger.info("Inside Publish IVR");
+	try {
+        const connection = await amqp.connect("amqp://dialplan:ns@4044888@localhost:5672");
+        const channel = await connection.createChannel();
+
+        const exchange = "dialplan_exchange";
+        const routingKey = "dialplan.update";
+
+        // Declare the exchange before publishing
+        await channel.assertExchange(exchange, "fanout", { durable: true });
+
+        const message = "dialplan reload";
+        channel.publish(exchange, routingKey, Buffer.from(message));
+
+        Logger.info(`Sent message to exchange: ${exchange}`);
+        await channel.close();
+        await connection.close();
+    } catch (error) {
+        Logger.error("Error publishing message:", error);
+    }
 }
 async function getIVRSettings(req, res) {
   try {
