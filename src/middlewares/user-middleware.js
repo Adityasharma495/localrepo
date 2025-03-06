@@ -312,7 +312,8 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
                 acl_settings: bodyReq.acl_settings,
                 // licence: bodyReq?.licence || 0,
                 sub_licence: bodyReq?.sub_licence || {},
-                flow_type: bodyReq?.flow_type
+                flow_type: bodyReq?.flow_type,
+                parent_licence: bodyReq?.parent_licence || {}
             }
         };
 

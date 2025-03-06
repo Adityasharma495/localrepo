@@ -26,17 +26,17 @@ async function signupUser(req, res) {
 
     // licence check only for reseller
     // if (req.user.role !== USERS_ROLE.SUPER_ADMIN && req.user.role !== USERS_ROLE.SUB_SUPERADMIN) {
-    if (req.user.role === USERS_ROLE.RESELLER) {
+    // if (req.user.role === USERS_ROLE.RESELLER) {
 
-      const availLicence = await licenceRepo.findOne({user_id : req.user.id})
+    //   const availLicence = await licenceRepo.findOne({user_id : req.user.id})
       
-      if (availLicence && availLicence.availeble_licence === 0) {
-        ErrorResponse.message = 'Licence is not available';
-        return res
-            .status(StatusCodes.BAD_REQUEST)
-            .json(ErrorResponse);
-      }
-    }
+    //   if (availLicence && availLicence.availeble_licence === 0) {
+    //     ErrorResponse.message = 'Licence is not available';
+    //     return res
+    //         .status(StatusCodes.BAD_REQUEST)
+    //         .json(ErrorResponse);
+    //   }
+    // }
 
     //sub user licence
     if (SUB_LICENCE_ROLE.includes(req.user.role)) {
@@ -55,12 +55,12 @@ async function signupUser(req, res) {
       }
 
       // if available_licence are not 0 then update sub user licence
-      const updatedData = {
-        ...subLicenceData, 
-        [bodyReq.user.role]: Number(subLicenceData[bodyReq.user.role] || 0) - 1
-      };
-      bodyReq.user.sub_user_licence_id = loggedInData.sub_user_licence_id._id
-      await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
+      // const updatedData = {
+      //   ...subLicenceData, 
+      //   [bodyReq.user.role]: Number(subLicenceData[bodyReq.user.role] || 0) - 1
+      // };
+      // bodyReq.user.sub_user_licence_id = loggedInData.sub_user_licence_id._id
+      await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: bodyReq.user.parent_licence})
 
     }
 
@@ -83,7 +83,7 @@ async function signupUser(req, res) {
     // }
 
     // insert sub user licence when user created by reseller
-    if (req.user.role === USERS_ROLE.RESELLER) {
+    if (req.user.role === USERS_ROLE.RESELLER || SUB_LICENCE_ROLE.includes(req.user.role)) {
       const data = await subUserLicenceRepo.create({
         user_id : user._id,
         total_licence: bodyReq.user.sub_licence,
@@ -94,7 +94,6 @@ async function signupUser(req, res) {
       subUserLicenceId = data._id
       await userRepo.update(user._id, {sub_user_licence_id: subUserLicenceId})
     }
-
        
     responseData.user = await user.generateUserData();
 
@@ -489,35 +488,40 @@ async function deleteUser(req, res) {
   try {
     
     if (req.user.role === USERS_ROLE.SUPER_ADMIN || req.user.role === USERS_ROLE.SUB_SUPERADMIN) {
-      //Delete for current users
-      for (const userId of userIds) {
-        const data = await licenceRepo.findOne({ user_id: userId });
-        if (data) {
-            await licenceRepo.updateByUserId(userId, {is_deleted: true});
-        }
-      }
-
-      // Check if reseller has any child if yes don't delete reseller
       for (const userId of userIds) {
         const data = await userRepo.findOne({ created_by: userId });
         if (data) {
-          ErrorResponse.message = `Child Present, Reseller Can't Deleted`;
+          ErrorResponse.message = `Child Present Of ${data.username}, Can't Deleted`;
           return res
                 .status(StatusCodes.BAD_REQUEST)
                 .json(ErrorResponse);
-        } else {
-          response = await userRepo.deleteMany(userIds, req.user);
         }
       } 
-    } else {
+      response = await userRepo.deleteMany(userIds, req.user);
       await userRepo.deleteMany(userIds, req.user);
+    } else {
       for (const userId of userIds) {
-        const loggedInData = await userRepo.getForLicence(userId);
-        const availableLicence = loggedInData.sub_user_licence_id.available_licence;
-        const data = await userRepo.getForLicence(userId);
-        let updatedData = { ...availableLicence };
-        updatedData[data.role] = (updatedData[data.role] || 0) + 1;
-        await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
+        const data = await userRepo.findOne({ created_by: userId });
+        if (data) {
+          ErrorResponse.message = `Child Present Of ${data.username}, Can't Deleted`;
+          return res
+                .status(StatusCodes.BAD_REQUEST)
+                .json(ErrorResponse);
+        }
+      } 
+
+      if (req.user.role === USERS_ROLE.RESELLER) {
+        response = await userRepo.deleteMany(userIds, req.user);
+      } else {
+        response = await userRepo.deleteMany(userIds, req.user);
+        for (const userId of userIds) {
+          const loggedInData = await userRepo.getForLicence(userId);
+          const availableLicence = loggedInData.sub_user_licence_id.available_licence;
+          const data = await userRepo.getForLicence(userId);
+          let updatedData = { ...availableLicence };
+          updatedData[data.role] = (updatedData[data.role] || 0) + 1;
+          await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
+        }
       }
     }
 
