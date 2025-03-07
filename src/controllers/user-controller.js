@@ -304,42 +304,67 @@ async function get(req, res) {
 async function updateUser(req, res) {
   const uid = req.params.id;
   const bodyReq = req.body;
+  console.log('bodyReq', bodyReq);
+  // process.exit(0)
  
   try {
     const responseData = {};
     
     // only update licence in case if reseller (reseller only update by superadmin or subsuperadmin)
-    // if (req.user.role === USERS_ROLE.SUPER_ADMIN || req.user.role === USERS_ROLE.SUB_SUPERADMIN) {
-    //   // licence update
-    //   const savedLicence = await licenceRepo.findOne({user_id: uid , is_deleted : false});
-    //   if (Number(bodyReq.user.licence) < Number(savedLicence.total_licence - savedLicence.availeble_licence)) {
-    //     ErrorResponse.message = `Can't Set Licence Because used licence Are greater.`;
-    //     return res
-    //           .status(StatusCodes.BAD_REQUEST)
-    //           .json(ErrorResponse);
-    //   }
-    //   const licenceData = {
-    //     user_type: savedLicence.user_type,
-    //     total_licence: bodyReq.user.licence,
-    //     availeble_licence: bodyReq.user.licence - (savedLicence.total_licence - savedLicence.availeble_licence) 
-    //   }
+    if (req.user.role === USERS_ROLE.SUPER_ADMIN || req.user.role === USERS_ROLE.SUB_SUPERADMIN || req.user.role === USERS_ROLE.RESELLER) {
+      const user = await userRepo.update(uid, bodyReq.user);
+      responseData.user = await user.generateUserData();
+    
+      if (bodyReq.company) {
+        responseData.company = await companyRepo.update(
+          bodyReq.company.id,
+          bodyReq.company
+        );
+      }
 
-    //   const data = await licenceRepo.findOne({user_id : uid}) 
-    //   if (data) {
-    //     await licenceRepo.updateByUserId(uid, licenceData)
-    //   }
-    // }
+      if (req.user.role === USERS_ROLE.RESELLER) {
+        const loggedInData = await userRepo.getForLicence(uid)
+        const total_licence = loggedInData.sub_user_licence_id.total_licence
+        const available_licence = loggedInData.sub_user_licence_id.available_licence
 
-    // if reseller update the sub licence values
-    if (req.user.role === USERS_ROLE.RESELLER) {
+        const used_licence = Object.keys(total_licence).reduce((acc, key) => {
+          acc[key] = total_licence[key] - (available_licence[key] || 0);
+          return acc;
+        }, {});
+
+        const updated_licence = bodyReq.user.sub_licence
+
+        // Compare each role and return immediately if an error is found
+        for (const key of Object.keys(used_licence)) {
+          if (used_licence[key] > (updated_licence[key] || 0)) {
+            ErrorResponse.message = `Can't Set ${USER_ROLE_VALUE[key]} Licence Because used licence Are greater.`;
+            return res
+                  .status(StatusCodes.BAD_REQUEST)
+                  .json(ErrorResponse);
+          }
+        }
+
+        const newAvailLicence = Object.keys(bodyReq.user.sub_licence).reduce((acc, key) => {
+          acc[key] = bodyReq.user.sub_licence[key] - (used_licence[key] || 0);
+          return acc;
+        }, {});
+
+        await subUserLicenceRepo.update(uid,
+          {
+            available_licence: newAvailLicence,
+            total_licence: bodyReq.user.sub_licence
+        })
+
+
+      }
+
+    } else {
       const loggedInData = await userRepo.getForLicence(uid)
       const total_licence = loggedInData.sub_user_licence_id.total_licence
       const available_licence = loggedInData.sub_user_licence_id.available_licence
 
       const used_licence = Object.keys(total_licence).reduce((acc, key) => {
-        if (key !== "agent") { 
-            acc[key] = total_licence[key] - (available_licence[key] || 0);
-        }
+        acc[key] = total_licence[key] - (available_licence[key] || 0);
         return acc;
       }, {});
 
@@ -356,25 +381,29 @@ async function updateUser(req, res) {
         }
       }
 
-      const updatedData = {
-        total_licence : bodyReq.user.sub_licence,
-        available_licence: Object.keys(bodyReq.user.sub_licence).reduce((acc, key) => {
-              acc[key] = bodyReq.user.sub_licence[key] - (used_licence[key] || 0);
-          return acc;
-        }, {})
+      const newAvailLicence = Object.keys(bodyReq.user.sub_licence).reduce((acc, key) => {
+        acc[key] = bodyReq.user.sub_licence[key] - (used_licence[key] || 0);
+        return acc;
+      }, {});
+
+      await subUserLicenceRepo.update(uid,
+        {
+          available_licence: newAvailLicence,
+          total_licence: bodyReq.user.sub_licence
+      })
+
+
+      const user = await userRepo.update(uid, bodyReq.user);
+      responseData.user = await user.generateUserData();
+    
+      if (bodyReq.company) {
+        responseData.company = await companyRepo.update(
+          bodyReq.company.id,
+          bodyReq.company
+        );
       }
 
-      await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, updatedData)
-    }
-
-    const user = await userRepo.update(uid, bodyReq.user);
-    responseData.user = await user.generateUserData();
-    
-    if (bodyReq.company) {
-      responseData.company = await companyRepo.update(
-        bodyReq.company.id,
-        bodyReq.company
-      );
+      await subUserLicenceRepo.update(req.user.id, {available_licence: bodyReq.user.parent_licence})
     }
 
     const userJourneyfields = {
@@ -515,12 +544,12 @@ async function deleteUser(req, res) {
       } else {
         response = await userRepo.deleteMany(userIds, req.user);
         for (const userId of userIds) {
-          const loggedInData = await userRepo.getForLicence(userId);
+          const loggedInData = await userRepo.getForLicence(req.user.id);
           const availableLicence = loggedInData.sub_user_licence_id.available_licence;
           const data = await userRepo.getForLicence(userId);
           let updatedData = { ...availableLicence };
           updatedData[data.role] = (updatedData[data.role] || 0) + 1;
-          await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
+          await subUserLicenceRepo.updateById(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
         }
       }
     }
