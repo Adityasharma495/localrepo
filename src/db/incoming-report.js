@@ -103,6 +103,17 @@ const CallRecordSchema = new mongoose.Schema({
     }
 },);
 
+CallRecordSchema.pre('save', function (next) {
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
+    const istDate = new Date(now.getTime() + istOffset);
+
+    // Set created_at and updated_at fields to IST
+    this.report_time = istDate;
+
+    next();
+});
+
 const CallRecord = mongoose.model(INCOMING_REPORTS_MODEL, CallRecordSchema);
 
 module.exports = CallRecord;
