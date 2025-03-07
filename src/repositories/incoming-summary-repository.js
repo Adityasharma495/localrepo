@@ -26,6 +26,57 @@ class IncomingSummaryRepository extends CrudRepository {
 
   }
 
+  async isSummaryExist(userId,incomingdid,startDate) {
+        
+        let startOfDay = new Date(startDate);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        let endOfDay = new Date(startDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        try {
+            let response = await this.model.findOne({
+                $and: [
+                    { did: incomingdid },
+                    { user_id : userId },
+                    {  schedule_date: {
+                                       $gte: startOfDay,
+                                       $lt: endOfDay      
+                                      }
+                    }
+                ]
+            });
+            return response;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
+
+
+     async updateSummary(data) {
+        let startOfDay = new Date(data.schedule_date);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        let endOfDay = new Date(data.schedule_date);
+        endOfDay.setHours(23, 59, 59, 999);
+        const response = await this.model.findOneAndUpdate(
+                          {
+                            $and: [
+                                    { user_id: data.user_id },
+                                    { did: data.did },
+                                    {  schedule_date:
+                                                    {
+                                                     $gte: startOfDay,
+                                                     $lt: endOfDay
+                                                    }
+                                    }
+                                  ]
+                          }, 
+                          data, 
+                          { runValidators: true, new: true }
+                        );
+        return response;
+    }
 }
 
 module.exports = IncomingSummaryRepository;

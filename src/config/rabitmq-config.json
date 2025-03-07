@@ -34,5 +34,6 @@
       }
     }
   }
-}
+},
+"MONGO_DB_URI":"mongodb://64.227.131.75:35017/cloud-telephony"
 }
