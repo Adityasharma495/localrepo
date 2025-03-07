@@ -26,5 +26,6 @@ module.exports = {
     PromptController:require("./prompt-controller"),
     LanguageController : require('./language-controller'),
     CreditController : require('./credit-controller'),
-    IncomingSummaryController: require('./incoming-summary-controller')
+    IncomingSummaryController: require('./incoming-summary-controller'),
+    IncomingReportController: require('./incoming-report-controller')
 }

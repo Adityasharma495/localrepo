@@ -107,7 +107,8 @@ const MODEL = {
     SUB_USER_LICENCE: 'sub_user_licence',
     FLOW_JSON: 'flows_json',
     CREDITS: 'credit_history',
-    INCOMING_SUMMARY: 'incoming_summary'
+    INCOMING_SUMMARY: 'incoming_summary',
+    INCOMING_REPORTS: 'incoming_report'
 }
 
 const AUTH_TYPES = {

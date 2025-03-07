@@ -33,7 +33,7 @@ const promptRoute = require('./prompts-routes.js')
 const languageRoute = require('./language-routes.js')
 const creditRoute = require('./credit-routes.js')
 const incomingSummaryRoute = require('./incoming-summary-routes.js')
-
+const incomingReportRoute = require('./incoming-report-routes.js')
 
 
 router.use('/users', userRoutes);
@@ -68,5 +68,7 @@ router.use('/prompt',promptRoute)
 router.use('/language', languageRoute)
 router.use('/credits', creditRoute)
 router.use('/incoming-summary', incomingSummaryRoute)
+router.use('/incoming-report', incomingReportRoute)
+
 
 module.exports = router;

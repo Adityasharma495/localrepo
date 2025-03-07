@@ -35,5 +35,6 @@ module.exports = {
     SubUserLicenceRepository: require('./sub-user-licence-repository'),
     FlowJsonRepository: require('./flow-json-repository'),
     CreditRepository: require('./credit-repository'),
-    IncomingSummaryRepository: require('./incoming-summary-repository')
+    IncomingSummaryRepository: require('./incoming-summary-repository'),
+    IncomingReportRepository: require('./incoming-report-repository')
 }

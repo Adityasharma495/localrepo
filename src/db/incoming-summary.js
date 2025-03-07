@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { constants } = require('../utils/common');
-const INCOMING_SUMMARY_MODEL = constants.MODEL.INCOMING_SUMMARY; // Replace with actual collection name
+const INCOMING_SUMMARY_MODEL = constants.MODEL.INCOMING_SUMMARY;
 
 const YourSchema = new mongoose.Schema(
   {
