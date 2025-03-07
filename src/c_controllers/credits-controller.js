@@ -19,14 +19,14 @@ async function updateCredit(req, res) {
     let fromUser;
 
     const updatedUser = await userRepo.get(bodyReq.id);
-    const parentUser = await userRepo.get(updatedUser.createdBy);
+    const parentUser = await userRepo.get(updatedUser?.dataValues?.created_by);
     const fromUpdatedUser = await userRepo.get(bodyReq.fromUser);
 
-    if (fromUpdatedUser._id.equals(parentUser._id)) {
+    if (fromUpdatedUser?.dataValues?.id === (parentUser?.dataValues?.id)) {
       if (userRole == USERS_ROLE.SUPER_ADMIN) {
         if (bodyReq.action == USER_CREDITS_ACTION.ADD) {
           let updatedValue =
-            Number(updatedUser.credits_available) +
+            Number(updatedUser?.dataValues?.credits_available) +
             Number(bodyReq.updatedCredit);
 
           user = await userRepo.update(bodyReq.id, {
@@ -35,28 +35,28 @@ async function updateCredit(req, res) {
 
           await creditRepo.create({
             user_id: bodyReq.id,
-            fromUser: bodyReq.fromUser,
-            toUser: bodyReq.id,
-            credits: Number(updatedUser.credits_available),
+            from_user: bodyReq.fromUser,
+            to_user: bodyReq.id,
+            credits: Number(updatedUser?.dataValues?.credits_available),
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.ADD,
-            balance: user.credits_available,
-            actionUser: bodyReq.id,
+            balance: user?.dataValues?.credits_available,
+            action_user: bodyReq.id,
           });
 
           await creditRepo.create({
             user_id: bodyReq.id,
-            fromUser: bodyReq.fromUser,
-            toUser: bodyReq.id,
-            credits: Number(fromUpdatedUser.credits_available),
+            from_user: bodyReq.fromUser,
+            to_user: bodyReq.id,
+            credits: Number(fromUpdatedUser?.dataValues?.credits_available),
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.DEDUCT,
-            balance: user.credits_available,
-            actionUser: bodyReq.fromUser,
+            balance: user?.dataValues?.credits_available,
+            action_user: bodyReq.fromUser,
           });
         } else if (bodyReq.action == USER_CREDITS_ACTION.DEDUCT) {
           let updatedValue =
-            Number(updatedUser.credits_available) -
+            Number(updatedUser?.dataValues?.credits_available) -
             Number(bodyReq.updatedCredit);
 
           if (updatedValue < 0) {
@@ -71,34 +71,34 @@ async function updateCredit(req, res) {
 
           await creditRepo.create({
             user_id: bodyReq.fromUser,
-            fromUser: bodyReq.fromUser,
-            toUser: bodyReq.id,
-            credits: Number(updatedUser.credits_available),
+            from_user: bodyReq.fromUser,
+            to_user: bodyReq.id,
+            credits: Number(updatedUser?.dataValues?.credits_available),
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.DEDUCT,
-            balance: user.credits_available,
-            actionUser: bodyReq.id,
+            balance: user?.dataValues?.credits_available,
+            action_user: bodyReq.id,
           });
 
           await creditRepo.create({
             user_id: bodyReq.id,
-            fromUser: bodyReq.fromUser,
-            toUser: bodyReq.id,
-            credits: Number(fromUpdatedUser.credits_available),
+            from_user: bodyReq.fromUser,
+            to_user: bodyReq.id,
+            credits: Number(fromUpdatedUser?.dataValues?.credits_available),
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.ADD,
-            balance: user.credits_available,
-            actionUser: bodyReq.fromUser,
+            balance: user?.dataValues?.credits_available,
+            action_user: bodyReq.fromUser,
           });
         }
       } else {
         if (bodyReq.action == USER_CREDITS_ACTION.ADD) {
           let updatedValue =
-            Number(updatedUser.credits_available) +
+            Number(updatedUser?.dataValues?.credits_available) +
             Number(bodyReq.updatedCredit);
 
           let updatedValueForFromUser =
-            Number(fromUpdatedUser.credits_available) -
+            Number(fromUpdatedUser?.dataValues?.credits_available) -
             Number(bodyReq.updatedCredit);
           user = await userRepo.update(bodyReq.id, {
             credits_available: updatedValue,
@@ -117,31 +117,31 @@ async function updateCredit(req, res) {
 
           await creditRepo.create({
             user_id: bodyReq.id,
-            fromUser: bodyReq.fromUser,
-            toUser: bodyReq.id,
-            credits: Number(updatedUser.credits_available),
+            from_user: bodyReq.fromUser,
+            to_user: bodyReq.id,
+            credits: Number(updatedUser?.dataValues?.credits_available),
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.ADD,
-            balance: user.credits_available,
-            actionUser: bodyReq.id,
+            balance: user?.dataValues?.credits_available,
+            action_user: bodyReq.id,
           });
 
           await creditRepo.create({
             user_id: bodyReq.id,
-            fromUser: bodyReq.fromUser,
-            toUser: bodyReq.id,
-            credits: Number(fromUpdatedUser.credits_available),
+            from_user: bodyReq.fromUser,
+            to_user: bodyReq.id,
+            credits: Number(fromUpdatedUser?.dataValues?.credits_available),
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.DEDUCT,
-            balance: fromUser.credits_available,
-            actionUser: bodyReq.fromUser,
+            balance: fromUser?.dataValues?.credits_available,
+            action_user: bodyReq.fromUser,
           });
         } else if (bodyReq.action == USER_CREDITS_ACTION.DEDUCT) {
           let updatedValue =
-            Number(updatedUser.credits_available) -
+            Number(updatedUser?.dataValues?.credits_available) -
             Number(bodyReq.updatedCredit);
           let updatedValueForFromUser =
-            Number(fromUpdatedUser.credits_available) +
+            Number(fromUpdatedUser?.dataValues?.credits_available) +
             Number(bodyReq.updatedCredit);
           if (updatedValue < 0) {
             let errorMessage = "Updated Credits Cannot be less than 0";
@@ -159,24 +159,24 @@ async function updateCredit(req, res) {
 
           await creditRepo.create({
             user_id: bodyReq.fromUser,
-            fromUser: bodyReq.fromUser,
-            toUser: bodyReq.id,
-            credits: Number(updatedUser.credits_available),
+            from_user: bodyReq.fromUser,
+            to_user: bodyReq.id,
+            credits: Number(updatedUser?.dataValues?.credits_available),
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.DEDUCT,
-            balance: user.credits_available,
-            actionUser: bodyReq.fromUser,
+            balance: user?.dataValues?.credits_available,
+            action_user: bodyReq.fromUser,
           });
 
           await creditRepo.create({
             user_id: bodyReq.id,
-            fromUser: bodyReq.fromUser,
-            toUser: bodyReq.id,
-            credits: Number(fromUpdatedUser.credits_available),
+            from_user: bodyReq.fromUser,
+            to_user: bodyReq.id,
+            credits: Number(fromUpdatedUser?.dataValues?.credits_available),
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.ADD,
-            balance: fromUser.credits_available,
-            actionUser: bodyReq.id,
+            balance: fromUser?.dataValues?.credits_available,
+            action_user: bodyReq.id,
           });
         }
       }
@@ -191,11 +191,11 @@ async function updateCredit(req, res) {
       return res.status(StatusCodes.ACCEPTED).json(SuccessRespnose);
     } else {
       let errorMessage = "";
-      if (parentUser.role == USERS_ROLE.SUPER_ADMIN) {
+      if (parentUser?.dataValues?.role == USERS_ROLE.SUPER_ADMIN) {
         errorMessage = "Superadmin cannot directly recharge other Users";
-      } else if (parentUser.role == USERS_ROLE.RESELLER) {
+      } else if (parentUser?.dataValues?.role == USERS_ROLE.RESELLER) {
         errorMessage = "Reseller cannot directly recharge other Users";
-      } else if (parentUser.role == USERS_ROLE.COMPANY_ADMIN) {
+      } else if (parentUser?.dataValues?.role == USERS_ROLE.COMPANY_ADMIN) {
         errorMessage = "Company User cannot directly recharge other Users";
       } else {
         errorMessage = "You cannot directly recharge other Users";
@@ -256,7 +256,12 @@ async function get(req, res) {
   const id = req.params.id;
 
   try {
-    const aclData = await creditRepo.get(id);
+    const whereCondition = {
+      where: {
+        id: id
+      }
+    };
+    const aclData = await creditRepo.findOne(whereCondition);
     if (aclData.length == 0) {
       const error = new Error();
       error.name = "CastError";

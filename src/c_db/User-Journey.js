@@ -1,14 +1,16 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/sequelize");
+const { constants } = require("../utils/common");
+const USER_MODEL_NAME = constants.MODEL.USERS;
 
 const UserJourney = sequelize.define(
   "user_journey",
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.BIGINT,
       allowNull: false,
       primaryKey: true,
+      autoIncrement: true,
     },
     module_name: {
       type: DataTypes.STRING,
@@ -22,7 +24,7 @@ const UserJourney = sequelize.define(
     created_by: {
       type: DataTypes.UUID,
       references: {
-        model: "users",
+        model: USER_MODEL_NAME,
         key: "id",
       },
     },

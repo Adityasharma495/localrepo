@@ -1,5 +1,7 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/sequelize");
+const { constants } = require('../utils/common');
+const USER_MODEL_NAME = constants.MODEL.USERS;
 
 const Credit = sequelize.define(
   "credit_history",
@@ -14,7 +16,7 @@ const Credit = sequelize.define(
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: "users",
+        model: USER_MODEL_NAME,
         key: "id",
       },
     },
@@ -22,7 +24,7 @@ const Credit = sequelize.define(
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: "users",
+        model: USER_MODEL_NAME,
         key: "id",
       },
     },
@@ -30,7 +32,7 @@ const Credit = sequelize.define(
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: "users",
+        model: USER_MODEL_NAME,
         key: "id",
       },
     },
@@ -38,7 +40,7 @@ const Credit = sequelize.define(
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: "users",
+        model: USER_MODEL_NAME,
         key: "id",
       },
     },
