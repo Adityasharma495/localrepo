@@ -108,7 +108,8 @@ const MODEL = {
     FLOW_JSON: 'flows_json',
     CREDITS: 'credit_history',
     INCOMING_SUMMARY: 'incoming_summary',
-    INCOMING_REPORTS: 'incoming_report'
+    INCOMING_REPORTS: 'incoming_report',
+    DOWNLOAD_REPORTS: 'download_report'
 }
 
 const AUTH_TYPES = {

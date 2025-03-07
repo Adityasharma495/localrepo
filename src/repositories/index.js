@@ -36,5 +36,6 @@ module.exports = {
     FlowJsonRepository: require('./flow-json-repository'),
     CreditRepository: require('./credit-repository'),
     IncomingSummaryRepository: require('./incoming-summary-repository'),
-    IncomingReportRepository: require('./incoming-report-repository')
+    IncomingReportRepository: require('./incoming-report-repository'),
+    DownloadReportRepository: require('./download-report-repository')
 }

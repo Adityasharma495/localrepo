@@ -60,7 +60,7 @@ async function signupUser(req, res) {
       //   [bodyReq.user.role]: Number(subLicenceData[bodyReq.user.role] || 0) - 1
       // };
       // bodyReq.user.sub_user_licence_id = loggedInData.sub_user_licence_id._id
-      await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: bodyReq.user.parent_licence})
+      await subUserLicenceRepo.updateById(loggedInData.sub_user_licence_id._id, {available_licence: bodyReq.user.parent_licence})
 
     }
 

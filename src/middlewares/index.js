@@ -22,5 +22,6 @@ module.exports = {
     MemberScheduleMiddleware:require('./member-schedule-middleware'),
     PromptsMiddleware: require('./prompts-middleware'),
     CreditMiddleware: require('./credit-middleware'),
-    IncomingReportMiddleware: require('./incoming-report-middleware')
+    IncomingReportMiddleware: require('./incoming-report-middleware'),
+    DownloadReportMiddleware: require('./download-report-middleware')
 }
