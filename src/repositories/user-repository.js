@@ -52,10 +52,10 @@ class UserRepository extends CrudRepository{
                     is_deleted: false,
                 }).sort({ createdAt: -1 });
             } else {
+               
                 data = await userModel.find({
-
                     is_deleted: false,
-                    createdBy: current_uid
+                    createdby: current_uid
                 }).sort({ createdAt: -1 });
             }
             

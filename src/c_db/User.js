@@ -45,6 +45,7 @@ const User = sequelize.define(
     status: {
       type: DataTypes.INTEGER,
       allowNull: true,
+     
     },
     // companies: {
     //   type: DataTypes.JSONB,

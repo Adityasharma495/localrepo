@@ -25,63 +25,60 @@ class UserRepository extends CrudRepository{
         
     }
 
-    async getAllByRoles(current_uid, current_user_role, given_user_role){
+    async getAllByRoles(current_uid, current_user_role, given_user_role) {
         
-
-        //Get user status as {0: 'Inactive', 1: 'Active'}
+        
+        // Get user status mapping
         const userStatusValues = constants.USERS_STATUS_VALUES_LABEL;
 
-        //Get role specified as the param
-        if(given_user_role){
-            var currentUserReadAccessRoles = given_user_role;
-        }
-        //If role is not specified, get user roles which can be READ by the current user
-        else{
+    
+        let rolesToQuery;
+        if (given_user_role) {
+            
+            rolesToQuery = given_user_role;
+        } else {
+            
             const PERMISSION_TYPE_READ = constants.PERMISSION_TYPES.READ;
-            var [currentUserReadAccessRoles] = Authentication.getUserAccessRoles(current_user_role, PERMISSION_TYPE_READ);
+            [rolesToQuery] = Authentication.getUserAccessRoles(current_user_role, PERMISSION_TYPE_READ);
         }
-
-
+    
         try {
-            let data;
-            // If role is "Superadmin show all the users"
-            if (current_user_role === 'role_sadmin') {
-                data = await userModel.find({
-                    is_deleted: false,
-                }).sort({ createdAt: -1 });
-            } else {
-                data = await userModel.find({
-
-                    is_deleted: false,
-                    createdBy: current_uid
-                }).sort({ createdAt: -1 });
+            let whereCondition = {
+                is_deleted: false,
+            };
+    
+            if (current_user_role !== 'role_sadmin') {
+                whereCondition.created_by = current_uid; // Ensure createdBy matches the current user ID if not superadmin
             }
-            
-            
-            
-            //Remove password field and convert status to its corresponding label
-            //{0: 'Inactive', 1: 'Active'}
-            data = data.map( val => {
-                val['status'] = userStatusValues[ val['status'] ];
-                val['password'] = undefined;
-                return val;
-            } );
-            
+    
+            let data = await User.findAll({
+                where: whereCondition,
+                order: [['created_at', 'DESC']], // Sorting by createdAt descending
+                attributes: { exclude: ['password'] } // Exclude password from results
+            });
+
+    
+            // Convert status codes to corresponding labels
+            data = data.map(user => ({
+                ...user.get({ plain: true }), // Get plain data object from Sequelize model instance
+                status: userStatusValues[user.status]
+            }));
+
+    
             return data;
-
+    
         } catch (error) {
-
+            console.error("Error fetching users by roles:", error);
             throw error;
-
         }
-
     }
+    
 
 
     async get(id) {
 
         try {
-            const response = await this.model.findById(id);
+            const response = await this.model.findByPk(id);
             if (!response) {
                 throw new AppError('Not able to find the resource', StatusCodes.NOT_FOUND);
             }

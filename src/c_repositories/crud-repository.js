@@ -46,10 +46,28 @@ class CrudRepository {
         return response;
     }
 
-    async update(id, data) {
-        const response = await this.model.findOneAndUpdate({_id: id}, data, { runValidators: true, new: true });
-        return response;
+async update(id, data) {
+
+
+    console.log("DATA TO UPDATE", data);
+    try {
+        // Find the instance first
+        const instance = await this.model.findByPk(id);
+        if (!instance) {
+            throw new Error('Instance not found');
+        }
+
+        // Update the instance with new data
+        const updatedInstance = await instance.update(data);
+
+        return updatedInstance;
+    } catch (error) {
+        // Handle the error appropriately
+        console.error('Update operation failed:', error);
+        throw error;
     }
+}
+
 
     async delete(id){
         try {
