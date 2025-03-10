@@ -67,9 +67,9 @@ function validateAgentCreate(req, res, next) {
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
-    }else if (bodyReq.extention && !Array.isArray(bodyReq.extention)) {
+    }else if (bodyReq.extension && !Array.isArray(bodyReq.extension)) {
         ErrorResponse.message = 'Something went wrong while agent Create';
-        ErrorResponse.error = new AppError(['extention not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+        ErrorResponse.error = new AppError(['extension not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
@@ -87,7 +87,7 @@ function modifyAgentBodyRequest(req, is_create = true) {
             agent: {
                 agent_name: bodyReq.agent_name.trim(),
                 agent_number: Number(bodyReq.agent_number),
-                extention: bodyReq?.extention || [],
+                extension: bodyReq?.extension || [],
                 access:bodyReq.access.trim(),
                 type:bodyReq.type.trim(),
                 email_id:bodyReq.email_id.trim(),

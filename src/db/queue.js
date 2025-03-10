@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const { MODEL } = require('../utils/common/constants')
 const { constants } = require('../utils/common');
 const USER_MODEL_NAME = constants.MODEL.USERS;
-const EXTENTION = constants.MODEL.EXTENTION;
+const EXTENSION = constants.MODEL.EXTENSION;
 
 
 // Helper function for IST conversion
@@ -17,9 +17,9 @@ const QueueSchema = new mongoose.Schema({
         required: true,
         trim: true,
       },
-      extention: {
+      extension: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: EXTENTION,
+        ref: EXTENSION,
         required: true,    
       },
       max_wait_time: {

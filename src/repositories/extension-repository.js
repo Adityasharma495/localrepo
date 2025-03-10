@@ -1,13 +1,13 @@
 const CrudRepository = require("./crud-repository");
-const extentionModel = require("../db/extention");
+const extensionModel = require("../db/extension");
 const AppError = require("../utils/errors/app-error");
 const { StatusCodes } = require("http-status-codes");
 
 
 
-class ExtentionRepository extends CrudRepository {
+class ExtensionRepository extends CrudRepository {
   constructor() {
-    super(extentionModel);
+    super(extensionModel);
   }
 
   async getAll(current_uid, check) {
@@ -20,10 +20,10 @@ class ExtentionRepository extends CrudRepository {
   
       // Add additional condition if `check` is 'all'
       if (check !== 'all') {
-        conditions.isAllocated = 0;
+        conditions.is_allocated = 0;
       }
 
-      let response = await extentionModel.find(conditions).populate('created_by').sort({ created_at: -1 }).lean();
+      let response = await extensionModel.find(conditions).populate('created_by').sort({ created_at: -1 }).lean();
       return response;
 
     } catch (error) {
@@ -40,7 +40,7 @@ class ExtentionRepository extends CrudRepository {
 
       const response = await this.model.findOne({ _id: data, is_deleted: false }).lean();
       if (!response) {
-        throw new AppError('Not able to find the Extention', StatusCodes.NOT_FOUND);
+        throw new AppError('Not able to find the Extension', StatusCodes.NOT_FOUND);
       }
       return response;
 
@@ -63,7 +63,7 @@ class ExtentionRepository extends CrudRepository {
       const check = await this.model.find({ _id: id, is_deleted: false });
       if (check.length == 0) {
         const error = new Error();
-        error.name = 'Extention not found';
+        error.name = 'Extension not found';
         throw error;
       }
       const response = await this.update(id, { is_deleted: true });
@@ -90,4 +90,4 @@ class ExtentionRepository extends CrudRepository {
 
 }
 
-module.exports = ExtentionRepository;
+module.exports = ExtensionRepository;

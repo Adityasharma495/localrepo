@@ -23,7 +23,7 @@ const numberFileList =  require("./numbers-filelist-routes");
 const exportLists = require("./export-List-routes");
 const agentRoute = require("./agent-routes")
 const agentGroupRoute = require("./agent-group-routes")
-const extentionRoute = require("./extention-routes")
+const extensionRoute = require("./extension-routes")
 const queueRoute = require('./queue-route')
 const callStratergy =require('./call-stratergy')
 const VoiceCategory = require('./voice-category')
@@ -60,7 +60,7 @@ router.use("/number-filelist", numberFileList);
 router.use("/export", exportLists);
 router.use("/agents", agentRoute)
 router.use("/agent-group", agentGroupRoute)
-router.use("/extention", extentionRoute)
+router.use("/extension", extensionRoute)
 router.use("/queue", queueRoute)
 router.use("/call-stratergy",callStratergy)
 router.use("/voice-category",VoiceCategory)

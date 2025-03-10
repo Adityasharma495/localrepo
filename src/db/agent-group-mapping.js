@@ -3,7 +3,7 @@ const { MODEL } = require('../utils/common/constants')
 const { constants } = require('../utils/common');
 const USER_MODEL_NAME = constants.MODEL.USERS;
 const AGENT_MODEL_NAME = constants.MODEL.AGENTS; 
-const EXTENTION_MODEL_NAME = constants.MODEL.EXTENTION
+const EXTENSION_MODEL_NAME = constants.MODEL.EXTENSION
 
 const AgentsGroupMappingSchema = new mongoose.Schema({
     agent_group_id: {
@@ -11,9 +11,9 @@ const AgentsGroupMappingSchema = new mongoose.Schema({
         ref: AGENT_MODEL_NAME, 
         required: true
     },
-    extention_id: {
+    extension_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: EXTENTION_MODEL_NAME, 
+        ref: EXTENSION_MODEL_NAME, 
         required: false
     },
     is_deleted: {

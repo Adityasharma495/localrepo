@@ -22,9 +22,9 @@ function validateQueueCreate(req, res, next) {
             .json(ErrorResponse);
     }
 
-    else if (bodyReq.extention  === undefined || bodyReq.extention === null) {
+    else if (bodyReq.extension  === undefined || bodyReq.extension === null) {
         ErrorResponse.message = 'Something went wrong while Queue Create';
-        ErrorResponse.error = new AppError(['extention not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+        ErrorResponse.error = new AppError(['extension not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
@@ -88,7 +88,7 @@ function modifyQueueBodyRequest(req, is_create = true) {
         let inputData = {
             queue: {
                 name: bodyReq.name.trim(),
-                extention: bodyReq.extention.trim(),
+                extension: bodyReq.extension.trim(),
                 max_wait_time: Number(bodyReq.max_wait_time),
                 open_wrapup: Number(bodyReq.open_wrapup),
                 default_wrapup_tag: Number(bodyReq.default_wrapup_tag) ?? null,

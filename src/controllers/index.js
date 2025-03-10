@@ -19,7 +19,7 @@ module.exports = {
     ExportListController: require('./export-list-controller'),
     AgentController: require('./agent-controller'),
     AgentGroupController: require('./agent-group-controller'),
-    ExtentionController: require('./extention-controller'),
+    ExtensionController: require('./extension-controller'),
     QueueController: require('./queue-controller'),
     MemberScheduleController:require('./member-schedule-controller'),
     HandleFileSaveController:require("./handleFileSave-controller"),

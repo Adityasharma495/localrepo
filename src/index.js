@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-const { ServerConfig, Mongodb, Logger } = require('./config');
+const { ServerConfig, connectMongo, Logger, connectSequelize } = require('./config');
 const apiRoutes = require('./routes');
 const swaggerRoutes = require('./routes/swagger');
 
@@ -23,18 +23,27 @@ app.use('/api', apiRoutes);
 app.use('/api-docs', swaggerRoutes);
 
 
-app.listen(ServerConfig.PORT, async() => {
-
-    Logger.info('\n\nxxxxxxxxxxxxxxxxxxxxxxx');
-    Logger.info(`Server -> Successfully started on PORT : ${ServerConfig.PORT}`);
-    console.log(`Server -> Successfully started on PORT : ${ServerConfig.PORT}`);
-
+const startServer = async () => {
     try {
-        await Mongodb.connectMongo();
-        Logger.info(`Mongodb -> Successfully connected`);
-        console.log(`Mongodb -> Successfully connected`);
-    } catch (error) {
-        Logger.error(`Mongodb -> Error while connecting: ${ JSON.stringify(error) }`)
-    }
+        await connectMongo();
+        Logger.info(`MongoDB -> Successfully connected`);
+        console.log(`MongoDB -> Successfully connected`);
+        
+        await connectSequelize();
+        Logger.info(`MySQL -> Successfully connected`);
+        console.log(`MySQL -> Successfully connected`);
 
-});
+        app.listen(ServerConfig.PORT, () => {
+            Logger.info('\n\nxxxxxxxxxxxxxxxxxxxxxxx');
+            Logger.info(`Server -> Successfully started on PORT : ${ServerConfig.PORT}`);
+            console.log(`Server -> Successfully started on PORT : ${ServerConfig.PORT}`);
+        });
+    } catch (error) {
+        Logger.error(`Error while starting the server: ${JSON.stringify(error)}`);
+        console.error(`Error while starting the server:`, error);
+        process.exit(1);  // Exit process if DB connections fail
+    }
+};
+
+// Start the server
+startServer();

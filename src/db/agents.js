@@ -2,10 +2,18 @@ const mongoose = require('mongoose');
 const { MODEL } = require('../utils/common/constants');
 const { constants } = require('../utils/common');
 const USER_MODEL_NAME = constants.MODEL.USERS;
-const EXTENTION_MODEL_NAME = constants.MODEL.EXTENTION;
+const TELEPHONY_PROFILE_MODEL_NAME = constants.MODEL.TELEPHONY_PROFILE;
 const ACCESS_CONTROL = constants.ACCESS_CONTROL;
 const AGENT_TYPE = constants.AGENT_TYPE;
 const AGENT_LOGIN_STATUS = constants.AGENT_LOGIN_STATUS;
+const bcrypt = require('bcrypt');
+
+// Helper function to hash the password
+function hookHashPassword(user) {
+    const SALT = bcrypt.genSaltSync(9);
+    const encryptedPassword = bcrypt.hashSync(user.password.trim(), SALT);
+    user.password = encryptedPassword;
+}
 
 const AgentsSchema = new mongoose.Schema({
     agent_name: {
@@ -17,11 +25,12 @@ const AgentsSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    extention: [{
+    telephony_profile: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: EXTENTION_MODEL_NAME, 
-    }],
-    isAllocated: {
+        ref: TELEPHONY_PROFILE_MODEL_NAME,
+        default: null 
+    },
+    is_allocated: {
         type: Number,
         default: 0 
     },
@@ -121,6 +130,11 @@ AgentsSchema.pre('save', function (next) {
     }
     this.updated_at = istDate;
 
+    // Hash password if the document is new or the password is modified
+    if (this.isNew || this.isModified('password')) {
+        hookHashPassword(this);
+    }
+
     next();
 });
 
@@ -132,8 +146,15 @@ AgentsSchema.pre('findOneAndUpdate', function (next) {
 
     this._update.updated_at = istDate;
 
+    // Hash password if it's being updated
+    if (this._update.password) {
+        const updateDoc = this._update;
+        hookHashPassword(updateDoc);
+    }
+
     next();
 });
+
 
 const agentData = mongoose.model(MODEL.AGENTS, AgentsSchema);
 

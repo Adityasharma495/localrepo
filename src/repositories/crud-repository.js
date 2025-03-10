@@ -8,12 +8,9 @@ class CrudRepository {
 
     async create(data) {
         try {
-            console.log('dtaa', data)
             const response = await this.model.create(data);
             return response;            
         } catch (error) {
-            console.log('dtaa', error)
-
             throw error
 
             // console.log(error);

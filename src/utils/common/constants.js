@@ -96,7 +96,7 @@ const MODEL = {
     DID_USER_MAPPING: 'did_user_mapping',
     AGENTS: 'agents',
     AGENTS_GROUP: 'agent_groups',
-    EXTENTION: 'extention',
+    EXTENSION: 'extension',
     AGENTS_GROUP_MAPPING: 'agent_group_mapping',
     LICENCE : 'licence',
     QUEUE: 'queue',
@@ -109,7 +109,8 @@ const MODEL = {
     CREDITS: 'credit_history',
     INCOMING_SUMMARY: 'incoming_summary',
     INCOMING_REPORTS: 'incoming_report',
-    DOWNLOAD_REPORTS: 'download_report'
+    DOWNLOAD_REPORTS: 'download_report',
+    TELEPHONY_PROFILE: 'telephphony_profile'
 }
 
 const AUTH_TYPES = {
@@ -221,7 +222,7 @@ const MODULE_LABEL = {
     NUMBER_FILE_LIST: 'Number Filelist',
     AGENT: 'Agent',
     AGENT_GROUP: 'Agent Group',
-    EXTENTION: 'extention',
+    EXTENSION: 'extension',
     QUEUE: 'queue',
     PROMPTS: 'Prompts'
 }
@@ -314,6 +315,11 @@ const SERVER ={
 
 const SUB_LICENCE_ROLE = ["role_cadmin", "role_ccadmin", "role_ccagent", "role_ccteamlead"];
 
+const BACKEND_BASE_URL =
+  process.env.NODE_ENV == "production"
+    ? "voiceboxapi.nspl.cloud"
+    : "voiceboxapi.nspl.cloud";
+
 
 
 module.exports = {
@@ -360,5 +366,6 @@ module.exports = {
     SERVER,
     SUB_LICENCE_ROLE,
     USER_ROLE_VALUE,
-    USER_CREDITS_ACTION
+    USER_CREDITS_ACTION,
+    BACKEND_BASE_URL
 }

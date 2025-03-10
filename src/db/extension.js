@@ -17,7 +17,7 @@ function hookHashPassword(user) {
     user.password = encryptedPassword;
 }
 
-const ExtentionSchema = new mongoose.Schema({
+const ExtensionSchema = new mongoose.Schema({
     username: {
         type: String,
         required: true,
@@ -28,7 +28,7 @@ const ExtentionSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    extention: {
+    extension: {
         type: Number,
         required: true,
     },
@@ -37,7 +37,7 @@ const ExtentionSchema = new mongoose.Schema({
         required: true,
         trim: true
       },
-    isAllocated: {
+    is_allocated: {
         type: Number,
         default: 0 
     },
@@ -60,11 +60,11 @@ const ExtentionSchema = new mongoose.Schema({
     }
 }, {
     versionKey: false,
-    timestamps: true
+    // timestamps: true
 });
 
 // Pre-save middleware for timestamps and hashing password
-ExtentionSchema.pre('save', async function (next) {
+ExtensionSchema.pre('save', async function (next) {
     const now = new Date();
 
     // Convert timestamps to IST
@@ -83,7 +83,7 @@ ExtentionSchema.pre('save', async function (next) {
 });
 
 // Pre-update middleware for timestamps and hashing password
-ExtentionSchema.pre('findOneAndUpdate', async function (next) {
+ExtensionSchema.pre('findOneAndUpdate', async function (next) {
     const now = new Date();
 
     // Convert updated_at to IST
@@ -99,6 +99,6 @@ ExtentionSchema.pre('findOneAndUpdate', async function (next) {
     next();
 });
 
-const extentionData = mongoose.model(MODEL.EXTENTION, ExtentionSchema, MODEL.EXTENTION);
+const extensionData = mongoose.model(MODEL.EXTENSION, ExtensionSchema, MODEL.EXTENSION);
 
-module.exports = extentionData;
+module.exports = extensionData;

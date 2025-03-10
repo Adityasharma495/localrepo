@@ -1,5 +1,7 @@
 const { StatusCodes } = require("http-status-codes");
-const { AgentRepository, UserJourneyRepository, ExtentionRepository , SubUserLicenceRepository, UserRepository} = require("../repositories");
+const { AgentRepository, UserJourneyRepository, ExtensionRepository ,
+  SubUserLicenceRepository, UserRepository,
+TelephonyProfileRepository} = require("../repositories");
 const {SuccessRespnose , ErrorResponse} = require("../utils/common");
 const AppError = require("../utils/errors/app-error");
 
@@ -10,9 +12,13 @@ const { AgentGroupController } = require(".");
 
 const agentRepo = new AgentRepository();
 const userJourneyRepo = new UserJourneyRepository();
-const extentionRepo = new ExtentionRepository();
+const extensionRepo = new ExtensionRepository();
 const subUserLicenceRepo = new SubUserLicenceRepository();
 const userRepo = new UserRepository();
+const telephonyProfileRepo = new TelephonyProfileRepository();
+
+const UsersController = require('./user-controller');
+
 
 async function toggleStatus(req, res) {
   const { id } = req.params; // The agent's ID
@@ -79,7 +85,9 @@ async function createAgent(req, res) {
   const responseData = {};
 
   try {
-   
+    let agent;
+    let extensionData;
+    let loggedInData
     const conditions = {
       created_by: req.user.id,
       $or: [
@@ -99,7 +107,7 @@ async function createAgent(req, res) {
 
     if (req.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
       //fetch logged in user sub licence data
-      const loggedInData = await userRepo.getForLicence(req.user.id)
+      loggedInData = await userRepo.getForLicence(req.user.id)
 
       //fetch logged in user sub licence data(available_licence)
       const subLicenceData = loggedInData.sub_user_licence_id.available_licence
@@ -117,16 +125,83 @@ async function createAgent(req, res) {
         ...subLicenceData, 
         agent: Number(subLicenceData.agent || 0) - 1
       };
-      await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
+      await subUserLicenceRepo.updateById(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
 
     }
-    const agent = await agentRepo.create(bodyReq.agent);
+    agent = await agentRepo.create(bodyReq.agent);
     responseData.agent = agent;
 
-    if ((bodyReq.agent?.extention).length !== 0) {
-        //update extention
-        await extentionRepo.update(bodyReq.agent.extention[0], {isAllocated : 1})
+    if ((bodyReq.agent?.extension).length !== 0) {
+        //update extension
+        await extensionRepo.update(bodyReq.agent.extension[0], {is_allocated : 1})
+        extensionData = await extensionRepo.get(bodyReq.agent.extension[0])
     }
+
+    // Entry in telephony_profile
+    const profiles = [
+      {
+        profile: {
+          id: agent._id,
+          type: 'phone',
+          number: {
+            country_code: '91',
+            number: agent.agent_number 
+          },
+          active_profile: false
+        },
+        created_by: req.user.id
+      }
+    ];
+    
+    // Include extensionData objects only if extensionData exists
+    if (extensionData) {
+      profiles.push(
+        {
+          profile: {
+            id: extensionData._id,
+            type: 'sip',
+            number: {
+              country_code: null,
+              number: extensionData.extension 
+            },
+            active_profile: false
+          },
+          created_by: req.user.id
+        },
+        {
+          profile: {
+            id: extensionData._id,
+            type: 'webrtc',
+            number: {
+              country_code: null,
+              number: extensionData.extension 
+            },
+            active_profile: false
+          },
+          created_by: req.user.id
+        }
+      );
+    }
+
+    
+
+    
+    const telephonyProfile = await telephonyProfileRepo.create(profiles);
+    await agentRepo.update(agent._id, {telephony_profile : telephonyProfile[0]._id})
+
+    // console.log(process.exit(0))
+
+    // Entry in Users Table
+    await userRepo.create({
+      acl_settings: null,
+      email: bodyReq.agent.email_id,
+      password: bodyReq.agent.password,
+      name: bodyReq.agent.agent_name,
+      role: "role_ccagent" , 
+      username: bodyReq.agent.username,
+      created_by: req.user.id
+    })
+
 
     const userJourneyfields = {
       module_name: MODULE_LABEL.AGENT,
@@ -268,19 +343,19 @@ async function updateAgent(req, res) {
 
 
     //Check for extension change
-    if (currentData.extention[0] && bodyReq.agent.extention[0] && (currentData.extention[0].toString() !== bodyReq.agent.extention[0].toString())) {
-      if ((currentData.extention).length > 0) {
-        await extentionRepo.bulkUpdate( currentData.extention, { isAllocated: 0 });
+    if (currentData.extension[0] && bodyReq.agent.extension[0] && (currentData.extension[0].toString() !== bodyReq.agent.extension[0].toString())) {
+      if ((currentData.extension).length > 0) {
+        await extensionRepo.bulkUpdate( currentData.extension, { is_allocated: 0 });
       }
 
-      if ((bodyReq.agent.extention).length > 0) {
-        await extentionRepo.bulkUpdate( bodyReq.agent.extention, { isAllocated: 1 });
+      if ((bodyReq.agent.extension).length > 0) {
+        await extensionRepo.bulkUpdate( bodyReq.agent.extension, { is_allocated: 1 });
       }
     }
 
-    if ((currentData.extention).length === 0 && (bodyReq.agent.extention).length > 0) {
-      if ((bodyReq.agent.extention).length > 0) {
-        await extentionRepo.bulkUpdate( bodyReq.agent.extention, { isAllocated: 1 });
+    if ((currentData.extension).length === 0 && (bodyReq.agent.extension).length > 0) {
+      if ((bodyReq.agent.extension).length > 0) {
+        await extensionRepo.bulkUpdate( bodyReq.agent.extension, { is_allocated: 1 });
       }
     }
 
@@ -330,9 +405,9 @@ async function deleteAgent(req, res) {
   try {
 
     const agents = await agentRepo.findMany(id);
-    const extentionIds = agents.flatMap(agent => agent.extention || []);
-    if (extentionIds.length > 0) {
-      await extentionRepo.bulkUpdate( extentionIds, { isAllocated: 0 });
+    const extensionIds = agents.flatMap(agent => agent.extension || []);
+    if (extensionIds.length > 0) {
+      await extensionRepo.bulkUpdate( extensionIds, { is_allocated: 0 });
     }
 
     const response = await agentRepo.deleteMany(id);
@@ -392,7 +467,7 @@ async function updateAllocation(req, res) {
     // Perform the update on all matching agent IDs
     const updatedResult = await agentRepo.bulkUpdate(
       { _id: { $in: agentIds } }, // Filter for matching IDs
-      { isAllocated: 1 } // Set isAllocated to 1
+      { is_allocated: 1 } // Set is_allocated to 1
     );
 
     if (updatedResult.modifiedCount === 0) {

@@ -17,7 +17,7 @@ module.exports = {
     NumberFileListMiddleware: require('./number-filelist-middleware'),
     AgentMiddleware: require('./agent-middleware'),
     AgentGroupMiddleware: require('./agent-group-middleware'),
-    ExtentionMiddleware: require('./extention-middleware'),
+    ExtensionMiddleware: require('./extension-middleware'),
     QueueMiddleware: require('./queue-middleware'),
     MemberScheduleMiddleware:require('./member-schedule-middleware'),
     PromptsMiddleware: require('./prompts-middleware'),

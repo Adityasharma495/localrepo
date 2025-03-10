@@ -20,9 +20,9 @@ class AgentRepository extends CrudRepository {
   
       // Add additional condition if `check` is 'all'
       if (check !== 'all') {
-        conditions.isAllocated = 0;
+        conditions.is_allocated = 0;
       }
-      let response = await agentModel.find(conditions).populate('extention').populate('created_by').sort({ created_at: -1 }).lean();
+      let response = await agentModel.find(conditions).populate('created_by').sort({ created_at: -1 }).lean();
       return response;
 
     } catch (error) {
@@ -52,7 +52,8 @@ class AgentRepository extends CrudRepository {
   }
 
   async update(id, data) {
-    const response = await this.model.findOneAndUpdate({ _id: id, is_deleted: false }, data, { runValidators: true, new: true });
+    console.log('datadatadatadatadatadatadatadatadata', data)
+    const response = await this.model.findOneAndUpdate({ _id: id }, data, { runValidators: true, new: true });
     return response;
   }
 
@@ -98,7 +99,6 @@ class AgentRepository extends CrudRepository {
     try {
         // Fetch all agents where is_deleted is false
         const agents = await this.model.find({ is_deleted: false, created_by :  userId})
-            .populate('extention') 
             .populate('created_by') 
             .sort({ created_at: -1 })
             .lean();

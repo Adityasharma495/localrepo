@@ -65,11 +65,11 @@ class AgentGroupMappingRepository extends CrudRepository {
 
   }
 
-  async deleteMapping(group_id, extention_id) {
+  async deleteMapping(group_id, extension_id) {
     try {
         const check = await this.model.find({
             agent_group_id: group_id,
-            extention_id: extention_id,
+            extension_id: extension_id,
         });
 
         if (check.length === 0) {
@@ -81,7 +81,7 @@ class AgentGroupMappingRepository extends CrudRepository {
         // Update the record to set is_deleted to true
         const response = await this.model.updateOne(
             { 
-              agent_group_id: group_id, extention_id: extention_id },
+              agent_group_id: group_id, extension_id: extension_id },
             { is_deleted: true }
         );
 
@@ -117,9 +117,9 @@ class AgentGroupMappingRepository extends CrudRepository {
     }
   }  
 
-  async getByExtentionId(ids) {
+  async getByextensionId(ids) {
     try {
-        const response = await this.model.find({ extention_id: { $in: ids }, is_deleted: false });
+        const response = await this.model.find({ extension_id: { $in: ids }, is_deleted: false });
         return response;            
     } catch (error) {
         throw error;

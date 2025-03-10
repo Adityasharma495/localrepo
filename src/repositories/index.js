@@ -21,7 +21,7 @@ module.exports = {
     DIDUserMappingRepository: require('./did-user-mapping-repository'),
     AgentRepository: require('./agent-repository'),
     AgentGroupRepository: require('./agent-group-repository'),
-    ExtentionRepository: require('./extention-repository'),
+    ExtensionRepository: require('./extension-repository'),
     AgentGroupMappingRepository: require('./agent-group-mapping-repository'),
     LicenceRepository: require('./licence-repository'),
     QueueRepository: require('./queue-repository'),
@@ -37,5 +37,7 @@ module.exports = {
     CreditRepository: require('./credit-repository'),
     IncomingSummaryRepository: require('./incoming-summary-repository'),
     IncomingReportRepository: require('./incoming-report-repository'),
-    DownloadReportRepository: require('./download-report-repository')
+    DownloadReportRepository: require('./download-report-repository'),
+    TelephonyProfileRepository: require('./telephony-profile-repository'),
+    SubscriberRepository: require('./subscriber-repository')
 }
