@@ -18,6 +18,7 @@ class MemberScheduleRepo extends CrudRepository {
      throw error
     }
   }
+  
 
   async memberUpdate(id,data){
     try {

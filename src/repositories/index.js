@@ -22,7 +22,6 @@ module.exports = {
     AgentRepository: require('./agent-repository'),
     AgentGroupRepository: require('./agent-group-repository'),
     ExtensionRepository: require('./extension-repository'),
-    AgentGroupMappingRepository: require('./agent-group-mapping-repository'),
     LicenceRepository: require('./licence-repository'),
     QueueRepository: require('./queue-repository'),
     FlowControlRepository:require('./flow-control-repository'),

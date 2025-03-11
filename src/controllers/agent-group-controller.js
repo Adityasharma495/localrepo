@@ -100,18 +100,14 @@ async function createAgentGroup(req, res) {
         .json(ErrorResponse);
     }
 
-    // Generate a shared _id
-    const sharedId = new mongoose.Types.ObjectId(); // Generate a new ObjectId
-
     // Create the agent group with the shared _id
     const agent = await agentGroupRepo.create({
       ...bodyReq.agent,
-      _id: sharedId // Assign the shared _id here
     });
 
     // Create the member schedule with the same _id
     const memberData = {
-      _id: sharedId, // Assign the shared _id here
+      _id: agent._id, // Assign the shared _id here
       start_time: "",
       end_time: "",
       week_days: [],
@@ -229,14 +225,50 @@ async function updateAgentGroup(req, res) {
   const uid = req.params.id;
   const bodyReq =  req.body;
 
-
   try {
     const responseData = {};
-    const agentGroup = await agentGroupRepo.get(uid);
+    let agent;
+    if (bodyReq?.agent?.type === 'time_schedule') {
+      if (bodyReq.agent.group_schedule_id) {
+        agent = await memberScheduleRepo.update(bodyReq.agent.group_schedule_id, {
+          week_days : bodyReq.agent.weekDays,
+          start_time: bodyReq.agent.startTime,
+          end_time: bodyReq.agent.endTime,
+       })   
+      } else {
+        const schedule = await memberScheduleRepo.create({
+          week_days : bodyReq.agent.weekDays,
+          start_time: bodyReq.agent.startTime,
+          end_time: bodyReq.agent.endTime,
+        }) 
+        agent = await agentGroupRepo.update(uid, {group_schedule_id : schedule._id})
+      }
 
-    const agent = await agentGroupRepo.updateGroup(uid,bodyReq.agent);
+    } 
+    else if (bodyReq?.agent?.type === 'strategy') {
+      agent = await agentGroupRepo.update(uid, {strategy : bodyReq.agent.strategy});
+    } else {
+      const agentIds = bodyReq?.agent?.agent_id;
 
+      const schedule = await memberScheduleRepo.update(uid, {
+         week_days : bodyReq.agent.memberSchedulePayload.week_days,
+         start_time: bodyReq.agent.memberSchedulePayload.start_time,
+         end_time: bodyReq.agent.memberSchedulePayload.end_time,
+      })     
   
+      const structuredData = agentIds.map(agentId => ({
+        agent_id: agentId,
+        member_schedule_id: schedule._id
+      }));
+  
+      agent = await agentGroupRepo.update(uid, {agents : structuredData});
+  
+      await agentRepo.bulkUpdate(
+        { _id: { $in: agentIds } },
+        { is_allocated: 1 } 
+      );
+    }
+    
 
     if (!agent) {
       const error = new Error();
@@ -335,7 +367,7 @@ async function getAssignedAgents(req, res) {
     // Fetch agent group
     const agentGroup = await agentGroupRepo.get(groupId);
 
-    if (!agentGroup || !agentGroup.agent_id || agentGroup.agent_id.length === 0) {
+    if (!agentGroup || agentGroup.agents.length === 0) {
       // If agent_id is empty or not defined, return an empty agents array
       SuccessRespnose.message = "No agents assigned to this group";
       SuccessRespnose.data = {

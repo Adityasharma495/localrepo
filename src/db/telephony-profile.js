@@ -4,7 +4,8 @@ const USER_MODEL_NAME = constants.MODEL.USERS;
 const { MODEL } = require('../utils/common/constants')
 
 const telephonyProfileSchema = new mongoose.Schema({
-  profile: {
+  profile:[ 
+    {
       id: {
         type: mongoose.Schema.Types.ObjectId,
         required: true
@@ -30,7 +31,7 @@ const telephonyProfileSchema = new mongoose.Schema({
         type: Boolean,
         default: true
       }
-  },
+    }],
   created_by: { 
     type: mongoose.Schema.Types.ObjectId,
     ref: USER_MODEL_NAME,

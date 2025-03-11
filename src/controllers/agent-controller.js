@@ -137,51 +137,48 @@ async function createAgent(req, res) {
         extensionData = await extensionRepo.get(bodyReq.agent.extension[0])
     }
 
-    // Entry in telephony_profile
+   // Entry in telephony_profile
     const profiles = [
       {
-        profile: {
-          id: agent._id,
-          type: 'phone',
-          number: {
-            country_code: '91',
-            number: agent.agent_number 
-          },
-          active_profile: false
-        },
+        profile: [
+          {
+            id: agent._id,
+            type: 'phone',
+            number: {
+              country_code: '91',
+              number: agent.agent_number
+            },
+            active_profile: false
+          }
+        ],
         created_by: req.user.id
       }
     ];
-    
+
     // Include extensionData objects only if extensionData exists
     if (extensionData) {
-      profiles.push(
+      profiles[0].profile.push(
         {
-          profile: {
-            id: extensionData._id,
-            type: 'sip',
-            number: {
-              country_code: null,
-              number: extensionData.extension 
-            },
-            active_profile: false
+          id: extensionData._id,
+          type: 'sip',
+          number: {
+            country_code: null,
+            number: extensionData.extension
           },
-          created_by: req.user.id
+          active_profile: false
         },
         {
-          profile: {
-            id: extensionData._id,
-            type: 'webrtc',
-            number: {
-              country_code: null,
-              number: extensionData.extension 
-            },
-            active_profile: false
+          id: extensionData._id,
+          type: 'webrtc',
+          number: {
+            country_code: null,
+            number: extensionData.extension
           },
-          created_by: req.user.id
+          active_profile: false
         }
       );
     }
+
 
     
 

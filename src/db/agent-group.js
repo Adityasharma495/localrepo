@@ -3,56 +3,33 @@ const { MODEL } = require('../utils/common/constants');
 const { constants } = require('../utils/common');
 const USER_MODEL_NAME = constants.MODEL.USERS;
 const AGENT_MODEL_NAME = constants.MODEL.AGENTS;
+const MEMEBER_SCHEDULES_MODEL_NAME = constants.MODEL.MEMEBER_SCHEDULES;
 
 const AgentsGroupSchema = new mongoose.Schema({
-    member_schedule_id:{
-        type:String,
-        require:false,
+    group_schedule_id:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: MEMEBER_SCHEDULES_MODEL_NAME,
+        default: null
     },
     group_name: {
         type: String,
         required: true,
         trim: true,
     },
-    agent_id: [
+    agents: [
         {
+          agent_id: {
             type: mongoose.Schema.Types.ObjectId,
             ref: AGENT_MODEL_NAME,
-            required: false,
-        },
+            required: false
+          },
+          member_schedule_id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: MEMEBER_SCHEDULES_MODEL_NAME,
+            required: false
+          }
+        }
     ],
-    time_schedule: [
-        {
-            week_days: [
-                {
-                    type: String,
-                    enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-                    required: true,
-                }],
-            time: {
-                type: Boolean,
-                default: false,
-            },
-        },
-    ],
-    // add_member_schedule: [
-    //     {
-    //         week_days:[
-    //             {
-    //             type: String,
-    //             enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-    //             required: true,
-    //         }],   
-    //         start_time: {
-    //             type: String, 
-    //             required: true,
-    //         },
-    //         end_time: {
-    //             type: String, 
-    //             required: true,
-    //         },
-    //     },
-    // ],
     manager: {
         type: String,
         required: true,
