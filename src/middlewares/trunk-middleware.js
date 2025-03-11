@@ -8,6 +8,8 @@ function validateTrunksCreate(req, res, next) {
 
     const bodyReq = req.body;
 
+    
+
     if (!req.is('application/json')) {
         ErrorResponse.message = 'Something went wrong while trunk crate';
         ErrorResponse.error = new AppError(['Invalid content type, incoming request must be in application/json format'], StatusCodes.BAD_REQUEST);
@@ -184,11 +186,11 @@ function modifyTrunkBodyRequest(req, is_create = true) {
                 cps: Number(bodyReq.cps),
                 codec: bodyReq.codec,
                 status: Number(bodyReq.status),
-                server: bodyReq.server
+                server_id: bodyReq.server
             }
         }
 
-        if (is_create) inputData.trunk.createdBy = req.user.id
+        if (is_create) inputData.trunk.created_by = req.user.id
 
         if (bodyReq.auth_type == AUTH_TYPES.IP) {
             inputData.trunk.auth_type_identify_by = bodyReq.auth_type_identify_by;
@@ -210,6 +212,9 @@ function modifyTrunkBodyRequest(req, is_create = true) {
 
 function modifyTrunkCreateBodyRequest(req, res, next) {
 
+
+    console.log("CAME TO MODIFY TRUNK CREATE", req.body);
+    
     try {
 
         const inputData = modifyTrunkBodyRequest(req);

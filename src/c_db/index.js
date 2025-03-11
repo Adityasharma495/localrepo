@@ -3,6 +3,7 @@ const Credit = require("./Credits");
 const UserJourney = require("./User-Journey");
 const ServerManagement = require("./server-management");
 const DataCenter = require("./data_center");
+const Trunks = require("./trunks");
 
 Credit.belongsTo(User, { foreignKey: "user_id" });
 Credit.belongsTo(User, { foreignKey: "from_user", as: "fromUser" });
@@ -20,4 +21,4 @@ User.hasMany(UserJourney, { foreignKey: "created_by", as: "creator" });
 DataCenter.hasMany(ServerManagement, { foreignKey: 'data_center_id', as: 'server_managements' });
 ServerManagement.belongsTo(DataCenter, { foreignKey: 'data_center_id',  as: 'data_center' });
 
-module.exports = { User, Credit, UserJourney, ServerManagement, DataCenter };
+module.exports = { User, Credit, UserJourney, ServerManagement, DataCenter, Trunks};
