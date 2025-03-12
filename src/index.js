@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-const { ServerConfig, connectMongo, Logger, connectSequelize } = require('./config');
+const { ServerConfig, MongoDB, Logger, connectSequelize } = require('./config');
 const apiRoutes = require('./routes');
 const swaggerRoutes = require('./routes/swagger');
 
@@ -25,7 +25,7 @@ app.use('/api-docs', swaggerRoutes);
 
 const startServer = async () => {
     try {
-        await connectMongo();
+        await MongoDB();
         Logger.info(`MongoDB -> Successfully connected`);
         console.log(`MongoDB -> Successfully connected`);
         

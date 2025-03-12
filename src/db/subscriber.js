@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/mongo-config').sequelize;
+const sequelize = require('../config/sequelize-config').sequelize;
 
 const Subscriber = sequelize.define('Subscriber', {
     id: {
