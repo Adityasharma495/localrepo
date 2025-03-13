@@ -4,6 +4,8 @@ const { constants } = require('../utils/common');
 const USER_MODEL_NAME = constants.MODEL.USERS;
 const AGENT_MODEL_NAME = constants.MODEL.AGENTS;
 const MEMEBER_SCHEDULES_MODEL_NAME = constants.MODEL.MEMEBER_SCHEDULES;
+const PROMPT_MODEL_NAME = constants.MODEL.PROMPT;
+
 
 const AgentsGroupSchema = new mongoose.Schema({
     group_schedule_id:{
@@ -61,6 +63,16 @@ const AgentsGroupSchema = new mongoose.Schema({
     sticky: {
         type: Boolean,
         default: false,
+    },
+    whisper_id:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: PROMPT_MODEL_NAME,
+        default: null
+    },
+    music_on_hold:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: PROMPT_MODEL_NAME,
+        default: null
     },
     is_deleted: {
         type: Boolean,

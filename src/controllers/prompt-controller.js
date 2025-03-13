@@ -11,11 +11,13 @@ const userJourneyRepo = new UserJourneyRepository();
 async function getPromptDetails(req, res) {
     try {
       // Extract `prompt_status and user_id` from query parameters
-      const { prompt_status, user_id } = req.query;
+      let { prompt_status, user_id } = req.query;
+
+      user_id = user_id ? user_id : req.user.id
   
       // Define query conditions based on the presence of `prompt_status and user_id`
       const conditions = (prompt_status || user_id) ? { prompt_status: parseInt(prompt_status), created_by: user_id } : {};
-  
+
       // Fetch prompts based on conditions
       const response = await PromptRepo.get(conditions);
   

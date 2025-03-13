@@ -105,8 +105,6 @@ async function createAgentGroup(req, res) {
       ...bodyReq.agent,
     });
 
-    await memberScheduleRepo.create(memberData);
-
     responseData.agent = agent;
 
     // Log user journey for this action
@@ -237,9 +235,7 @@ async function updateAgentGroup(req, res) {
       }
 
     } 
-    else if (bodyReq?.agent?.type === 'strategy') {
-      agent = await agentGroupRepo.update(uid, {strategy : bodyReq.agent.strategy});
-    } else {
+    else if (bodyReq?.agent?.type === 'add_member'){
       const agentIds = bodyReq?.agent?.agent_id;
       const preData = await agentGroupRepo.get(uid)
 
@@ -268,9 +264,10 @@ async function updateAgentGroup(req, res) {
         { _id: { $in: agentIds } },
         { is_allocated: 1 } 
       );
+    } else {
+      agent = await agentGroupRepo.update(uid, bodyReq.agent);
     }
     
-
     if (!agent) {
       const error = new Error();
       error.name = 'CastError';
@@ -359,6 +356,7 @@ async function deleteAgentGroup(req, res) {
 
 async function getAssignedAgents(req, res) {
   const groupId = req.params.id;
+  let transformedAgents
 
   try {
     if (!groupId) {
@@ -370,26 +368,25 @@ async function getAssignedAgents(req, res) {
 
     if (!agentGroup || !agentGroup.agents.length) {
       console.log("No agents found");
-      return [];
+      transformedAgents = []
+    } else {
+      transformedAgents = await Promise.all(
+        (agentGroup.agents).map(async (agent) => {
+          const agentData = await agentRepo.get(agent.agent_id);
+          const scheduleData = await memberScheduleRepo.get(agent.member_schedule_id);
+          return {
+            id: agentGroup._id,
+            group_name: agentGroup.group_name,
+            agent: agentData,
+            schedule: scheduleData
+          };
+        })
+      );
     }
-
-    const transformedAgents = await Promise.all(
-      (agentGroup.agents).map(async (agent) => {
-        const agentData = await agentRepo.get(agent.agent_id);
-        const scheduleData = await memberScheduleRepo.get(agent.member_schedule_id);
-        return {
-          id: agentGroup._id,
-          group_name: agentGroup.group_name,
-          agent: agentData,
-          schedule: scheduleData
-        };
-      })
-    );
 
     SuccessRespnose.message = "Successfully fetched assigned agents";
     SuccessRespnose.data = transformedAgents
 
-    
     Logger.info(`Agent Group -> Successfully fetched assigned agents for Group ID: ${groupId}`);
     return res.status(StatusCodes.OK).json(SuccessRespnose);
 

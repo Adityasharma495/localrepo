@@ -5,9 +5,6 @@ const {MemberScheduleMiddleware} = require('../../middlewares')
 const router = express.Router();
 
 
-
-
-
 router.post("/allocate",AuthMiddleware.validateUser,AgentController.updateAllocation)
 //agent delete: /api/v1/agent/delete POST
 router.post("/delete", AuthMiddleware.validateUser, AgentMiddleware.validateDeleteRequest,AgentController.deleteAgent);
