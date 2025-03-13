@@ -43,10 +43,6 @@ const AgentsGroupSchema = new mongoose.Schema({
         default: 'Not Assigned',
         trim: true,
     },
-    member_count: {
-        type: Number,
-        default: 0,
-    },
     strategy: {
         type: String,
         enum: ["ROUNDROBIN RINGING", "SEQUENTIAL RINGING", "RANDOM RINGING", "LEAST OCCUPIED RINGING", "LEAST IDLE RINGING"],
