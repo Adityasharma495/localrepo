@@ -11,7 +11,7 @@ class DownloadReportRepository extends CrudRepository {
 
     try {
 
-      let response = await downloadReportModel.find({}).lean();
+      let response = await downloadReportModel.find({user_id : current_uid}).lean();
       return response;
 
     } catch (error) {

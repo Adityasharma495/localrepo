@@ -217,7 +217,7 @@ async function createAgent(req, res) {
 
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
   } catch (error) {
-    console.log(error)
+    console.log('errorerrorerrorerror', error)
     Logger.error(
       `Agent -> unable to create Agent: ${JSON.stringify(
         bodyReq

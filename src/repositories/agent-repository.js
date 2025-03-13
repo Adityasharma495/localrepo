@@ -107,7 +107,6 @@ class AgentRepository extends CrudRepository {
         throw new AppError(`Failed to fetch active agents: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR);
     }
 }
-
 }
 
 module.exports = AgentRepository;

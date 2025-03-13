@@ -8,13 +8,6 @@ const AGENT_TYPE = constants.AGENT_TYPE;
 const AGENT_LOGIN_STATUS = constants.AGENT_LOGIN_STATUS;
 const bcrypt = require('bcrypt');
 
-// Helper function to hash the password
-function hookHashPassword(user) {
-    const SALT = bcrypt.genSaltSync(9);
-    const encryptedPassword = bcrypt.hashSync(user.password.trim(), SALT);
-    user.password = encryptedPassword;
-}
-
 const AgentsSchema = new mongoose.Schema({
     agent_name: {
         type: String,
@@ -120,11 +113,6 @@ AgentsSchema.pre('save', function (next) {
     }
     this.updated_at = istDate;
 
-    // Hash password if the document is new or the password is modified
-    if (this.isNew || this.isModified('password')) {
-        hookHashPassword(this);
-    }
-
     next();
 });
 
@@ -135,12 +123,6 @@ AgentsSchema.pre('findOneAndUpdate', function (next) {
     const istDate = new Date(now.getTime() + istOffset);
 
     this._update.updated_at = istDate;
-
-    // Hash password if it's being updated
-    if (this._update.password) {
-        const updateDoc = this._update;
-        hookHashPassword(updateDoc);
-    }
 
     next();
 });
