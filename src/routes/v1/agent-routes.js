@@ -7,7 +7,6 @@ const router = express.Router();
 
 
 
-router.post("/schedule/:id", AuthMiddleware.validateUser,MemberScheduleMiddleware.validateSchedule,AgentController.updateMemberScheduleAgent);
 
 router.post("/allocate",AuthMiddleware.validateUser,AgentController.updateAllocation)
 //agent delete: /api/v1/agent/delete POST

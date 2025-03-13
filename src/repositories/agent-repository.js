@@ -34,6 +34,7 @@ class AgentRepository extends CrudRepository {
   }
 
   async get(data) {
+    console.log('datadatadatadatadatadatadatadatadata', data)
 
     try {
 
@@ -52,7 +53,6 @@ class AgentRepository extends CrudRepository {
   }
 
   async update(id, data) {
-    console.log('datadatadatadatadatadatadatadatadata', data)
     const response = await this.model.findOneAndUpdate({ _id: id }, data, { runValidators: true, new: true });
     return response;
   }

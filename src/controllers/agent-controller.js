@@ -497,8 +497,8 @@ async function updateAllocation(req, res) {
 }
 
 async function updateMemberScheduleAgent(req, res) {
-  const { id } = req.params; // Extract the agent's ID from request parameters
-  const { start_time, end_time, week_days } = req.body; // Extract schedule details from request body
+  const { id } = req.params; 
+  const { start_time, end_time, week_days } = req.body; 
 
   try {
     const agent = await agentRepo.get(id);

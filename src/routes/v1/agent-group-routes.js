@@ -21,4 +21,9 @@ router.get("/:id", AuthMiddleware.validateUser, AgentGroupController.getById);
 
 router.get("/:id/assigned-agents",AuthMiddleware.validateUser, AgentGroupController.getAssignedAgents)
 
+router.post("/schedule/:id", AuthMiddleware.validateUser,AgentGroupMiddleware.validateSchedule,AgentGroupController.updateMemberScheduleAgent);
+
+router.post("/remove-agent/:id", AuthMiddleware.validateUser,AgentGroupMiddleware.validateAgentRemove,AgentGroupController.removeAgent);
+
+
 module.exports = router;
