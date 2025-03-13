@@ -63,16 +63,6 @@ const AgentsSchema = new mongoose.Schema({
         default: '',
         trim: true,
     },
-    username: {
-        type: String,
-        required: true,
-        unique: true,
-        trim: true,
-    },
-    password: {
-        type: String,
-        required: true,
-    },
     call_status: {
         type: Number,
         default: 0,

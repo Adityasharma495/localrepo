@@ -34,7 +34,6 @@ class AgentRepository extends CrudRepository {
   }
 
   async get(data) {
-    console.log('datadatadatadatadatadatadatadatadata', data)
 
     try {
 
