@@ -50,7 +50,7 @@ const mongoConnection = async() =>{
             let summary_data = {};
             try {
               report_data = {
-                 user_id : cdrJson.userId,
+                 user_id : mongoose.Types.ObjectId.isValid(cdrJson.userId) ? cdrJson.userId : null,
                  call_sid : cdrJson.id,
                  caller_number : cdrJson.callerFrom,
                  callee_number : cdrJson.calleeTo,
@@ -83,13 +83,15 @@ const mongoConnection = async() =>{
                    console.log("data ... : "+ JSON.stringify(incoming));
                    summary_data = {
                         did : incoming.did,
-                        user_id : incoming.user_id,
+                        user_id : mongoose.Types.ObjectId.isValid(incoming.userId) ? incoming.userId : null,
                         schedule_date : startDate,
-                        nos_processed : Number(incoming.nos_processed)+1,
-                        connected_calls : (cdrJson.billingDuration > 0 ? Number(incoming.connected_calls)+1 : incoming.connected_calls),
-                        dtmf_count : Number(incoming.dtmf_count) + Number(cdrJson.dtmfCount),
-                        retry_count : Number(incoming.retry_count) + Number(cdrJson.retryCount),
-                        sms_count : Number(incoming.sms_count) + Number(cdrJson.smsCount),                 
+                        nos_processed : (Number(incoming.nos_processed) || 0)+1,
+                        connected_calls : (cdrJson.billingDuration > 0 ? (Number(incoming.connected_calls))+1 : incoming.connected_calls),
+                        dtmf_count : (Number(incoming.dtmf_count) || 0) + (Number(cdrJson.dtmfCount) || 0),
+                        retry_count : (Number(incoming.retry_count)||0) + (Number(cdrJson.retryCount) || 0),
+                        sms_count : (Number(incoming.sms_count) || 0) + (Number(cdrJson.smsCount) || 0), 
+                        parent_id : mongoose.Types.ObjectId.isValid(incoming.parentId) ? incoming.parentId : null,
+                        s_parent_id :  mongoose.Types.ObjectId.isValid(incoming.sparentId) ? incoming.sparentId : null,              
                    }
                    
                    const summary = await incomingSummaryRepo.updateSummary(summary_data);
@@ -99,13 +101,13 @@ const mongoConnection = async() =>{
               }else{
                    summary_data = {
                        did : did,
-                       user_id : userId,
+                       user_id : mongoose.Types.ObjectId.isValid(userId) ? incoming.userId : null,
                        schedule_date : startDate,
                        nos_processed : 1,
                        connected_calls : connectedCalls,
-                       dtmf_count : cdrJson.dtmfCount,
-                       retry_count : cdrJson.retryCount,
-                       sms_count : cdrJson.smsCount
+                       dtmf_count : cdrJson.dtmfCount ?? 0,
+                       retry_count : cdrJson.retryCount ?? 0,
+                       sms_count : cdrJson.smsCount ?? 0
                    }
 
                    const summary = await incomingSummaryRepo.create(summary_data);
