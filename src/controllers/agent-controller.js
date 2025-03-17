@@ -17,8 +17,6 @@ const subUserLicenceRepo = new SubUserLicenceRepository();
 const userRepo = new UserRepository();
 const telephonyProfileRepo = new TelephonyProfileRepository();
 
-const UsersController = require('./user-controller');
-
 
 async function toggleStatus(req, res) {
   const { id } = req.params; // The agent's ID
@@ -178,15 +176,9 @@ async function createAgent(req, res) {
         }
       );
     }
-
-
-    
-
     
     const telephonyProfile = await telephonyProfileRepo.create(profiles);
     await agentRepo.update(agent._id, {telephony_profile : telephonyProfile[0]._id})
-
-    // console.log(process.exit(0))
 
     // Entry in Users Table
     await userRepo.create({
@@ -217,7 +209,6 @@ async function createAgent(req, res) {
 
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
   } catch (error) {
-    console.log('errorerrorerrorerror', error)
     Logger.error(
       `Agent -> unable to create Agent: ${JSON.stringify(
         bodyReq
@@ -272,6 +263,11 @@ async function getById(req, res) {
       throw new AppError("Missing Agent Id", StatusCodes.BAD_REQUEST);
      }
     const agentData = await agentRepo.get(id);
+    const userDetail = await userRepo.getByName(agentData.agent_name);
+    agentData.username = userDetail?.username
+    const extensionDetail = await extensionRepo.get(agentData.telephony_profile?.profile[1]?.id);
+    agentData.extensionName = extensionDetail?.username
+
     if (agentData.length == 0) {
       const error = new Error();
       error.name = 'CastError';
@@ -338,23 +334,22 @@ async function updateAgent(req, res) {
       }
     }
 
-
     //Check for extension change
-    if (currentData.extension[0] && bodyReq.agent.extension[0] && (currentData.extension[0].toString() !== bodyReq.agent.extension[0].toString())) {
-      if ((currentData.extension).length > 0) {
-        await extensionRepo.bulkUpdate( currentData.extension, { is_allocated: 0 });
-      }
+    // if (currentData.extension[0] && bodyReq.agent.extension[0] && (currentData.extension[0].toString() !== bodyReq.agent.extension[0].toString())) {
+    //   if ((currentData.extension).length > 0) {
+    //     await extensionRepo.bulkUpdate( currentData.extension, { is_allocated: 0 });
+    //   }
 
-      if ((bodyReq.agent.extension).length > 0) {
-        await extensionRepo.bulkUpdate( bodyReq.agent.extension, { is_allocated: 1 });
-      }
-    }
+    //   if ((bodyReq.agent.extension).length > 0) {
+    //     await extensionRepo.bulkUpdate( bodyReq.agent.extension, { is_allocated: 1 });
+    //   }
+    // }
 
-    if ((currentData.extension).length === 0 && (bodyReq.agent.extension).length > 0) {
-      if ((bodyReq.agent.extension).length > 0) {
-        await extensionRepo.bulkUpdate( bodyReq.agent.extension, { is_allocated: 1 });
-      }
-    }
+    // if ((currentData.extension).length === 0 && (bodyReq.agent.extension).length > 0) {
+    //   if ((bodyReq.agent.extension).length > 0) {
+    //     await extensionRepo.bulkUpdate( bodyReq.agent.extension, { is_allocated: 1 });
+    //   }
+    // }
 
     const agent = await agentRepo.update(uid, bodyReq.agent);
     if (!agent) {
@@ -398,16 +393,53 @@ async function updateAgent(req, res) {
 
 async function deleteAgent(req, res) {
   const id = req.body.agentIds;
-
   try {
 
     const agents = await agentRepo.findMany(id);
-    const extensionIds = agents.flatMap(agent => agent.extension || []);
-    if (extensionIds.length > 0) {
+    const allocated = [];
+    const notAllocated = [];
+    let response;
+
+    agents.forEach(item => {
+      if (item.is_allocated === 1) {
+        allocated.push(item.agent_name);
+      } else {
+        notAllocated.push(item);
+      }
+    });
+
+    const extensionIds = []
+    const telephonyProfiles = []
+    const deletedAgent = []
+    const deletedUser = []
+ 
+   // get extension ids from telephony_profile
+   for (const agent of notAllocated) {
+    if (agent.telephony_profile) {
+      
+      const userDetail = await userRepo.getByName(agent.agent_name);
+      deletedUser.push(userDetail._id);
+
+      const telephonyProfile = await telephonyProfileRepo.get(agent.telephony_profile);
+      telephonyProfiles.push(agent.telephony_profile);
+      deletedAgent.push(agent._id);
+      
+      if (telephonyProfile.profile.length > 1) {
+        extensionIds.push(telephonyProfile.profile[1].id);
+      }
+    }
+  }
+
+    if (notAllocated.length > 0) {
       await extensionRepo.bulkUpdate( extensionIds, { is_allocated: 0 });
+      await userRepo.bulkUpdate( deletedUser, { is_deleted: true });
+  
+      await telephonyProfileRepo.hardDeleteMany(telephonyProfiles)
+      response = await agentRepo.deleteMany(id);
     }
 
-    const response = await agentRepo.deleteMany(id);
+   
+
     if (req.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
       const loggedInData = await userRepo.getForLicence(req.user.id);
       const availableLicence = loggedInData.sub_user_licence_id.available_licence;
@@ -416,23 +448,32 @@ async function deleteAgent(req, res) {
           updatedData.agent = (updatedData.agent || 0) + 1;
       }
 
-      await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
+      await subUserLicenceRepo.updateById(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
     }
+
+
     const userJourneyfields = {
       module_name: MODULE_LABEL.AGENT,
       action: ACTION_LABEL.DELETE,
       created_by: req?.user?.id
     }
 
+    Logger.info(`Agent -> ${notAllocated} deleted successfully`);
+
     await userJourneyRepo.create(userJourneyfields);
-    SuccessRespnose.message = "Deleted successfully!";
-    SuccessRespnose.data = response;
+    if (allocated.length > 0) {
+      SuccessRespnose.message = `${allocated} agents not deleted as they are in Agents Groups.`;
+      SuccessRespnose.data = response
+      return res.status(StatusCodes.BAD_REQUEST).json(SuccessRespnose);
+    } else {
+      SuccessRespnose.message = `Agent Deleted Successfully`;
+      SuccessRespnose.data = response;
+      return res.status(StatusCodes.OK).json(SuccessRespnose);
 
-    Logger.info(`Agent -> ${id} deleted successfully`);
+    }
 
-    return res.status(StatusCodes.OK).json(SuccessRespnose);
+
   } catch (error) {
-
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg = error.message;
 

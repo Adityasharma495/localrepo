@@ -39,7 +39,7 @@ class TelephonyProfileRepository extends CrudRepository {
 
     try {
 
-      const response = await this.model.findOne({ _id: data, is_deleted: false }).lean();
+      const response = await this.model.findOne({ _id: data}).lean();
       if (!response) {
         throw new AppError('Not able to find the Telephony profile', StatusCodes.NOT_FOUND);
       }
@@ -52,6 +52,15 @@ class TelephonyProfileRepository extends CrudRepository {
     }
 
   }
+
+    async hardDeleteMany(idArray) {
+          try {
+              const response = await this.model.deleteMany({ _id: { $in: idArray } });
+              return response;
+          } catch (error) {
+              throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
+          }
+      }
 }
 
 module.exports = TelephonyProfileRepository;

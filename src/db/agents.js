@@ -77,25 +77,6 @@ const AgentsSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-
-    // ✅ Time Schedule Section
-    time_schedule: {
-        start_time: {
-            type: String,
-            default: "12:00:00 AM",
-            match: [/^(0[1-9]|1[0-2]):[0-5][0-9]:[0-5][0-9]\s?(AM|PM)$/, 'Please use a valid time format (HH:MM:SS AM/PM)']
-        },
-        end_time: {
-            type: String,
-            default: "11:59:59 PM",
-            match: [/^(0[1-9]|1[0-2]):[0-5][0-9]:[0-5][0-9]\s?(AM|PM)$/, 'Please use a valid time format (HH:MM:SS AM/PM)']
-        },
-        week_days: {
-            type: [String],
-            enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-            default: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        }
-    }
 }, {
     versionKey: false,
     // timestamps: true

@@ -14,7 +14,7 @@ router.post('/',AuthMiddleware.validateUser,AgentMiddleware.validateAgentCreate,
 
 
 // agent update: /api/v1/agent POST
-router.post('/:id',AuthMiddleware.validateUser,AgentMiddleware.validateAgentCreate,AgentMiddleware.modifyAgentUpdateBodyRequest,AgentController.updateAgent);
+router.post('/:id',AuthMiddleware.validateUser, AgentMiddleware.modifyAgentUpdateBodyRequest,AgentController.updateAgent);
 
 //agent getAll: /api/v1/agent GET
 router.get("/", AuthMiddleware.validateUser, AgentController.getAll);

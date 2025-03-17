@@ -37,7 +37,7 @@ class AgentRepository extends CrudRepository {
 
     try {
 
-      const response = await this.model.findOne({ _id: data, is_deleted: false }).lean();
+      const response = await this.model.findOne({ _id: data, is_deleted: false }).populate('telephony_profile').lean();
       if (!response) {
         throw new AppError('Not able to find the Agent', StatusCodes.NOT_FOUND);
       }

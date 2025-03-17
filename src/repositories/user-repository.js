@@ -13,14 +13,13 @@ class UserRepository extends CrudRepository{
     }
 
     async getByUsername(username){
-        
         try {
             
             const user = await userModel.findOne({ username });
             return user;    
 
         } catch (error) {
-         
+            console.log('error', error)
             throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
 
         }
@@ -163,6 +162,20 @@ class UserRepository extends CrudRepository{
             throw error;
         }
 
+    }
+
+    async getByName(name){
+        try {
+            
+            const user = await userModel.findOne({ name });
+            return user;    
+
+        } catch (error) {
+            console.log('error', error)
+            throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
+
+        }
+        
     }
     
 

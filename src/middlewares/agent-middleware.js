@@ -87,18 +87,21 @@ function modifyAgentBodyRequest(req, is_create = true) {
             agent: {
                 agent_name: bodyReq.agent_name.trim(),
                 agent_number: Number(bodyReq.agent_number),
-                extension: bodyReq?.extension || [],
                 access:bodyReq.access.trim(),
                 type:bodyReq.type.trim(),
                 email_id:bodyReq.email_id.trim(),
                 description:bodyReq.description.trim(),
-                username:bodyReq.username.trim(),
-                password:bodyReq.password.trim(),
                 // login_status:bodyReq.login_status
             }
         }
 
-        if (is_create) inputData.agent.created_by = req.user.id
+        if (is_create) {
+            inputData.agent.created_by = req.user.id
+            inputData.agent.username = bodyReq.username.trim()
+            inputData.agent.password = bodyReq.password.trim()
+            inputData.agent.extension = bodyReq?.extension || []
+
+        } 
         return inputData;
 
     } catch (error) {
