@@ -3,5 +3,6 @@ module.exports = {
     CreditController: require("./credits-controller"),
     UserJourneyController: require("./user-journey-controller"),
     ServerManagementController: require("./server-management-controller"),
-    DataCenterController:require("./data-center-controller")
+    DataCenterController:require("./data-center-controller"),
+    PromptController:require("./prompt-controller")
 }

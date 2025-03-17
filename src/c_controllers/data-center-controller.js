@@ -44,20 +44,20 @@ async function createDataCenter(req, res) {
     const dataCenterPayload = {
       ...bodyReq.data_center,
       overseas_details: bodyReq.overseas_details,
-      // created_by: req.user.id
+      created_by: req.user.id
     };
 
     const dataCenter = await dataCenterRepo.create(dataCenterPayload);
 
     responseData.dataCenter = dataCenter;
 
-    // const userJourneyfields = {
-    //   module_name: MODULE_LABEL.DATA_CENTER,
-    //   action: ACTION_LABEL.ADD,
-    //   created_by: req?.user?.id
-    // };
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.DATA_CENTER,
+      action: ACTION_LABEL.ADD,
+      created_by: req?.user?.id
+    };
 
-    // await userJourneyRepo.create(userJourneyfields);
+    await userJourneyRepo.create(userJourneyfields);
 
     const SuccessResponse = {
       data: responseData,
@@ -201,13 +201,13 @@ async function updateDataCenter(req, res) {
     }
     responseData.dataCenter = dataCenter;
 
-    // const userJourneyfields = {
-    //   module_name: MODULE_LABEL.DATA_CENTER,
-    //   action: ACTION_LABEL.EDIT,
-    //   created_by: req?.user?.id,
-    // };
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.DATA_CENTER,
+      action: ACTION_LABEL.EDIT,
+      created_by: req?.user?.id,
+    };
 
-    // await userJourneyRepo.create(userJourneyfields);
+    await userJourneyRepo.create(userJourneyfields);
 
     SuccessRespnose.message = "Updated successfully!";
     SuccessRespnose.data = responseData;
@@ -244,13 +244,13 @@ async function deleteDataCenter(req, res) {
   try {
     const response = await dataCenterRepo.deleteMany(idArray);
 
-    // const userJourneyfields = {
-    //   module_name: MODULE_LABEL.DATA_CENTER,
-    //   action: ACTION_LABEL.DELETE,
-    //   created_by: req?.user?.id,
-    // };
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.DATA_CENTER,
+      action: ACTION_LABEL.DELETE,
+      created_by: req?.user?.id,
+    };
 
-    // await userJourneyRepo.create(userJourneyfields);
+    await userJourneyRepo.create(userJourneyfields);
 
     SuccessRespnose.message = "Deleted successfully!";
     SuccessRespnose.data = response;
