@@ -17,7 +17,7 @@ async function getPromptDetails(req, res) {
         const conditions = {};
 
         if (prompt_status) conditions.prompt_status = parseInt(prompt_status);
-        if (user_id) conditions.createdBy = user_id;
+        if (user_id) conditions.created_by = user_id;
 
         const results = await promptRepo.get(conditions);
 
@@ -66,19 +66,20 @@ async function savePrompts(req, res) {
             prompt_category: bodyReq.prompt_category,
             prompt_name: bodyReq.prompt_name,
             prompt_url: file_url,
-            createdBy: req.user.id,
+            created_by: req.user.id,
             prompt_duration: bodyReq.duration || 0
         });
 
         await userJourneyRepo.create({
             module_name: MODULE_LABEL.PROMPTS,
             action: ACTION_LABEL.ADD,
-            createdBy: req.user.id
+            created_by: req.user.id
         });
 
         SuccessRespnose.message = "Successfully created a new Prompt";
         return res.status(StatusCodes.CREATED).json(SuccessRespnose);
     } catch (error) {
+        console.log("error", error);
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Error while processing the Prompts file.', error });
     }
 }

@@ -7,10 +7,10 @@ const UserJourney = sequelize.define(
   "user_journey",
   {
     id: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       allowNull: false,
       primaryKey: true,
-      autoIncrement: true,
     },
     module_name: {
       type: DataTypes.STRING,

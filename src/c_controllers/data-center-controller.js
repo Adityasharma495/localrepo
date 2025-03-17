@@ -14,7 +14,6 @@ const userJourneyRepo = new UserJourneyRepository();
 
 async function createDataCenter(req, res) {
   const bodyReq = req.body;
-  console.log("bodyReq", bodyReq);
   try {
     const responseData = {};
 

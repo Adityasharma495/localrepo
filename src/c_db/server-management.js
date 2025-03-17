@@ -1,6 +1,6 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/sequelize");
-const { DATA_CENTER_TYPE } = require("../utils/common/constants");
+const { DATA_CENTER_TYPE, MODEL } = require("../utils/common/constants");
 
 const ServerManagement = sequelize.define(
   "server_management",
@@ -52,11 +52,11 @@ const ServerManagement = sequelize.define(
     },
     created_by: {
       type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      // references: {
-      //     model: USER_MODEL_NAME,
-      //     key: 'id'
-      // }
+      allowNull: false,
+      references: {
+          model: MODEL.USERS,
+          key: 'id'
+      }
     },
     created_at: DataTypes.DATE,
     updated_at: DataTypes.DATE,

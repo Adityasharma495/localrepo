@@ -13,7 +13,7 @@ const userJourneyRepo = new UserJourneyRepository();
 async function createServerManagement(req, res) {
   const bodyReq = req.body;
   bodyReq.server.data_center_id = Number(bodyReq.server.data_center);
-  bodyReq.server.created_by = "0f9b51be-1c73-47c1-befc-fe46616d5e6e";
+  bodyReq.server.created_by = bodyReq.server.createdBy;
   try {
     const responseData = {};
     const server = await serverManagementRepo.create(bodyReq.server);
