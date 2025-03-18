@@ -15,7 +15,6 @@ const { UserController } = require("../../c_controllers");
 
   // LOGOUT USER ROUTE
   router.post("/logout", AuthMiddleware.validateUser, UserController.logoutUser);
-
   // GET USER
   router.get('/:id', AuthMiddleware.validateUser, UserController.get);
 

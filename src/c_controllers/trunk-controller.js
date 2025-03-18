@@ -3,6 +3,8 @@ const { TrunkRepository, UserJourneyRepository } = require("../c_repositories");
 const {SuccessRespnose , ErrorResponse , Authentication } = require("../utils/common");
 const {MODULE_LABEL, ACTION_LABEL} = require('../utils/common/constants');
 const { Logger } = require("../config");
+const AppError = require("../utils/errors/app-error");
+
 
 
 const trunkRepo = new TrunkRepository();
@@ -11,7 +13,7 @@ const userJourneyRepo = new UserJourneyRepository();
 async function createTrunk(req, res) {
     const bodyReq = req.body;
 
-    console.log("AT LAST COMING TO CREATE TRUNK HERE", bodyReq);
+ 
   
     try {
       const responseData = {};
@@ -121,13 +123,17 @@ async function createTrunk(req, res) {
     try {
       const response = await trunkRepo.deleteMany(id);
   
-      const userJourneyfields = {
-        module_name: MODULE_LABEL.TRUNKS,
-        action: ACTION_LABEL.DELETE,
-        createdBy: req?.user?.id
-      }
+
+      console.log("REPOSNE AFTER DELETE", response);
+
+
+      // const userJourneyfields = {
+      //   module_name: MODULE_LABEL.TRUNKS,
+      //   action: ACTION_LABEL.DELETE,
+      //   createdBy: req?.user?.id
+      // }
   
-      await userJourneyRepo.create(userJourneyfields);
+      // await userJourneyRepo.create(userJourneyfields);
       SuccessRespnose.message = "Deleted successfully!";
       SuccessRespnose.data = response;
   
@@ -160,50 +166,54 @@ async function createTrunk(req, res) {
     const uid = req.params.id;
     const bodyReq = req.body;
     try {
-  
-      const responseData = {};
-      const trunk = await trunkRepo.update(uid, bodyReq.trunk);
-      if (!trunk) {
-        const error = new Error();
-        error.name = 'CastError';
-        throw error;
-      }
-      responseData.trunk = trunk;
-  
-      const userJourneyfields = {
-        module_name: MODULE_LABEL.TRUNKS,
-        action: ACTION_LABEL.EDIT,
-        createdBy:  req?.user?.id
-      }
-  
-      const userJourney = await userJourneyRepo.create(userJourneyfields);
-      responseData.userJourney = userJourney
-  
-      SuccessRespnose.message = 'Updated successfully!';
-      SuccessRespnose.data = responseData;
-  
-      Logger.info(`Trunk -> ${uid} updated successfully`);
-  
-      return res.status(StatusCodes.OK).json(SuccessRespnose);
-  
+        const responseData = {};
+        const trunk = await trunkRepo.update(uid, bodyReq.trunk);
+        if (!trunk) {
+            const error = new Error();
+            error.name = 'CastError';
+            throw error;
+        }
+        responseData.trunk = trunk;
+
+        // const userJourneyfields = {
+        //     module_name: MODULE_LABEL.TRUNKS,
+        //     action: ACTION_LABEL.EDIT,
+        //     createdBy: req?.user?.id
+        // };
+
+        // const userJourney = await userJourneyRepo.create(userJourneyfields);
+        // responseData.userJourney = userJourney;
+
+        SuccessRespnose.message = 'Updated successfully!';
+        SuccessRespnose.data = responseData;
+
+        Logger.info(`Trunk -> ${uid} updated successfully`);
+
+        return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {
-  
-      if (error.name == 'CastError') {
-        statusCode = StatusCodes.BAD_REQUEST;
-        errorMsg = 'Trunk not found';
-      }
-      else if (error.name == 'MongoServerError') {
-        statusCode = StatusCodes.BAD_REQUEST;
-        if (error.codeName == 'DuplicateKey') errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
-      }
-      ErrorResponse.message = errorMsg;
-  
-      Logger.error(`Trunk-> unable to update trunk: ${uid}, data: ${JSON.stringify(bodyReq)}, error: ${JSON.stringify(error)}`);
-  
-      return res.status(statusCode).json(ErrorResponse);
-  
+        // ✅ Initialize `statusCode` and `errorMsg`
+        let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+        let errorMsg = error.message || "Something went wrong";
+
+        if (error.name == 'CastError') {
+            statusCode = StatusCodes.BAD_REQUEST;
+            errorMsg = 'Trunk not found';
+        }
+        else if (error.name == 'MongoServerError') {
+            statusCode = StatusCodes.BAD_REQUEST;
+            if (error.codeName == 'DuplicateKey') {
+                errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
+            }
+        }
+
+        ErrorResponse.message = errorMsg;
+
+        Logger.error(`Trunk-> unable to update trunk: ${uid}, data: ${JSON.stringify(bodyReq)}, error: ${JSON.stringify(error)}`);
+
+        return res.status(statusCode).json(ErrorResponse);
     }
-  }
+}
+
 
 
   module.exports = {

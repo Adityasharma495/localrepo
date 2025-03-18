@@ -8,7 +8,7 @@ class CrudRepository {
 
     async create(data) {
 
-        console.log("DATA TO BE CREATED", data);
+  
         try {
             const response = await this.model.create(data);
 
@@ -73,25 +73,41 @@ class CrudRepository {
 
     async deleteMany(idArray) {
         try {
-            const check = await this.model.find({ _id: { $in: idArray }, is_deleted: false },{ _id: 1 });
+            // Step 1: Check if all the provided IDs exist and are not deleted
+            const check = await this.model.findAll({
+                where: {
+                    id: idArray,
+                    is_deleted: false
+                },
+                attributes: ['id'] // Only fetch the IDs
+            });
+    
             if (check.length !== idArray.length) {
-              const checkData = check.map(obj => obj._id.toString());
-              const notFoundElement =  idArray.filter(x => !checkData.includes(x));
-              const error = new Error();
-              error.name = `Data with id ${notFoundElement} not found.`;
-              throw error;
+                // Extract existing IDs and find the missing ones
+                const existingIds = check.map(obj => obj.id);
+                const notFoundElements = idArray.filter(id => !existingIds.includes(id));
+    
+                const error = new Error(`Data with id ${notFoundElements} not found.`);
+                error.name = "NotFoundError";
+                throw error;
             }
-            const response = await this.model.updateMany(
-              { _id: { $in: idArray } },
-              { $set: { is_deleted: true } }
-          );
-            return response;
-          } catch (error) {
+    
+            // Step 2: Perform soft delete (update `is_deleted` to true)
+            const response = await this.model.update(
+                { is_deleted: true }, // Set is_deleted = true
+                {
+                    where: {
+                        id: idArray
+                    }
+                }
+            );
+    
+            return { deletedCount: response[0] }; // Sequelize returns [affectedRows] in update()
+        } catch (error) {
             throw error;
-          }
-      
+        }
     }
-
+    
     async findAllData() {
         const response = await this.model.find({ is_deleted: false }).lean();
         return response;

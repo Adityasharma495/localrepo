@@ -151,6 +151,9 @@ function validateSignup(req, res, next){
 }
 
 function validateSignin(req, res, next){
+
+    console.log("CAME TO VALIDATE SIGNIN");
+    
     const bodyReq = req.body;
 
     if(!req.is('application/json')){

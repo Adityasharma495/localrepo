@@ -9,7 +9,6 @@ async function validateUser(req, res, next){
     try {
         const token = req.headers['authorization'];
 
-
         const decodeJwt = await Authentication.verifyJWToken(token);
         if(decodeJwt){
 

@@ -36,9 +36,29 @@ class TrunksRepository extends CrudRepository {
   }
 
   async update(id, data) {
-    const response = await this.model.findOneAndUpdate({ _id: id, is_deleted: false }, data, { runValidators: true, new: true });
-    return response;
-  }
+    try {
+        // Step 1: Find the record by ID and ensure it's not deleted
+        const trunk = await this.model.findOne({
+            where: {
+                id: id,
+                is_deleted: false
+            }
+        });
+
+        if (!trunk) {
+            throw new Error("Trunk not found");
+        }
+
+        // Step 2: Update the record
+        await trunk.update(data);
+
+        // Step 3: Return the updated record
+        return trunk;
+    } catch (error) {
+        throw error;
+    }
+}
+
 
   async get(data) {
 

@@ -7,7 +7,6 @@ const AUTH_TYPES = constants.AUTH_TYPES;
 function validateTrunksCreate(req, res, next) {
 
     const bodyReq = req.body;
-
     
 
     if (!req.is('application/json')) {
@@ -181,10 +180,10 @@ function modifyTrunkBodyRequest(req, is_create = true) {
                 domain: bodyReq.domain.trim(),
                 port: Number(bodyReq.port),
                 pilot_number: bodyReq.pilot_number.trim(),
-                operator: bodyReq.operator.trim(),
+                operator_id: bodyReq.operator.trim(),
                 channels: Number(bodyReq.channels),
                 cps: Number(bodyReq.cps),
-                codec: bodyReq.codec,
+                codec_id: bodyReq.codec,
                 status: Number(bodyReq.status),
                 server_id: bodyReq.server
             }
@@ -212,8 +211,6 @@ function modifyTrunkBodyRequest(req, is_create = true) {
 
 function modifyTrunkCreateBodyRequest(req, res, next) {
 
-
-    console.log("CAME TO MODIFY TRUNK CREATE", req.body);
     
     try {
 
