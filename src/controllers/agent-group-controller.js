@@ -373,7 +373,10 @@ async function getAssignedAgents(req, res) {
       transformedAgents = await Promise.all(
         (agentGroup.agents).map(async (agent) => {
           const agentData = await agentRepo.get(agent.agent_id);
-          const scheduleData = await memberScheduleRepo.get(agent.member_schedule_id);
+          let scheduleData = {}
+          if (agent.member_schedule_id) {
+            scheduleData = await memberScheduleRepo.get(agent.member_schedule_id);
+          }
           return {
             id: agentGroup._id,
             group_name: agentGroup.group_name,

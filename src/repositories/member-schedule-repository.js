@@ -57,7 +57,6 @@ class MemberScheduleRepo extends CrudRepository {
         return response;
   
       } catch (error) {
-  
         throw error;
   
       }

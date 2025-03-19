@@ -2,7 +2,7 @@ const { exec } = require('child_process');
 const { StatusCodes } = require("http-status-codes");
 const { ErrorResponse, SuccessRespnose } = require("../utils/common");
 const {PromptRepository, UserJourneyRepository} = require("../repositories")
-const {MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, STORAGE_PATH, SERVER} = require('../utils/common/constants');
+const {MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, STORAGE_PATH, SERVER, USERS_ROLE} = require('../utils/common/constants');
 const { Logger } = require("../config");
 const PromptRepo = new PromptRepository();
 const fs = require("fs");
@@ -10,13 +10,17 @@ const userJourneyRepo = new UserJourneyRepository();
 
 async function getPromptDetails(req, res) {
     try {
-      // Extract `prompt_status and user_id` from query parameters
-      let { prompt_status, user_id } = req.query;
+      let conditions = {}
 
-      user_id = user_id ? user_id : req.user.id
-  
-      // Define query conditions based on the presence of `prompt_status and user_id`
-      const conditions = (prompt_status || user_id) ? { prompt_status: parseInt(prompt_status), created_by: user_id } : {};
+      if (req.user.role !== USERS_ROLE.SUPER_ADMIN) {
+        let { prompt_status, user_id } = req.query;
+
+
+        user_id = user_id ? user_id : req.user.id
+    
+        // Define query conditions based on the presence of `prompt_status and user_id`
+        conditions = (prompt_status || user_id) ? { prompt_status: parseInt(prompt_status), created_by: user_id } : {};
+      }
 
       // Fetch prompts based on conditions
       const response = await PromptRepo.get(conditions);

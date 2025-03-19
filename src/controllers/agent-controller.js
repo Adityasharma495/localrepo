@@ -265,8 +265,11 @@ async function getById(req, res) {
     const agentData = await agentRepo.get(id);
     const userDetail = await userRepo.getByName(agentData.agent_name);
     agentData.username = userDetail?.username
-    const extensionDetail = await extensionRepo.get(agentData.telephony_profile?.profile[1]?.id);
-    agentData.extensionName = extensionDetail?.username
+    let extensionDetail;
+    if (agentData.telephony_profile?.profile[1]?.id) {
+      extensionDetail = await extensionRepo.get(agentData.telephony_profile?.profile[1]?.id);
+    }
+    agentData.extensionName = extensionDetail?.username || ''
 
     if (agentData.length == 0) {
       const error = new Error();
