@@ -5,7 +5,7 @@ module.exports = {
     CodecRepository: require('./codec-repository'),
     TrunksRepository: require('./trunk-repository'),
     CountryCodeRepository: require('./country-code-repository'),
-    NumbersRepository: require('./numbersRepository'),
+    NumbersRepository: require('./numbers-repository'),
     IVRRepository: require('./ivr-repository'),
     OperatorsRepository: require('./operator-repository'),
     CallsRepository: require('./calls-repository'),
@@ -21,8 +21,7 @@ module.exports = {
     DIDUserMappingRepository: require('./did-user-mapping-repository'),
     AgentRepository: require('./agent-repository'),
     AgentGroupRepository: require('./agent-group-repository'),
-    ExtentionRepository: require('./extention-repository'),
-    AgentGroupMappingRepository: require('./agent-group-mapping-repository'),
+    ExtensionRepository: require('./extension-repository'),
     LicenceRepository: require('./licence-repository'),
     QueueRepository: require('./queue-repository'),
     FlowControlRepository:require('./flow-control-repository'),
@@ -34,5 +33,10 @@ module.exports = {
     LanguageRepository: require('./language-repository'),
     SubUserLicenceRepository: require('./sub-user-licence-repository'),
     FlowJsonRepository: require('./flow-json-repository'),
-    CreditRepository: require('./credit-repository')
+    CreditRepository: require('./credit-repository'),
+    IncomingSummaryRepository: require('./incoming-summary-repository'),
+    IncomingReportRepository: require('./incoming-report-repository'),
+    DownloadReportRepository: require('./download-report-repository'),
+    TelephonyProfileRepository: require('./telephony-profile-repository'),
+    SubscriberRepository: require('./subscriber-repository')
 }

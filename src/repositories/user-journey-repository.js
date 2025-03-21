@@ -13,9 +13,9 @@ class UserJourneyRepository extends CrudRepository {
       let response;
       // If role is "Superadmin show all the Journey"
       if (role === 'role_sadmin') {
-        response = await userJourneyModel.find({}).populate('createdBy', ["_id", "username"]).sort({ createdAt: -1 }).lean();
+        response = await userJourneyModel.find({}).populate('created_by', ["_id", "username"]).sort({ created_at: -1 }).lean();
     } else {
-        response = await userJourneyModel.find({ createdBy: current_uid }).populate('createdBy', ["_id", "username"]).sort({ createdAt: -1 }).lean();
+        response = await userJourneyModel.find({ created_by: current_uid }).populate('created_by', ["_id", "username"]).sort({ created_at: -1 }).lean();
     }
     return response;
 

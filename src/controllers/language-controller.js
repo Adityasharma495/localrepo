@@ -14,6 +14,8 @@ async function getAll(req, res){
         SuccessRespnose.message = "Success";
         SuccessRespnose.data = response;
 
+        Logger.info(`Language -> recieved all languages list`);
+
         return res.status(StatusCodes.OK).json(SuccessRespnose);
         
     } catch (error) {

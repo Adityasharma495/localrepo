@@ -45,7 +45,7 @@ const NumbersSchema = new mongoose.Schema({
         ref: COUNTRY_CODE_MODEL_NAME,
         default: null
     },
-    createdBy: {
+    created_by: {
         type: mongoose.Schema.Types.ObjectId,
         ref: USER_MODEL_NAME,
         required: true
@@ -88,7 +88,7 @@ async function saveNumbers(numberSchema) {
 
 async function getAll(current_uid) {
     try {
-        let response = await numbersModel.find({ is_deleted: false, createdBy: current_uid });
+        let response = await numbersModel.find({ is_deleted: false, created_by: current_uid });
         let updatedResponse = [];
         response.map(val => {
             let obj = {
@@ -99,7 +99,7 @@ async function getAll(current_uid) {
                 allocated_to: val["allocated_to"],
                 call_center: val["call_center"],
                 country_code: val["country_code"],
-                createdBy: val["createdBy"],
+                created_by: val["created_by"],
                 is_deleted: val["is_deleted"],
                 createdAt: val["createdAt"],
                 updatedAt: val["updatedAt"],

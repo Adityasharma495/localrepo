@@ -4,6 +4,7 @@ const AppError = require('../utils/errors/app-error');
 
 function validateServerManagementRequest(req, res, next) {
     const bodyReq = req.body;
+    const digitRegex = /^\d+$/;
 
     if (!req.is('application/json')) {
         ErrorResponse.message = 'Something went wrong while creating Server Management';
@@ -47,21 +48,21 @@ function validateServerManagementRequest(req, res, next) {
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
     }
-    else if (bodyReq.cpu_cores == undefined || !bodyReq.cpu_cores.trim()) {
+    else if (bodyReq.cpu_cores == undefined || !bodyReq.cpu_cores.trim() || !digitRegex.test(bodyReq.cpu_cores)) {
         ErrorResponse.message = 'Something went wrong while creating Server Management';
         ErrorResponse.error = new AppError(['cpu_cores not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
     }
-    else if (bodyReq.ram == undefined || !bodyReq.ram.trim()) {
+    else if (bodyReq.ram == undefined || !bodyReq.ram.trim() || !digitRegex.test(bodyReq.ram)) {
         ErrorResponse.message = 'Something went wrong while creating Server Management';
         ErrorResponse.error = new AppError(['ram not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
     }
-    else if (bodyReq.hard_disk == undefined || !bodyReq.hard_disk.trim()) {
+    else if (bodyReq.hard_disk == undefined || !bodyReq.hard_disk.trim() || !digitRegex.test(bodyReq.hard_disk)) {
         ErrorResponse.message = 'Something went wrong while creating Server Management';
         ErrorResponse.error = new AppError(['hard_disk not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
         return res
@@ -101,13 +102,13 @@ function modifyServerManagementRequest(req, is_create = true) {
                 server_ip: bodyReq.server_ip.trim(),
                 server_name: bodyReq.server_name.trim(),
                 os: bodyReq.os,
-                cpu_cores: bodyReq.cpu_cores.trim(),
-                ram: bodyReq.ram.trim(),
-                hard_disk: bodyReq.hard_disk.trim()
+                cpu_cores: Number(bodyReq.cpu_cores),
+                ram: Number(bodyReq.ram),
+                hard_disk: Number(bodyReq.hard_disk)
             }
         }
 
-        if (is_create) inputData.server.createdBy = req.user.id
+        if (is_create) inputData.server.created_by = req.user.id
 
         return inputData;
 

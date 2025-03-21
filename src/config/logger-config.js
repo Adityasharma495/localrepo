@@ -12,13 +12,21 @@ const transport = new transports.DailyRotateFile({
     zippedArchive: true
 });
 
+const consoleTransport = new transports.Console({
+    format: combine(
+        timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+        customFormat
+    )
+});
+
 const logger = createLogger({
     format: combine(
         timestamp({format: 'YYYY-MM-DD HH:mm:ss'}),
         customFormat
     ),
     transports: [
-        transport
+        transport,
+        consoleTransport
     ]
 });
 

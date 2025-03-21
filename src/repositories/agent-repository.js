@@ -15,14 +15,14 @@ class AgentRepository extends CrudRepository {
     try {
       let conditions = {
         is_deleted: false,
-        createdBy: current_uid,
+        created_by: current_uid,
       };
   
       // Add additional condition if `check` is 'all'
       if (check !== 'all') {
-        conditions.isAllocated = 0;
+        conditions.is_allocated = 0;
       }
-      let response = await agentModel.find(conditions).populate('extention').populate('createdBy').sort({ createdAt: -1 }).lean();
+      let response = await agentModel.find(conditions).populate('created_by').sort({ created_at: -1 }).lean();
       return response;
 
     } catch (error) {
@@ -52,7 +52,7 @@ class AgentRepository extends CrudRepository {
   }
 
   async update(id, data) {
-    const response = await this.model.findOneAndUpdate({ _id: id, is_deleted: false }, data, { runValidators: true, new: true });
+    const response = await this.model.findOneAndUpdate({ _id: id }, data, { runValidators: true, new: true });
     return response;
   }
 
@@ -94,21 +94,19 @@ class AgentRepository extends CrudRepository {
     }
   }
 
-  async getAllActiveAgents() {
+  async getAllActiveAgents(userId) {
     try {
         // Fetch all agents where is_deleted is false
-        const agents = await this.model.find({ is_deleted: false })
-            .populate('extention')  // Populate extension details if referenced
-            .populate('createdBy')  // Populate createdBy user details if referenced
-            .sort({ createdAt: -1 }) // Sort by creation date in descending order
-            .lean(); // Return plain JavaScript objects instead of Mongoose documents
+        const agents = await this.model.find({ is_deleted: false, created_by :  userId})
+            .populate('created_by') 
+            .sort({ created_at: -1 })
+            .lean();
 
         return agents;
     } catch (error) {
         throw new AppError(`Failed to fetch active agents: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR);
     }
 }
-
 }
 
 module.exports = AgentRepository;

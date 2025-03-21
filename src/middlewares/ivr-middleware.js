@@ -76,7 +76,7 @@ function modifyIVRBodyRequest(req, is_create = true){
             },
             ivr_data: bodyReq.data.trim()
         } 
-        if(is_create) inputData.ivr.createdBy = req.user.id
+        if(is_create) inputData.ivr.created_by = req.user.id
         return inputData;
     } catch (error) {
         throw error;

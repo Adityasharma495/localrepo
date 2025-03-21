@@ -11,22 +11,26 @@ const userJourneyRepo = new UserJourneyRepository();
 async function getPromptDetails(req, res) {
     try {
       // Extract `prompt_status and user_id` from query parameters
-      const { prompt_status, user_id } = req.query;
+      let { prompt_status, user_id } = req.query;
+
+      user_id = user_id ? user_id : req.user.id
   
       // Define query conditions based on the presence of `prompt_status and user_id`
-      const conditions = (prompt_status || user_id) ? { prompt_status: parseInt(prompt_status), createdBy: user_id } : {};
-  
+      const conditions = (prompt_status || user_id) ? { prompt_status: parseInt(prompt_status), created_by: user_id } : {};
+
       // Fetch prompts based on conditions
       const response = await PromptRepo.get(conditions);
   
       if (response && response.length > 0) {
         SuccessRespnose.data = response;
         SuccessRespnose.message = "Prompt fetched successfully";
+        Logger.info(`Get Prompt Details -> Prompt fetched successfully`);
         return res.status(StatusCodes.OK).json(SuccessRespnose);
       } else {
         // Handle no results
         SuccessRespnose.data = [];
         SuccessRespnose.message = "No prompts found";
+        Logger.info(`Get Prompt Details -> No prompts found`);
         return res.status(StatusCodes.OK).json(SuccessRespnose);
       }
     } catch (error) {
@@ -62,7 +66,7 @@ async function savePrompts(req, res) {
 
         // check for duplicate file name
         const conditions = {
-            createdBy: req.user.id, 
+            created_by: req.user.id, 
             prompt_name: bodyReq.prompt_name 
         }
         const checkDuplicate = await PromptRepo.findOne(conditions);
@@ -122,13 +126,13 @@ async function savePrompts(req, res) {
 
         
 
-        const file_url = `${BACKEND_API_BASE_URL}/temp/voice/${req.user.id}/prompts/${bodyReq.language}/${file_name}`;
+        const file_url = `${BACKEND_API_BASE_URL}/assets/voice/${req.user.id}/prompts/${bodyReq.language}/${file_name}`;
 
         const prompts = await PromptRepo.create({
             prompt_category: bodyReq.prompt_category,
             prompt_name: bodyReq.prompt_name,
             prompt_url: file_url,
-            createdBy: req.user.id,
+            created_by: req.user.id,
             prompt_duration : bodyReq.duration || 0
         });
 
@@ -137,7 +141,7 @@ async function savePrompts(req, res) {
         const userJourneyfields = {
           module_name: MODULE_LABEL.PROMPTS,
           action: ACTION_LABEL.ADD,
-          createdBy:  req?.user?.id
+          created_by:  req?.user?.id
         }
     
         const userJourney = await userJourneyRepo.create(userJourneyfields);
@@ -174,13 +178,16 @@ async function updatePropmtStatus(req, res) {
       if (response) {
         SuccessRespnose.data = response; // The updated document or metadata from the repository
         SuccessRespnose.message = "Prompt status updated successfully";
+        Logger.info(`Get Prompt Details -> Prompt status updated successfully`);
         return res.status(StatusCodes.OK).json(SuccessRespnose);
       } else {
         // Handle case where no document is updated
         ErrorResponse.message = "Prompt not found or update failed";
+        Logger.info(`Get Prompt Details -> Prompt not found or update failed`);
         return res.status(StatusCodes.NOT_FOUND).json(ErrorResponse);
       }
     } catch (error) {
+      Logger.info(`Get Prompt Details -> error updating prompt status`);
       let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
       let errorMsg = error.message;
   

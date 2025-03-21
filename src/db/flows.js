@@ -6,31 +6,31 @@ const USER_MODEL_NAME = constants.MODEL.USERS;
 
 const FlowSchema = new mongoose.Schema(
   {
-    callcenterId: {
+    call_center_id: {
       type: String,
       required: true,
       trim: true,
     },
-    flowName: {
+    flow_name: {
       type: String,
       required: true,
       trim: true,
     },
-    flowId: {
+    flow_id: {
       type: String,
       required:true,
       default: uuidv4,
     },
-    nodeId: {
+    node_id: {
       type: Number,
       required: true,
     },
-    scheduleId: {
+    schedule_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: MEMEBER_SCHEDULES_MODEL_NAME,
       default: null
     },
-    flowJson: {
+    flow_json: {
       type: Object, 
       required: true,
     },
@@ -39,27 +39,27 @@ const FlowSchema = new mongoose.Schema(
       required: true,
       default: 1,
     },
-    flowRender: {
+    flow_render: {
       type: Object, 
       required: true,
     },
-    createdBy: { 
+    created_by: { 
       type: mongoose.Schema.Types.ObjectId,
       ref: USER_MODEL_NAME,
       default: null 
     },
-    createdAt: {
+    created_at: {
       type: Date,
       default: Date.now
     },
-    updatedAt: {
+    updated_at: {
         type: Date,
         default: Date.now
    }
   },
   {
     versionKey: false, 
-    timestamps: true, 
+    // timestamps: true, 
   }
 );
 
@@ -72,8 +72,8 @@ const FlowSchema = new mongoose.Schema(
 
     // Loop through each document and set IST dates
     docs.forEach(doc => {
-        doc.createdAt = istDate;
-        doc.updatedAt = istDate;
+        doc.created_at = istDate;
+        doc.updated_at = istDate;
     });
 
     next();
@@ -82,22 +82,22 @@ const FlowSchema = new mongoose.Schema(
 const FlowControlSchema = new mongoose.Schema(
   {
    
-    callcenterId: {
+    call_center_id: {
       type: String,
       required: true,
       trim: true,
     },
-    flowName: {
+    flow_name: {
       type: String,
       required: true,
       trim: true,
     },
-    flowId: {
+    flow_id: {
       type: String,
       required:true,
       default: uuidv4,
     },
-    nodeId: {
+    node_id: {
       type: Number,
       required: true,
     },
@@ -105,7 +105,7 @@ const FlowControlSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    nextNode: {
+    next_node: {
       type: Number, 
     //   required: true,
     },
@@ -117,13 +117,13 @@ const FlowControlSchema = new mongoose.Schema(
   },
   {
     versionKey: false, 
-    timestamps: true, 
+    // timestamps: true, 
   }
 );
 
 
 const FlowModel = mongoose.model('flows', FlowSchema);
-const FlowControlModel = mongoose.model('flowControls', FlowControlSchema);
+const FlowControlModel = mongoose.model('flow_controls', FlowControlSchema);
 
 module.exports = {
   FlowModel,

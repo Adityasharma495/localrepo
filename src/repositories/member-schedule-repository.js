@@ -18,6 +18,7 @@ class MemberScheduleRepo extends CrudRepository {
      throw error
     }
   }
+  
 
   async memberUpdate(id,data){
     try {
@@ -44,6 +45,32 @@ class MemberScheduleRepo extends CrudRepository {
     } catch (error) {
       throw error;
     }
+  }
+
+    async get(data) {
+      try {
+  
+        const response = await this.model.findOne({ _id: data}).lean();
+        if (!response) {
+          throw new AppError('Not able to find the Member Schedule', StatusCodes.NOT_FOUND);
+        }
+        return response;
+  
+      } catch (error) {
+  
+        throw error;
+  
+      }
+  
+    }
+
+    async delete(id) {
+      try {
+          const response = await this.model.deleteOne({ _id: id });
+          return response;
+      } catch (error) {
+          throw error;
+      }
   }
 }
 

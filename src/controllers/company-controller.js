@@ -10,7 +10,7 @@ const userJourneyRepo = new UserJourneyRepository();
 async function create(req, res){
 
     const bodyReq = req.body;
-    const data = { name: bodyReq.name, createdBy: req.user.id }
+    const data = { name: bodyReq.name, created_by: req.user.id }
 
     try {
 
@@ -19,7 +19,7 @@ async function create(req, res){
         const userJourneyfields = {
             module_name: MODULE_LABEL.COMPANY,
             action: ACTION_LABEL.ADD,
-            createdBy: req?.user?.id
+            created_by: req?.user?.id
           }
       
         await userJourneyRepo.create(userJourneyfields);
@@ -60,6 +60,8 @@ async function getAll(req, res){
         SuccessRespnose.data = data;
         SuccessRespnose.message = 'Success';
 
+        Logger.info(`Company -> recieved all successfully`);
+
         return res.status(StatusCodes.OK).json(SuccessRespnose);
         
     } catch (error) {
@@ -84,6 +86,8 @@ async function get(req, res){
 
         const data = await companyRepository.get(companyId);
         SuccessRespnose.data = data;
+
+        Logger.info(`Company -> recieved ${companyId} successfully`);
         
         return res.status(StatusCodes.OK).json(SuccessRespnose);
         
@@ -124,7 +128,7 @@ async function updateCompany(req, res){
         const userJourneyfields = {
             module_name: MODULE_LABEL.COMPANY,
             action: ACTION_LABEL.EDIT,
-            createdBy: req?.user?.id
+            created_by: req?.user?.id
           }
       
         await userJourneyRepo.create(userJourneyfields);

@@ -1,57 +1,64 @@
 const { StatusCodes } = require("http-status-codes");
-const { ExtentionRepository, UserJourneyRepository, AgentGroupMappingRepository, AgentGroupRepository } = require("../repositories");
+const { ExtensionRepository, UserJourneyRepository, SubscriberRepository } = require("../repositories");
 const {SuccessRespnose , ErrorResponse} = require("../utils/common");
 const AppError = require("../utils/errors/app-error");
-
+const {BACKEND_BASE_URL} = require('../utils/common/constants');
 const {MODULE_LABEL, ACTION_LABEL} = require('../utils/common/constants');
 
 const { Logger } = require("../config");
 
-const extentionRepo = new ExtentionRepository();
+const extensionRepo = new ExtensionRepository();
 const userJourneyRepo = new UserJourneyRepository();
 
-async function createExtention(req, res) {
+async function createExtension(req, res) {
   const bodyReq = req.body;
   try {
     const responseData = {}
     const conditions = {
-      createdBy: req.user.id,
+      created_by: req.user.id,
       $or: [
-        { extention: bodyReq.extention.extention },
-        { username: bodyReq.extention.username}
+        { extension: bodyReq.extension.extension },
+        { username: bodyReq.extension.username}
       ]
     };
-    const checkDuplicate = await extentionRepo.findOne(conditions);
+    const checkDuplicate = await extensionRepo.findOne(conditions);
     
     if (checkDuplicate && Object.keys(checkDuplicate).length !== 0) {
-      const duplicateField = checkDuplicate.extention === bodyReq.extention.extention ? 'Extention' : 'Username';
+      const duplicateField = checkDuplicate.extension === bodyReq.extension.extension ? 'Extension' : 'Username';
       ErrorResponse.message = `${duplicateField} Already Exists`;
       return res
         .status(StatusCodes.BAD_REQUEST)
         .json(ErrorResponse);
     }
-    const extention = await extentionRepo.create(bodyReq.extention);
-    responseData.extention = extention;
+    const extension = await extensionRepo.create(bodyReq.extension);
+    responseData.extension = extension;
+
+    // entry to subscriber
+    await SubscriberRepository.addSubscriber({
+      username: bodyReq.extension.extension,
+      domain: BACKEND_BASE_URL,
+      password:bodyReq.extension.password,
+    })
 
     const userJourneyfields = {
-      module_name: MODULE_LABEL.EXTENTION,
+      module_name: MODULE_LABEL.EXTENSION,
       action: ACTION_LABEL.ADD,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
 
     SuccessRespnose.data = responseData;
-    SuccessRespnose.message = "Successfully created a new Extention";
+    SuccessRespnose.message = "Successfully created a new Extension";
 
     Logger.info(
-      `Extention -> created successfully: ${JSON.stringify(responseData)}`
+      `Extension -> created successfully: ${JSON.stringify(responseData)}`
     );
 
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
   } catch (error) {
     Logger.error(
-      `Extention -> unable to create Extention: ${JSON.stringify(
+      `Extension -> unable to create Extension: ${JSON.stringify(
         bodyReq
       )} error: ${JSON.stringify(error)}`
     );
@@ -74,9 +81,13 @@ async function createExtention(req, res) {
 async function getAll(req, res) {
   const { data } = req.query || null;
   try {
-    const extentionData = await extentionRepo.getAll(req.user.id, data);
-    SuccessRespnose.data = extentionData;
+    const extensionData = await extensionRepo.getAll(req.user.id, data);
+    SuccessRespnose.data = extensionData;
     SuccessRespnose.message = "Success";
+
+    Logger.info(
+      `Extension -> recieved all successfully`
+    );
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -84,7 +95,7 @@ async function getAll(req, res) {
     ErrorResponse.error = error;
 
     Logger.error(
-      `Extention -> unable to get Extentions list, error: ${JSON.stringify(error)}`
+      `Extension -> unable to get Extensions list, error: ${JSON.stringify(error)}`
     );
 
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
@@ -96,16 +107,20 @@ async function getById(req, res) {
 
   try {
     if (!id) {
-      throw new AppError("Missing Extention Id", StatusCodes.BAD_REQUEST);
+      throw new AppError("Missing Extension Id", StatusCodes.BAD_REQUEST);
      }
-    const extentionData = await extentionRepo.get(id);
-    if (extentionData.length == 0) {
+    const extensionData = await extensionRepo.get(id);
+    if (extensionData.length == 0) {
       const error = new Error();
       error.name = 'CastError';
       throw error;
     }
     SuccessRespnose.message = "Success";
-    SuccessRespnose.data = extentionData;
+    SuccessRespnose.data = extensionData;
+
+    Logger.info(
+      `Extension -> recieved ${id} successfully`
+    );
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -115,61 +130,69 @@ async function getById(req, res) {
     ErrorResponse.error = error;
     if (error.name == "CastError") {
       statusCode = StatusCodes.BAD_REQUEST;
-      errorMsg = "Extention not found";
+      errorMsg = "Extension not found";
     }
     ErrorResponse.message = errorMsg;
 
     Logger.error(
-      `Extention -> unable to get Extention ${id}, error: ${JSON.stringify(error)}`
+      `Extension -> unable to get Extension ${id}, error: ${JSON.stringify(error)}`
     );
 
     return res.status(statusCode).json(ErrorResponse);
   }
 }
 
-async function updateExtention(req, res) {
+async function updateExtension(req, res) {
   const uid = req.params.id;
   const bodyReq = req.body;
   try {
 
     const responseData = {};
-    const currentData = await extentionRepo.get(uid);
+    const currentData = await extensionRepo.get(uid);
 
-    if (currentData.extention !== bodyReq.extention.extention) {
-      const extentionCondition = {
-        createdBy: req.user.id,
-        extention: bodyReq.extention.extention
+    if (currentData.extension !== bodyReq.extension.extension) {
+      const extensionCondition = {
+        created_by: req.user.id,
+        extension: bodyReq.extension.extension
       };
-      const extentionDuplicate = await extentionRepo.findOne(extentionCondition);
-      if (extentionDuplicate) {
-        ErrorResponse.message = 'Extention already exists';
+      const extensionDuplicate = await extensionRepo.findOne(extensionCondition);
+      if (extensionDuplicate) {
+        ErrorResponse.message = 'Extension already exists';
         return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
       }
     }
 
     // Check for duplicate username if it is being changed
-    if (currentData.username !== bodyReq.extention.username) {
+    if (currentData.username !== bodyReq.extension.username) {
       const nameCondition = {
-        createdBy: req.user.id,
-        username: bodyReq.extention.username
+        created_by: req.user.id,
+        username: bodyReq.extension.username
       };
-      const nameDuplicate = await extentionRepo.findOne(nameCondition);
+      const nameDuplicate = await extensionRepo.findOne(nameCondition);
       if (nameDuplicate) {
         ErrorResponse.message = 'Username already exists';
         return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
       }
     }
-    const extention = await extentionRepo.update(uid, bodyReq.extention);
-    if (!extention) {
+    const extension = await extensionRepo.update(uid, bodyReq.extension);
+
+     // update subscriber
+     await SubscriberRepository.addSubscriber({
+      username: bodyReq.extension.extension,
+      domain: BACKEND_BASE_URL,
+      password:bodyReq.extension.password,
+    })
+    
+    if (!extension) {
       const error = new Error();
       error.name = 'CastError';
       throw error;
     }
-    responseData.extention = extention;
+    responseData.extension = extension;
     const userJourneyfields = {
-      module_name: MODULE_LABEL.EXTENTION,
+      module_name: MODULE_LABEL.EXTENSION,
       action: ACTION_LABEL.EDIT,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
@@ -177,14 +200,14 @@ async function updateExtention(req, res) {
     SuccessRespnose.message = 'Updated successfully!';
     SuccessRespnose.data = responseData;
 
-    Logger.info(`Extention -> ${uid} updated successfully`);
+    Logger.info(`Extension -> ${uid} updated successfully`);
     return res.status(StatusCodes.OK).json(SuccessRespnose);
 
   } catch (error) {
     let statusCode
     if (error.name == 'CastError') {
       statusCode = StatusCodes.BAD_REQUEST;
-      errorMsg = 'Extention not found';
+      errorMsg = 'Extension not found';
     }
     else if (error.name == 'MongoServerError') {
       statusCode = StatusCodes.BAD_REQUEST;
@@ -192,21 +215,21 @@ async function updateExtention(req, res) {
     }
     ErrorResponse.message = errorMsg;
 
-    Logger.error(`Extention-> unable to update Extention: ${uid}, data: ${JSON.stringify(bodyReq)}, error: ${JSON.stringify(error)}`);
+    Logger.error(`Extension-> unable to update Extension: ${uid}, data: ${JSON.stringify(bodyReq)}, error: ${JSON.stringify(error)}`);
 
     return res.status(statusCode).json(ErrorResponse);
 
   }
 }
 
-async function deleteExtention(req, res) {
-  const id = req.body.extentionIds;
+async function deleteExtension(req, res) {
+  const id = req.body.extensionIds;
 
   try {
-     // Check if any of the extensions have isAllocated: 1
-     const allocatedExtensions = await extentionRepo.find({
+     // Check if any of the extensions have is_allocated: 1
+     const allocatedExtensions = await extensionRepo.find({
       _id: { $in: id },
-      isAllocated: 1,
+      is_allocated: 1,
     });
 
     if (allocatedExtensions.length > 0) {
@@ -214,19 +237,19 @@ async function deleteExtention(req, res) {
       throw new Error(`Cannot delete these extensions as they are allocated: ${allocatedIds}`);
     }
 
-    const response = await extentionRepo.deleteMany(id);
+    const response = await extensionRepo.deleteMany(id);
     
     const userJourneyfields = {
-      module_name: MODULE_LABEL.EXTENTION,
+      module_name: MODULE_LABEL.EXTENSION,
       action: ACTION_LABEL.DELETE,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
     SuccessRespnose.message = "Deleted successfully!";
     SuccessRespnose.data = response;
 
-    Logger.info(`Extention -> ${id} deleted successfully`);
+    Logger.info(`Extension -> ${id} deleted successfully`);
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -237,16 +260,16 @@ async function deleteExtention(req, res) {
     ErrorResponse.error = error;
     if (error.name == "CastError") {
       statusCode = StatusCodes.BAD_REQUEST;
-      errorMsg = "Extention not found";
+      errorMsg = "Extension not found";
     }
     ErrorResponse.message = errorMsg;
 
     Logger.error(
-      `Extention -> unable to delete Extention: ${id}, error: ${JSON.stringify(error)}`
+      `Extension -> unable to delete Extension: ${id}, error: ${JSON.stringify(error)}`
     );
 
     return res.status(statusCode).json(ErrorResponse);
   }
 }
 
-module.exports = {createExtention, getAll, getById, updateExtention, deleteExtention}
+module.exports = {createExtension, getAll, getById, updateExtension, deleteExtension}

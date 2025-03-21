@@ -21,7 +21,7 @@ async function createModule(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.MODULE,
       action: ACTION_LABEL.ADD,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
@@ -62,6 +62,10 @@ async function getAll(req, res) {
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
+    Logger.info(
+      `Module -> recieved all successfully`
+    );
+
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     ErrorResponse.message = error.message;
@@ -90,6 +94,10 @@ async function getById(req, res) {
     }
     SuccessRespnose.message = "Success";
     SuccessRespnose.data = moduleData;
+
+    Logger.info(
+      `Module -> recieved ${id} successfully`
+    );
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -127,7 +135,7 @@ async function updateModule(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.MODULE,
       action: ACTION_LABEL.EDIT,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
@@ -165,7 +173,7 @@ async function deleteModule(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.MODULE,
       action: ACTION_LABEL.DELETE,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);

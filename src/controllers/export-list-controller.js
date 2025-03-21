@@ -1,8 +1,10 @@
 const { StatusCodes } = require("http-status-codes");
 const { UserRepository, CallCentreRepository, TrunksRepository, NumbersRepository, IVRRepository,
   DataCenterRepository, ServerManagementRepository,ModuleRepository,UserJourneyRepository,AclSettingRepository,NumberFileListRepository,
- AgentRepository, AgentGroupRepository, ExtentionRepository, CreditRepository} = require("../repositories");
+ AgentRepository, AgentGroupRepository, extensionRepository, CreditRepository} = require("../repositories");
 const { Parser } = require('json2csv');
+
+const { Logger } = require("../config");
 
 async function exportData(req, res) {
     const { model } = req.params;
@@ -21,7 +23,7 @@ async function exportData(req, res) {
       NumberFileList: new NumberFileListRepository(),
       Agent: new AgentRepository(),
       AgentGroup: new AgentGroupRepository(),
-      Extension: new ExtentionRepository(),
+      Extension: new extensionRepository(),
       Credits: new CreditRepository()
     };
   
@@ -44,6 +46,8 @@ async function exportData(req, res) {
       res.header('Content-Type', 'text/csv');
       res.attachment(`${model}.csv`);
       res.data = csv;
+
+      Logger.error(`Export List -> data exported successfully for ${model}`);
   
       return res.status(StatusCodes.OK).json({
         message: `${model} data exported successfully`,

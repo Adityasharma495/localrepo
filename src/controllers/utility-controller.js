@@ -15,6 +15,10 @@ async function getAllTimezones(req, res) {
         SuccessRespnose.data = data;
         SuccessRespnose.message = "Success";
 
+        Logger.info(
+            `Timezones -> recieved all successfully`
+        );
+
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
     } catch (error) {

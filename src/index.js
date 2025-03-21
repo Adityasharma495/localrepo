@@ -1,12 +1,12 @@
 const express = require('express');
 const sequelize = require('./config/sequelize');
-const { ServerConfig, Mongodb, Logger } = require('./config');
+const { ServerConfig, Logger } = require('./config');
+const connectMongo = require('./config/mongo-config');
 const apiRoutes = require('./routes');
 const swaggerRoutes = require('./routes/swagger');
 
 const cors = require('cors');
 const path = require('path');
-
 
 
 
@@ -27,7 +27,7 @@ app.use('/temp', express.static(path.join(__dirname, '../temp')));
 app.use('/api', apiRoutes);
 app.use('/api-docs', swaggerRoutes);
 
-// Initialize the server **only after** DB connections succeed
+// Initialize the server *only after* DB connections succeed
 const startServer = async () => {
   try {
     // Test CockroachDB connection
@@ -41,7 +41,7 @@ const startServer = async () => {
     Logger.info('CockroachDB -> Database synchronized');
 
     // Connect to MongoDB
-    await Mongodb.connectMongo();
+    await connectMongo();
     console.log('✅ Successfully connected to MongoDB!');
     Logger.info('MongoDB -> Successfully connected');
 

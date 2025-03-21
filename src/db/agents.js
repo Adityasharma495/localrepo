@@ -2,10 +2,11 @@ const mongoose = require('mongoose');
 const { MODEL } = require('../utils/common/constants');
 const { constants } = require('../utils/common');
 const USER_MODEL_NAME = constants.MODEL.USERS;
-const EXTENTION_MODEL_NAME = constants.MODEL.EXTENTION;
+const TELEPHONY_PROFILE_MODEL_NAME = constants.MODEL.TELEPHONY_PROFILE;
 const ACCESS_CONTROL = constants.ACCESS_CONTROL;
 const AGENT_TYPE = constants.AGENT_TYPE;
 const AGENT_LOGIN_STATUS = constants.AGENT_LOGIN_STATUS;
+const bcrypt = require('bcrypt');
 
 const AgentsSchema = new mongoose.Schema({
     agent_name: {
@@ -17,11 +18,12 @@ const AgentsSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    extention: [{
+    telephony_profile: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: EXTENTION_MODEL_NAME, 
-    }],
-    isAllocated: {
+        ref: TELEPHONY_PROFILE_MODEL_NAME,
+        default: null 
+    },
+    is_allocated: {
         type: Number,
         default: 0 
     },
@@ -54,26 +56,24 @@ const AgentsSchema = new mongoose.Schema({
         default: '',
         trim: true,
     },
-    username: {
-        type: String,
-        required: true,
-        unique: true,
-        trim: true,
+    call_status: {
+        type: Number,
+        default: 0,
     },
-    password: {
-        type: String,
-        required: true,
+    last_call: {
+        type: Date,
+        default: null
     },
-    createdBy: { 
+    created_by: { 
         type: mongoose.Schema.Types.ObjectId,
         ref: USER_MODEL_NAME,
         default: null 
     },
-    createdAt: {
+    created_at: {
         type: Date,
         default: Date.now
     },
-    updatedAt: {
+    updated_at: {
         type: Date,
         default: Date.now
     },
@@ -98,7 +98,7 @@ const AgentsSchema = new mongoose.Schema({
     }
 }, {
     versionKey: false,
-    timestamps: true
+    // timestamps: true
 });
 
 // Pre-save middleware to convert timestamps to IST
@@ -107,25 +107,26 @@ AgentsSchema.pre('save', function (next) {
     const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
     const istDate = new Date(now.getTime() + istOffset);
 
-    // Set createdAt and updatedAt fields to IST
+    // Set created_at and updated_at fields to IST
     if (this.isNew) {
-        this.createdAt = istDate;
+        this.created_at = istDate;
     }
-    this.updatedAt = istDate;
+    this.updated_at = istDate;
 
     next();
 });
 
-// Pre-update middleware to convert updatedAt to IST
+// Pre-update middleware to convert updated_at to IST
 AgentsSchema.pre('findOneAndUpdate', function (next) {
     const now = new Date();
     const istOffset = 5.5 * 60 * 60 * 1000; 
     const istDate = new Date(now.getTime() + istOffset);
 
-    this._update.updatedAt = istDate;
+    this._update.updated_at = istDate;
 
     next();
 });
+
 
 const agentData = mongoose.model(MODEL.AGENTS, AgentsSchema);
 

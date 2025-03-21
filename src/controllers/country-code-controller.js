@@ -23,7 +23,7 @@ async function create(req, res) {
         const userJourneyfields = {
             module_name: MODULE_LABEL.COUNTRY_CODE,
             action: ACTION_LABEL.ADD,
-            createdBy: req?.user?.id
+            created_by: req?.user?.id
           }
       
         await userJourneyRepo.create(userJourneyfields);
@@ -62,6 +62,8 @@ async function getAll(req, res) {
         SuccessRespnose.data = data;
         SuccessRespnose.message = 'Success';
 
+        Logger.info(`Country Code -> recieved all successfully`);
+
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
     } catch (error) {
@@ -93,6 +95,8 @@ async function get(req, res) {
             ErrorResponse.data = data;
             return res.status(statusCode).json(ErrorResponse);
         }
+
+        Logger.info(`Country Code -> recieved ${countryCodeId} successfully`);
 
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
@@ -133,7 +137,7 @@ async function updateCountryCode(req, res) {
         const userJourneyfields = {
             module_name: MODULE_LABEL.COUNTRY_CODE,
             action: ACTION_LABEL.EDIT,
-            createdBy: req?.user?.id
+            created_by: req?.user?.id
           }
       
         await userJourneyRepo.create(userJourneyfields);
@@ -176,7 +180,7 @@ async function deleteCountryCode(req, res) {
         const userJourneyfields = {
             module_name: MODULE_LABEL.COUNTRY_CODE,
             action: ACTION_LABEL.DELETE,
-            createdBy: req?.user?.id
+            created_by: req?.user?.id
           }
       
         await userJourneyRepo.create(userJourneyfields);

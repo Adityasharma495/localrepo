@@ -21,7 +21,7 @@ async function create(req, res) {
             name: bodyReq.name.trim(),
             domain: bodyReq.domain.trim(),
             description: bodyReq.description.trim(),
-            createdBy: req.user.id,
+            created_by: req.user.id,
             company: req.user.companies.id,
             country_code: bodyReq.countryCode.trim(),
             timezone: bodyReq.timezone.trim()
@@ -34,7 +34,7 @@ async function create(req, res) {
         const userJourneyfields = {
             module_name: MODULE_LABEL.CALL_CENTER,
             action: ACTION_LABEL.ADD,
-            createdBy: req?.user?.id
+            created_by: req?.user?.id
           }
       
         await userJourneyRepo.create(userJourneyfields);
@@ -72,6 +72,8 @@ async function getAll(req, res) {
         SuccessRespnose.data = data;
         SuccessRespnose.message = 'Success';
 
+        Logger.info(`Call Centre -> recieved all successfully`);
+
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
     } catch (error) {
@@ -96,6 +98,8 @@ async function get(req, res) {
 
         const data = await callCentreRepository.get(callCentreId);
         SuccessRespnose.data = data;
+
+        Logger.info(`Call Centre -> recieved ${callCentreId} successfully`);
 
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
@@ -142,7 +146,7 @@ async function updateCallCentre(req, res) {
         const userJourneyfields = {
             module_name: MODULE_LABEL.CALL_CENTER,
             action: ACTION_LABEL.EDIT,
-            createdBy: req?.user?.id
+            created_by: req?.user?.id
           }
       
         await userJourneyRepo.create(userJourneyfields);
@@ -185,6 +189,8 @@ async function getUsers(req, res) {
 
         const data = await userRepository.getCallCentreUsers(callCentreId);
         SuccessRespnose.data = data;
+
+        Logger.info(`Call Centre -> recieved users based on ${callCentreId} successfully`);
 
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 

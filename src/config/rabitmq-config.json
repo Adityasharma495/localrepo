@@ -1,0 +1,39 @@
+{
+"rmq":{
+  "$schema": "./node_modules/rascal/lib/config/schema.json",
+  "vhosts": {
+    "/": {
+      "connection": {
+        "url": "amqp://dialplan:ns@4044888@64.227.131.75:5672/"
+      },
+      "exchanges": {
+	      "cdr_exchange":{
+		      "type":"direct",
+		      "options":{
+			      "durable":true
+		      }
+	      }
+      },
+      "queues": {
+	      "cdr_queue":{
+		      "options":{
+			      "durable":true
+		      }
+	      }
+      },
+      "publications": {
+        "cdr_publisher": {
+          "queue": "cdr_queue"
+        }
+      },
+      "subscriptions": {
+        "cdr_subscriber": {
+          "queue": "cdr_queue",
+          "prefetch": 3
+        }
+      }
+    }
+  }
+},
+"MONGO_DB_URI":"mongodb://64.227.131.75:35017/cloud-telephony"
+}

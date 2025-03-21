@@ -86,27 +86,31 @@ const MODEL = {
     IVR: 'ivrs',
     IVR_DATA: 'ivrs_data',
     TIMEZONES: 'timezones',
-    DATACENTER: 'datacenter',
-    SERVERMANAGEMENT: 'servermanagement',
+    DATACENTER: 'data_center',
+    SERVERMANAGEMENT: 'server_management',
     MODULE: 'module',
-    USER_JOURNEY: 'userjourney',
-    ACL_SETTINGS: 'aclsettings',
-    NUMBER_STATUS: 'numberstatus',
-    NUMBER_FILES_LIST: 'numbersfilelist',
-    DID_USER_MAPPING: 'didusermapping',
+    USER_JOURNEY: 'user_journey',
+    ACL_SETTINGS: 'acl_setting',
+    NUMBER_STATUS: 'number_status',
+    NUMBER_FILES_LIST: 'number_files_list',
+    DID_USER_MAPPING: 'did_user_mapping',
     AGENTS: 'agents',
     AGENTS_GROUP: 'agent_groups',
-    EXTENTION: 'extention',
-    AGENTS_GROUP_MAPPING: 'agentgroupmapping',
+    EXTENSION: 'extension',
+    AGENTS_GROUP_MAPPING: 'agent_group_mapping',
     LICENCE : 'licence',
     QUEUE: 'queue',
     PROMPT:'prompt',
-    FLOWS_EDGES: 'flowedge',
+    FLOWS_EDGES: 'flow_edge',
     LANGUAGE: 'language',
     MEMEBER_SCHEDULES: 'member_schedules',
-    SUB_USER_LICENCE: 'subuserlicence',
+    SUB_USER_LICENCE: 'sub_user_licence',
     FLOW_JSON: 'flows_json',
-    CREDITS: 'credit_history'
+    CREDITS: 'credit_history',
+    INCOMING_SUMMARY: 'incoming_summary',
+    INCOMING_REPORTS: 'incoming_report',
+    DOWNLOAD_REPORTS: 'download_report',
+    TELEPHONY_PROFILE: 'telephphony_profile'
 }
 
 const AUTH_TYPES = {
@@ -218,7 +222,7 @@ const MODULE_LABEL = {
     NUMBER_FILE_LIST: 'Number Filelist',
     AGENT: 'Agent',
     AGENT_GROUP: 'Agent Group',
-    EXTENTION: 'extention',
+    EXTENSION: 'extension',
     QUEUE: 'queue',
     PROMPTS: 'Prompts'
 }
@@ -311,6 +315,11 @@ const SERVER ={
 
 const SUB_LICENCE_ROLE = ["role_cadmin", "role_ccadmin", "role_ccagent", "role_ccteamlead"];
 
+const BACKEND_BASE_URL =
+  process.env.NODE_ENV == "production"
+    ? "voiceboxapi.nspl.cloud"
+    : "voiceboxapi.nspl.cloud";
+
 
 
 module.exports = {
@@ -357,5 +366,6 @@ module.exports = {
     SERVER,
     SUB_LICENCE_ROLE,
     USER_ROLE_VALUE,
-    USER_CREDITS_ACTION
+    USER_CREDITS_ACTION,
+    BACKEND_BASE_URL
 }

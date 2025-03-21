@@ -2,6 +2,7 @@ const { HandleFileSaveRepository } = require("../repositories");
 const { SuccessRespnose, ErrorResponse } = require("../utils/common");
 const HandleFileSaveRepo = new HandleFileSaveRepository();
 const { StatusCodes } = require("http-status-codes");
+const { Logger } = require("../config");
 async function SaveAudioFile(req,res)
 {
     
@@ -22,6 +23,10 @@ async function SaveAudioFile(req,res)
 
         SuccessRespnose.data = response;
         SuccessRespnose.message = 'Successfully created Prompt';
+
+        Logger.info(
+            `Handle File Save / Prompts -> created successfully`
+        );
         return res.status(StatusCodes.CREATED).json(SuccessRespnose);
 
     } catch (error) {
@@ -35,6 +40,10 @@ async function SaveAudioFile(req,res)
 
     ErrorResponse.message = errorMsg;
     ErrorResponse.error = error;
+
+    Logger.error(
+        `Handle File Save / Prompts -> error in saving audio file: ${JSON.stringify(error)}`
+    );
 
     return res.status(statusCode).json(ErrorResponse);
     }

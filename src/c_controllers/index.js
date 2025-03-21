@@ -4,5 +4,6 @@ module.exports = {
     UserJourneyController: require("./user-journey-controller"),
     ServerManagementController: require("./server-management-controller"),
     DataCenterController:require("./data-center-controller"),
-    PromptController:require("./prompt-controller")
+    PromptController:require("./prompt-controller"),
+    NumbersController:require("./numbers-controller")
 }

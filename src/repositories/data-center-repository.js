@@ -16,7 +16,7 @@ class DataCenterRepository extends CrudRepository {
 
     try {
 
-      let response = await dataCenterModel.find({ is_deleted: false }).sort({ createdAt: -1 }).lean();
+      let response = await dataCenterModel.find({ is_deleted: false }).sort({ created_at: -1 }).lean();
       response = response.map(val => {
         val['type'] = dataCenterLabelType[val['type']];
         return val;

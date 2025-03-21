@@ -1,8 +1,5 @@
 const CrudRepository = require("./crud-repository");
 const { FlowsJsonModel } = require("../db");
-const { StatusCodes } = require('http-status-codes');
-const AppError = require('../utils/errors/app-error');
-const { v4: uuidv4 } = require('uuid');
 
 class FlowJsonRepository extends CrudRepository {
 
@@ -11,13 +8,13 @@ class FlowJsonRepository extends CrudRepository {
   }
 
   async updateByFlowId(id, data) {
-    const response = await this.model.updateMany({flowId: id}, data, { runValidators: true, new: true });
+    const response = await this.model.updateMany({flow_id: id}, data, { runValidators: true, new: true });
     return response;
   }
 
   async deleteIVRByFlowId(flowId) {
     try {
-      let response = await this.model.deleteMany({ flowId: flowId });
+      let response = await this.model.deleteMany({ flow_id: flowId });
       return response;
     } catch (error) {
       throw error;
@@ -35,7 +32,7 @@ class FlowJsonRepository extends CrudRepository {
 
   async getIVRByFlowId(flowId) {
     try {
-      let response = await this.model.findOne({ flowId: flowId }).lean();
+      let response = await this.model.findOne({ flow_id: flowId }).lean();
       return response;
     } catch (error) {
       throw error;

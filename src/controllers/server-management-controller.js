@@ -19,7 +19,7 @@ async function createServerManagement(req, res) {
       const userJourneyfields = {
         module_name: MODULE_LABEL.SERVER_MANAGEMENT,
         action: ACTION_LABEL.ADD,
-        createdBy:  req?.user?.id
+        created_by:  req?.user?.id
       }
   
       const userJourney = await userJourneyRepo.create(userJourneyfields);
@@ -60,6 +60,10 @@ async function getAll(req, res) {
       const data = await serverManagementRepo.getAll(req.user.id);
       SuccessRespnose.data = data;
       SuccessRespnose.message = "Success";
+
+      Logger.info(
+        `Server Management -> recieved all successfully`
+      );
   
       return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {
@@ -89,6 +93,10 @@ async function getById(req, res) {
       }
       SuccessRespnose.message = "Success";
       SuccessRespnose.data = dataCentreData;
+
+      Logger.info(
+        `Server Management -> recieved ${id} successfully`
+      );
   
       return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {
@@ -127,7 +135,7 @@ async function updateServerManagement(req, res) {
       const userJourneyfields = {
         module_name: MODULE_LABEL.SERVER_MANAGEMENT,
         action: ACTION_LABEL.EDIT,
-        createdBy:  req?.user?.id
+        created_by:  req?.user?.id
       }
   
       const userJourney = await userJourneyRepo.create(userJourneyfields);
@@ -140,6 +148,7 @@ async function updateServerManagement(req, res) {
       return res.status(StatusCodes.OK).json(SuccessRespnose);
   
     } catch (error) {
+      let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
   
       if (error.name == 'CastError') {
         statusCode = StatusCodes.BAD_REQUEST;
@@ -166,7 +175,7 @@ async function deleteServerManagement(req, res) {
       const userJourneyfields = {
         module_name: MODULE_LABEL.SERVER_MANAGEMENT,
         action: ACTION_LABEL.DELETE,
-        createdBy: req?.user?.id
+        created_by: req?.user?.id
       }
   
       await userJourneyRepo.create(userJourneyfields);

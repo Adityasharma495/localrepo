@@ -23,7 +23,7 @@ const numberFileList =  require("./numbers-filelist-routes");
 const exportLists = require("./export-List-routes");
 const agentRoute = require("./agent-routes")
 const agentGroupRoute = require("./agent-group-routes")
-const extentionRoute = require("./extention-routes")
+const extensionRoute = require("./extension-routes")
 const queueRoute = require('./queue-route')
 const callStratergy =require('./call-stratergy')
 const VoiceCategory = require('./voice-category')
@@ -32,6 +32,9 @@ const memberSchedule = require('./member-schedule-routes')
 const promptRoute = require('./prompts-routes.js')
 const languageRoute = require('./language-routes.js')
 const creditRoute = require('./credit-routes.js')
+const incomingSummaryRoute = require('./incoming-summary-routes.js')
+const incomingReportRoute = require('./incoming-report-routes.js')
+const downloadReportRoute = require('./download-report-routes.js')
 
 
 
@@ -57,7 +60,7 @@ router.use("/number-filelist", numberFileList);
 router.use("/export", exportLists);
 router.use("/agents", agentRoute)
 router.use("/agent-group", agentGroupRoute)
-router.use("/extention", extentionRoute)
+router.use("/extension", extensionRoute)
 router.use("/queue", queueRoute)
 router.use("/call-stratergy",callStratergy)
 router.use("/voice-category",VoiceCategory)
@@ -66,5 +69,8 @@ router.use('/member-schedule',memberSchedule)
 router.use('/prompt',promptRoute)
 router.use('/language', languageRoute)
 router.use('/credits', creditRoute)
+router.use('/incoming-summary', incomingSummaryRoute)
+router.use('/incoming-report', incomingReportRoute)
+router.use('/download-report', downloadReportRoute)
 
 module.exports = router;

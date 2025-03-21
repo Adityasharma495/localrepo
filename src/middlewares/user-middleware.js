@@ -74,15 +74,15 @@ function validateSignup(req, res, next){
         }
     }
 
-    if (bodyReq?.licence) {
-        if (bodyReq.licence == undefined || !bodyReq.licence.trim()) {
-            ErrorResponse.message = 'Something went wrong while while user signup';
-            ErrorResponse.error = new AppError(['licence not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-            return res
-                .status(StatusCodes.BAD_REQUEST)
-                .json(ErrorResponse);
-        }
-    }
+    // if (bodyReq?.licence) {
+    //     if (bodyReq.licence == undefined || !bodyReq.licence.trim()) {
+    //         ErrorResponse.message = 'Something went wrong while while user signup';
+    //         ErrorResponse.error = new AppError(['licence not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+    //         return res
+    //             .status(StatusCodes.BAD_REQUEST)
+    //             .json(ErrorResponse);
+    //     }
+    // }
     
 
     if(!permission){
@@ -312,9 +312,10 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
                 email: bodyReq.email.trim(),
                 module: bodyReq.module,
                 acl_settings: bodyReq.acl_settings,
-                licence: bodyReq?.licence || 0,
+                // licence: bodyReq?.licence || 0,
                 sub_licence: bodyReq?.sub_licence || {},
-                flow_type: bodyReq?.flow_type
+                flow_type: bodyReq?.flow_type,
+                parent_licence: bodyReq?.parent_licence || {}
             }
         };
 
@@ -322,7 +323,7 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
         if(is_create){
             inputData.user.role = bodyReq.role;
             inputData.user.password = bodyReq.password.trim();
-            inputData.user.createdBy =  bodyReq.createdBy ?? req.user.id;
+            inputData.user.created_by =  bodyReq.created_by ?? req.user.id;
         }
         //In case of user update
         else{
@@ -353,7 +354,7 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
             }
 
             if(is_create){
-                inputData.company.createdBy = req.user.id;
+                inputData.company.created_by = req.user.id;
                 inputData.company.category = associatedCompanyCategory;
             }else{
                 inputData.company.id = bodyReq.company.id;
@@ -388,9 +389,9 @@ const authenticateSuperAdmin = async (req, res, next) => {
   try {
     const decoded = await Authentication.verifyJWToken(token);
     
-    if ((decoded.role !== 'role_sadmin') && (decoded.role !== 'role_reseller')) {
-      return res.status(403).json({ error: 'Access denied. Insufficient privileges.' });
-    }
+    // if ((decoded.role !== 'role_sadmin') && (decoded.role !== 'role_reseller')) {
+    //   return res.status(403).json({ error: 'Access denied. Insufficient privileges.' });
+    // }
 
     req.user = decoded;
     next();

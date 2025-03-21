@@ -42,7 +42,7 @@ async function create(req, res) {
       const userJourneyfields = {
         module_name: MODULE_LABEL.NUMBERS,
         action: ACTION_LABEL.ADD,
-        createdBy:  req?.user?.id
+        created_by:  req?.user?.id
       }
   
       const userJourney = await userJourneyRepo.create(userJourneyfields);
@@ -109,7 +109,7 @@ async function update(req, res) {
         const userJourneyfields = {
             module_name: MODULE_LABEL.NUMBERS,
             action: ACTION_LABEL.EDIT,
-            createdBy: req?.user?.id
+            created_by: req?.user?.id
           }
       
         await userJourneyRepo.create(userJourneyfields);
@@ -207,8 +207,8 @@ async function bulkUpdate(req, res) {
               if (!numberDetails) {  
                 
                 numberRecord.status = NUMBER_STATUS_LABLE[numberRecord.status];
-                numberRecord.createdBy = req.user.id;
-                numberRecord.createdAt = toIST(new Date());
+                numberRecord.created_by = req.user.id;
+                numberRecord.created_at = toIST(new Date());
                 DIDAlloctionInsertion.push({
                     DID: numberRecord.actual_number,
                     allocated_to: req?.user?.id
@@ -219,8 +219,8 @@ async function bulkUpdate(req, res) {
                 if (numberDetails.number_type !== numberRecord.number_type) {
 
                   numberRecord.status = NUMBER_STATUS_LABLE[numberRecord.status];
-                  numberRecord.createdBy = req.user.id;
-                  numberRecord.createdAt = toIST(new Date());
+                  numberRecord.created_by = req.user.id;
+                  numberRecord.created_at = toIST(new Date());
                   DIDAlloctionInsertion.push({
                     DID: numberRecord.actual_number,
                     allocated_to: req?.user?.id
@@ -295,7 +295,7 @@ async function bulkUpdate(req, res) {
               const userJourneyfields = {
                 module_name: MODULE_LABEL.NUMBERS,
                 action: ACTION_LABEL.UPLOAD,
-                createdBy: req?.user?.id
+                created_by: req?.user?.id
               };
       
               await userJourneyRepo.create(userJourneyfields);
@@ -394,10 +394,10 @@ async function uploadNumbers(req, res) {
                     state_code: row?.['State Code'] || null,
                     cost: row.Cost,
                     operator: row.Operator.toUpperCase(),
-                    createdBy: req.user.id,
+                    created_by: req.user.id,
                     number_type: bodyReq.numberType,
                     uploaded_file_id: uploadFile._id,
-                    createdAt: toIST(new Date()),
+                    created_at: toIST(new Date()),
                     updatedAt: toIST(new Date())
                 });
                 })();
@@ -431,7 +431,7 @@ async function uploadNumbers(req, res) {
                     const userJourneyfields = {
                     module_name: MODULE_LABEL.NUMBERS,
                     action: ACTION_LABEL.UPLOAD,
-                    createdBy: req?.user?.id
+                    created_by: req?.user?.id
                     };
 
                     await userJourneyRepo.create(userJourneyfields);
@@ -487,10 +487,14 @@ async function getAll(req, res) {
             val['status'] = numberStatusValues[val['status']];
             return val;
         })
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
         SuccessRespnose.data = data;
         SuccessRespnose.message = 'Success';
+
+        Logger.info(
+            `Number -> recieved all successfully`
+        );
 
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
@@ -521,6 +525,10 @@ async function get(req, res) {
             ErrorResponse.data = data;
             return res.status(statusCode).json(ErrorResponse);
         }
+
+        Logger.info(
+            `Number -> recieved ${numberId} successfully`
+        );
 
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
@@ -553,7 +561,7 @@ async function deleteNumber(req, res) {
         const userJourneyfields = {
             module_name: MODULE_LABEL.NUMBERS,
             action: ACTION_LABEL.DELETE,
-            createdBy: req?.user?.id
+            created_by: req?.user?.id
           }
       
         await userJourneyRepo.create(userJourneyfields);
@@ -600,6 +608,9 @@ async function getDIDNumbers(req, res) {
             return res.status(statusCode).json(ErrorResponse);
         }
 
+        Logger.info(
+            `Number -> recieved ${numberType} number successfully`
+        );
 
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
@@ -629,6 +640,10 @@ async function getAllStatus(req, res) {
         const filteredData = data.filter(item => item.status_code !== 9 && item.status_code !== 10);
         SuccessRespnose.data = filteredData;
         SuccessRespnose.message = 'Success';
+
+        Logger.info(
+            `Number -> recieved number with all status successfully`
+        );
 
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
@@ -697,7 +712,7 @@ const assignBulkDID = async (req, res) => {
                     const userJourneyfields = {
                         module_name: MODULE_LABEL.NUMBERS,
                         action: ACTION_LABEL.ASSIGN_BULK_DID,
-                        createdBy: req?.user?.id
+                        created_by: req?.user?.id
                       }
                   
                     await userJourneyRepo.create(userJourneyfields);
@@ -760,10 +775,14 @@ const assignIndividualDID = async (req, res) => {
         const userJourneyfields = {
             module_name: MODULE_LABEL.NUMBERS,
             action: ACTION_LABEL.ASSIGN_INDIVIDUAL_DID,
-            createdBy: req?.user?.id
+            created_by: req?.user?.id
           }
       
         await userJourneyRepo.create(userJourneyfields);
+
+        Logger.info(
+            `Number -> successfully assigned individual DID`
+        );
 
         SuccessRespnose.message = 'Successfully assigned Individual DID.';
         return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -798,7 +817,7 @@ async function updateStatus(req, res) {
         const userJourneyfields = {
             module_name: MODULE_LABEL.NUMBERS,
             action: ACTION_LABEL.STATUS_ACTION_APPROVED,
-            createdBy: req?.user?.id
+            created_by: req?.user?.id
         }
 
         if (bodyReq.action === 'Reject') {
@@ -897,7 +916,7 @@ async function DIDUserMapping(req, res) {
                     }
     
                     if (roleOfAllocateTo.role === USERS_ROLE.COMPANY_ADMIN) {
-                        const createdByRole = await userRepo.get(roleOfAllocateTo.createdBy);
+                        const createdByRole = await userRepo.get(roleOfAllocateTo.created_by);
                         const isSame = createdByRole.role === USERS_ROLE.COMPANY_ADMIN;
     
                         level = isSame ? DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN : DID_ALLOCATION_LEVEL.COMPANY_ADMIN;
@@ -958,6 +977,8 @@ async function getToAllocateNumbers(req, res) {
         SuccessRespnose.data = data;
         SuccessRespnose.message = 'Success';
 
+        Logger.info(`Numbers -> to allocated numbers recieved successfully`);
+
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
     } catch (error) {
@@ -1003,6 +1024,8 @@ async function getAllocatedNumbers(req, res) {
         }
         SuccessRespnose.data = response;
         SuccessRespnose.message = 'Success';
+
+        Logger.info(`Numbers -> allocated numbers recieved successfully`);
 
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
@@ -1066,6 +1089,7 @@ async function removeAllocatedNumbers(req, res) {
         }
 
         SuccessRespnose.message = 'Success';
+        Logger.info(`Numbers -> removed allocated numbers successfully`);
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
     } catch (error) {
@@ -1103,6 +1127,8 @@ async function setInboundRouting(req, res) {
         }
 
         SuccessRespnose.message = 'Success';
+
+        Logger.info(`Numbers -> set up inbound routing on ${bodyReq.number} successfully`);
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
     } catch (error) {

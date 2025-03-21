@@ -38,7 +38,7 @@ function modifyCallsBodyRequest(req, is_create = true) {
             }
         }
 
-        if (is_create) inputData.calls.createdBy = req.user.id
+        if (is_create) inputData.calls.created_by = req.user.id
 
         if (bodyReq.did) {
             inputData.calls.did = bodyReq.did.trim()

@@ -10,8 +10,13 @@ class CreditRepository extends CrudRepository {
   async getAll(id) {
     try {
       let userIds = [];
+      let notIncludeThisUser = null;
+
       if (id) {
-        const users = await UserModel.find({ createdBy: id }).select('_id');
+        const targetUser = await UserModel.find({ _id: id });
+        notIncludeThisUser = targetUser[0]?.created_by;
+
+        const users = await UserModel.find({ created_by: id }).select('_id');
         userIds = users.map(user => user._id.toString());
       }
 
@@ -19,22 +24,23 @@ class CreditRepository extends CrudRepository {
         ? {
             $or: [
               { user_id: id }, 
-              { fromUser: id },
-              { toUser: id },
-              { actionUser: id },
+              { from_user: id },
+              { to_user: id },
+              { action_user: id },
               { user_id: { $in: userIds } },
-              { fromUser: { $in: userIds } },
-              { toUser: { $in: userIds } },
-              { actionUser: { $in: userIds } }
-            ]
+              { from_user: { $in: userIds } },
+              { to_user: { $in: userIds } },
+              { action_user: { $in: userIds } }
+            ],
+            ...(notIncludeThisUser && { action_user: { $ne: notIncludeThisUser } })
           }
         : {};
 
       const response = await CreditModel.find(query)
-        .populate('fromUser', ["fromUser", "username"])
-        .populate('actionUser', ["actionUser", "username"])
-        .populate('toUser', ["toUser", "username"])
-        .sort({ createdAt: -1 })
+        .populate('from_user', ["from_user", "username"])
+        .populate('action_user', ["action_user", "username"])
+        .populate('to_user', ["to_user", "username"])
+        .sort({ created_at: -1 })
         .lean();
 
       return response;

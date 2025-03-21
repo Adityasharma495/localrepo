@@ -12,6 +12,7 @@ class CrudRepository {
             return response;            
         } catch (error) {
             throw error
+
             // console.log(error);
             // if (error.name === 'ValidationError' || (error.name === 'MongoServerError' && error.code === 11000)) {
             //     let detailedErrorMessage = error.message;

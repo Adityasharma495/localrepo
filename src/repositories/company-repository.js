@@ -8,7 +8,7 @@ class CompanyRepository extends CrudRepository {
 
   async getAll() {
     try {
-      const response = await this.model.find().sort({ createdAt: -1 });
+      const response = await this.model.find().sort({ created_at: -1 });
       return response;
     } catch (error) {
       throw error;
