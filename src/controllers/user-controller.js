@@ -18,7 +18,7 @@ const subUserLicenceRepo = new SubUserLicenceRepository();
 
 async function signupUser(req, res) {
   const bodyReq = req.body;
-
+   
   try {
     const responseData = {};
     let user;

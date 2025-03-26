@@ -1,4 +1,4 @@
-const CrudRepository = require("../repositories/crud-repository");
+const CrudRepository = require("./crud-repository");
 const { Credit, User } = require("../c_db");
 const { Op } = require("sequelize");
 

@@ -32,7 +32,7 @@ const Operator = sequelize.define(
     },
     created_by: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'users_new',
         key: 'id',

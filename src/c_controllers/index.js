@@ -9,5 +9,9 @@ module.exports = {
     AgentController:require("./agent-controller"),
     CompanyController:require("./company-controller"),
     OperatorController:require("./operator-controller"),
-    CodecController:require('./codec-controller')
+    CodecController:require('./codec-controller'),
+    PromptController:require("./prompt-controller"),
+    NumbersController:require("./numbers-controller"),
+    TrunkController: require("./trunk-controller"),
+    IVRController: require("./ivr-controller")
 }

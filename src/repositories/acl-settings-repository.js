@@ -10,7 +10,6 @@ class AclSettingRepository extends CrudRepository {
   }
 
   async getAll(current_uid) {
-
     try {
 
       let response = await aclSettingModel.find({ is_deleted: false }).populate('created_by', ["_id", "username"]).sort({ created_at: -1 }).lean();

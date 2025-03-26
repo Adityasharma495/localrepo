@@ -9,7 +9,7 @@ const User = sequelize.define(
   'users',
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       autoIncrement: true,
       primaryKey: true,
     },
@@ -39,13 +39,17 @@ const User = sequelize.define(
       allowNull: false,
     },
     created_by: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
     },
     status: {
       type: DataTypes.INTEGER,
       allowNull: true,
-     
+    },
+    flow_type: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null
     },
     // companies: {
     //   type: DataTypes.JSONB,

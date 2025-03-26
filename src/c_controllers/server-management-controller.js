@@ -13,20 +13,20 @@ const userJourneyRepo = new UserJourneyRepository();
 async function createServerManagement(req, res) {
   const bodyReq = req.body;
   bodyReq.server.data_center_id = Number(bodyReq.server.data_center);
-  bodyReq.server.created_by = "0f9b51be-1c73-47c1-befc-fe46616d5e6e";
+  bodyReq.server.created_by = bodyReq.server.createdBy;
   try {
     const responseData = {};
     const server = await serverManagementRepo.create(bodyReq.server);
     responseData.serverManagement = server;
 
-    // const userJourneyfields = {
-    //   module_name: MODULE_LABEL.SERVER_MANAGEMENT,
-    //   action: ACTION_LABEL.ADD,
-    //   created_by:  req?.user?.id
-    // }
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.SERVER_MANAGEMENT,
+      action: ACTION_LABEL.ADD,
+      created_by:  req?.user?.id
+    }
 
-    // const userJourney = await userJourneyRepo.create(userJourneyfields);
-    // responseData.userJourney = userJourney
+    const userJourney = await userJourneyRepo.create(userJourneyfields);
+    responseData.userJourney = userJourney
 
     SuccessRespnose.data = responseData;
     SuccessRespnose.message = "Successfully created a new Server";
@@ -132,14 +132,14 @@ async function updateServerManagement(req, res) {
     }
     responseData.server = server;
 
-    // const userJourneyfields = {
-    //   module_name: MODULE_LABEL.SERVER_MANAGEMENT,
-    //   action: ACTION_LABEL.EDIT,
-    //   created_by: req?.user?.id,
-    // };
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.SERVER_MANAGEMENT,
+      action: ACTION_LABEL.EDIT,
+      created_by: req?.user?.id,
+    };
 
-    // const userJourney = await userJourneyRepo.create(userJourneyfields);
-    // responseData.userJourney = userJourney;
+    const userJourney = await userJourneyRepo.create(userJourneyfields);
+    responseData.userJourney = userJourney;
 
     SuccessRespnose.message = "Updated successfully!";
     SuccessRespnose.data = responseData;
@@ -174,13 +174,13 @@ async function deleteServerManagement(req, res) {
 
   try {
     const response = await serverManagementRepo.deleteMany(idArray);
-    // const userJourneyfields = {
-    //   module_name: MODULE_LABEL.SERVER_MANAGEMENT,
-    //   action: ACTION_LABEL.DELETE,
-    //   created_by: req?.user?.id,
-    // };
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.SERVER_MANAGEMENT,
+      action: ACTION_LABEL.DELETE,
+      created_by: req?.user?.id,
+    };
 
-    // await userJourneyRepo.create(userJourneyfields);
+    await userJourneyRepo.create(userJourneyfields);
     SuccessRespnose.message = "Deleted successfully!";
     SuccessRespnose.data = response;
 

@@ -45,8 +45,8 @@ class UserRepository extends CrudRepository{
                
                 data = await userModel.find({
                     is_deleted: false,
-                    createdby: current_uid
-                }).sort({ createdAt: -1 });
+                    created_by: current_uid
+                }).sort({ created_at: -1 });
             }
     
             // Remove password field and convert status to labels

@@ -87,10 +87,10 @@ const Trunks = sequelize.define(
       defaultValue: null
     },
     created_by: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
       references: {
-        model: 'users_new',
+        model: 'users',
         key: 'id'
       }
     },
