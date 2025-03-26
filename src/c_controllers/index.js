@@ -1,3 +1,4 @@
+
 module.exports = {
     UserController:require("./user-controller"),
     CreditController: require("./credits-controller"),
@@ -5,5 +6,7 @@ module.exports = {
     ServerManagementController: require("./server-management-controller"),
     DataCenterController:require("./data-center-controller"),
     PromptController:require("./prompt-controller"),
-    NumbersController:require("./numbers-controller")
+    NumbersController:require("./numbers-controller"),
+    TrunkController: require("./trunk-controller"),
+    IVRController: require("./ivr-controller")
 }

@@ -1,8 +1,12 @@
+
 module.exports = {
   UserRepository: require("./user-repository"),
   CreditsRepository: require("./credits-repository"),
   UserJourneyRepository: require("./user-journey-repository"),
   ServerManagementRepository:require("./server-management-repository"),
+  DataCenterRepository:require("./data-center-repository"),
+  LicenceRepository: require("./licence-repository"),
+  TrunkRepository: require("./trunk-repository"),
   DataCenterRepository:require("./data-center-repository"),
   PromptRepository:require("./prompt-repository"),
   NumbersRepository:require("./numbers-repository"),
@@ -10,5 +14,11 @@ module.exports = {
   NumberFileListRepository:require("./number-filelist-repository"),
   NumberStatusRepository:require('./number-status-repository'),
   MemberScheduleRepo:require('./member-schedule-repository'),
-  CountryCodeRepository:require("./country-code-repository")
+  CountryCodeRepository:require("./country-code-repository"),
+  IVRDataRepository:require("./ivr-data-repository"),
+  IVRRepository:require("./ivr-repository"),
+  FlowControlRepository:require("./flow-control-repository"),
+  FlowEdgesRepository:require("./flow-edge-repository"),
+  FlowJsonRepository:require("./flow-json-repository"),
+  FlowRepository:require("./flows-repository"),
 };

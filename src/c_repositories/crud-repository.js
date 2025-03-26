@@ -7,23 +7,28 @@ class CrudRepository {
     }
 
     async create(data) {
+
+        console.log("DATA TO BE CREATED", data);
         try {
             const response = await this.model.create(data);
+
+            console.log("RETURING RESPONSE", response);
             return response;            
         } catch (error) {
+            console.log(error);
             throw error
-            // console.log(error);
-            // if (error.name === 'ValidationError' || (error.name === 'MongoServerError' && error.code === 11000)) {
-            //     let detailedErrorMessage = error.message;
-            //     if (error.code === 11000) {
-            //         // Adding detail to the error message about which key was duplicated
-            //         const duplicatedField = Object.keys(error.keyPattern)[0];
-            //         const duplicatedValue = error.keyValue[duplicatedField];
-            //         detailedErrorMessage = `Duplicate key error: ${duplicatedField} with value '${duplicatedValue}' already exists.`;
-            //     }
-            //     throw new AppError(detailedErrorMessage, StatusCodes.BAD_REQUEST);
-            // }
-            // throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
+            
+            if (error.name === 'ValidationError' || (error.name === 'MongoServerError' && error.code === 11000)) {
+                let detailedErrorMessage = error.message;
+                if (error.code === 11000) {
+                    // Adding detail to the error message about which key was duplicated
+                    const duplicatedField = Object.keys(error.keyPattern)[0];
+                    const duplicatedValue = error.keyValue[duplicatedField];
+                    detailedErrorMessage = `Duplicate key error: ${duplicatedField} with value '${duplicatedValue}' already exists.`;
+                }
+                throw new AppError(detailedErrorMessage, StatusCodes.BAD_REQUEST);
+            }
+            throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
         }
     }
     
@@ -55,6 +60,7 @@ class CrudRepository {
         const response = await this.model.update(data, options, { runValidators: true, new: true });
         return response;
     }
+
 
     async delete(id){
         try {

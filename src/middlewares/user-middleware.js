@@ -7,10 +7,14 @@ function validateSignup(req, res, next){
     const bodyReq = req.body;
     const createrRole = req['user'].role
 
-    console.log("createrRole",createrRole);
 
+    console.log("CREATER ROLE", createrRole);
     const userRole = bodyReq.role;
+
+   
     const permission = Authentication.checkPermission(createrRole,userRole);
+
+    console.log("PERMISSIONS", permission);
 
     if(!req.is('application/json')){
         ErrorResponse.message = 'Something went wrong while user signup';
@@ -139,7 +143,7 @@ function validateSignup(req, res, next){
                     .status(StatusCodes.BAD_REQUEST)
                     .json(ErrorResponse);      
         }    
-
+        console.log("DONE ALL");
     }
 
     next();
