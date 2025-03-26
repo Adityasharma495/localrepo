@@ -10,20 +10,19 @@ class IncomingSummaryRepository extends CrudRepository {
   }
 
   async getAll(userId) {
-
     try {
-
-      let response = await incomingSummaryModel.find({ user_id: userId })
-      .populate('user_id', ["_id", "username"])
-      .populate('parent_id', ["_id", "username"])
-      .populate('s_parent_id', ["_id", "username"])
-      .lean();
-
+      const query = userId ? { user_id: userId } : {};
+  
+      const response = await incomingSummaryModel.find(query)
+        .populate('user_id', ["_id", "username"])
+        .populate('parent_id', ["_id", "username"])
+        .populate('s_parent_id', ["_id", "username"])
+        .lean();
+  
       return response;
     } catch (error) {
       throw error;
     }
-
   }
 
   async isSummaryExist(userId,incomingdid,startDate) {

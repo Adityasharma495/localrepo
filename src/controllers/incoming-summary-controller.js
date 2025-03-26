@@ -1,5 +1,6 @@
 const { StatusCodes } = require('http-status-codes');
 const { SuccessRespnose, ErrorResponse } = require('../utils/common');
+const constant = require('../utils/common/constants')
 const { Logger } = require('../config');
 const { IncomingSummaryRepository } = require('../repositories');
 const incomingSummaryRepo = new IncomingSummaryRepository();
@@ -9,7 +10,9 @@ async function getAll(req, res) {
 
     try {
 
-        const data = await incomingSummaryRepo.getAll(req.user.id);
+        const userId = req.user.role === constant.USERS_ROLE.CALLCENTRE_AGENT ? null : req.user.id
+
+        const data = await incomingSummaryRepo.getAll(userId);
         SuccessRespnose.data = data;
         SuccessRespnose.message = 'Success';
 

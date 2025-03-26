@@ -2,6 +2,8 @@ const { StatusCodes } = require("http-status-codes");
 const { DownloadReportRepository } = require("../repositories");
 const {SuccessRespnose , ErrorResponse} = require("../utils/common");
 const { Logger } = require("../config");
+const constant = require('../utils/common/constants')
+
 const downloadReportRepo = new DownloadReportRepository();
 
 async function createDownloadReport(req, res) {
@@ -62,7 +64,8 @@ async function createDownloadReport(req, res) {
 
 async function getAll(req, res) {
     try {
-      const data = await downloadReportRepo.getAll(req.user.id);
+      const userId = req.user.role === constant.USERS_ROLE.CALLCENTRE_AGENT ? null : req.user.id
+      const data = await downloadReportRepo.getAll(userId);
       SuccessRespnose.data = data;
       SuccessRespnose.message = "Success";
 

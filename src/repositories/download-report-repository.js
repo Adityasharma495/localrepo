@@ -10,8 +10,8 @@ class DownloadReportRepository extends CrudRepository {
   async getAll(current_uid) {
 
     try {
-
-      let response = await downloadReportModel.find({user_id : current_uid}).lean();
+      const query = current_uid ? { user_id: current_uid } : {};
+      let response = await downloadReportModel.find(query).lean();
       return response;
 
     } catch (error) {
