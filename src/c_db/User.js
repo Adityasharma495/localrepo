@@ -9,8 +9,8 @@ const User = sequelize.define(
   'users',
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
     },
     username: {
@@ -39,7 +39,7 @@ const User = sequelize.define(
       allowNull: false,
     },
     created_by: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
     status: {

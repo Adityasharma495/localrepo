@@ -1,6 +1,3 @@
-const languageData = require('../db/languages');
-const { UserJourneyRepository } = require('../repositories');
-
 module.exports = {
     UserController: require('./user-controller'),
     CompanyController: require('./company-controller'),
@@ -22,11 +19,14 @@ module.exports = {
     ExportListController: require('./export-list-controller'),
     AgentController: require('./agent-controller'),
     AgentGroupController: require('./agent-group-controller'),
-    ExtentionController: require('./extention-controller'),
+    ExtensionController: require('./extension-controller'),
     QueueController: require('./queue-controller'),
     MemberScheduleController:require('./member-schedule-controller'),
     HandleFileSaveController:require("./handleFileSave-controller"),
     PromptController:require("./prompt-controller"),
     LanguageController : require('./language-controller'),
-    CreditController : require('./credit-controller')
+    CreditController : require('./credit-controller'),
+    IncomingSummaryController: require('./incoming-summary-controller'),
+    IncomingReportController: require('./incoming-report-controller'),
+    DownloadReportController: require('./download-report-controller')
 }

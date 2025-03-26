@@ -11,8 +11,6 @@ class CrudRepository {
   
         try {
             const response = await this.model.create(data);
-
-            console.log("RETURING RESPONSE", response);
             return response;            
         } catch (error) {
             console.log(error);

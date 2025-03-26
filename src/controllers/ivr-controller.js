@@ -16,6 +16,7 @@ const flowEdgesRepo = new FlowEdgesRepository();
 const memberScheduleRepo = new MemberScheduleRepository();
 const flowJsonRepository = new FlowJsonRepository();
 const userRepository = new UserRepository();
+const amqp = require("amqplib");
 
 
 async function createIVR(req, res) {
@@ -29,8 +30,8 @@ async function createIVR(req, res) {
     if (userDetail?.flow_type == 1) {
       // check for duplicate Flow name
       const conditions = {
-        createdBy: req.user.id, 
-        flowName: bodyReq.nodesData.flowName 
+        created_by: req.user.id, 
+        flow_name: bodyReq.nodesData.flowName 
       }
       const checkDuplicate = await flowsRepo.findOne(conditions);
           
@@ -44,8 +45,8 @@ async function createIVR(req, res) {
 
       if (bodyReq.edges.length > 0) {
         await flowEdgesRepo.create({
-          flowId: flowId,
-          edgeJson: bodyReq.edges
+          flow_id: flowId,
+          edge_json: bodyReq.edges
         })
 
         if (FlowDataResponse.length > 0) {
@@ -61,25 +62,26 @@ async function createIVR(req, res) {
             module_id : flowId
           })
 
-        flowsRepo.updateByFlowId(flowId, {scheduleId : scheduleData._id}) 
+        flowsRepo.updateByFlowId(flowId, {schedule_id : scheduleData._id}) 
       }
       // data insert into flow-astrisk
       await flowJsonRepository.create({
-        callcenterId: bodyReq.nodesData.callCenterId,
-        flowName: bodyReq.nodesData.flowName,
-        flowId: flowId,
-        nodesData : bodyReq.nodesData,
-        edgesData: bodyReq.edges,
+        call_center_id: bodyReq.nodesData.callCenterId,
+        flow_name: bodyReq.nodesData.flowName,
+        flow_id: flowId,
+        nodes_data : bodyReq.nodesData,
+        edges_data: bodyReq.edges,
         type: userDetail.flow_type,
-        createdBy: req.user.id,
-        scheduleId: scheduleData ? scheduleData?._id : null,
-        fileData: bodyReq.nodesData.fileData,
-        rePrompt: bodyReq.nodesData.rePrompt
+        created_by: req.user.id,
+        schedule_id: scheduleData ? scheduleData?._id : null,
+        file_data: bodyReq.nodesData.fileData,
+        re_prompt: bodyReq.nodesData.rePrompt,
+        is_gather_node: bodyReq.nodesData.isGatherNode
       })
     } else {
       const conditions = {
-        createdBy: req.user.id, 
-        flowName: bodyReq.nodesData.flowName 
+        created_by: req.user.id, 
+        flow_name: bodyReq.nodesData.flowName 
       }
 
       const checkDuplicate = await flowJsonRepository.findOne(conditions);
@@ -102,17 +104,21 @@ async function createIVR(req, res) {
 
       // data insert into flow-astrisk
       await flowJsonRepository.create({
-        callcenterId: bodyReq.nodesData.callCenterId,
-        flowName: bodyReq.nodesData.flowName,
-        flowId: flowId,
-        nodesData : bodyReq.nodesData,
-        edgesData: bodyReq.edges,
+        call_center_id: bodyReq.nodesData.callCenterId,
+        flow_name: bodyReq.nodesData.flowName,
+        flow_id: flowId,
+        nodes_data : bodyReq.nodesData,
+        edges_data: bodyReq.edges,
         type: userDetail.flow_type,
-        createdBy: req.user.id,
-        scheduleId: scheduleData ? scheduleData?._id : null,
-        fileData: bodyReq.nodesData.fileData,
-        rePrompt: bodyReq.nodesData.rePrompt
+        created_by: req.user.id,
+        schedule_id: scheduleData ? scheduleData?._id : null,
+        file_data: bodyReq.nodesData.fileData,
+        re_prompt: bodyReq.nodesData.rePrompt,
+        is_gather_node: bodyReq.nodesData.isGatherNode
       })
+      Logger.info(`Publishing message to queue`);
+      publishIVRUpdate();
+
     }
 
       const lastResponse = "Successfully created a new IVR"
@@ -124,7 +130,7 @@ async function createIVR(req, res) {
       const userJourneyfields = {
         module_name: MODULE_LABEL.IVR,
         action: ACTION_LABEL.ADD,
-        createdBy: req?.user?.id
+        created_by: req?.user?.id
       }
       await userJourneyRepo.create(userJourneyfields);
 
@@ -140,6 +146,28 @@ async function createIVR(req, res) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse); 
   }
 }
+async function publishIVRUpdate() {
+	Logger.info("Inside Publish IVR");
+	try {
+        const connection = await amqp.connect("amqp://dialplan:ns@4044888@localhost:5672");
+        const channel = await connection.createChannel();
+
+        const exchange = "dialplan_exchange";
+        const routingKey = "dialplan.update";
+
+        // Declare the exchange before publishing
+        await channel.assertExchange(exchange, "fanout", { durable: true });
+
+        const message = "dialplan reload";
+        channel.publish(exchange, routingKey, Buffer.from(message));
+
+        Logger.info(`Sent message to exchange: ${exchange}`);
+        await channel.close();
+        await connection.close();
+    } catch (error) {
+        Logger.error("Error publishing message:", error);
+    }
+}
 async function getIVRSettings(req, res) {
   try {
     const ivrSettings = await IvrSettings.findOne({}); 
@@ -149,6 +177,8 @@ async function getIVRSettings(req, res) {
 
     SuccessRespnose.data = ivrSettings;
     SuccessRespnose.message = "Successfully fetched IVR settings";
+
+    Logger.info(`IVR -> created successfully`);
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -163,7 +193,7 @@ async function getIVRSettings(req, res) {
 async function getAllIVR(req, res) {
   try {
     // const userDetail = await userRepository.get(req.user.id)
-    const data = await flowJsonRepository.getAll({createdBy: req.user.id});
+    const data = await flowJsonRepository.getAll({created_by: req.user.id});
     
     // if (userDetail?.flow_type == 1) {
     //   data = await flowsRepo.getAll(req.user.id);
@@ -173,6 +203,8 @@ async function getAllIVR(req, res) {
 
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
+
+    Logger.info(`IVR -> recieved all successfully`);
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -190,17 +222,17 @@ async function getAllIVR(req, res) {
 async function updateIVR(req, res) {
     const id = req.params.id;
     const bodyReq = req.body;
-    
+
     try {
       const userDetail = await userRepository.get(req.user.id)
       if (userDetail?.flow_type == 1) {
         const currentData = await flowsRepo.getIVRByFlowId(id);
       
         // Check for duplicate flow Name
-        if (currentData[0]?.flowName !== bodyReq.nodesData.flowName) {
+        if (currentData[0]?.flow_name !== bodyReq.nodesData.flowName) {
           const nameCondition = {
-            createdBy: req.user.id,
-            flowName: bodyReq.nodesData.flowName
+            created_by: req.user.id,
+            flow_name: bodyReq.nodesData.flowName
           };
         
           const nameDuplicate = await flowsRepo.findOne(nameCondition);
@@ -227,8 +259,8 @@ async function updateIVR(req, res) {
         let FlowEdgesResponse;
         if (bodyReq.edges.length > 0) {
           FlowEdgesResponse = await flowEdgesRepo.create({
-            flowId: flowId,
-            edgeJson: bodyReq.edges
+            flow_id: flowId,
+            edge_json: bodyReq.edges
           })
 
           if (FlowDataResponse.length > 0) {
@@ -244,21 +276,22 @@ async function updateIVR(req, res) {
               module_id : flowId
             })
 
-          flowsRepo.updateByFlowId(flowId, {scheduleId : scheduleData._id}) 
+          flowsRepo.updateByFlowId(flowId, {schedule_id : scheduleData._id}) 
         }
 
         // data insert into flow-astrisk
         await flowJsonRepository.create({
-          callcenterId: bodyReq.nodesData.callCenterId,
-          flowName: bodyReq.nodesData.flowName,
-          flowId: flowId,
-          nodesData : bodyReq.nodesData,
-          edgesData: bodyReq.edges,
+          call_center_id: bodyReq.nodesData.callCenterId,
+          flow_name: bodyReq.nodesData.flowName,
+          flow_id: flowId,
+          nodes_data : bodyReq.nodesData,
+          edges_data: bodyReq.edges,
           type: userDetail.flow_type,
-          createdBy: req.user.id,
-          scheduleId: scheduleData ? scheduleData?._id : null,
-          fileData: bodyReq.nodesData.fileData,
-          rePrompt: bodyReq.nodesData.rePrompt
+          created_by: req.user.id,
+          schedule_id: scheduleData ? scheduleData?._id : null,
+          file_data: bodyReq.nodesData.fileData,
+          re_prompt: bodyReq.nodesData.rePrompt,
+          is_gather_node: bodyReq.nodesData.isGatherNode
         })
       } else {
         const currentData = await flowJsonRepository.getIVRByFlowId(id);
@@ -266,8 +299,8 @@ async function updateIVR(req, res) {
         // Check for duplicate flow Name
         if (currentData?.flowName !== bodyReq.nodesData.flowName) {
           const nameCondition = {
-            createdBy: req.user.id,
-            flowName: bodyReq.nodesData.flowName
+            created_by: req.user.id,
+            flow_name: bodyReq.nodesData.flowName
           };
         
           const nameDuplicate = await flowJsonRepository.findOne(nameCondition);
@@ -291,18 +324,19 @@ async function updateIVR(req, res) {
         flowJsonRepository.updateByFlowId(id,
           {
             type: userDetail?.flow_type,
-            flowName: bodyReq.nodesData.flowName,
-            nodesData : bodyReq.nodesData,
-            edgesData: bodyReq.edges,
-            scheduleId: scheduleData ? scheduleData?._id : null,
-            fileData: bodyReq.nodesData.fileData,
-            rePrompt: bodyReq.nodesData.rePrompt
+            flow_name: bodyReq.nodesData.flowName,
+            nodes_data : bodyReq.nodesData,
+            edges_data: bodyReq.edges,
+            schedule_id: scheduleData ? scheduleData?._id : null,
+            file_data: bodyReq.nodesData.fileData,
+            re_prompt: bodyReq.nodesData.rePrompt,
+            is_gather_node: bodyReq.nodesData.isGatherNode
           }) 
       }
         const userJourneyfields = {
           module_name: MODULE_LABEL.IVR,
           action: ACTION_LABEL.EDIT,
-          createdBy: req?.user?.id
+          created_by: req?.user?.id
         }
     
         await userJourneyRepo.create(userJourneyfields);
@@ -361,7 +395,7 @@ async function updateIVR(req, res) {
         const userJourneyfields = {
           module_name: MODULE_LABEL.IVR,
           action: ACTION_LABEL.DELETE,
-          createdBy: req?.user?.id
+          created_by: req?.user?.id
         }  
     
         await userJourneyRepo.create(userJourneyfields);
@@ -396,14 +430,14 @@ async function updateIVR(req, res) {
       const IvrId = req.params.id;
       // const userDetail = await userRepository.get(req.user.id)
       const data = await flowJsonRepository.getIVRByFlowId(IvrId);
-      console.log('datadtadatdatdatadatdtdatad', data)
       const nodesData = transformData(data)
       const edgeData = {
-          edgeJson : data.edgesData
+          edgeJson : data.edges_data
         };
       const scheduleData = await memberScheduleRepo.getAll(IvrId);
-      const fileData = data.fileData;
-      const rePrompt = data.rePrompt;
+      const fileData = data.file_data;
+      const rePrompt = data.re_prompt;
+      const isGatherNode = data.is_gather_node
 
 
       // if (userDetail?.flow_type == 1) {
@@ -418,8 +452,10 @@ async function updateIVR(req, res) {
       //   };
       //   scheduleData = await memberScheduleRepo.getAll(IvrId);
       // }
-      SuccessRespnose.data = {nodesData,edgeData,scheduleData, fileData, rePrompt };
+      SuccessRespnose.data = {nodesData,edgeData,scheduleData, fileData, rePrompt,isGatherNode };
       SuccessRespnose.message = "Success";
+
+      Logger.info(`IVR -> recieved ivr of flow ${IvrId} successfully`);
 
       return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {
@@ -435,19 +471,19 @@ async function updateIVR(req, res) {
   }
 
   function transformData(input) {
-    return Object.values(input.nodesData.nodes).map((node, index) => ({
+    return Object.values(input.nodes_data.nodes).map((node, index) => ({
         _id: input._id, 
-        callcenterId: input.callcenterId,
-        flowName: input.flowName,
-        flowId: input.flowId,
-        nodeId: parseInt(node.id),
-        scheduleId: input.scheduleId || null,
-        flowJson: node.flowJson,
+        call_center_id: input.call_center_id,
+        flow_name: input.flow_name,
+        flow_id: input.flow_id,
+        node_id: parseInt(node.id),
+        schedule_id: input.scheduleId || null,
+        flow_json: node.flowJson,
         status: input.status,
-        flowRender: node.flowRender,
-        createdBy: input.createdBy,
-        createdAt: input.createdAt,
-        updatedAt: input.updatedAt,
+        flow_render: node.flowRender,
+        created_by: input.created_by,
+        created_at: input.created_at,
+        updated_at: input.updated_at,
     }));
 }
 

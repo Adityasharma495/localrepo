@@ -3,18 +3,26 @@ const { MODEL } = require('../utils/common/constants')
 
 const FlowEdgesSchema = new mongoose.Schema(
   {
-    flowId: {
+    flow_id: {
       type: String,
       required:true,
     },
-    edgeJson: {
+    edge_json: {
       type: Object, 
       required: true,
     },
+    created_at: {
+        type: Date,
+        default: Date.now
+    },
+    updated_at: {
+        type: Date,
+        default: Date.now
+    }
   },
   {
     versionKey: false, 
-    timestamps: true, 
+    // timestamps: true, 
   }
 );
 

@@ -33,12 +33,12 @@ class FlowControlRepository extends CrudRepository {
           if (condition === "noInput" || condition === "wrongInput") {
             
             return {
-              flowName,
-              callcenterId: callCenterId,
-              flowId,
-              nodeId: parseInt(nodeId, 10),
+              flow_name: flowName,
+              call_center_id: callCenterId,
+              flow_id: flowId,
+              node_id: parseInt(nodeId, 10),
               condition,
-              nextNode: null, 
+              next_node: null, 
               status: 1,
               metadata: {
                 fileUrl: controlData.fileUrl,
@@ -47,12 +47,12 @@ class FlowControlRepository extends CrudRepository {
             };
           } else {
             return {
-              flowName,
-              callcenterId: callCenterId,
-              flowId,
-              nodeId: parseInt(nodeId, 10),
+              flow_name: flowName,
+              call_center_id: callCenterId,
+              flow_id: flowId,
+              node_id: parseInt(nodeId, 10),
               condition,
-              nextNode: controlData.nodeId ? parseInt(controlData.nodeId, 10) : null,
+              next_node: controlData.nodeId ? parseInt(controlData.nodeId, 10) : null,
               status: 1,
             };
           }
@@ -76,7 +76,7 @@ class FlowControlRepository extends CrudRepository {
 
   async deleteIVRByFlowId(flowId) {
     try {
-      let response = await this.model.deleteMany({ flowId: flowId });
+      let response = await this.model.deleteMany({ flow_id: flowId });
       return response;
     } catch (error) {
       throw error;

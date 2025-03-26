@@ -9,17 +9,17 @@ const CREDITS = constants.MODEL.CREDITS;
         required: true,
         ref: USER_MODEL_NAME
     },
-    fromUser: {
+    from_user: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: USER_MODEL_NAME
     },
-    toUser: {
+    to_user: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: USER_MODEL_NAME
     },
-    actionUser: {
+    action_user: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: USER_MODEL_NAME
@@ -52,10 +52,18 @@ const CREDITS = constants.MODEL.CREDITS;
         type: String,
         default: null,
         trim: true
-    }
+    },
+    created_at: {
+      type: Date,
+      default: Date.now
+    },
+    updated_at: {
+        type: Date,
+        default: Date.now
+    },
   },{
     versionKey: false,
-    timestamps: true
+    // timestamps: true
   });
 
   // Pre-save middleware to convert timestamps to IST
@@ -64,26 +72,26 @@ const CREDITS = constants.MODEL.CREDITS;
     const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
     const istDate = new Date(now.getTime() + istOffset);
 
-    // Set createdAt and updatedAt fields to IST
+    // Set created_at and updated_at fields to IST
     if (this.isNew) {
-        this.createdAt = istDate;
+        this.created_at = istDate;
     }
-    this.updatedAt = istDate;
+    this.updated_at = istDate;
 
     next();
   });
 
-  // Pre-update middleware to convert updatedAt to IST
+  // Pre-update middleware to convert updated_at to IST
   CreditsSchema.pre('findOneAndUpdate', function (next) {
     const now = new Date();
     const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
     const istDate = new Date(now.getTime() + istOffset);
 
-    this._update.updatedAt = istDate;
+    this._update.updated_at = istDate;
 
     next();
   });
 
-  const creditsSchema = mongoose.model(CREDITS, CreditsSchema);
+  const creditsSchema = mongoose.model(CREDITS, CreditsSchema, CREDITS);
 
   module.exports = creditsSchema;

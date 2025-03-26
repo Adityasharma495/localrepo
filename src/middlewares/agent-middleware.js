@@ -6,7 +6,6 @@ const AppError = require('../utils/errors/app-error');
 function validateAgentCreate(req, res, next) {
 
     const bodyReq = req.body;
-
     if (!req.is('application/json')) {
         ErrorResponse.message = 'Something went wrong while Agent Create';
         ErrorResponse.error = new AppError(['Invalid content type, incoming request must be in application/json format'], StatusCodes.BAD_REQUEST);
@@ -22,7 +21,7 @@ function validateAgentCreate(req, res, next) {
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
     }
-    else if (bodyReq.agent_number == undefined || !bodyReq.agent_number.trim()) {
+    else if (bodyReq.agent_number == undefined || isNaN(bodyReq.agent_number)) {
         ErrorResponse.message = 'Something went wrong while agent Create';
         ErrorResponse.error = new AppError(['agent_number not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
         return res
@@ -67,9 +66,9 @@ function validateAgentCreate(req, res, next) {
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
-    }else if (bodyReq.extention && !Array.isArray(bodyReq.extention)) {
+    }else if (bodyReq.extension && !Array.isArray(bodyReq.extension)) {
         ErrorResponse.message = 'Something went wrong while agent Create';
-        ErrorResponse.error = new AppError(['extention not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+        ErrorResponse.error = new AppError(['extension not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
@@ -87,18 +86,22 @@ function modifyAgentBodyRequest(req, is_create = true) {
             agent: {
                 agent_name: bodyReq.agent_name.trim(),
                 agent_number: Number(bodyReq.agent_number),
-                extention: bodyReq?.extention || [],
                 access:bodyReq.access.trim(),
                 type:bodyReq.type.trim(),
                 email_id:bodyReq.email_id.trim(),
                 description:bodyReq.description.trim(),
-                username:bodyReq.username.trim(),
-                password:bodyReq.password.trim(),
                 // login_status:bodyReq.login_status
             }
         }
 
-        if (is_create) inputData.agent.createdBy = req.user.id
+        if (is_create) {
+            inputData.agent.created_by = req.user.id
+            inputData.agent.username = bodyReq.username.trim()
+            inputData.agent.password = bodyReq.password.trim()
+            inputData.agent.extension = bodyReq?.extension || []
+
+        } 
+
         return inputData;
 
     } catch (error) {

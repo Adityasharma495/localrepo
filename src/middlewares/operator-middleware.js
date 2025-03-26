@@ -54,7 +54,7 @@ function modifyOperatorBodyRequest(req, is_create = true) {
             }
         }
 
-        if (is_create) inputData.operator.createdBy = req.user.id
+        if (is_create) inputData.operator.created_by = req.user.id
 
         return inputData;
 

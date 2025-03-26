@@ -2,6 +2,7 @@ const { StatusCodes } = require("http-status-codes");
 const { ErrorResponse, SuccessRespnose } = require("../utils/common");
 const AppError = require("../utils/errors/app-error");
 const {MemberScheduleRepository, AgentGroupRepository} = require("../repositories")
+const { Logger } = require('../config');
 
 
 const memberScheduleRepo = new MemberScheduleRepository();
@@ -19,6 +20,7 @@ async function UpdateScheduleTime(req,res,next)
         {
             SuccessRespnose.data= response;
             SuccessRespnose.message="Member Schedule Updated"
+            Logger.info(`Member Schedule -> Updated successfully`);
             return res.status(StatusCodes.CREATED).json(SuccessRespnose);
         }
     } catch (error) {
@@ -31,6 +33,7 @@ async function UpdateScheduleTime(req,res,next)
           errorMsg = "Member schedule error";
         }
         ErrorResponse.message = errorMsg;
+        Logger.error(`Member Schedule -> error in updating member schedule ${JSON.stringify(error)}`);
         return res.status(statusCode).json(ErrorResponse);
 
     }

@@ -47,7 +47,7 @@ const agentRepo = new AgentRepository();
 //     const userJourneyfields = {
 //       module_name: MODULE_LABEL.AGENT_GROUP,
 //       action: ACTION_LABEL.ADD,
-//       createdBy: req?.user?.id
+//       created_by: req?.user?.id
 //     };
 //     await userJourneyRepo.create(userJourneyfields);
 
@@ -100,24 +100,10 @@ async function createAgentGroup(req, res) {
         .json(ErrorResponse);
     }
 
-    // Generate a shared _id
-    const sharedId = new mongoose.Types.ObjectId(); // Generate a new ObjectId
-
     // Create the agent group with the shared _id
     const agent = await agentGroupRepo.create({
       ...bodyReq.agent,
-      _id: sharedId // Assign the shared _id here
     });
-
-    // Create the member schedule with the same _id
-    const memberData = {
-      _id: sharedId, // Assign the shared _id here
-      start_time: "",
-      end_time: "",
-      week_days: [],
-    };
-
-    await memberScheduleRepo.create(memberData);
 
     responseData.agent = agent;
 
@@ -125,7 +111,7 @@ async function createAgentGroup(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.AGENT_GROUP,
       action: ACTION_LABEL.ADD,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     };
     await userJourneyRepo.create(userJourneyfields);
 
@@ -167,6 +153,10 @@ async function getAll(req, res) {
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
+    Logger.info(
+      `Agent Group -> recieved all successfully`
+    );
+
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     ErrorResponse.message = error.message;
@@ -196,6 +186,10 @@ async function getById(req, res) {
     SuccessRespnose.message = "Success";
     SuccessRespnose.data = agentData;
 
+    Logger.info(
+      `Agent Group -> recieved ${id} successfully`
+    );
+
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
@@ -221,15 +215,59 @@ async function updateAgentGroup(req, res) {
   const uid = req.params.id;
   const bodyReq =  req.body;
 
-
   try {
     const responseData = {};
-    const agentGroup = await agentGroupRepo.get(uid);
+    let agent;
+    if (bodyReq?.agent?.type === 'time_schedule') {
+      if (bodyReq.agent.group_schedule_id) {
+        agent = await memberScheduleRepo.update(bodyReq.agent.group_schedule_id, {
+          week_days : bodyReq.agent.weekDays,
+          start_time: bodyReq.agent.startTime,
+          end_time: bodyReq.agent.endTime,
+       })   
+      } else {
+        const schedule = await memberScheduleRepo.create({
+          week_days : bodyReq.agent.weekDays,
+          start_time: bodyReq.agent.startTime,
+          end_time: bodyReq.agent.endTime,
+        }) 
+        agent = await agentGroupRepo.update(uid, {group_schedule_id : schedule._id})
+      }
 
-    const agent = await agentGroupRepo.updateGroup(uid,bodyReq.agent);
+    } 
+    else if (bodyReq?.agent?.type === 'add_member'){
+      const agentIds = bodyReq?.agent?.agent_id;
+      const preData = await agentGroupRepo.get(uid)
 
+      const schedule = await memberScheduleRepo.create({
+         week_days : bodyReq.agent.memberSchedulePayload.week_days,
+         start_time: bodyReq.agent.memberSchedulePayload.start_time,
+         end_time: bodyReq.agent.memberSchedulePayload.end_time,
+      })     
   
+      const structuredData = agentIds.map(agentId => ({
+        agent_id: agentId,
+        member_schedule_id: schedule._id
+      }));
 
+      // Merge existing agents with new ones (avoiding duplicates)
+      const updatedAgents = [...preData.agents, ...structuredData].reduce((acc, curr) => {
+        if (!acc.some(agent => agent.agent_id === curr.agent_id)) {
+          acc.push(curr);
+        }
+        return acc;
+      }, []);
+  
+      agent = await agentGroupRepo.update(uid, {agents : updatedAgents});
+  
+      await agentRepo.bulkUpdate(
+        { _id: { $in: agentIds } },
+        { is_allocated: 1 } 
+      );
+    } else {
+      agent = await agentGroupRepo.update(uid, bodyReq.agent);
+    }
+    
     if (!agent) {
       const error = new Error();
       error.name = 'CastError';
@@ -240,7 +278,7 @@ async function updateAgentGroup(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.AGENT_GROUP,
       action: ACTION_LABEL.EDIT,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     };
 
     await userJourneyRepo.create(userJourneyfields);
@@ -254,7 +292,7 @@ async function updateAgentGroup(req, res) {
   } catch (error) {
 
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
-    let errorMsg = error.message || "An error occurred"; // Default value
+    let errorMsg = error.message || "An error occurred"; 
 
     if (error.name === 'CastError') {
       statusCode = StatusCodes.BAD_REQUEST;
@@ -286,7 +324,7 @@ async function deleteAgentGroup(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.AGENT_GROUP,
       action: ACTION_LABEL.DELETE,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
@@ -318,6 +356,7 @@ async function deleteAgentGroup(req, res) {
 
 async function getAssignedAgents(req, res) {
   const groupId = req.params.id;
+  let transformedAgents
 
   try {
     if (!groupId) {
@@ -327,28 +366,26 @@ async function getAssignedAgents(req, res) {
     // Fetch agent group
     const agentGroup = await agentGroupRepo.get(groupId);
 
-    if (!agentGroup || !agentGroup.agent_id || agentGroup.agent_id.length === 0) {
-      // If agent_id is empty or not defined, return an empty agents array
-      SuccessRespnose.message = "No agents assigned to this group";
-      SuccessRespnose.data = {
-        group_id: groupId,
-        group_name: agentGroup?.group_name || "Unknown Group",
-        agents: []
-      };
-
-      Logger.info(`Agent Group -> No agents assigned for Group ID: ${groupId}`);
-      return res.status(StatusCodes.OK).json(SuccessRespnose);
+    if (!agentGroup || !agentGroup.agents.length) {
+      console.log("No agents found");
+      transformedAgents = []
+    } else {
+      transformedAgents = await Promise.all(
+        (agentGroup.agents).map(async (agent) => {
+          const agentData = await agentRepo.get(agent.agent_id);
+          const scheduleData = await memberScheduleRepo.get(agent.member_schedule_id);
+          return {
+            id: agentGroup._id,
+            group_name: agentGroup.group_name,
+            agent: agentData,
+            schedule: scheduleData
+          };
+        })
+      );
     }
 
-    // Fetch agents only if agent_id array is not empty
-    const agents = await agentRepo.findMany(agentGroup.agent_id);
-
     SuccessRespnose.message = "Successfully fetched assigned agents";
-    SuccessRespnose.data = {
-      group_id: groupId,
-      group_name: agentGroup.group_name,
-      agents: agents
-    };
+    SuccessRespnose.data = transformedAgents
 
     Logger.info(`Agent Group -> Successfully fetched assigned agents for Group ID: ${groupId}`);
     return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -374,6 +411,122 @@ async function getAssignedAgents(req, res) {
 }
 
 
+async function updateMemberScheduleAgent(req, res) {
+  const { id } = req.params; 
+  const bodyReq = req.body; 
+
+  try {
+    const agentGroup = await agentGroupRepo.get(id);
+    let scheduleData;
+    const occurrenceCount = agentGroup.agents.filter(agent => 
+      agent.member_schedule_id.toString() === bodyReq.id
+    ).length;
+
+    if (occurrenceCount > 1) {
+
+      scheduleData = await memberScheduleRepo.create({
+        start_time: bodyReq.start_time,
+        end_time: bodyReq.end_time,
+        week_days: bodyReq.week_days
+      })
+
+      const updatedAgents = agentGroup.agents.map(agent => {
+        if (agent.agent_id.toString() === bodyReq.agent_id) {
+          return { ...agent, member_schedule_id: scheduleData._id };
+        }
+        return agent;
+      });
+
+      await agentGroupRepo.update(id, {agents : updatedAgents})
+      
+    } else {
+      scheduleData = await memberScheduleRepo.update(bodyReq.id , {
+        start_time: bodyReq.start_time,
+        end_time: bodyReq.end_time,
+        week_days: bodyReq.week_days
+      })
+    }
 
 
-module.exports = {createAgentGroup, getAll, getById, updateAgentGroup, deleteAgentGroup,getAssignedAgents}
+    // Success response
+    SuccessRespnose.message = "Agent time schedule updated successfully.";
+    SuccessRespnose.data = scheduleData;
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    if (error.name === "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Invalid agent ID.";
+    }
+
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `Agent -> Failed to update time schedule for Agent ID: ${id}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+async function removeAgent(req, res) {
+  const { id } = req.params; 
+  const bodyReq = req.body; 
+
+  try {
+    const agentGroup = await agentGroupRepo.get(id);
+    const targetAgentId = bodyReq.agent_id
+
+    const removedAgent = agentGroup.agents.find(agent => agent.agent_id.toString() === targetAgentId);
+    const removedMemberScheduleId = removedAgent ? removedAgent.member_schedule_id : null;
+
+    // Filter out the agent from the array
+    const updatedAgents = agentGroup.agents.filter(agent => agent.agent_id.toString() !== targetAgentId);
+
+
+    const occurrenceCount = updatedAgents.filter(agent => 
+      agent.member_schedule_id.toString() === removedMemberScheduleId
+    ).length;
+
+    if (occurrenceCount !== 0) {
+      await agentGroupRepo.update(id, {agents : updatedAgents})
+      await agentRepo.update(targetAgentId, {is_allocated: 0})
+      
+    } else {
+      await agentGroupRepo.update(id, {agents : updatedAgents})
+      await agentRepo.update(targetAgentId, {is_allocated: 0})
+      await memberScheduleRepo.delete(removedMemberScheduleId)
+    }
+
+    // Success response
+    SuccessRespnose.message = "Agent time schedule updated successfully.";
+    SuccessRespnose.data = updatedAgents;
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    if (error.name === "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Invalid agent ID.";
+    }
+
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `Agent -> Failed to update time schedule for Agent ID: ${id}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+
+
+module.exports = {createAgentGroup, getAll, getById, updateAgentGroup, deleteAgentGroup,getAssignedAgents, updateMemberScheduleAgent, removeAgent}

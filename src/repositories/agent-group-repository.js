@@ -14,10 +14,10 @@ class AgentGroupRepository extends CrudRepository {
   async getAll(current_uid) {
     try {
         let response = await agentGroupModel
-            .find({ is_deleted: false, createdBy :  current_uid })
-            .populate('agent_id') 
-            .populate('createdBy')
-            .sort({ createdAt: -1 })
+            .find({ is_deleted: false, created_by :  current_uid })
+            // .populate('agagent_id') 
+            .populate('created_by')
+            .sort({ created_at: -1 })
             .lean();
         return response;
     } catch (error) {
@@ -29,7 +29,7 @@ async get(data) {
   try {
       const response = await this.model
           .findOne({ _id: data, is_deleted: false })
-          // .populate('agent_id') 
+          .populate('group_schedule_id')
           .lean();
           
       if (!response) {
@@ -46,18 +46,18 @@ async get(data) {
 async create(data) {
   try {
       const newDocument = await this.model.create(data);
-      const response = await this.model.findById(newDocument._id).populate('agent_id');
+      const response = await this.model.findById(newDocument._id);
       
       return response;            
   } catch (error) {
       throw error;
   }
-}z
+}
 
 async update(id, data) {
   const response = await this.model
       .findOneAndUpdate({ _id: id, is_deleted: false }, data, { runValidators: true, new: true })
-      .populate('agent_id');
+      ;
   
   return response;
 }
@@ -127,7 +127,7 @@ async updateGroup(id, data) {
       { _id: id, is_deleted: false },
       { agent_id: updatedAgentIds },
       { runValidators: true, new: true }
-    ).populate('agent_id');
+    );
 
     return response;
 

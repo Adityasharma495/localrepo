@@ -17,7 +17,7 @@ function hookHashPassword(user) {
     user.password = encryptedPassword;
 }
 
-const ExtentionSchema = new mongoose.Schema({
+const ExtensionSchema = new mongoose.Schema({
     username: {
         type: String,
         required: true,
@@ -28,7 +28,7 @@ const ExtentionSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    extention: {
+    extension: {
         type: Number,
         required: true,
     },
@@ -37,7 +37,7 @@ const ExtentionSchema = new mongoose.Schema({
         required: true,
         trim: true
       },
-    isAllocated: {
+    is_allocated: {
         type: Number,
         default: 0 
     },
@@ -45,34 +45,34 @@ const ExtentionSchema = new mongoose.Schema({
         type: Boolean,
         default: false 
     },
-    createdBy: { 
+    created_by: { 
         type: mongoose.Schema.Types.ObjectId,
         ref: USER_MODEL_NAME,
         default: null 
     },
-    createdAt: {
+    created_at: {
         type: Date,
         default: Date.now
     },
-    updatedAt: {
+    updated_at: {
         type: Date,
         default: Date.now
     }
 }, {
     versionKey: false,
-    timestamps: true
+    // timestamps: true
 });
 
 // Pre-save middleware for timestamps and hashing password
-ExtentionSchema.pre('save', async function (next) {
+ExtensionSchema.pre('save', async function (next) {
     const now = new Date();
 
     // Convert timestamps to IST
     const istDate = convertToIST(now);
     if (this.isNew) {
-        this.createdAt = istDate; 
+        this.created_at = istDate; 
     }
-    this.updatedAt = istDate;
+    this.updated_at = istDate;
 
     // Hash password if the document is new or the password is modified
     if (this.isNew || this.isModified('password')) {
@@ -83,12 +83,12 @@ ExtentionSchema.pre('save', async function (next) {
 });
 
 // Pre-update middleware for timestamps and hashing password
-ExtentionSchema.pre('findOneAndUpdate', async function (next) {
+ExtensionSchema.pre('findOneAndUpdate', async function (next) {
     const now = new Date();
 
-    // Convert updatedAt to IST
+    // Convert updated_at to IST
     const istDate = convertToIST(now);
-    this._update.updatedAt = istDate;
+    this._update.updated_at = istDate;
 
     // Hash password if it's being updated
     if (this._update.password) {
@@ -99,6 +99,6 @@ ExtentionSchema.pre('findOneAndUpdate', async function (next) {
     next();
 });
 
-const extentionData = mongoose.model(MODEL.EXTENTION, ExtentionSchema);
+const extensionData = mongoose.model(MODEL.EXTENSION, ExtensionSchema, MODEL.EXTENSION);
 
-module.exports = extentionData;
+module.exports = extensionData;

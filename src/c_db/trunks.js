@@ -14,9 +14,9 @@ const Trunks = sequelize.define(
   'trunks',
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true
     },
     name: {
       type: DataTypes.STRING,
@@ -46,7 +46,7 @@ const Trunks = sequelize.define(
       trim: true
     },
     operator_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       references: {
         model: 'operators',
         key: 'id'
@@ -71,7 +71,7 @@ const Trunks = sequelize.define(
     },
     
     codec_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       references: {
         model: 'codecs',
         key: 'id'
@@ -87,10 +87,10 @@ const Trunks = sequelize.define(
       defaultValue: null
     },
     created_by: {
-      type: DataTypes.UUID,
-      allowNull: false,
+      type: DataTypes.INTEGER,
+      allowNull: true,
       references: {
-        model: 'users',
+        model: 'users_new',
         key: 'id'
       }
     },

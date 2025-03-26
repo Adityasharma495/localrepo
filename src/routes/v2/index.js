@@ -8,6 +8,9 @@ const userJourney = require('./user-journey-route');
 const serverManagement = require('./server-management-routes');
 const dataCenter = require('./data-center-routes');
 const trunkRoutes = require('./trunk-routes');
+const agentRoutes = require("./agent-routes")
+const operatorRoutes = require("./operator-routes")
+const CodecRoutes = require("./codec-routes")
 
 router.use('/users', userRoutes);
 router.use('/credits', creditRoutes);
@@ -15,5 +18,9 @@ router.use('/user-journey', userJourney);
 router.use('/server-management', serverManagement);
 router.use('/data-center', dataCenter);
 router.use('/trunks', trunkRoutes);
+router.use('/agents', agentRoutes);
+router.use('/operators', operatorRoutes);
+router.use('/codecs', CodecRoutes);
+
 
 module.exports = router;

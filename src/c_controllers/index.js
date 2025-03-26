@@ -5,5 +5,9 @@ module.exports = {
     UserJourneyController: require("./user-journey-controller"),
     ServerManagementController: require("./server-management-controller"),
     DataCenterController:require("./data-center-controller"),
-    TrunkController: require("./trunk-controller")
+    TrunkController: require("./trunk-controller"),
+    AgentController:require("./agent-controller"),
+    CompanyController:require("./company-controller"),
+    OperatorController:require("./operator-controller"),
+    CodecController:require('./codec-controller')
 }

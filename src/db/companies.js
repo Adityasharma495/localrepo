@@ -31,10 +31,18 @@ const COMPANY_MODEL_NAME = constants.MODEL.COMPANIES;
         type: String,
         enum: COMPANY_TYPES
       },
-      createdBy: { 
+      created_by: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: USER_MODEL_NAME, 
         default: null 
+      },
+      created_at: {
+        type: Date,
+        default: Date.now
+      },
+      updated_at: {
+          type: Date,
+          default: Date.now
       },
       users: [{
         type: mongoose.Schema.Types.ObjectId,
@@ -42,7 +50,7 @@ const COMPANY_MODEL_NAME = constants.MODEL.COMPANIES;
       }]
   },{
     versionKey: false,
-    timestamps: true
+    // timestamps: true
   });
 
   CompanySchema.post('findOneAndUpdate', async function(doc){
@@ -109,22 +117,22 @@ const COMPANY_MODEL_NAME = constants.MODEL.COMPANIES;
     const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
     const istDate = new Date(now.getTime() + istOffset);
 
-    // Set createdAt and updatedAt fields to IST
+    // Set created_at and updated_at fields to IST
     if (this.isNew) {
-        this.createdAt = istDate;
+        this.created_at = istDate;
     }
-    this.updatedAt = istDate;
+    this.updated_at = istDate;
 
     next();
   });
 
-  // Pre-update middleware to convert updatedAt to IST
+  // Pre-update middleware to convert updated_at to IST
   CompanySchema.pre('findOneAndUpdate', function (next) {
     const now = new Date();
     const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
     const istDate = new Date(now.getTime() + istOffset);
 
-    this._update.updatedAt = istDate;
+    this._update.updated_at = istDate;
 
     next();
   });

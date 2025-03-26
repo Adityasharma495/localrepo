@@ -82,7 +82,7 @@ const SUB_USER_LICENCE_MODEL = constants.MODEL.SUB_USER_LICENCE;
         type: Boolean,
         default: false
       },
-      createdBy: { 
+      created_by: { 
         type: mongoose.Schema.Types.ObjectId,
         ref: USER_MODEL_NAME,
         default: null 
@@ -94,10 +94,18 @@ const SUB_USER_LICENCE_MODEL = constants.MODEL.SUB_USER_LICENCE;
       credits_available:{
         type: Number,
         default: 0,
+      },
+      created_at: {
+          type: Date,
+          default: Date.now
+      },
+      updated_at: {
+          type: Date,
+          default: Date.now
       }
   },{
     versionKey: false,
-    timestamps: true
+    // timestamps: true
   });
 
   UserSchema.pre('save', async function save(next) {
@@ -161,7 +169,8 @@ const SUB_USER_LICENCE_MODEL = constants.MODEL.SUB_USER_LICENCE;
       // Find the user by id and populate the module field
       const user = await this.model(USER_MODEL_NAME)
       .findById(this._id)
-      .populate('acl_settings', '_id acl_name module_operations')  // Assuming the module schema has a name field
+      .populate('acl_settings', '_id acl_name module_operations')
+      .populate('sub_user_licence_id')  // Assuming the module schema has a name field
       .exec();
       if (!user) throw new Error('User not found');
       const userData = user.toObject();
@@ -212,22 +221,22 @@ const SUB_USER_LICENCE_MODEL = constants.MODEL.SUB_USER_LICENCE;
     const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
     const istDate = new Date(now.getTime() + istOffset);
 
-    // Set createdAt and updatedAt fields to IST
+    // Set created_at and updated_at fields to IST
     if (this.isNew) {
-        this.createdAt = istDate;
+        this.created_at = istDate;
     }
-    this.updatedAt = istDate;
+    this.updated_at = istDate;
 
     next();
   });
 
-  // Pre-update middleware to convert updatedAt to IST
+  // Pre-update middleware to convert updated_at to IST
   UserSchema.pre('findOneAndUpdate', function (next) {
     const now = new Date();
     const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
     const istDate = new Date(now.getTime() + istOffset);
 
-    this._update.updatedAt = istDate;
+    this._update.updated_at = istDate;
 
     next();
   });

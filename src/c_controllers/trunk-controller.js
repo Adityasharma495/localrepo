@@ -13,7 +13,6 @@ const userJourneyRepo = new UserJourneyRepository();
 async function createTrunk(req, res) {
     const bodyReq = req.body;
 
- 
   
     try {
       const responseData = {};
@@ -21,13 +20,13 @@ async function createTrunk(req, res) {
       responseData.trunk = trunk;
 
 
-      console.log("CREATED TRUNK HERE", trunk);
+
   
-      // const userJourneyfields = {
-      //   module_name: MODULE_LABEL.TRUNKS,
-      //   action: ACTION_LABEL.ADD,
-      //   createdBy:  req?.user?.id
-      // }
+      const userJourneyfields = {
+        module_name: MODULE_LABEL.TRUNKS,
+        action: ACTION_LABEL.ADD,
+        createdBy:  req?.user?.id
+      }
   
       // const userJourney = await userJourneyRepo.create(userJourneyfields);
       // responseData.userJourney = userJourney

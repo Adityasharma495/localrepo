@@ -8,7 +8,7 @@ class FlowEdgesRepository extends CrudRepository {
 
   async getAll(flowId) {
     try {
-      let response = await flowEdgeModel.findOne({ flowId: flowId }).lean();
+      let response = await flowEdgeModel.findOne({ flow_id: flowId }).lean();
       return response;
     } catch (error) {
       throw error;
@@ -18,7 +18,7 @@ class FlowEdgesRepository extends CrudRepository {
 
   async deleteIVRByFlowId(flowId) {
     try {
-      let response = await this.model.deleteMany({ flowId: flowId });
+      let response = await this.model.deleteMany({ flow_id: flowId });
       return response;
     } catch (error) {
       throw error;

@@ -15,6 +15,8 @@ async function getAll(req, res){
         SuccessRespnose.message = "Success";
         SuccessRespnose.data = response;
 
+        Logger.info(`User -> recieved all codecs list`);
+
         return res.status(StatusCodes.OK).json(SuccessRespnose);
         
     } catch (error) {

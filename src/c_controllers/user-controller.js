@@ -16,8 +16,6 @@ const licenceRepo = new LicenceRepository();
 
 async function signinUser(req, res) {
 
-  console.log("CAME TO SIGN IN USER");
-
     const bodyReq = req.body;
     const username = bodyReq.username;
   
@@ -141,10 +139,9 @@ async function signinUser(req, res) {
   
     try {
       const user = await userRepo.get(uid);
-
-      console.log("FOUND USER", user);
-
       let userData = await user.generateUserData();
+
+      console.log("USER DTA", userData);
       userData.companies = user.companies 
   
       const availLicence = await licenceRepo.findOne({user_id : uid})
@@ -179,6 +176,8 @@ async function signinUser(req, res) {
   }
 
   async function deleteUser(req, res) {
+
+    console.log("CAME TO DELETE USER");
     const userIds = req.body.userIds;
     let response
   

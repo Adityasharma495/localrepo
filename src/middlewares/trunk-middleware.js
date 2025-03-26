@@ -3,11 +3,12 @@ const { StatusCodes } = require('http-status-codes');
 const { ErrorResponse, constants, Helpers, Authentication } = require('../utils/common');
 const AppError = require('../utils/errors/app-error');
 const AUTH_TYPES = constants.AUTH_TYPES;
+const AUTH_TYPE_NUM_TO_STRING = constants.AUTH_TYPE_NUM_TO_STRING;
 
 function validateTrunksCreate(req, res, next) {
 
     const bodyReq = req.body;
-    
+
 
     if (!req.is('application/json')) {
         ErrorResponse.message = 'Something went wrong while trunk crate';
@@ -169,14 +170,17 @@ function validateTrunksCreate(req, res, next) {
 
 function modifyTrunkBodyRequest(req, is_create = true) {
 
+
     try {
 
         const bodyReq = req.body;
 
+        const resolvedAuthType = AUTH_TYPE_NUM_TO_STRING[bodyReq.auth_type];
+
         let inputData = {
             trunk: {
                 name: bodyReq.name.trim(),
-                auth_type: bodyReq.auth_type,
+                auth_type: resolvedAuthType,
                 domain: bodyReq.domain.trim(),
                 port: Number(bodyReq.port),
                 pilot_number: bodyReq.pilot_number.trim(),
@@ -215,6 +219,7 @@ function modifyTrunkCreateBodyRequest(req, res, next) {
     try {
 
         const inputData = modifyTrunkBodyRequest(req);
+
         req.body = inputData;
         next();
 

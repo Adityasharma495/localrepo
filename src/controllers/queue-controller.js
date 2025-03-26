@@ -21,7 +21,7 @@ async function createQueue(req, res) {
 
     const conditions = {
       name: bodyReq.queue.name,
-      createdBy: req.user.id
+      created_by: req.user.id
     }
     const checkDuplicate = await queueRepo.findOne(conditions);
 
@@ -39,7 +39,7 @@ async function createQueue(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.QUEUE,
       action: ACTION_LABEL.ADD,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
@@ -82,6 +82,10 @@ async function getAll(req, res) {
     SuccessRespnose.data = queueData;
     SuccessRespnose.message = "Success";
 
+    Logger.info(
+      `Queue -> recieved all successfully`
+    );
+
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     ErrorResponse.message = error.message;
@@ -110,6 +114,10 @@ async function getById(req, res) {
     }
     SuccessRespnose.message = "Success";
     SuccessRespnose.data = queueData;
+
+    Logger.info(
+      `Queue -> recieved ${id} successfully`
+    );
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -144,7 +152,7 @@ async function updateQueue(req, res) {
     // Check for duplicate queue name if it is being changed
     if (currentData.name !== bodyReq.queue.name) {
       const nameCondition = {
-        createdBy: req.user.id,
+        created_by: req.user.id,
         name: bodyReq.queue.name
       };
       const nameDuplicate = await queueRepo.findOne(nameCondition);
@@ -164,7 +172,7 @@ async function updateQueue(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.QUEUE,
       action: ACTION_LABEL.EDIT,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
@@ -202,7 +210,7 @@ async function deleteQueue(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.QUEUE,
       action: ACTION_LABEL.DELETE,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);

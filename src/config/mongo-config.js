@@ -1,5 +1,6 @@
 const ServerConfig = require('./server-config');
 const mongoose = require('mongoose');
+const { Sequelize } = require('sequelize');
 
 const connectMongo = async() => {
     try {
@@ -9,6 +10,4 @@ const connectMongo = async() => {
     }   
 }
 
-module.exports = {
-    connectMongo
-}
+module.exports = connectMongo

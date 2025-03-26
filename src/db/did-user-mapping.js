@@ -29,9 +29,17 @@ const USER_MODEL_NAME = constants.MODEL.USERS;
         type: Boolean,
         default: true 
       },
+      created_at: {
+          type: Date,
+          default: Date.now
+      },
+      updated_at: {
+          type: Date,
+          default: Date.now
+      }
   },{
     versionKey: false,
-    timestamps: true
+    // timestamps: true
   });
 
   // Pre-save middleware to convert timestamps to IST
@@ -40,26 +48,26 @@ const USER_MODEL_NAME = constants.MODEL.USERS;
     const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
     const istDate = new Date(now.getTime() + istOffset);
 
-    // Set createdAt and updatedAt fields to IST
+    // Set created_at and updated_at fields to IST
     if (this.isNew) {
-        this.createdAt = istDate;
+        this.created_at = istDate;
     }
-    this.updatedAt = istDate;
+    this.updated_at = istDate;
 
     next();
   });
 
-  // Pre-update middleware to convert updatedAt to IST
+  // Pre-update middleware to convert updated_at to IST
   DIDUserMappingSchema.pre('findOneAndUpdate', function (next) {
     const now = new Date();
     const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
     const istDate = new Date(now.getTime() + istOffset);
 
-    this._update.updatedAt = istDate;
+    this._update.updated_at = istDate;
 
     next();
   });
 
-  const didUserMappingSchema = mongoose.model(DID_USER_MAPPING_MODEL_NAME, DIDUserMappingSchema);
+  const didUserMappingSchema = mongoose.model(DID_USER_MAPPING_MODEL_NAME, DIDUserMappingSchema, DID_USER_MAPPING_MODEL_NAME);
 
   module.exports = didUserMappingSchema;

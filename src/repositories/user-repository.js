@@ -13,44 +13,34 @@ class UserRepository extends CrudRepository{
     }
 
     async getByUsername(username){
-        
         try {
             
             const user = await userModel.findOne({ username });
             return user;    
 
         } catch (error) {
-         
+            console.log('error', error)
             throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
 
         }
         
     }
 
-    async getAllByRoles(current_uid, current_user_role, given_user_role){
-        
-
-        //Get user status as {0: 'Inactive', 1: 'Active'}
+    async getAllByRoles(current_uid, current_user_role, given_user_role) {
+        // Get user status as {0: 'Inactive', 1: 'Active'}
         const userStatusValues = constants.USERS_STATUS_VALUES_LABEL;
-
-        //Get role specified as the param
-        if(given_user_role){
-            var currentUserReadAccessRoles = given_user_role;
-        }
-        //If role is not specified, get user roles which can be READ by the current user
-        else{
-            const PERMISSION_TYPE_READ = constants.PERMISSION_TYPES.READ;
-            var [currentUserReadAccessRoles] = Authentication.getUserAccessRoles(current_user_role, PERMISSION_TYPE_READ);
-        }
-
-
+    
+        // Get role specified as the param
+        let currentUserReadAccessRoles = given_user_role || 
+            (await Authentication.getUserAccessRoles(current_user_role, constants.PERMISSION_TYPES.READ))[0];
+    
         try {
             let data;
-            // If role is "Superadmin show all the users"
+            // If role is "Superadmin", show all users
             if (current_user_role === 'role_sadmin') {
-                data = await userModel.find({
-                    is_deleted: false,
-                }).sort({ createdAt: -1 });
+                data = await userModel.find({ is_deleted: false })
+                    .populate('created_by', 'username')
+                    .sort({ created_at: -1 });
             } else {
                
                 data = await userModel.find({
@@ -58,32 +48,26 @@ class UserRepository extends CrudRepository{
                     createdby: current_uid
                 }).sort({ createdAt: -1 });
             }
-            
-            
-            
-            //Remove password field and convert status to its corresponding label
-            //{0: 'Inactive', 1: 'Active'}
-            data = data.map( val => {
-                val['status'] = userStatusValues[ val['status'] ];
+    
+            // Remove password field and convert status to labels
+            data = data.map(val => {
+                val['status'] = userStatusValues[val['status']];
                 val['password'] = undefined;
                 return val;
-            } );
-            
+            });
+    
             return data;
-
+    
         } catch (error) {
-
             throw error;
-
         }
-
     }
-
+    
 
     async get(id) {
 
         try {
-            const response = await this.model.findById(id);
+            const response = await this.model.findById(id).populate('companies._id').populate('sub_user_licence_id');
             if (!response) {
                 throw new AppError('Not able to find the resource', StatusCodes.NOT_FOUND);
             }
@@ -103,8 +87,8 @@ class UserRepository extends CrudRepository{
             const userStatusValues = constants.USERS_STATUS_VALUES_LABEL;
             
             let data = await this.model.find({
-                createdBy: call_centre_id, is_deleted: false
-            }).sort({ createdAt: -1 }) ;
+                created_by: call_centre_id, is_deleted: false
+            }).sort({ created_at: -1 }) ;
 
             //TODO: Make it dynamic (modular)
             //Remove password field and convert status to its corresponding label
@@ -144,14 +128,14 @@ class UserRepository extends CrudRepository{
             if (loggedUser.role === USERS_ROLE.SUPER_ADMIN || loggedUser.role === USERS_ROLE.SUB_SUPERADMIN) {
                 for (const userId of idArray) {
                     const userData = await this.get(userId);
-                    if (userData.createdBy.toString() !== loggedUser.id.toString()) {
+                    if (userData.created_by.toString() !== loggedUser.id.toString()) {
                         throw new Error("One or more users were not created by the logged-in superadmin, so deletion is not allowed.");
                     }
                 }
             }
     
             for (const userId of idArray) {
-                const parentDetail = await this.findOne({ createdBy: userId });
+                const parentDetail = await this.findOne({ created_by: userId });
 
                 if (parentDetail !== null) {
                     throw new Error("One or more records cannot be deleted as they have child records.");
@@ -177,6 +161,20 @@ class UserRepository extends CrudRepository{
             throw error;
         }
 
+    }
+
+    async getByName(name){
+        try {
+            
+            const user = await userModel.findOne({ name });
+            return user;    
+
+        } catch (error) {
+            console.log('error', error)
+            throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
+
+        }
+        
     }
     
 

@@ -13,6 +13,8 @@ async function getAll(req, res) {
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
+    Logger.info(`Number File List -> recieved all successfully`);
+
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     ErrorResponse.message = error.message;
@@ -39,7 +41,7 @@ async function deleteNumberFile(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.NUMBER_FILE_LIST,
       action: ACTION_LABEL.DELETE,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     }
 
     await userJourneyRepo.create(userJourneyfields);

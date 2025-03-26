@@ -49,11 +49,11 @@ const createUser = {
                   type: 'string',
                   example: '605636683f6e29c81c8b2db0',
                 },
-                createdAt: {
+                created_at: {
                   type: 'string',
                   example: '2021-03-20T19:40:59.495Z',
                 },
-                updatedAt: {
+                updated_at: {
                   type: 'string',
                   example: '2021-03-20T21:23:10.879Z',
                 },

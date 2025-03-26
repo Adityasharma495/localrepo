@@ -13,7 +13,7 @@ class AclSettingRepository extends CrudRepository {
 
     try {
 
-      let response = await aclSettingModel.find({ is_deleted: false }).populate('createdBy', ["_id", "username"]).sort({ createdAt: -1 }).lean();
+      let response = await aclSettingModel.find({ is_deleted: false }).populate('created_by', ["_id", "username"]).sort({ created_at: -1 }).lean();
       response = response.map(val => {
         val['status'] = statusValues[val['status']];
         return val;

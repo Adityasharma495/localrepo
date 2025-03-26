@@ -12,6 +12,7 @@ class CrudRepository {
             return response;            
         } catch (error) {
             throw error
+
             // console.log(error);
             // if (error.name === 'ValidationError' || (error.name === 'MongoServerError' && error.code === 11000)) {
             //     let detailedErrorMessage = error.message;
@@ -110,6 +111,20 @@ class CrudRepository {
         } catch (error) {
             throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
         }
+    }
+
+      async bulkUpdate(ids, data) {
+        const response = await this.model.updateMany(
+            { _id: { $in: ids }},
+            data,
+            { runValidators: true }
+        );
+        
+        if (response.matchedCount === 0) {
+            throw new AppError('No matching resources found to update', StatusCodes.NOT_FOUND);
+        }
+        
+        return response;
     }
 }
 

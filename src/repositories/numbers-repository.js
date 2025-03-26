@@ -9,7 +9,7 @@ class NumbersRepository extends CrudRepository {
 
     async getAll() {
         try {
-            let response = await this.model.find({ is_deleted: false}).sort({ createdAt: -1 }).lean();
+            let response = await this.model.find({ is_deleted: false}).sort({ created_at: -1 }).lean();
             response = response.map(val => {
                 val['status'] = numberStatusValues[val['status']];
                 return val;
