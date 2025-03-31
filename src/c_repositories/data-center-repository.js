@@ -11,16 +11,24 @@ class DataCenterRepository extends CrudRepository {
     super(DataCenter); // Pass the Sequelize model to the parent class
   }
 
-  async getAll(current_uid) {
+  async getAll(role, current_uid) {
     try {
-      // Fetch all non-deleted records
-      const response = await DataCenter.findAll({
-        where: { is_deleted: false },
-        order: [["created_at", "DESC"]], // Sort by createdAt in descending order
-        raw: true, // Return plain JavaScript objects instead of Sequelize instances
-      });
+      let response;
 
-      // Map the response to include the type label
+      if (role == constants.USERS_ROLE.SUPER_ADMIN) {
+        response = await DataCenter.findAll({
+          where: { is_deleted: false },
+          order: [["created_at", "DESC"]],
+          raw: true,
+        });
+      } else {
+        response = await DataCenter.findAll({
+          where: { is_deleted: false, created_by: current_uid },
+          order: [["created_at", "DESC"]],
+          raw: true,
+        });
+      }
+
       const formattedResponse = response.map((val) => {
         val.type = dataCenterLabelType[val.type];
         return val;

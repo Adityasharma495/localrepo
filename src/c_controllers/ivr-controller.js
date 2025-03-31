@@ -9,13 +9,14 @@ const {
   UserRepository
 } = require("../c_repositories");
 const { IVRSettings } = require("../c_db"); 
-const { SuccessRespnose, ErrorResponse } = require("../utils/common");
+const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../utils/common");
 const { MODULE_LABEL, ACTION_LABEL } = require('../utils/common/constants');
 const { v4: uuidv4 } = require('uuid');
 const { Logger } = require("../config");
 const AppError = require("../utils/errors/app-error");
 const amqp = require("amqplib");
-const sequelize = require('../config/sequelize'); 
+const sequelize = require('../config/sequelize');
+const version = process.env.API_V || '1'; 
 
 const userJourneyRepo = new UserJourneyRepository();
 const flowsRepo = new FlowRepository();
@@ -111,7 +112,12 @@ async function createIVR(req, res) {
     }
 
     SuccessRespnose.message = "Successfully created a new IVR";
-    SuccessRespnose.data = {flowRepoData, flowEdgesData, flowControlData, flowJsonData};
+    SuccessRespnose.data = {
+      flowRepoData: ResponseFormatter.formatResponseIds(flowRepoData, version),
+      flowEdgesData: ResponseFormatter.formatResponseIds(flowEdgesData, version), 
+      flowControlData: ResponseFormatter.formatResponseIds(flowControlData, version), 
+      flowJsonData: ResponseFormatter.formatResponseIds(flowJsonData, version)
+    };
     Logger.info(`IVR created successfully: ${flowId}`);
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
 
@@ -169,7 +175,7 @@ async function getIVRSettings(req, res) {
 async function getAllIVR(req, res) {
   try {
     const data = await flowJsonRepository.getAll({ created_by: req.user.id });
-    SuccessRespnose.data = data;
+    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
     SuccessRespnose.message = "Success";
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -353,12 +359,12 @@ async function getIVRByFlowId(req, res) {
     const scheduleData = await memberScheduleRepo.getAll(ivrId);
 
     SuccessRespnose.data = {
-      nodesData,
-      edgeData,
-      scheduleData,
-      fileData: data.file_data,
-      rePrompt: data.re_prompt,
-      isGatherNode: data.is_gather_node
+      nodesData: ResponseFormatter.formatResponseIds(nodesData, version),
+      edgeData: ResponseFormatter.formatResponseIds(edgeData, version),
+      scheduleData: ResponseFormatter.formatResponseIds(scheduleData, version),
+      fileData: ResponseFormatter.formatResponseIds(data.file_data, version),
+      rePrompt: ResponseFormatter.formatResponseIds(data.re_prompt, version),
+      isGatherNode: ResponseFormatter.formatResponseIds(data.is_gather_node, version)
     };
     
     SuccessRespnose.message = "Success";

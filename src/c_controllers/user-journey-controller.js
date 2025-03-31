@@ -1,14 +1,15 @@
 const { StatusCodes } = require("http-status-codes");
 const { UserJourneyRepository } = require("../c_repositories");
-const {SuccessRespnose , ErrorResponse} = require("../utils/common");
+const {SuccessRespnose , ErrorResponse, ResponseFormatter} = require("../utils/common");
 const { Logger } = require("../config");
 const userJourneyRepo = new UserJourneyRepository();
 
+const version = process.env.API_V || '1';
+
 async function getAll(req, res) {
-  console.log("hit get request for user journey");
   try {
     const data = await userJourneyRepo.getAll(req.user.id, req.user.role);
-    SuccessRespnose.data = data;
+    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
     SuccessRespnose.message = "Success";
 
     Logger.error(

@@ -1,6 +1,6 @@
 const { StatusCodes } = require("http-status-codes");
 const { CreditsRepository, UserRepository } = require("../c_repositories");
-const { SuccessRespnose, ErrorResponse } = require("../utils/common");
+const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../utils/common");
 const {
   USER_CREDITS_ACTION,
   USERS_ROLE,
@@ -8,6 +8,7 @@ const {
 const { Logger } = require("../config");
 const creditRepo = new CreditsRepository();
 const userRepo = new UserRepository();
+const version = process.env.API_V || '1';
 
 async function updateCredit(req, res) {
   const bodyReq = req.body;
@@ -17,7 +18,6 @@ async function updateCredit(req, res) {
     const responseData = {};
     let user;
     let fromUser;
-
     const updatedUser = await userRepo.get(bodyReq.id);
     const parentUser = await userRepo.get(updatedUser?.dataValues?.created_by);
     const fromUpdatedUser = await userRepo.get(bodyReq.fromUser);
@@ -40,7 +40,7 @@ async function updateCredit(req, res) {
             credits: Number(updatedUser?.dataValues?.credits_available),
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.ADD,
-            balance: user?.dataValues?.credits_available,
+            balance: updatedValue,
             action_user: bodyReq.id,
           });
 
@@ -51,7 +51,7 @@ async function updateCredit(req, res) {
             credits: Number(fromUpdatedUser?.dataValues?.credits_available),
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.DEDUCT,
-            balance: user?.dataValues?.credits_available,
+            balance: updatedValue,
             action_user: bodyReq.fromUser,
           });
         } else if (bodyReq.action == USER_CREDITS_ACTION.DEDUCT) {
@@ -76,7 +76,7 @@ async function updateCredit(req, res) {
             credits: Number(updatedUser?.dataValues?.credits_available),
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.DEDUCT,
-            balance: user?.dataValues?.credits_available,
+            balance: updatedValue,
             action_user: bodyReq.id,
           });
 
@@ -87,7 +87,7 @@ async function updateCredit(req, res) {
             credits: Number(fromUpdatedUser?.dataValues?.credits_available),
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.ADD,
-            balance: user?.dataValues?.credits_available,
+            balance: updatedValue,
             action_user: bodyReq.fromUser,
           });
         }
@@ -122,7 +122,7 @@ async function updateCredit(req, res) {
             credits: Number(updatedUser?.dataValues?.credits_available),
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.ADD,
-            balance: user?.dataValues?.credits_available,
+            balance: updatedValue,
             action_user: bodyReq.id,
           });
 
@@ -133,7 +133,7 @@ async function updateCredit(req, res) {
             credits: Number(fromUpdatedUser?.dataValues?.credits_available),
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.DEDUCT,
-            balance: fromUser?.dataValues?.credits_available,
+            balance: updatedValueForFromUser,
             action_user: bodyReq.fromUser,
           });
         } else if (bodyReq.action == USER_CREDITS_ACTION.DEDUCT) {
@@ -164,7 +164,7 @@ async function updateCredit(req, res) {
             credits: Number(updatedUser?.dataValues?.credits_available),
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.DEDUCT,
-            balance: user?.dataValues?.credits_available,
+            balance: updatedValue,
             action_user: bodyReq.fromUser,
           });
 
@@ -175,19 +175,18 @@ async function updateCredit(req, res) {
             credits: Number(fromUpdatedUser?.dataValues?.credits_available),
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.ADD,
-            balance: fromUser?.dataValues?.credits_available,
+            balance: updatedValueForFromUser,
             action_user: bodyReq.id,
           });
         }
       }
 
-      SuccessRespnose.data = responseData;
+      SuccessRespnose.data = ResponseFormatter.formatResponseIds(responseData, version);
       SuccessRespnose.message = "Successfully Updated User's Credit";
 
       Logger.info(
         `Credit -> Updated successfully: ${JSON.stringify(responseData)}`
       );
-
       return res.status(StatusCodes.ACCEPTED).json(SuccessRespnose);
     } else {
       let errorMessage = "";
@@ -205,19 +204,16 @@ async function updateCredit(req, res) {
         .json({ message: errorMessage });
     }
   } catch (error) {
-    console.log("Error updating user credits", error);
     Logger.error(
       `Credit -> unable to create Credit: ${JSON.stringify(
         bodyReq
       )} error: ${JSON.stringify(error)}`
     );
 
-    let statusCode = error.statusCode;
+    let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg = error.message;
     if (error.name == "MongoServerError" || error.code == 11000) {
       statusCode = StatusCodes.BAD_REQUEST;
-      if (error.codeName == "DuplicateKey")
-        errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
     }
 
     ErrorResponse.message = errorMsg;
@@ -235,14 +231,13 @@ async function getAll(req, res) {
     } else {
       data = await creditRepo.getAll();
     }
-    SuccessRespnose.data = data;
+    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
     SuccessRespnose.message = "Success";
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
-  } catch (error) {
+  } catch (error) {    
     ErrorResponse.message = error.message;
     ErrorResponse.error = error;
-    console.log("error getting credits", error);
 
     Logger.error(
       `Credit -> unable to get Credit list, error: ${JSON.stringify(error)}`
@@ -268,10 +263,10 @@ async function get(req, res) {
       throw error;
     }
     SuccessRespnose.message = "Success";
-    SuccessRespnose.data = aclData;
+    SuccessRespnose.data = ResponseFormatter.formatResponseIds(aclData, version);
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
-  } catch (error) {
+  } catch (error) { 
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg = error.message;
 

@@ -4,6 +4,7 @@ const { StatusCodes } = require("http-status-codes");
 const {
   SuccessRespnose,
   ErrorResponse,
+  ResponseFormatter,
 } = require("../utils/common");
 
 const { Logger } = require("../config");
@@ -12,6 +13,7 @@ const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE, PREFIX_VALUE, SUB_LICENCE_ROLE, U
 
 const userRepo = new UserRepository();
 const licenceRepo = new LicenceRepository();
+const version = process.env.API_V || '1';
 
 
 async function signinUser(req, res) {
@@ -35,7 +37,7 @@ async function signinUser(req, res) {
           const userData = await user.generateUserData(true);
   
           SuccessRespnose.message = "Successfully signed in";
-          SuccessRespnose.data = userData;
+          SuccessRespnose.data = ResponseFormatter.formatResponseIds(userData, version);
   
           // const userJourneyfields = {
           //   module_name: MODULE_LABEL.USERS,
@@ -87,7 +89,7 @@ async function signinUser(req, res) {
       );
   
       SuccessRespnose.message = "Success";
-      SuccessRespnose.data = response;
+      SuccessRespnose.data = ResponseFormatter.formatResponseIds(response, version);
   
       return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {
@@ -156,7 +158,7 @@ async function signinUser(req, res) {
       }
   
       SuccessRespnose.message = "Success";
-      SuccessRespnose.data = userData;
+      SuccessRespnose.data = ResponseFormatter.formatResponseIds(userData, version);
   
       return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {
@@ -226,7 +228,7 @@ async function signinUser(req, res) {
       await userJourneyRepo.create(userJourneyfields);
       
       SuccessRespnose.message = "Deleted successfully!";
-      SuccessRespnose.data = response;
+      SuccessRespnose.data = ResponseFormatter.formatResponseIds(response, version);
   
       Logger.info(`User -> ${userIds} deleted successfully`);
   
@@ -276,7 +278,7 @@ async function signinUser(req, res) {
         await userRepo.update(uid, { status: user.status });
     
         SuccessRespnose.message = "User Status Updated Successfully!";
-        SuccessRespnose.data = responseData;
+        SuccessRespnose.data = ResponseFormatter.formatResponseIds(responseData, version);
     
         Logger.info(`User Status-> ${uid} updated successfully`);
         return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -335,7 +337,7 @@ async function signinUser(req, res) {
     const userData = await user.generateUserData(true);
   
     SuccessRespnose.message = "Successfully signed in";
-    SuccessRespnose.data = userData;
+    SuccessRespnose.data = ResponseFormatter.formatResponseIds(userData, version);
   
     Logger.info(`User -> ${JSON.stringify(userData)} login successfully`);
   
@@ -453,7 +455,7 @@ async function signinUser(req, res) {
   
           return res.status(StatusCodes.CREATED).json({
               message: "User Created successfully!",
-              data: responseData
+              data: ResponseFormatter.formatResponseIds(responseData, version)
           });
       } catch (error) {
           console.error(`Error during user signup: ${error}`);

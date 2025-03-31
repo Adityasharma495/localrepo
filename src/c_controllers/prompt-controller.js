@@ -1,6 +1,6 @@
 const { exec } = require('child_process');
 const { StatusCodes } = require("http-status-codes");
-const { ErrorResponse, SuccessRespnose } = require("../utils/common");
+const { ErrorResponse, SuccessRespnose, ResponseFormatter } = require("../utils/common");
 const { MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, STORAGE_PATH, SERVER } = require('../utils/common/constants');
 const { Logger } = require("../config");
 const fs = require("fs");
@@ -10,6 +10,7 @@ const {UserJourneyRepository} = require('../c_repositories');
 
 const promptRepo = new PromptRepository();
 const userJourneyRepo = new UserJourneyRepository();
+const version = process.env.API_V || '1';
 
 async function getPromptDetails(req, res) {
     try {
@@ -22,7 +23,7 @@ async function getPromptDetails(req, res) {
         const results = await promptRepo.get(conditions);
 
         if (results.length > 0) {
-            SuccessRespnose.data = results;
+            SuccessRespnose.data = ResponseFormatter.formatResponseIds(results, version);
             SuccessRespnose.message = "Prompt fetched successfully";
             return res.status(StatusCodes.OK).json(SuccessRespnose);
         } else {
@@ -92,16 +93,19 @@ async function updatePromptStatus(req, res) {
         const result = await promptRepo.update(promptId, { prompt_status: status });
 
         if (result) {
-            SuccessRespnose.message = "Prompt status updated successfully";
-            return res.status(StatusCodes.OK).json(SuccessRespnose);
+            return res.status(StatusCodes.OK).json({
+                message: "Prompt status updated successfully",
+            });
         } else {
-            ErrorResponse.message = "Prompt not found or update failed";
-            return res.status(StatusCodes.NOT_FOUND).json(ErrorResponse);
+            return res.status(StatusCodes.NOT_FOUND).json({
+                message: "Prompt not found or update failed",
+            });
         }
     } catch (error) {
-        ErrorResponse.error = error;
-        ErrorResponse.message = error.message;
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            message: "Internal server error",
+            error: error.message,
+        });
     }
 }
 

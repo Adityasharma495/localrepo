@@ -76,7 +76,7 @@ class UserRepository extends CrudRepository{
 
 
     async get(id) {
-
+        console.log("id in repoo",id);
         try {
             const response = await this.model.findByPk(id);
             if (!response) {
