@@ -105,7 +105,7 @@ const MODEL = {
     INCOMING_SUMMARY: 'incoming_summary',
     INCOMING_REPORTS: 'incoming_report',
     DOWNLOAD_REPORTS: 'download_report',
-    TELEPHONY_PROFILE: 'telephphony_profile'
+    VOIP_PROFILE: 'voip_profile'
 }
 
 const AUTH_TYPES = {
