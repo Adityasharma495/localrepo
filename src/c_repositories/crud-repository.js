@@ -112,8 +112,17 @@ class CrudRepository {
     }
 
     async findOne(conditions) {
+
+        console.log("FIND ONE CONDITION", conditions);
         try {
-            const response = await this.model.findOne({ is_deleted: false, ...conditions});
+            const response = await this.model.findOne({
+                where: {
+                  is_deleted: false,
+                  ...conditions
+                }
+              });
+
+            console.log("RETURNIH RESPONSE", response);
             return response;
         } catch (error) {
             throw error;

@@ -1,9 +1,10 @@
 const {UserRepository} = require("../c_repositories")
-const {LicenceRepository} = require("../c_repositories")
+const {LicenceRepository, UserJourneyRepository} = require("../c_repositories")
 const { StatusCodes } = require("http-status-codes");
 const {
   SuccessRespnose,
   ErrorResponse,
+  formatResponse,
 } = require("../utils/common");
 
 const { Logger } = require("../config");
@@ -12,6 +13,9 @@ const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE, PREFIX_VALUE, SUB_LICENCE_ROLE, U
 
 const userRepo = new UserRepository();
 const licenceRepo = new LicenceRepository();
+const userJourneyRepo = new UserJourneyRepository();
+
+const version = process.env.API_V || '1';
 
 
 async function signinUser(req, res) {
@@ -22,11 +26,11 @@ async function signinUser(req, res) {
     try {
       //Fetch user via username
       const user = await userRepo.getByUsername(username);
+
       if (user) {
         // if (user.isValidLogin() == false)
         //   throw new AppError("Inactive or deleted user", StatusCodes.FORBIDDEN);
         const isPasswordMatch = await user.comparePassword(bodyReq.password);
-
 
         if (isPasswordMatch) {
           
@@ -73,7 +77,6 @@ async function signinUser(req, res) {
 
   async function getAll(req, res) {
 
- 
     try {
       const userRole = req.query.role;
 
@@ -83,9 +86,11 @@ async function signinUser(req, res) {
         req.user.role,
         userRole
       );
-  
+
       SuccessRespnose.message = "Success";
-      SuccessRespnose.data = response;
+      const responseData = formatResponse.formatResponseIds(response,version)
+
+      SuccessRespnose.data = responseData;
   
       return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {
@@ -140,8 +145,6 @@ async function signinUser(req, res) {
     try {
       const user = await userRepo.get(uid);
       let userData = await user.generateUserData();
-
-      console.log("USER DTA", userData);
       userData.companies = user.companies 
   
       const availLicence = await licenceRepo.findOne({user_id : uid})
@@ -177,14 +180,15 @@ async function signinUser(req, res) {
 
   async function deleteUser(req, res) {
 
-    console.log("CAME TO DELETE USER");
     const userIds = req.body.userIds;
+
     let response
   
     try {
       
       if (req.user.role === USERS_ROLE.SUPER_ADMIN || req.user.role === USERS_ROLE.SUB_SUPERADMIN) {
         //Delete for current users
+
         for (const userId of userIds) {
           const data = await licenceRepo.findOne({ user_id: userId });
           if (data) {
@@ -194,7 +198,10 @@ async function signinUser(req, res) {
   
         // Check if reseller has any child if yes don't delete reseller
         for (const userId of userIds) {
-          const data = await userRepo.findOne({ createdBy: userId });
+
+          const data = await userRepo.findOne({ created_by: userId });
+
+
           if (data) {
             ErrorResponse.message = `Child Present, Reseller Can't Deleted`;
             return res
@@ -207,9 +214,14 @@ async function signinUser(req, res) {
       } else {
         await userRepo.deleteMany(userIds, req.user);
         for (const userId of userIds) {
+
+
           const loggedInData = await userRepo.getForLicence(userId);
+
           const availableLicence = loggedInData.sub_user_licence_id.available_licence;
+
           const data = await userRepo.findOne({ _id: userId });
+
           let updatedData = { ...availableLicence };
           updatedData[data.role] = (updatedData[data.role] || 0) + 1;
           await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
@@ -325,7 +337,10 @@ async function signinUser(req, res) {
   async function switchUser(req, res) {
     const { id } = req.body;
     const targetUser = await userRepo.get(id);
+
+
     const user = await userRepo.getByUsername(targetUser.username);
+
   
     if (!targetUser) {
       return res.status(404).json({ error: 'User not found' });
@@ -378,16 +393,13 @@ async function signinUser(req, res) {
 
   async function signupUser(req, res) {
       const bodyReq = req.body;
-      console.log("CAME HERE TO SIGNUP USER", bodyReq);
-  
+
       try {
           const responseData = {};
           let user;
           let subUserLicenceId;
 
 
-          console.log("USER ROLE", req.user.role);
-  
           // Assume licenceRepo and other repos are properly imported and available
           // Check if the user has available licenses
           if (req.user.role === USERS_ROLE.RESELLER) {
@@ -463,6 +475,156 @@ async function signinUser(req, res) {
           });
       }
   }
+
+
+  async function updateUser(req, res) {
+
+    const uid = req.params.id;
+    const bodyReq = req.body;
+    // process.exit(0)
+   
+    try {
+      const responseData = {};
+      
+      // only update licence in case if reseller (reseller only update by superadmin or subsuperadmin)
+      if (req.user.role === USERS_ROLE.SUPER_ADMIN || req.user.role === USERS_ROLE.SUB_SUPERADMIN || req.user.role === USERS_ROLE.RESELLER) {
+        const user = await userRepo.update(uid, bodyReq.user);
+
+        const userInstance = await userRepo.get(uid);
+
+        responseData.user = await userInstance.generateUserData();
+
+        if (bodyReq.company) {
+          responseData.company = await companyRepo.update(
+            bodyReq.company.id,
+            bodyReq.company
+          );
+        }
+  
+        if (req.user.role === USERS_ROLE.RESELLER) {
+          const loggedInData = await userRepo.getForLicence(uid)
+          const total_licence = loggedInData.sub_user_licence_id.total_licence
+          const available_licence = loggedInData.sub_user_licence_id.available_licence
+  
+          const used_licence = Object.keys(total_licence).reduce((acc, key) => {
+            acc[key] = total_licence[key] - (available_licence[key] || 0);
+            return acc;
+          }, {});
+  
+          const updated_licence = bodyReq.user.sub_licence
+  
+          // Compare each role and return immediately if an error is found
+          for (const key of Object.keys(used_licence)) {
+            if (used_licence[key] > (updated_licence[key] || 0)) {
+              ErrorResponse.message = `Can't Set ${USER_ROLE_VALUE[key]} Licence Because used licence Are greater.`;
+              return res
+                    .status(StatusCodes.BAD_REQUEST)
+                    .json(ErrorResponse);
+            }
+          }
+  
+          const newAvailLicence = Object.keys(bodyReq.user.sub_licence).reduce((acc, key) => {
+            acc[key] = bodyReq.user.sub_licence[key] - (used_licence[key] || 0);
+            return acc;
+          }, {});
+  
+          await subUserLicenceRepo.update(uid,
+            {
+              available_licence: newAvailLicence,
+              total_licence: bodyReq.user.sub_licence
+          })
+  
+  
+        }
+  
+      } else {
+        const loggedInData = await userRepo.getForLicence(uid)
+
+        const total_licence = loggedInData.sub_user_licence_id.total_licence
+        const available_licence = loggedInData.sub_user_licence_id.available_licence
+  
+        const used_licence = Object.keys(total_licence).reduce((acc, key) => {
+          acc[key] = total_licence[key] - (available_licence[key] || 0);
+          return acc;
+        }, {});
+  
+  
+        const updated_licence = bodyReq.user.sub_licence
+  
+        // Compare each role and return immediately if an error is found
+        for (const key of Object.keys(used_licence)) {
+          if (used_licence[key] > (updated_licence[key] || 0)) {
+            ErrorResponse.message = `Can't Set ${USER_ROLE_VALUE[key]} Licence Because used licence Are greater.`;
+            return res
+                  .status(StatusCodes.BAD_REQUEST)
+                  .json(ErrorResponse);
+          }
+        }
+  
+        const newAvailLicence = Object.keys(bodyReq.user.sub_licence).reduce((acc, key) => {
+          acc[key] = bodyReq.user.sub_licence[key] - (used_licence[key] || 0);
+          return acc;
+        }, {});
+  
+        await subUserLicenceRepo.update(uid,
+          {
+            available_licence: newAvailLicence,
+            total_licence: bodyReq.user.sub_licence
+        })
+  
+  
+        const user = await userRepo.update(uid, bodyReq.user);
+        responseData.user = await user.generateUserData();
+      
+        if (bodyReq.company) {
+          responseData.company = await companyRepo.update(
+            bodyReq.company.id,
+            bodyReq.company
+          );
+        }
+  
+        await subUserLicenceRepo.update(req.user.id, {available_licence: bodyReq.user.parent_licence})
+      }
+  
+      const userJourneyfields = {
+        module_name: MODULE_LABEL.USERS,
+        action: ACTION_LABEL.EDIT,
+        created_by: req?.user?.id
+      }
+
+      const userJourney = await userJourneyRepo.create(userJourneyfields);
+      responseData.userJourney = userJourney
+  
+      SuccessRespnose.message = "Updated successfully!";
+      SuccessRespnose.data = responseData;
+  
+      Logger.info(`User -> ${uid} updated successfully`);
+  
+      return res.status(StatusCodes.OK).json(SuccessRespnose);
+    } catch (error) {
+      let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+      let errorMsg = error.message;
+  
+      ErrorResponse.error = error;
+      if (error.name == "CastError") {
+        statusCode = StatusCodes.BAD_REQUEST;
+        errorMsg = "User not found";
+      } else if (error.name == "MongoServerError") {
+        statusCode = StatusCodes.BAD_REQUEST;
+        if (error.codeName == "DuplicateKey")
+          errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
+      }
+      ErrorResponse.message = errorMsg;
+  
+      Logger.error(
+        `User -> unable to update user: ${uid}, data: ${JSON.stringify(
+          bodyReq
+        )}, error: ${JSON.stringify(error)}`
+      );
+  
+      return res.status(statusCode).json(ErrorResponse);
+    }
+  }
   
   module.exports = {
     get,
@@ -472,6 +634,7 @@ async function signinUser(req, res) {
     deleteUser,
     statusPasswordUpdateUser,
     switchUser,
-    signupUser
+    signupUser,
+    updateUser
 
   }

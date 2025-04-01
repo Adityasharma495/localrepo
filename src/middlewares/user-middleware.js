@@ -4,17 +4,15 @@ const { ErrorResponse, constants, Helpers, Authentication } = require('../utils/
 const AppError = require('../utils/errors/app-error');
 
 function validateSignup(req, res, next){
+
     const bodyReq = req.body;
     const createrRole = req['user'].role
-
-
-    console.log("CREATER ROLE", createrRole);
     const userRole = bodyReq.role;
 
    
     const permission = Authentication.checkPermission(createrRole,userRole);
 
-    console.log("PERMISSIONS", permission);
+
 
     if(!req.is('application/json')){
         ErrorResponse.message = 'Something went wrong while user signup';
@@ -96,8 +94,8 @@ function validateSignup(req, res, next){
                 .status(StatusCodes.UNAUTHORIZED)
                 .json(ErrorResponse)
     }
-
     const ifValidateCompany = Authentication.ifAssociateCompany(bodyReq.role);
+
 
     if(ifValidateCompany){
 
@@ -151,8 +149,6 @@ function validateSignup(req, res, next){
 }
 
 function validateSignin(req, res, next){
-
-    console.log("CAME TO VALIDATE SIGNIN");
     
     const bodyReq = req.body;
 
@@ -309,6 +305,7 @@ function validateUpdateUser(req, res, next){
  * @returns 
  */
 function modifyUserSignupBodyRequest(req, res, next, is_create){
+
     try {
      
         const bodyReq = req.body;
@@ -318,6 +315,7 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
                 name: bodyReq.name.trim(),
                 email: bodyReq.email.trim(),
                 module: bodyReq.module,
+                company:bodyReq.company,
                 acl_settings: bodyReq.acl_settings,
                 // licence: bodyReq?.licence || 0,
                 sub_licence: bodyReq?.sub_licence || {},

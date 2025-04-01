@@ -1,5 +1,6 @@
 const CrudRepository = require('./crud-repository');
 const User = require('../c_db/User');
+const Company = require("../c_db/companies")
 const { constants, Authentication } = require('../utils/common');
 const {USERS_ROLE} = require('../utils/common/constants');
 
@@ -53,9 +54,16 @@ class UserRepository extends CrudRepository{
     
             let data = await User.findAll({
                 where: whereCondition,
-                order: [['created_at', 'DESC']], // Sorting by createdAt descending
-                attributes: { exclude: ['password'] } // Exclude password from results
-            });
+                order: [['created_at', 'DESC']],
+                attributes: { exclude: ['password'] },
+                include: [
+                  {
+                    model: Company,
+                    as: 'companies',
+                    attributes: ['id', 'name', 'phone', 'address', 'pincode'] // select only required fields
+                  }
+                ]
+              });
 
     
             // Convert status codes to corresponding labels
@@ -139,7 +147,10 @@ class UserRepository extends CrudRepository{
             if (loggedUser.role === USERS_ROLE.SUPER_ADMIN || loggedUser.role === USERS_ROLE.SUB_SUPERADMIN) {
                 for (const userId of idArray) {
                     const userData = await this.get(userId);
-                    if (userData.createdBy.toString() !== loggedUser.id.toString()) {
+
+                    console.log("USER ID CREATED BY STRING",userData.created_by.toString());
+                    console.log("LOGGED USER ID CREATED BY STRING",loggedUser.id.toString());
+                    if (userData.created_by.toString() !== loggedUser.id.toString()) {
                         throw new Error("One or more users were not created by the logged-in superadmin, so deletion is not allowed.");
                     }
                 }
@@ -161,7 +172,6 @@ class UserRepository extends CrudRepository{
     }
 
     async getForLicence(id) {
-
         try {
             const response = await this.model.findById(id).populate('sub_user_licence_id').exec();
             if (!response) {

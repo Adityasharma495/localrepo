@@ -95,9 +95,6 @@ function getUserAssociatedCompanyCategory(create_user_role){
 }
 
 function checkPermission(createrRole , userRole){
-
-    console.log("CREATER ROLE",createrRole);
-    console.log("USER ROLE",userRole);
     const permissions = getUserAccessRoles(createrRole,PERMISSION_TYPES.CREATE);
     if(permissions.includes(userRole)) return true;
     return false;

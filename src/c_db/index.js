@@ -1,4 +1,5 @@
 const User = require("./User");
+const Company = require("./companies")
 const Credit = require("./Credits");
 const UserJourney = require("./User-Journey");
 const ServerManagement = require("./server-management");
@@ -25,6 +26,17 @@ Credit.belongsTo(User, { foreignKey: "user_id" });
 Credit.belongsTo(User, { foreignKey: "from_user", as: "fromUser" });
 Credit.belongsTo(User, { foreignKey: "to_user", as: "toUser" });
 Credit.belongsTo(User, { foreignKey: "action_user", as: "actionUser" });
+
+
+
+User.belongsTo(Company, { foreignKey: "company_id", as: "companies" });
+Company.hasMany(User, { foreignKey: "company_id", as: "companyUsers" });
+
+
+
+NumberFile.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+User.hasMany(NumberFile, { foreignKey: 'user_id', as: 'userFiles' });
+
 
 User.hasMany(Credit, { foreignKey: "user_id" });
 User.hasMany(Credit, { foreignKey: "from_user", as: "fromUser" });
@@ -58,5 +70,6 @@ module.exports = {
     FlowControl,
     FlowEdges,
     FlowJson,
-    Flow
+    Flow,
+    Company
 };

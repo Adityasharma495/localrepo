@@ -18,8 +18,6 @@ async function createAgent(req, res) {
   const responseData = {};
 
 
-  console.log("USER ROLE HERE", req.user.role);
-
   try {
     let agent;
     let extensionData;

@@ -1,5 +1,6 @@
 const { StatusCodes } = require('http-status-codes');
 const { SuccessRespnose, ErrorResponse } = require('../utils/common');
+const {formatResponse} = require("../utils/common")
 const { Logger } = require('../config');
 const { State} = require('country-state-city');
 const {
@@ -27,6 +28,7 @@ const { constants } = require("../utils/common");
 const numberStatusValues = constants.NUMBER_STATUS_VALUE;
 const stream = require('stream');
 const csv = require('csv-parser');
+const version = process.env.API_V || '1';
 
 async function create(req, res) {
     const bodyReq = req.body;
@@ -130,33 +132,33 @@ async function update(req, res) {
     }
   }
 
-  async function getAll(req, res) {
-    try {
-      let data;
-      if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
-        data = await didUserMappingRepository.findAll({ where: { allocated_to: req.user.id } });
-      } else {
-        data = await didUserMappingRepository.findAll({ where: { allocated_to: req.user.id } });
-      }
+  // async function getAll(req, res) {
+  //   try {
+  //     let data;
+  //     if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
+  //       data = await didUserMappingRepository.findAll({ where: { allocated_to: req.user.id } });
+  //     } else {
+  //       data = await didUserMappingRepository.findAll({ where: { allocated_to: req.user.id } });
+  //     }
   
-      const uniqueDIDs = [...new Set(data.map(item => item.DID))];
-      data = await numberRepo.findAll({ where: { id: uniqueDIDs } });
+  //     const uniqueDIDs = [...new Set(data.map(item => item.DID))];
+  //     data = await numberRepo.findAll({ where: { id: uniqueDIDs } });
   
-      data = data.map(val => {
-        val.status = numberStatusValues[val.status];
-        return val;
-      }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  //     data = data.map(val => {
+  //       val.status = numberStatusValues[val.status];
+  //       return val;
+  //     }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   
-      SuccessRespnose.data = data;
-      SuccessRespnose.message = 'Success';
+  //     SuccessRespnose.data = data;
+  //     SuccessRespnose.message = 'Success';
   
-      return res.status(StatusCodes.OK).json(SuccessRespnose);
-    } catch (error) {
-      ErrorResponse.message = error.message;
-      ErrorResponse.error = error;
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
-    }
-  }
+  //     return res.status(StatusCodes.OK).json(SuccessRespnose);
+  //   } catch (error) {
+  //     ErrorResponse.message = error.message;
+  //     ErrorResponse.error = error;
+  //     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  //   }
+  // }
 
 async function bulkUpdate(req, res) {
     const file = req.file;
@@ -348,6 +350,8 @@ async function uploadNumbers(req, res) {
 }
 
 async function getAll(req, res) {
+
+  console.log("CAME TO GET ALL USERS HERE");
     try {
         let data;
         if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
@@ -366,7 +370,8 @@ async function getAll(req, res) {
         })
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-        SuccessRespnose.data = data;
+        SuccessRespnose.data = formatResponse.formatResponseIds(data, version);
+
         SuccessRespnose.message = 'Success';
 
         Logger.info(
@@ -449,9 +454,12 @@ async function getDIDNumbers(req, res) {
 async function getAllStatus(req, res) {
     try {
       const data = await numberStatusRepo.getAll();
+
       const filteredData = data.filter(item => item.status_code !== 9 && item.status_code !== 10);
   
-      SuccessRespnose.data = filteredData;
+
+
+      SuccessRespnose.data = formatResponse.formatResponseIds(filteredData, version);
       SuccessRespnose.message = 'Success';
       return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {

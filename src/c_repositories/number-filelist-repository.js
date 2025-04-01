@@ -1,5 +1,6 @@
 const CrudRepository = require("./crud-repository");
 const NumberFile = require("../c_db/numbers-file-list");
+const {User} = require("../c_db")
 const { Op } = require("sequelize");
 
 class NumberFileListRepository extends CrudRepository {
@@ -8,11 +9,13 @@ class NumberFileListRepository extends CrudRepository {
   }
 
   async getAll() {
+
+    console.log("CAME TO GET ALL");
     try {
       let response = await NumberFile.findAll({
         where: { is_deleted: false },
         include: [{
-          model: require("../db/users"),
+          model: User,
           as: "user",
           attributes: ["id", "username"],
         }],

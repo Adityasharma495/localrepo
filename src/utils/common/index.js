@@ -3,5 +3,6 @@ module.exports = {
     SuccessRespnose: require('./success-response'),
     ErrorResponse: require('./error-response'),
     Authentication: require('./authentication'),
-    Helpers: require('./helpers')
+    Helpers: require('./helpers'),
+    formatResponse: require("./responseFormatter")
 }

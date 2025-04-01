@@ -51,11 +51,14 @@ const User = sequelize.define(
       allowNull: true,
       defaultValue: null
     },
-    // companies: {
-    //   type: DataTypes.JSONB,
-    //   defaultValue: [],
-    //   allowNull: true,
-    // },   
+    company_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'companies',
+        key: 'id'
+      }
+    },
     credits_available: {
       type: DataTypes.INTEGER,
       defaultValue: 0,

@@ -14,6 +14,7 @@ const CodecRoutes = require("./codec-routes")
 const prompt = require('./prompts-routes');
 const numbers = require('./numbers-routes');
 const ivrRoutes = require("./ivr-routes");
+const NumberFileRoutes = require("./number-file-routes")
 
 
 router.use('/users', userRoutes);
@@ -29,5 +30,7 @@ router.use('/codecs', CodecRoutes);
 router.use('/prompt', prompt);
 router.use('/numbers', numbers);
 router.use('/ivr', ivrRoutes);
+router.use('/number-filelist', NumberFileRoutes);
+
 
 module.exports = router;

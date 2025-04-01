@@ -13,5 +13,6 @@ module.exports = {
     PromptController:require("./prompt-controller"),
     NumbersController:require("./numbers-controller"),
     TrunkController: require("./trunk-controller"),
-    IVRController: require("./ivr-controller")
+    IVRController: require("./ivr-controller"),
+    NumberFileListController:require("./number-fileList-controller")
 }
