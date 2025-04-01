@@ -3,8 +3,7 @@ const { constants } = require('../utils/common');
 const USER_MODEL_NAME = constants.MODEL.USERS;
 const { MODEL } = require('../utils/common/constants')
 
-const telephonyProfileSchema = new mongoose.Schema({
-  profile:[ 
+const voipProfileSchema = new mongoose.Schema(
     {
       id: {
         type: mongoose.Schema.Types.ObjectId,
@@ -13,24 +12,36 @@ const telephonyProfileSchema = new mongoose.Schema({
       type: {
         type: String,
         required: true,
-        enum: ["SIP", "WEBRTC", "PSTN"],
+        enum: ["SIP", "WEBRTC"],
         default: "SIP"
       },
-      number: {
-          country_code: {
+      settings: {
+
+          host: {
+            type: String,
+            required: true
+          },
+          websocket_url: {
             type: String,
             default: null
           },
-          number: {
-            type: String,
-            required: true
-          }
+          port: {
+            type: Number,
+            default: null
+          },
+          stun_servers: {
+            type: Array,
+            default: null
+          },
+          turn_servers: {
+            type: Array,
+            default: null
+          },
+
+
+        required: true
       },
-      active_profile: {
-        type: Boolean,
-        default: true
-      }
-    }],
+    
   created_by: { 
     type: mongoose.Schema.Types.ObjectId,
     ref: USER_MODEL_NAME,
@@ -43,6 +54,6 @@ const telephonyProfileSchema = new mongoose.Schema({
   
 }, { versionKey: false, });
 
-const TelephonyProfile = mongoose.model(MODEL.TELEPHONY_PROFILE, telephonyProfileSchema, MODEL.TELEPHONY_PROFILE);
+const VoipProfile = mongoose.model(MODEL.VOIP_PROFILE, voipProfileSchema, MODEL.VOIP_PROFILE);
 
-module.exports = TelephonyProfile;
+module.exports = VoipProfile;
