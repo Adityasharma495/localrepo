@@ -15,7 +15,6 @@ const telephonyProfileSchema = new mongoose.Schema({
         required: true
       },
       number: {
-        type: {
           country_code: {
             type: String,
             default: null
@@ -24,8 +23,6 @@ const telephonyProfileSchema = new mongoose.Schema({
             type: String,
             required: true
           }
-        },
-        required: true
       },
       active_profile: {
         type: Boolean,
