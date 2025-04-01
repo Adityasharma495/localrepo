@@ -4,5 +4,6 @@ module.exports = {
     ErrorResponse: require('./error-response'),
     Authentication: require('./authentication'),
     Helpers: require('./helpers'),
-    formatResponse: require("./responseFormatter")
+    formatResponse: require("./responseFormatter"),
+    ResponseFormatter: require('./responseFormatter')
 }

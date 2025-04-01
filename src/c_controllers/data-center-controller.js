@@ -3,7 +3,7 @@ const {
   DataCenterRepository,
   UserJourneyRepository,
 } = require("../c_repositories");
-const { SuccessRespnose, ErrorResponse } = require("../utils/common");
+const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../utils/common");
 const AppError = require("../utils/errors/app-error");
 const { MODULE_LABEL, ACTION_LABEL } = require("../utils/common/constants");
 
@@ -11,6 +11,7 @@ const { Logger } = require("../config");
 
 const dataCenterRepo = new DataCenterRepository();
 const userJourneyRepo = new UserJourneyRepository();
+const version = process.env.API_V || '1';
 
 async function createDataCenter(req, res) {
   const bodyReq = req.body;
@@ -42,7 +43,7 @@ async function createDataCenter(req, res) {
 
     const dataCenterPayload = {
       ...bodyReq.data_center,
-      overseas_details: bodyReq.overseas_details,
+      overseas_details: bodyReq?.data_center?.overseas_details,
       created_by: req.user.id
     };
 
@@ -100,8 +101,8 @@ async function createDataCenter(req, res) {
 
 async function getAll(req, res) {
   try {
-    const data = await dataCenterRepo.getAll(req.user.id);
-    SuccessRespnose.data = data;
+    const data = await dataCenterRepo.getAll(req.user.role, req.user.id);
+    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
     SuccessRespnose.message = "Success";
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -133,7 +134,7 @@ async function getById(req, res) {
       throw error;
     }
     SuccessRespnose.message = "Success";
-    SuccessRespnose.data = dataCentreData;
+    SuccessRespnose.data = ResponseFormatter.formatResponseIds(dataCentreData, version);
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -209,7 +210,7 @@ async function updateDataCenter(req, res) {
     await userJourneyRepo.create(userJourneyfields);
 
     SuccessRespnose.message = "Updated successfully!";
-    SuccessRespnose.data = responseData;
+    SuccessRespnose.data = ResponseFormatter.formatResponseIds(responseData, version);
 
     Logger.info(`Data Center -> ${uid} updated successfully`);
     return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -252,7 +253,7 @@ async function deleteDataCenter(req, res) {
     await userJourneyRepo.create(userJourneyfields);
 
     SuccessRespnose.message = "Deleted successfully!";
-    SuccessRespnose.data = response;
+    SuccessRespnose.data = ResponseFormatter.formatResponseIds(response, version);
 
     Logger.info(`Data Center -> ${idArray} deleted successfully`);
 

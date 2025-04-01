@@ -1,21 +1,19 @@
 function formatResponseIds(data, version = '1') {
-    if (version !== '2') return data;
-  
-    const transform = (item) => {
-      if (item && item.id !== undefined) {
-        const { id, ...rest } = item;
-        return { _id: id, ...rest }; // _id first
-      }
-      return item;
-    };
-  
-    if (Array.isArray(data)) {
-      return data.map(transform);
+  if (version !== '2') return data;
+
+  const transform = (item) => {
+    if (item && item.id !== undefined) {
+      const { id, ...rest } = item;
+      return { _id: id, ...rest }; // _id first
     }
-  
-    return transform(data);
+    return item;
+  };
+
+  if (Array.isArray(data)) {
+    return data.map(transform);
   }
-  
-  module.exports = { formatResponseIds };
-  
-  
+
+  return transform(data);
+}
+
+module.exports = { formatResponseIds };

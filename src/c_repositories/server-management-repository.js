@@ -11,21 +11,37 @@ class ServerManagementRepository extends CrudRepository {
         super(ServerManagement);  
     }
 
-    async getAll() {
+    async getAll(role, current_user_id) {
         try {
-            const response = await ServerManagement.findAll({
-                where: { is_deleted: false },
-                include: [
-                    {
-                        model: DataCenter,  
-                        as: "data_center",
-                        attributes: ["id", "name"], 
-                    },
-                ],
-                order: [["created_at", "DESC"]], 
-                raw: true,  
-            });
-
+            let response;
+            if (role == constants.USERS_ROLE.SUPER_ADMIN) {
+                response = await ServerManagement.findAll({
+                    where: { is_deleted: false },
+                    include: [
+                        {
+                            model: DataCenter,  
+                            as: "data_center",
+                            attributes: ["id", "name"], 
+                        },
+                    ],
+                    order: [["created_at", "DESC"]], 
+                    raw: true,  
+                });
+            } else {
+                response = await ServerManagement.findAll({
+                    where: { is_deleted: false, created_by: current_user_id },
+                    include: [
+                        {
+                            model: DataCenter,  
+                            as: "data_center",
+                            attributes: ["id", "name"], 
+                        },
+                    ],
+                    order: [["created_at", "DESC"]], 
+                    raw: true,  
+                });
+            }
+            
             const formattedResponse = response.map((val) => {
                 val.type = dataCenterLabelType[val.type];
                 return val;
