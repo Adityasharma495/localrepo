@@ -1,5 +1,5 @@
 const CrudRepository = require("./crud-repository");
-const {Agents} = require("../c_db");
+const {Agents} = require("../c_db/");
 const AppError = require("../utils/errors/app-error");
 const { StatusCodes } = require("http-status-codes");
 const { Op } = require("sequelize");
@@ -106,14 +106,13 @@ class AgentRepository extends CrudRepository {
   }
 
   async getAllActiveAgents(userId) {
-
-    console.log("RESPECTIVE USER ID", userId);
     try {
       const agents = await Agents.findAll({
         where: { is_deleted: false, created_by: userId },
         order: [['created_at', 'DESC']],
         // include: [{ model: "users", as: "creator" }],
       });
+
 
       return agents;
     } catch (error) {

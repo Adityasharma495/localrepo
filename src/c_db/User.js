@@ -51,13 +51,20 @@ const User = sequelize.define(
       allowNull: true,
       defaultValue: null
     },
-    company_id: {
+    companies: {
+      type: DataTypes.JSONB,  // Use JSONB for CockroachDB/PostgreSQL
+      allowNull: true,
+      defaultValue: null
+    },
+    acl_settings_id: {
       type: DataTypes.UUID,
       allowNull: true,
       references: {
-        model: 'companies',
-        key: 'id'
-      }
+        model: 'aclsettings',
+        key: 'id',
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'SET NULL',
     },
     credits_available: {
       type: DataTypes.INTEGER,
@@ -146,7 +153,7 @@ User.prototype.generateUserData = async function (tokenGenerate = false) {
     }
 
     // Assume getUserAccessRoles is a method that you define to get role access based on the user's role
-    userData.rolesAccess = Authentication.getUserAccessRoles(this.role);
+    userData.roles_access = Authentication.getUserAccessRoles(this.role);
 
     return userData;
   } catch (error) {

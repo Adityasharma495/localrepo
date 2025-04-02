@@ -14,5 +14,6 @@ module.exports = {
     NumbersController:require("./numbers-controller"),
     TrunkController: require("./trunk-controller"),
     IVRController: require("./ivr-controller"),
-    NumberFileListController:require("./number-fileList-controller")
+    NumberFileListController:require("./number-fileList-controller"),
+    AclSettingsController:require("./acl-setting-controller")
 }

@@ -20,6 +20,7 @@ const FlowControl = require("./flow-control");
 const FlowEdges = require("./flow-edge");
 const FlowJson = require("./flows-json");
 const Flow = require("./flows");
+const AclSettings = require("./acl-settings")
 
 
 Credit.belongsTo(User, { foreignKey: "user_id" });
@@ -29,14 +30,21 @@ Credit.belongsTo(User, { foreignKey: "action_user", as: "actionUser" });
 
 
 
-User.belongsTo(Company, { foreignKey: "company_id", as: "companies" });
-Company.hasMany(User, { foreignKey: "company_id", as: "companyUsers" });
+// User.belongsTo(Company, { foreignKey: "company_id", as: "companies" });
+// Company.hasMany(User, { foreignKey: "company_id", as: "companyUsers" });
 
 
 
 NumberFile.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 User.hasMany(NumberFile, { foreignKey: 'user_id', as: 'userFiles' });
 
+
+AclSettings.belongsTo(User, { foreignKey: "created_by", as: "creator" });
+User.hasMany(AclSettings, { foreignKey: "created_by", as: "aclsettings" });
+
+
+User.belongsTo(AclSettings, { foreignKey: 'acl_settings_id', as: 'acl_settings',});
+AclSettings.hasMany(User, {foreignKey: 'acl_settings_id',as: 'users',});
 
 User.hasMany(Credit, { foreignKey: "user_id" });
 User.hasMany(Credit, { foreignKey: "from_user", as: "fromUser" });
@@ -51,6 +59,7 @@ ServerManagement.belongsTo(DataCenter, { foreignKey: 'data_center_id',  as: 'dat
 
 
 module.exports = { 
+    Agents,
     User,
     Credit,
     UserJourney,
@@ -71,5 +80,6 @@ module.exports = {
     FlowEdges,
     FlowJson,
     Flow,
-    Company
+    Company,
+    AclSettings
 };

@@ -27,6 +27,7 @@ class UserRepository extends CrudRepository{
     }
 
     async getAllByRoles(current_uid, current_user_role, given_user_role) {
+
         // Get user status as {0: 'Inactive', 1: 'Active'}
         const userStatusValues = constants.USERS_STATUS_VALUES_LABEL;
     
@@ -51,7 +52,7 @@ class UserRepository extends CrudRepository{
     
             // Remove password field and convert status to labels
             data = data.map(val => {
-                val['status'] = userStatusValues[val['status']];
+                // val['status'] = userStatusValues[val['status']];
                 val['password'] = undefined;
                 return val;
             });

@@ -54,23 +54,20 @@ class UserRepository extends CrudRepository{
     
             let data = await User.findAll({
                 where: whereCondition,
-                order: [['created_at', 'DESC']],
                 attributes: { exclude: ['password'] },
-                include: [
-                  {
-                    model: Company,
-                    as: 'companies',
-                    attributes: ['id', 'name', 'phone', 'address', 'pincode'] // select only required fields
-                  }
-                ]
+                raw: true,
+                nest: true,
               });
 
-    
-            // Convert status codes to corresponding labels
-            data = data.map(user => ({
-                ...user.get({ plain: true }), // Get plain data object from Sequelize model instance
-                status: userStatusValues[user.status]
-            }));
+              console.log("RETURNING DATA", data);
+              
+
+
+
+            // data = data.map(user => ({
+            //     ...user.get({ plain: true }), 
+            //     status: userStatusValues[user.status]
+            // }));
 
     
             return data;
@@ -84,7 +81,6 @@ class UserRepository extends CrudRepository{
 
 
     async get(id) {
-        console.log("id in repoo",id);
         try {
             const response = await this.model.findByPk(id);
             if (!response) {

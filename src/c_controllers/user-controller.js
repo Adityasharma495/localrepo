@@ -4,11 +4,8 @@ const { StatusCodes } = require("http-status-codes");
 const {
   SuccessRespnose,
   ErrorResponse,
-<<<<<<< HEAD
   formatResponse,
-=======
   ResponseFormatter,
->>>>>>> 378e2711050827499912035f1efac1eff5254915
 } = require("../utils/common");
 
 const { Logger } = require("../config");
@@ -17,11 +14,6 @@ const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE, PREFIX_VALUE, SUB_LICENCE_ROLE, U
 
 const userRepo = new UserRepository();
 const licenceRepo = new LicenceRepository();
-<<<<<<< HEAD
-const userJourneyRepo = new UserJourneyRepository();
-
-=======
->>>>>>> 378e2711050827499912035f1efac1eff5254915
 const version = process.env.API_V || '1';
 
 
@@ -95,13 +87,7 @@ async function signinUser(req, res) {
       );
 
       SuccessRespnose.message = "Success";
-<<<<<<< HEAD
-      const responseData = formatResponse.formatResponseIds(response,version)
-
-      SuccessRespnose.data = responseData;
-=======
       SuccessRespnose.data = ResponseFormatter.formatResponseIds(response, version);
->>>>>>> 378e2711050827499912035f1efac1eff5254915
   
       return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {
@@ -152,12 +138,11 @@ async function signinUser(req, res) {
 
   async function get(req, res) {
     const uid = req.params.id;
-  
     try {
       const user = await userRepo.get(uid);
       let userData = await user.generateUserData();
       userData.companies = user.companies 
-  
+      
       const availLicence = await licenceRepo.findOne({user_id : uid})
       userData.licence = availLicence?.total_licence
   

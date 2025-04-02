@@ -2,8 +2,9 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/sequelize');
 const User = require('./User');
 const { constants } = require('../utils/common');
-
 const COMPANY_TYPES = constants.COMPANY_TYPES;
+
+
 
 const Company = sequelize.define(
   'companies',
@@ -82,17 +83,7 @@ const Company = sequelize.define(
   }
 );
 
-// ✅ Many-to-many: companies <-> users
-Company.belongsToMany(User, {
-  through: 'company_users',
-  as: 'users',
-  foreignKey: 'company_id',
-  otherKey: 'user_id',
-  onDelete: 'CASCADE',
-  onUpdate: 'CASCADE',
-});
-
-// Optional: If you want to easily access created_by user
+// ✅ Keep only this
 Company.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 
 module.exports = Company;

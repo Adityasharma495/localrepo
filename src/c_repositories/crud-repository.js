@@ -112,8 +112,6 @@ class CrudRepository {
     }
 
     async findOne(conditions) {
-
-        console.log("FIND ONE CONDITION", conditions);
         try {
             const response = await this.model.findOne({
                 where: {
@@ -121,8 +119,6 @@ class CrudRepository {
                   ...conditions
                 }
               });
-
-            console.log("RETURNIH RESPONSE", response);
             return response;
         } catch (error) {
             throw error;
