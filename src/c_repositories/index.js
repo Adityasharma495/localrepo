@@ -24,5 +24,6 @@ module.exports = {
   FlowEdgesRepository:require("./flow-edge-repository"),
   FlowJsonRepository:require("./flow-json-repository"),
   FlowRepository:require("./flows-repository"),
-  AclSettingsRepository:require("./acl-settings-repository")
+  AclSettingsRepository:require("./acl-settings-repository"),
+  CompanyRepository:require("./company-repository")
 };

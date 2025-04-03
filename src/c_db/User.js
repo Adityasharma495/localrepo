@@ -52,7 +52,7 @@ const User = sequelize.define(
       defaultValue: null
     },
     companies: {
-      type: DataTypes.JSONB,  // Use JSONB for CockroachDB/PostgreSQL
+      type: DataTypes.JSONB,  
       allowNull: true,
       defaultValue: null
     },

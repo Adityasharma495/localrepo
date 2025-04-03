@@ -1,4 +1,4 @@
-const {UserRepository} = require("../c_repositories")
+const {UserRepository, CompanyRepository} = require("../c_repositories")
 const {LicenceRepository, UserJourneyRepository} = require("../c_repositories")
 const { StatusCodes } = require("http-status-codes");
 const {
@@ -14,6 +14,8 @@ const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE, PREFIX_VALUE, SUB_LICENCE_ROLE, U
 
 const userRepo = new UserRepository();
 const licenceRepo = new LicenceRepository();
+const companyRepo = new CompanyRepository();
+const userJourneyRepo = new UserJourneyRepository();
 const version = process.env.API_V || '1';
 
 
@@ -353,6 +355,7 @@ async function signinUser(req, res) {
   }
 
   async function licenceCreated(bodyReq, loggedUser, userCreated) {
+
     try {
       if (loggedUser.role !== USERS_ROLE.SUPER_ADMIN && loggedUser.role !== USERS_ROLE.SUB_SUPERADMIN) {
         // add licence for new user created
@@ -373,12 +376,14 @@ async function signinUser(req, res) {
       } else {
         const licenceData = {
           user_type: userCreated.role,
-          user_id : userCreated._id,
+          user_id : userCreated.id,
           total_licence: bodyReq.user.licence,
           availeble_licence: bodyReq.user.licence,
           createdBy: loggedUser.id
         }
-        await licenceRepo.create(licenceData)
+
+       await licenceRepo.create(licenceData)
+
       }
     } catch (error) {
       throw error
@@ -437,6 +442,7 @@ async function signinUser(req, res) {
   
           // Create license if a SUPER_ADMIN or SUB_SUPERADMIN creates a reseller
           if ([USERS_ROLE.SUPER_ADMIN, USERS_ROLE.SUB_SUPERADMIN].includes(req.user.role)) {
+  
               await licenceCreated(bodyReq, req.user, user);
           }
   
@@ -444,11 +450,20 @@ async function signinUser(req, res) {
           if (bodyReq.company) {
               const companyData = {
                   ...bodyReq.company,
-                  users: [user._id],
+                  users: [user.id],
                   createdBy: req.user.id
               };
+
+              console.log("COMPANY DATA", companyData);
               const company = await companyRepo.create(companyData);
               responseData.company = company;
+
+              await userRepo.update(user.id, {
+                companies: {
+                    _id: company.id,
+                    name: company.name,
+                }
+            });
           }
   
           responseData.user = await user.generateUserData();

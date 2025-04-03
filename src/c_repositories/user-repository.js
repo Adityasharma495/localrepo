@@ -58,11 +58,7 @@ class UserRepository extends CrudRepository{
                 raw: true,
                 nest: true,
               });
-
-              console.log("RETURNING DATA", data);
               
-
-
 
             // data = data.map(user => ({
             //     ...user.get({ plain: true }), 

@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/sequelize');
 const { USER_MODEL_NAME } = require('../utils/common/constants');
 
-const Licence = sequelize.define('Licence', {
+const Licence = sequelize.define('licences', {
     user_type: {
         type: DataTypes.STRING,
         allowNull: false
@@ -29,7 +29,7 @@ const Licence = sequelize.define('Licence', {
         type: DataTypes.BOOLEAN,
         defaultValue: false
     },
-    createdBy: {
+    created_by: {
         type: DataTypes.UUID,
         references: {
             model: "users", 
@@ -39,9 +39,10 @@ const Licence = sequelize.define('Licence', {
     }
 }, {
     timestamps: true,
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
-});
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+    freezeTableName: true // also recommended
+  });
 
 // Hook for trimming strings
 Licence.beforeValidate((licence, options) => {

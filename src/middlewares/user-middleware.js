@@ -309,9 +309,7 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
     try {
      
         const bodyReq = req.body;
-
-
-        console.log("INCOMING BODY REQUEST", bodyReq);
+        
         let inputData = {
             user: {
                 username: bodyReq.username.trim(),
@@ -326,8 +324,6 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
                 parent_licence: bodyReq?.parent_licence || {}
             }
         };
-
-        console.log("INPUT DATA", inputData);
 
         //In case of user create
         if(is_create){

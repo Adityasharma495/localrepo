@@ -47,7 +47,7 @@ const Company = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
       validate: {
-        isIn: [COMPANY_TYPES],
+        isIn: [Object.values(COMPANY_TYPES)],
       },
     },
     created_by: {

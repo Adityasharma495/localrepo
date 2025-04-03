@@ -8,6 +8,25 @@ class LicenceRepository extends CrudRepository {
     super(Licence);
   }
 
+  async create(data) {
+    try {
+      const licence = await this.model.create({
+        user_type: data.user_type,
+        user_id: data.user_id,
+        total_licence: data.total_licence ?? 0,
+        available_licence: data.availeble_licence ?? 0,
+        createdBy: data.createdBy
+      });
+
+      console.log("AT LAST CREATED LICESNEEE", licence);
+  
+      return licence;
+    } catch (error) {
+      throw error;
+    }
+  }
+  
+
   async getAll(current_uid) {
 
     try {
