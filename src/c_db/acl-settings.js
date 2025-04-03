@@ -16,7 +16,7 @@ const AclSettings = sequelize.define(
       trim: true,
     },
     module_operations: {
-      type: DataTypes.JSONB, // For PostgreSQL; use JSON for MySQL
+      type: DataTypes.JSONB, 
       allowNull: false,
       defaultValue: {},
     },
