@@ -141,7 +141,7 @@ async function createAgent(req, res) {
         profile: [
           {
             id: agent._id,
-            type: 'phone',
+            type: 'PSTN',
             number: {
               country_code: '91',
               number: agent.agent_number
@@ -158,7 +158,7 @@ async function createAgent(req, res) {
       profiles[0].profile.push(
         {
           id: extensionData._id,
-          type: 'sip',
+          type: 'SIP',
           number: {
             country_code: null,
             number: extensionData.extension
@@ -167,7 +167,7 @@ async function createAgent(req, res) {
         },
         {
           id: extensionData._id,
-          type: 'webrtc',
+          type: 'WEBRTC',
           number: {
             country_code: null,
             number: extensionData.extension
