@@ -15,8 +15,8 @@ const VoiceCategorySchema = new mongoose.Schema({
     },
 })
 
-const VoiceCategory = mongoose.model('voice_categories',VoiceCategorySchema)
-const CallStrategy = mongoose.model('call_stratergy',callStratergySchema)
+const VoiceCategory = mongoose.model('voice_categories',VoiceCategorySchema, 'voice_categories')
+const CallStrategy = mongoose.model('call_stratergy',callStratergySchema, 'call_stratergy')
 
 module.exports = {
     CallStrategy,
