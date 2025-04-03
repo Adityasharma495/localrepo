@@ -141,7 +141,6 @@ function validateSignup(req, res, next){
                     .status(StatusCodes.BAD_REQUEST)
                     .json(ErrorResponse);      
         }    
-        console.log("DONE ALL");
     }
 
     next();

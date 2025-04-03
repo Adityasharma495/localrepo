@@ -453,8 +453,6 @@ async function signinUser(req, res) {
                   users: [user.id],
                   createdBy: req.user.id
               };
-
-              console.log("COMPANY DATA", companyData);
               const company = await companyRepo.create(companyData);
               responseData.company = company;
 

@@ -18,7 +18,6 @@ class LicenceRepository extends CrudRepository {
         createdBy: data.createdBy
       });
 
-      console.log("AT LAST CREATED LICESNEEE", licence);
   
       return licence;
     } catch (error) {
