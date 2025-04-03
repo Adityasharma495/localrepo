@@ -17,6 +17,7 @@ const telephonyProfileSchema = new mongoose.Schema({
         default: "SIP"
       },
       number: {
+
           country_code: {
             type: String,
             default: null
@@ -24,7 +25,18 @@ const telephonyProfileSchema = new mongoose.Schema({
           number: {
             type: String,
             required: true
-          }
+          },
+          extension: {
+            type: mongoose.Schema.Types.ObjectId,
+            default: null
+          },
+          voip_profile: {
+            type: mongoose.Schema.Types.ObjectId,
+            default: null
+          },
+
+
+        required: true
       },
       active_profile: {
         type: Boolean,
