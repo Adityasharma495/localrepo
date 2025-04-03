@@ -36,7 +36,7 @@ const startServer = async () => {
     Logger.info('CockroachDB -> Successfully connected');
 
     // Sync Sequelize models
-    // await sequelize.sync({ alter: true }); // Use { force: true } only in development if needed
+    await sequelize.sync({ alter: true }); // Use { force: true } only in development if needed
     console.log('✅ Database synchronized successfully!');
     Logger.info('CockroachDB -> Database synchronized');
 

@@ -18,6 +18,8 @@ const FlowControl = require("./flow-control");
 const FlowEdges = require("./flow-edge");
 const FlowJson = require("./flows-json");
 const Flow = require("./flows");
+const Timezone = require("./timezones");
+const Language = require("./languages");
 
 
 Credit.belongsTo(User, { foreignKey: "user_id" });
@@ -57,5 +59,7 @@ module.exports = {
     FlowControl,
     FlowEdges,
     FlowJson,
-    Flow
+    Flow,
+    Timezone,
+    Language
 };

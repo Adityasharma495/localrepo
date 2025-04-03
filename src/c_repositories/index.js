@@ -21,4 +21,6 @@ module.exports = {
   FlowEdgesRepository:require("./flow-edge-repository"),
   FlowJsonRepository:require("./flow-json-repository"),
   FlowRepository:require("./flows-repository"),
+  TimezoneRepository: require("./timezone-repository"),
+  LanguageRepository: require("./language-repository"),
 };

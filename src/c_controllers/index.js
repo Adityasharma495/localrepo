@@ -8,5 +8,9 @@ module.exports = {
     PromptController:require("./prompt-controller"),
     NumbersController:require("./numbers-controller"),
     TrunkController: require("./trunk-controller"),
-    IVRController: require("./ivr-controller")
+    IVRController: require("./ivr-controller"),
+    CityController: require("./city-controller"),
+    StateController: require("./state-controller"),
+    UtilityController: require("./utility-controller"),
+    LanguageController: require("./language-controller"),
 }

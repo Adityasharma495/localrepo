@@ -11,6 +11,10 @@ const trunkRoutes = require('./trunk-routes');
 const prompt = require('./prompts-routes');
 const numbers = require('./numbers-routes');
 const ivrRoutes = require("./ivr-routes");
+const cityRoute = require("./city-routes");
+const stateRoute = require("./state-route");
+const timezoneRoutes = require('./timezone-routes');
+const languageRoute = require('./language-routes.js')
 
 
 router.use('/users', userRoutes);
@@ -22,5 +26,9 @@ router.use('/trunks', trunkRoutes);
 router.use('/prompt', prompt);
 router.use('/numbers', numbers);
 router.use('/ivr', ivrRoutes);
+router.use('/city', cityRoute);
+router.use('/states', stateRoute);
+router.use('/timezones', timezoneRoutes);
+router.use('/language', languageRoute);
 
 module.exports = router;
