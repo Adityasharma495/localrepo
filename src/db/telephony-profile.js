@@ -34,9 +34,6 @@ const telephonyProfileSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             default: null
           },
-
-
-        required: true
       },
       active_profile: {
         type: Boolean,
