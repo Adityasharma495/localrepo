@@ -6,7 +6,6 @@ const AppError = require('../utils/errors/app-error');
 function validateAgentCreate(req, res, next) {
 
     const bodyReq = req.body;
-
     if (!req.is('application/json')) {
         ErrorResponse.message = 'Something went wrong while Agent Create';
         ErrorResponse.error = new AppError(['Invalid content type, incoming request must be in application/json format'], StatusCodes.BAD_REQUEST);
@@ -22,7 +21,7 @@ function validateAgentCreate(req, res, next) {
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
     }
-    else if (bodyReq.agent_number == undefined || !bodyReq.agent_number.trim()) {
+    else if (bodyReq.agent_number == undefined || isNaN(bodyReq.agent_number)) {
         ErrorResponse.message = 'Something went wrong while agent Create';
         ErrorResponse.error = new AppError(['agent_number not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
         return res
@@ -102,6 +101,7 @@ function modifyAgentBodyRequest(req, is_create = true) {
             inputData.agent.extension = bodyReq?.extension || []
 
         } 
+
         return inputData;
 
     } catch (error) {

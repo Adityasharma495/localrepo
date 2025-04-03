@@ -15,9 +15,7 @@ class NumberFileListRepository extends CrudRepository {
     } catch (error) {
       throw error;
     }
-
   }
-
 }
 
 module.exports = NumberFileListRepository;

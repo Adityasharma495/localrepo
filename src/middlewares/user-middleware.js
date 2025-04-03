@@ -4,10 +4,15 @@ const { ErrorResponse, constants, Helpers, Authentication } = require('../utils/
 const AppError = require('../utils/errors/app-error');
 
 function validateSignup(req, res, next){
+
     const bodyReq = req.body;
     const createrRole = req['user'].role
     const userRole = bodyReq.role;
+
+   
     const permission = Authentication.checkPermission(createrRole,userRole);
+
+
 
     if(!req.is('application/json')){
         ErrorResponse.message = 'Something went wrong while user signup';
@@ -89,8 +94,8 @@ function validateSignup(req, res, next){
                 .status(StatusCodes.UNAUTHORIZED)
                 .json(ErrorResponse)
     }
-
     const ifValidateCompany = Authentication.ifAssociateCompany(bodyReq.role);
+
 
     if(ifValidateCompany){
 
@@ -136,7 +141,6 @@ function validateSignup(req, res, next){
                     .status(StatusCodes.BAD_REQUEST)
                     .json(ErrorResponse);      
         }    
-
     }
 
     next();
@@ -144,7 +148,7 @@ function validateSignup(req, res, next){
 }
 
 function validateSignin(req, res, next){
-
+    
     const bodyReq = req.body;
 
     if(!req.is('application/json')){
@@ -300,15 +304,18 @@ function validateUpdateUser(req, res, next){
  * @returns 
  */
 function modifyUserSignupBodyRequest(req, res, next, is_create){
+
     try {
      
         const bodyReq = req.body;
+        
         let inputData = {
             user: {
                 username: bodyReq.username.trim(),
                 name: bodyReq.name.trim(),
                 email: bodyReq.email.trim(),
                 module: bodyReq.module,
+                company:bodyReq.company,
                 acl_settings: bodyReq.acl_settings,
                 // licence: bodyReq?.licence || 0,
                 sub_licence: bodyReq?.sub_licence || {},
@@ -420,6 +427,8 @@ function validateDeleteRequest (req, res, next) {
 
 function validateUserStatusRequest (req, res, next) {
     const bodyReq = req.body;
+
+    
 
     if(!req.is('application/json')) {
         ErrorResponse.message = 'Something went wrong while updating user data';

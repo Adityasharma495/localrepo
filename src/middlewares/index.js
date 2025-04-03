@@ -23,5 +23,6 @@ module.exports = {
     PromptsMiddleware: require('./prompts-middleware'),
     CreditMiddleware: require('./credit-middleware'),
     IncomingReportMiddleware: require('./incoming-report-middleware'),
-    DownloadReportMiddleware: require('./download-report-middleware')
+    DownloadReportMiddleware: require('./download-report-middleware'),
+    CompanyMiddleware: require('./company-middleware'),
 }

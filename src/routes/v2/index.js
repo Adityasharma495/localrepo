@@ -1,0 +1,38 @@
+const express = require("express");
+const router = express.Router();
+
+
+const userRoutes = require('./user-routes');
+const creditRoutes = require('./credit-routes');
+const userJourney = require('./user-journey-route');
+const serverManagement = require('./server-management-routes');
+const dataCenter = require('./data-center-routes');
+const trunkRoutes = require('./trunk-routes');
+const agentRoutes = require("./agent-routes")
+const operatorRoutes = require("./operator-routes")
+const CodecRoutes = require("./codec-routes")
+const prompt = require('./prompts-routes');
+const numbers = require('./numbers-routes');
+const ivrRoutes = require("./ivr-routes");
+const NumberFileRoutes = require("./number-file-routes")
+const AclSettingsRoutes = require("./acl-settings-routes")
+
+
+router.use('/users', userRoutes);
+router.use('/credits', creditRoutes);
+router.use('/user-journey', userJourney);
+router.use('/server-management', serverManagement);
+router.use('/data-center', dataCenter);
+router.use('/trunks', trunkRoutes);
+router.use('/agents', agentRoutes);
+router.use('/operators', operatorRoutes);
+router.use('/codecs', CodecRoutes);
+router.use('/prompt', prompt);
+router.use('/numbers', numbers);
+router.use('/ivr', ivrRoutes);
+router.use('/number-filelist', NumberFileRoutes);
+router.use('/acl-settings',AclSettingsRoutes)
+
+
+
+module.exports = router;

@@ -18,7 +18,7 @@ const subUserLicenceRepo = new SubUserLicenceRepository();
 
 async function signupUser(req, res) {
   const bodyReq = req.body;
-
+   
   try {
     const responseData = {};
     let user;
@@ -230,8 +230,10 @@ async function signinUser(req, res) {
 }
 
 async function getAll(req, res) {
+
   try {
     const userRole = req.query.role;
+
     const response = await userRepo.getAllByRoles(
       req.user.id,
       req.user.role,

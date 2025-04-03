@@ -318,6 +318,13 @@ const BACKEND_BASE_URL =
 
 
 
+    const AUTH_TYPE_NUM_TO_STRING = {
+        1: 'REGISTRATION',
+        2: 'IP',
+        '1': 'REGISTRATION',
+        '2': 'IP',
+      };
+
 module.exports = {
     USERS_STATUS,
     USERS_STATUS_VALUES_LABEL,
@@ -363,5 +370,6 @@ module.exports = {
     SUB_LICENCE_ROLE,
     USER_ROLE_VALUE,
     USER_CREDITS_ACTION,
-    BACKEND_BASE_URL
+    BACKEND_BASE_URL,
+    AUTH_TYPE_NUM_TO_STRING
 }

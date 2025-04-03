@@ -11,6 +11,7 @@ const SERVER_MODEL = constants.MODEL.SERVERMANAGEMENT;
 
 
 const TrunksSchema = new mongoose.Schema({
+    
     name: {
         type: String,
         required: true,

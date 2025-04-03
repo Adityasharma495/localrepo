@@ -1,5 +1,5 @@
 const CrudRepository = require("./crud-repository");
-const extensionModel = require("../db/extension");
+const  Extension= require("../c_db/extention");
 const AppError = require("../utils/errors/app-error");
 const { StatusCodes } = require("http-status-codes");
 
@@ -7,7 +7,7 @@ const { StatusCodes } = require("http-status-codes");
 
 class ExtensionRepository extends CrudRepository {
   constructor() {
-    super(extensionModel);
+    super(Extension);
   }
 
   async getAll(current_uid, check) {
@@ -23,7 +23,7 @@ class ExtensionRepository extends CrudRepository {
         conditions.is_allocated = 0;
       }
 
-      let response = await extensionModel.find(conditions).populate('created_by').sort({ created_at: -1 }).lean();
+      let response = await Extension.find(conditions).populate('created_by').sort({ created_at: -1 }).lean();
       return response;
 
     } catch (error) {

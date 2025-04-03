@@ -13,7 +13,6 @@ async function UpdateScheduleTime(req,res,next)
     const bodyReq = req.body;
     const group_id = req.params.id;
 
-
     try {
         const response = await memberScheduleRepo.memberUpdate(group_id,bodyReq)
         const responseGroup = await agentGroupRepo.bulkUpdate(group_id,{member_schedule_id:response._id})
