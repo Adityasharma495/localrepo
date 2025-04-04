@@ -5,6 +5,7 @@ const incomingReportRepo = new IncomingReportRepository();
 const incomingSummaryRepo = new IncomingSummaryRepository();
 const { Logger } = require("../config");
 const mongoose = require('mongoose');
+const moment = require("moment-timezone");
 
 
 const connectMongo = async() => {
@@ -22,6 +23,19 @@ const mongoConnection = async() =>{
     } catch (error) {
                  Logger.error(`Mongodb -> Error while connecting: ${ JSON.stringify(error) }`)
     }
+}
+
+const getDateTimeFormat = (date) =>{
+
+            const startdateIST = moment.tz(date, "Asia/Kolkata"); // Parse as IST
+            const startdateUTC = startdateIST.utc().toDate(); // Convert to UTC Date Object
+
+            const now = new Date(startdateUTC);
+            const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
+            const istDate = new Date(now.getTime() + istOffset);
+
+            return istDate;
+
 }
 
 (async () => {
@@ -44,20 +58,39 @@ const mongoConnection = async() =>{
 
          subscription
          .on('message', async (message, content, ackOrNack) => {
-            Logger.info("subscribed content : " + content);
+            Logger.info("subscribed content : " + JSON.stringify(content));
             const cdrJson = content;//JSON.parse(content);
             let report_data = {};
             let summary_data = {};
+            // const startdateUTC = new Date(cdrJson.timings.START);
+            // const startdateIST = moment(startdateUTC).tz("Asia/Kolkata").format("YYYY-MM-DDTHH:mm:ss.SSSZ");;
+            // const enddateUTC = new Date(cdrJson.timings.END);
+            // const enddateIST = moment(enddateUTC).tz("Asia/Kolkata").format("YYYY-MM-DDTHH:mm:ss.SSSZ");;
+
+            // const startdateIST = moment.tz(cdrJson.timings.START, "Asia/Kolkata"); // Parse as IST
+            // const startdateUTC = startdateIST.utc().toDate(); // Convert to UTC Date Object
+
+            // const enddateIST = moment.tz(cdrJson.timings.END, "Asia/Kolkata"); // Parse as IST
+            // const enddateUTC = enddateIST.utc().toDate();
+
+            // const now = new Date(startdateUTC);
+            // const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
+            // const istDate = new Date(now.getTime() + istOffset);
+
+
+
             try {
               report_data = {
                  user_id : mongoose.Types.ObjectId.isValid(cdrJson.userId) ? cdrJson.userId : null,
                  call_sid : cdrJson.id,
                  caller_number : cdrJson.callerFrom,
                  callee_number : cdrJson.calleeTo,
-                 start_time : cdrJson.timings.START,
-                 end_time : cdrJson.timings.END,
+                 start_time : getDateTimeFormat(cdrJson.timings.START),
+                 end_time : getDateTimeFormat(cdrJson.timings.END),
                  dtmf : cdrJson.dtmf
             }
+
+            Logger.info("Report Date : "+JSON.stringify(report_data));
   
             const report = await incomingReportRepo.create(report_data);
             Logger.info(`Incoming Report -> added successfully: ${JSON.stringify(report)}`);
@@ -73,7 +106,7 @@ const mongoConnection = async() =>{
            try{
               
               const did = cdrJson.callerFrom;
-              const startDate = cdrJson.timings.START;
+              const startDate = getDateTimeFormat(cdrJson.timings.START);
               const userId = cdrJson.userId;
               const connectedCalls = (cdrJson.billingDuration > 0 ? 1 : 0);
 
