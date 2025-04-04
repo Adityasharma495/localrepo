@@ -12,6 +12,8 @@ const USER_MODEL_NAME = constants.MODEL.USERS;
 const COMPANY_MODEL_NAME = constants.MODEL.COMPANIES;
 const ACL_SETTINGS_MODEL = constants.MODEL.ACL_SETTINGS;
 const SUB_USER_LICENCE_MODEL = constants.MODEL.SUB_USER_LICENCE;
+const VOICE_PLAN_MODEL = constants.MODEL.VOICE_PLAN;
+
 
   const validateEmail = function(email) {
     var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
@@ -95,6 +97,11 @@ const SUB_USER_LICENCE_MODEL = constants.MODEL.SUB_USER_LICENCE;
         type: Number,
         default: 0,
       },
+      voice_plan_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: VOICE_PLAN_MODEL,
+        default: null 
+      },
       created_at: {
           type: Date,
           default: Date.now
@@ -170,7 +177,8 @@ const SUB_USER_LICENCE_MODEL = constants.MODEL.SUB_USER_LICENCE;
       const user = await this.model(USER_MODEL_NAME)
       .findById(this._id)
       .populate('acl_settings', '_id acl_name module_operations')
-      .populate('sub_user_licence_id')  // Assuming the module schema has a name field
+      .populate('sub_user_licence_id')
+      .populate('voice_plan_id')
       .exec();
       if (!user) throw new Error('User not found');
       const userData = user.toObject();

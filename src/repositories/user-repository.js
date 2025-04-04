@@ -177,6 +177,20 @@ class UserRepository extends CrudRepository{
         }
         
     }
+
+    async getForVoicePlan(id) {
+
+        try {
+            const response = await this.model.findById(id).populate('voice_plan_id').exec();
+            if (!response) {
+                throw new AppError('Not able to find the resource', StatusCodes.NOT_FOUND);
+            }
+            return response;         
+        } catch (error) {
+            throw error;
+        }
+
+    }
     
 
 }
