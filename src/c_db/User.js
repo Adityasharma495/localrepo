@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { ServerConfig } = require('../config');
 const {Authentication} = require('../utils/common');
+const AclSettings = require("./acl-settings")
 
 const User = sequelize.define(
   'users',
@@ -59,17 +60,14 @@ const User = sequelize.define(
     acl_settings_id: {
       type: DataTypes.UUID,
       allowNull: true,
-      references: {
-        model: 'aclsettings',
-        key: 'id',
-      },
-      onUpdate: 'CASCADE',
-      onDelete: 'SET NULL',
     },
     credits_available: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
-      allowNull: false 
+      allowNull: false,
+      validate: {
+        min: 0
+      }
     }, 
     created_at: {
       type: DataTypes.DATE,
@@ -86,14 +84,6 @@ const User = sequelize.define(
       allowNull: false,
       defaultValue: false,
     },
-    credits_available: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-      allowNull: false,
-      validate: {
-        min: 0
-      }
-    }
   },
   {
     timestamps: true,

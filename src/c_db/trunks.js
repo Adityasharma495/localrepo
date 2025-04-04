@@ -3,6 +3,7 @@ const sequelize = require('../config/sequelize');
 const { constants } = require('../utils/common');
 const AUTH_TYPES = constants.AUTH_TYPES;
 const TRUNKS_STATUS = constants.TRUNKS_STATUS;
+const operator = require("./operator")
 // const TRUNKS_MODEL_NAME = constants.MODEL.TRUNKS;
 // const CODEC_MODEL = constants.MODEL.CODEC;
 // const USER_MODEL_NAME = constants.MODEL.USERS;
@@ -48,7 +49,7 @@ const Trunks = sequelize.define(
     operator_id: {
       type: DataTypes.INTEGER,
       references: {
-        model: 'operators',
+        model: operator,
         key: 'id'
       }
     },
@@ -99,14 +100,14 @@ const Trunks = sequelize.define(
       allowNull: false,
       defaultValue: false
     },
-    // server_id: {
-    //   type: DataTypes.UUID,
-    //   allowNull: false,
-    //   references: {
-    //     model: 'server_managements',
-    //     key: 'id'
-    //   }
-    // },
+    server_id: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+      references: {
+        model: 'server_managements',
+        key: 'id'
+      }
+    },
   },
   {
     timestamps: true,

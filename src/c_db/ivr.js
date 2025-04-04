@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/sequelize");
 const { MODEL } = require('../utils/common/constants');
-
+const IVR_DATA_MODEL= require("./ivr-data")
 const IVR = sequelize.define(MODEL.IVR, {
   id: {
     type: DataTypes.UUID,
@@ -12,7 +12,7 @@ const IVR = sequelize.define(MODEL.IVR, {
     type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: MODEL.IVR_DATA,
+      model: IVR_DATA_MODEL,
       key: 'id'
     }
   },

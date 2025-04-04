@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/sequelize');
 const { USER_MODEL_NAME } = require('../utils/common/constants');
+const User = require('./User'); 
 
 const Licence = sequelize.define('licences', {
     user_type: {
@@ -9,9 +10,9 @@ const Licence = sequelize.define('licences', {
     },
     user_id: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
         references: {
-            model: "users", 
+            model: User, 
             key: 'id'
         }
     },
@@ -32,10 +33,9 @@ const Licence = sequelize.define('licences', {
     created_by: {
         type: DataTypes.UUID,
         references: {
-            model: "users", 
+            model: User, 
             key: 'id'
         },
-        // defaultValue: null   
     }
 }, {
     timestamps: true,

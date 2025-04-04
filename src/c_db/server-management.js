@@ -52,7 +52,7 @@ const ServerManagement = sequelize.define(
     },
     created_by: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
       references: {
           model: MODEL.USERS,
           key: 'id'

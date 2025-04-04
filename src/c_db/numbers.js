@@ -90,6 +90,7 @@ const Numbers = sequelize.define(
     },
     created_by: {
       type: DataTypes.UUID,
+      allowNull:true,
       references: {
         model: USER_MODEL_NAME,
         key: "id",

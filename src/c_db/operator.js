@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/sequelize');
 const { constants } = require('../utils/common');
-
+const User = require("./User")
 const OPERATOR_STATUS = constants.OPERATOR_STATUS;
 
 const Operator = sequelize.define(
@@ -31,10 +31,10 @@ const Operator = sequelize.define(
       },
     },
     created_by: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
       references: {
-        model: 'users_new',
+        model: User,
         key: 'id',
       },
     },

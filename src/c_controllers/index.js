@@ -14,6 +14,8 @@ module.exports = {
     NumbersController:require("./numbers-controller"),
     TrunkController: require("./trunk-controller"),
     IVRController: require("./ivr-controller"),
-    NumberFileListController:require("./number-fileList-controller"),
-    AclSettingsController:require("./acl-setting-controller")
+    CityController: require("./city-controller"),
+    StateController: require("./state-controller"),
+    UtilityController: require("./utility-controller"),
+    LanguageController: require("./language-controller"),
 }

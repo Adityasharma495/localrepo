@@ -71,14 +71,7 @@ const Agents = sequelize.define(
     created_by: {
       type: DataTypes.UUID,
       allowNull: false,
-      references: {
-        model: User,
-        key: 'id',
-      },
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE',
     },
-    
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

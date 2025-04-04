@@ -21,9 +21,11 @@ const FlowEdges = require("./flow-edge");
 const FlowJson = require("./flows-json");
 const Flow = require("./flows");
 const AclSettings = require("./acl-settings")
+const Timezone = require("./timezones");
+const Language = require("./languages");
 
 
-Credit.belongsTo(User, { foreignKey: "user_id" });
+Credit.belongsTo(User, { foreignKey: "user_id",onDelete: 'CASCADE',onUpdate: 'CASCADE', });
 Credit.belongsTo(User, { foreignKey: "from_user", as: "fromUser" });
 Credit.belongsTo(User, { foreignKey: "to_user", as: "toUser" });
 Credit.belongsTo(User, { foreignKey: "action_user", as: "actionUser" });
@@ -43,13 +45,14 @@ AclSettings.belongsTo(User, { foreignKey: "created_by", as: "creator" });
 User.hasMany(AclSettings, { foreignKey: "created_by", as: "aclsettings" });
 
 
-User.belongsTo(AclSettings, { foreignKey: 'acl_settings_id', as: 'acl_settings',});
-AclSettings.hasMany(User, {foreignKey: 'acl_settings_id',as: 'users',});
-
 User.hasMany(Credit, { foreignKey: "user_id" });
 User.hasMany(Credit, { foreignKey: "from_user", as: "fromUser" });
 User.hasMany(Credit, { foreignKey: "to_user", as: "toUser" });
 User.hasMany(Credit, { foreignKey: "action_user", as: "actionUser" });
+
+User.belongsTo(AclSettings, {foreignKey: 'acl_settings_id',as: 'acl_settings'});
+AclSettings.hasMany(User, {foreignKey: 'acl_settings_id',as: 'users'});
+  
 
 UserJourney.belongsTo(User, { foreignKey: "created_by", as: "creator" });
 User.hasMany(UserJourney, { foreignKey: "created_by", as: "creator" });
@@ -81,5 +84,7 @@ module.exports = {
     FlowJson,
     Flow,
     Company,
-    AclSettings
+    AclSettings,
+    Timezone,
+    Language
 };

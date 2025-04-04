@@ -25,5 +25,7 @@ module.exports = {
   FlowJsonRepository:require("./flow-json-repository"),
   FlowRepository:require("./flows-repository"),
   AclSettingsRepository:require("./acl-settings-repository"),
-  CompanyRepository:require("./company-repository")
+  CompanyRepository:require("./company-repository"),
+  TimezoneRepository: require("./timezone-repository"),
+  LanguageRepository: require("./language-repository"),
 };

@@ -14,8 +14,10 @@ const CodecRoutes = require("./codec-routes")
 const prompt = require('./prompts-routes');
 const numbers = require('./numbers-routes');
 const ivrRoutes = require("./ivr-routes");
-const NumberFileRoutes = require("./number-file-routes")
-const AclSettingsRoutes = require("./acl-settings-routes")
+const cityRoute = require("./city-routes");
+const stateRoute = require("./state-route");
+const timezoneRoutes = require('./timezone-routes');
+const languageRoute = require('./language-routes.js')
 
 
 router.use('/users', userRoutes);
@@ -30,9 +32,9 @@ router.use('/codecs', CodecRoutes);
 router.use('/prompt', prompt);
 router.use('/numbers', numbers);
 router.use('/ivr', ivrRoutes);
-router.use('/number-filelist', NumberFileRoutes);
-router.use('/acl-settings',AclSettingsRoutes)
-
-
+router.use('/city', cityRoute);
+router.use('/states', stateRoute);
+router.use('/timezones', timezoneRoutes);
+router.use('/language', languageRoute);
 
 module.exports = router;
