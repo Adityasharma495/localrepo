@@ -8,8 +8,6 @@ const downloadReportRepo = new DownloadReportRepository();
 
 async function createDownloadReport(req, res) {
     const bodyReq = req.body;
-    console.log('bodyReqbodyReqbodyReqbodyReqbodyReq', bodyReq)
-    // process.exit(0);
 
     try {
       const responseData = {};
@@ -17,8 +15,6 @@ async function createDownloadReport(req, res) {
         user_id : bodyReq.user_id,
         did:  bodyReq.did
       })
-
-      console.log('getData', getData)
 
       if (getData) {
         return res.status(StatusCodes.CREATED).json({

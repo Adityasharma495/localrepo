@@ -18,13 +18,14 @@ function validateCreateRequest (req, res, next) {
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
-    } else if (bodyReq.user_id == undefined) {
-        ErrorResponse.message = 'Something went wrong while Updating User Credits.';
-        ErrorResponse.error = new AppError(['user_id not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-        return res
-            .status(StatusCodes.BAD_REQUEST)
-            .json(ErrorResponse);
-    }
+    } 
+    // else if (bodyReq.user_id == undefined) {
+    //     ErrorResponse.message = 'Something went wrong while Updating User Credits.';
+    //     ErrorResponse.error = new AppError(['user_id not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+    //     return res
+    //         .status(StatusCodes.BAD_REQUEST)
+    //         .json(ErrorResponse);
+    // }
     next();
 }
 

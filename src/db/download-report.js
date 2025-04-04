@@ -5,7 +5,7 @@ const USER_MODEL_NAME = constants.MODEL.USERS;
 
 const downloadReportSchema = new mongoose.Schema({
         did: {
-            type: Number,
+            type: String,
             required: true
         },
         user_id: {

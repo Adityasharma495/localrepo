@@ -48,6 +48,23 @@ class IncomingReportRepository extends CrudRepository {
     return response;
   }
 
+  async getByDid(data) {
+
+    try {
+      const response = await this.model.find(data);
+      if (!response) {
+        throw new AppError('Not able to find the Incoming Report', StatusCodes.NOT_FOUND);
+      }
+      return response;
+
+    } catch (error) {
+
+      throw error;
+
+    }
+
+  }
+
 }
 
 module.exports = IncomingReportRepository;
