@@ -9,6 +9,8 @@ const path = require('path');
 const archiver = require('archiver');
 const { parse } = require('json2csv');
 const moment = require('moment');
+const {BACKEND_API_BASE_URL} = require('../utils/common/constants');
+
 
 const connectMongo = async() => {
     try {
@@ -41,7 +43,7 @@ const mongoConnection = async() =>{
                     );
 
                     const BASE_FOLDER = path.join(__dirname, '../../assets/reports', report.did); 
-
+                    let fileName;
                     const incomingReportData = await incomingReportRepo.getByDid({caller_number : report.did})
                     if (incomingReportData.length > 0) {
                         const extractedData = incomingReportData.map(record => ({
@@ -52,6 +54,7 @@ const mongoConnection = async() =>{
 
                         const csvData = parse(extractedData);
                         const timestamp = moment().format('YYYYMMDD_HHmmss');
+                        fileName = `report_${report.did}_${timestamp}.zip`
                         const csvFilePath = path.join(BASE_FOLDER, `report_${report.did}_${timestamp}.csv`);
                         const zipFilePath = path.join(BASE_FOLDER, `report_${report.did}_${timestamp}.zip`);
 
@@ -65,6 +68,12 @@ const mongoConnection = async() =>{
 
                         fs.unlinkSync(csvFilePath);
                     }
+
+                    const file_url = `${BACKEND_API_BASE_URL}/assets/reports/${report.did}/${fileName}`;
+                    await downloadReportRepo.update(
+                        report._id,
+                        {download_link : file_url}
+                    );
 
                 } catch (sqlError) {
                     console.error(`Error updating SQL for report ID ${report.sql_id}:`, sqlError);
