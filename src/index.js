@@ -5,7 +5,6 @@ const path = require('path');
 const { ServerConfig, MongoDB, Logger, connectSequelize } = require('./config');
 const apiRoutes = require('./routes');
 const swaggerRoutes = require('./routes/swagger');
-
 const app = express();
 
 app.use(express.json());

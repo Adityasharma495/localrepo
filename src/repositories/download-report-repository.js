@@ -40,6 +40,11 @@ class DownloadReportRepository extends CrudRepository {
     }
 
   }
+
+  async getAllData(filter = {}) {
+    const response = await this.model.find(filter);
+    return response;
+``}
 }
 
 module.exports = DownloadReportRepository;

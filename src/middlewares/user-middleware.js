@@ -1,5 +1,4 @@
 const { StatusCodes } = require('http-status-codes');
-
 const { ErrorResponse, constants, Helpers, Authentication } = require('../utils/common');
 const AppError = require('../utils/errors/app-error');
 
@@ -70,16 +69,21 @@ function validateSignup(req, res, next){
                 .json(ErrorResponse);
         }
     }
-
-    // if (bodyReq?.licence) {
-    //     if (bodyReq.licence == undefined || !bodyReq.licence.trim()) {
-    //         ErrorResponse.message = 'Something went wrong while while user signup';
-    //         ErrorResponse.error = new AppError(['licence not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-    //         return res
-    //             .status(StatusCodes.BAD_REQUEST)
-    //             .json(ErrorResponse);
-    //     }
-    // }
+    if (
+        req.user.role !== constants.USERS_ROLE.CALLCENTRE_ADMIN &&
+        req.user.role !== constants.USERS_ROLE.CALLCENTRE_AGENT &&
+        req.user.role !== constants.USERS_ROLE.CALLCENTRE_TEAM_LEAD
+    ) {
+        if (bodyReq.voice_plan_id === undefined) {
+            ErrorResponse.message = 'Something went wrong while user signup';
+            ErrorResponse.error = new AppError(
+                ['Voice Plan not found in the incoming request in the correct form'],
+                StatusCodes.BAD_REQUEST
+            );
+            return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+        }
+    }
+    
     
 
     if(!permission){
@@ -313,7 +317,8 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
                 // licence: bodyReq?.licence || 0,
                 sub_licence: bodyReq?.sub_licence || {},
                 flow_type: bodyReq?.flow_type,
-                parent_licence: bodyReq?.parent_licence || {}
+                parent_licence: bodyReq?.parent_licence || {},
+                voice_plan_id :  bodyReq?.voice_plan_id || null
             }
         };
 
