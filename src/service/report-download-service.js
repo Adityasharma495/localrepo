@@ -10,6 +10,7 @@ const archiver = require('archiver');
 const { parse } = require('json2csv');
 const moment = require('moment');
 const {BACKEND_API_BASE_URL} = require('../utils/common/constants');
+const batchLimit = 900000;
 
 
 const connectMongo = async() => {
@@ -22,6 +23,9 @@ const connectMongo = async() => {
 
 const mongoConnection = async() =>{
     try {
+        if (mongoose.connection.readyState === 1) {
+            return;
+        }
         await connectMongo();
         Logger.info(`Mongodb -> Successfully connected`);
     } catch (error) {
@@ -29,11 +33,11 @@ const mongoConnection = async() =>{
     }
 }
 
-(async () => {
+const reports = async () => {
      
     try {
          await mongoConnection();
-         const downloadReportData = await downloadReportRepo.getAllData({status : 0})
+         const downloadReportData = await downloadReportRepo.getAllData({status : 0},{ limit: batchLimit })
          if (downloadReportData.length > 0) {
             for (const report of downloadReportData) {
                 try {
@@ -43,8 +47,16 @@ const mongoConnection = async() =>{
                     );
 
                     const BASE_FOLDER = path.join(__dirname, '../../assets/reports', report.did); 
+                    Logger.info(`Base Folder : ${BASE_FOLDER}`);
+                    if (!fs.existsSync(BASE_FOLDER)) {
+                           fs.mkdirSync(BASE_FOLDER, { recursive: true });
+                    }
                     let fileName;
-                    const incomingReportData = await incomingReportRepo.getByDid({caller_number : report.did})
+                    const rawDid = report.did.replace(/^\+/, ''); // Remove '+' if it exists
+                    const regex = new RegExp(`^\\+?${rawDid}$`);  // Match with or without '+'
+                    Logger.info(`DID Search: ${regex} `);
+                    const incomingReportData = await incomingReportRepo.getByDid({ caller_number: { $regex: regex } })
+                    Logger.info(`Incomming Report Data Count : ${incomingReportData.length} `);
                     if (incomingReportData.length > 0) {
                         const extractedData = incomingReportData.map(record => ({
                             ...record._doc,
@@ -54,10 +66,13 @@ const mongoConnection = async() =>{
 
                         const csvData = parse(extractedData);
                         const timestamp = moment().format('YYYYMMDD_HHmmss');
-                        fileName = `report_${report.did}_${timestamp}.zip`
+                        Logger.info(`Time : ${timestamp} `);
+                        fileName = `report_${report.did}_${timestamp}.zip`;
+                        Logger.info(`File Name : ${fileName} `);
                         const csvFilePath = path.join(BASE_FOLDER, `report_${report.did}_${timestamp}.csv`);
+                        Logger.info(`CSV File Path  : ${csvFilePath} `);
                         const zipFilePath = path.join(BASE_FOLDER, `report_${report.did}_${timestamp}.zip`);
-
+                        Logger.info(`ZIP File Path : ${zipFilePath} `);
                         fs.writeFileSync(csvFilePath, csvData, 'utf8');
                         const output = fs.createWriteStream(zipFilePath);
                         const archive = archiver('zip', { zlib: { level: 9 } });
@@ -67,16 +82,19 @@ const mongoConnection = async() =>{
                         await archive.finalize();
 
                         fs.unlinkSync(csvFilePath);
+
+                        const file_url = `${BACKEND_API_BASE_URL}/assets/reports/${report.did}/${fileName}`;
+                        Logger.info(`File URL : ${file_url} `);
+                        await downloadReportRepo.update(
+                        report._id,
+                        {download_link : file_url , status : 2}
+                        );
                     }
 
-                    const file_url = `${BACKEND_API_BASE_URL}/assets/reports/${report.did}/${fileName}`;
-                    await downloadReportRepo.update(
-                        report._id,
-                        {download_link : file_url}
-                    );
+                    
 
                 } catch (sqlError) {
-                    console.error(`Error updating SQL for report ID ${report.sql_id}:`, sqlError);
+                    console.error(`Error updating Mongo for report ID ${report}:`, sqlError);
                 }
             }
          }
@@ -88,5 +106,8 @@ const mongoConnection = async() =>{
        console.error(`Exception ${err}`);
     }
 
-})();
+    const tout = setTimeout(reports, 1000)
 
+};
+
+const tout = setTimeout(reports, 1000);
