@@ -62,22 +62,6 @@ const getDateTimeFormat = (date) =>{
             const cdrJson = content;//JSON.parse(content);
             let report_data = {};
             let summary_data = {};
-            // const startdateUTC = new Date(cdrJson.timings.START);
-            // const startdateIST = moment(startdateUTC).tz("Asia/Kolkata").format("YYYY-MM-DDTHH:mm:ss.SSSZ");;
-            // const enddateUTC = new Date(cdrJson.timings.END);
-            // const enddateIST = moment(enddateUTC).tz("Asia/Kolkata").format("YYYY-MM-DDTHH:mm:ss.SSSZ");;
-
-            // const startdateIST = moment.tz(cdrJson.timings.START, "Asia/Kolkata"); // Parse as IST
-            // const startdateUTC = startdateIST.utc().toDate(); // Convert to UTC Date Object
-
-            // const enddateIST = moment.tz(cdrJson.timings.END, "Asia/Kolkata"); // Parse as IST
-            // const enddateUTC = enddateIST.utc().toDate();
-
-            // const now = new Date(startdateUTC);
-            // const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
-            // const istDate = new Date(now.getTime() + istOffset);
-
-
 
             try {
               report_data = {
