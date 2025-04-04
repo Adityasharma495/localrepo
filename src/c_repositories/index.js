@@ -1,3 +1,4 @@
+const { OperatorsRepository } = require("../repositories");
 
 module.exports = {
   UserRepository: require("./user-repository"),
@@ -23,4 +24,7 @@ module.exports = {
   FlowRepository:require("./flows-repository"),
   TimezoneRepository: require("./timezone-repository"),
   LanguageRepository: require("./language-repository"),
+  CodecsRepository: require("./codec-repository"),
+  ModuleRepository: require("./module-repository"),
+  OperatorsRepository: require("./operator-repository")
 };

@@ -20,6 +20,9 @@ const FlowJson = require("./flows-json");
 const Flow = require("./flows");
 const Timezone = require("./timezones");
 const Language = require("./languages");
+const Codecs = require("./codecs");
+const Module = require("./module");
+const Operator = require("./operator");
 
 
 Credit.belongsTo(User, { foreignKey: "user_id" });
@@ -61,5 +64,8 @@ module.exports = {
     FlowJson,
     Flow,
     Timezone,
-    Language
+    Language,
+    Codecs,
+    Module,
+    Operator
 };
