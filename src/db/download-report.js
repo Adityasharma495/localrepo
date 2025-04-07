@@ -13,6 +13,10 @@ const downloadReportSchema = new mongoose.Schema({
             ref: USER_MODEL_NAME,
             default: null 
         },
+        schedule_date: {
+            type: Date,
+            default: null
+        },
         requested_date: {
             type: Date,
             default: Date.now
