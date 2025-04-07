@@ -33,6 +33,19 @@ const mongoConnection = async() =>{
     }
 }
 
+const getDateTimeFormat = (date) =>{
+
+            const startdateIST = moment.tz(date, "Asia/Kolkata"); // Parse as IST
+            const startdateUTC = startdateIST.utc().toDate(); // Convert to UTC Date Object
+
+            const now = new Date(startdateUTC);
+            const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
+            const istDate = new Date(now.getTime() + istOffset);
+
+            return istDate;
+
+}
+
 const reports = async () => {
      
     try {
@@ -40,6 +53,8 @@ const reports = async () => {
          const downloadReportData = await downloadReportRepo.getAllData({status : 0},{ limit: batchLimit })
          if (downloadReportData.length > 0) {
             for (const report of downloadReportData) {
+                console.log("::::::::::::::: "+JSON.stringify(report));
+                console.log("::::::::::::::: "+report.schedule_date.toISOString());
                 try {
                     await downloadReportRepo.update(
                         report._id,
@@ -55,7 +70,33 @@ const reports = async () => {
                     const rawDid = report.did.replace(/^\+/, ''); // Remove '+' if it exists
                     const regex = new RegExp(`^\\+?${rawDid}$`);  // Match with or without '+'
                     Logger.info(`DID Search: ${regex} `);
-                    const incomingReportData = await incomingReportRepo.getByDid({ caller_number: { $regex: regex } })
+                    Logger.info(`Schedule Date : ${report.schedule_date.toISOString()} `);
+
+                    let startOfDay = new Date(report.schedule_date.toISOString());
+                    Logger.info(`Start Of  Date : ${startOfDay} `);
+                    startOfDay.setHours(0, 0, 0, 0);
+
+                    let endOfDay = new Date(report.schedule_date.toISOString());
+                    endOfDay.setHours(23, 59, 59, 999);
+
+                    startOfDay = getDateTimeFormat(startOfDay);
+                    endOfDay = getDateTimeFormat(endOfDay)
+
+                    Logger.info(`Start Date : ${typeof startOfDay.toISOString()} , End Date : ${endOfDay.toISOString()}`)
+
+                    const query = {
+                                     $and: [
+                                            { callee_number: { $regex: regex }},
+                                            {  schedule_date: {
+                                                              $gte: new Date(startOfDay),
+                                                              $lt: new Date(endOfDay)      
+                                               }
+                                            }
+                                           ]
+                   }
+
+                    // const incomingReportData = await incomingReportRepo.getByDid({ callee_number: { $regex: regex } });
+                    const incomingReportData = await incomingReportRepo.getByDid(query);
                     Logger.info(`Incomming Report Data Count : ${incomingReportData.length} `);
                     if (incomingReportData.length > 0) {
                         const extractedData = incomingReportData.map(record => ({
