@@ -89,7 +89,7 @@ const getDateTimeFormat = (date) =>{
 
            try{
               
-              const did = cdrJson.callerFrom;
+              const did = cdrJson.calleeTo;
               const startDate = getDateTimeFormat(cdrJson.timings.START);
               const userId = cdrJson.userId;
               const connectedCalls = (cdrJson.billingDuration > 0 ? 1 : 0);
@@ -110,14 +110,16 @@ const getDateTimeFormat = (date) =>{
                         parent_id : mongoose.Types.ObjectId.isValid(incoming.parentId) ? incoming.parentId : null,
                         s_parent_id :  mongoose.Types.ObjectId.isValid(incoming.sparentId) ? incoming.sparentId : null,              
                    }
+
+                   console.log("summary : "+summary_data);
                    
                    const summary = await incomingSummaryRepo.updateSummary(summary_data);
-                   Logger.info(`Incoming Report -> updated successfully: ${JSON.stringify(summary)}`);
+                   Logger.info(`Incoming Summary -> updated successfully: ${JSON.stringify(summary)}`);
 
 
               }else{
                    summary_data = {
-                       did : did,
+                       did : cdrJson.calleeTo,
                        user_id : mongoose.Types.ObjectId.isValid(userId) ? incoming.userId : null,
                        schedule_date : startDate,
                        nos_processed : 1,
@@ -127,8 +129,10 @@ const getDateTimeFormat = (date) =>{
                        sms_count : cdrJson.smsCount ?? 0
                    }
 
+                   console.log("summary : "+summary_data);
+
                    const summary = await incomingSummaryRepo.create(summary_data);
-                   Logger.info(`Incoming Report -> added successfully: ${JSON.stringify(summary)}`);
+                   Logger.info(`Incoming Summary -> added successfully: ${JSON.stringify(summary)}`);
 
               }
            }
