@@ -13,8 +13,6 @@ class OperatorsRepository extends CrudRepository {
                 order: [['created_at', 'DESC']],
                 raw: true
             });
-
-            console.log("response", response);
             return response;
         } catch (error) {
             throw error;

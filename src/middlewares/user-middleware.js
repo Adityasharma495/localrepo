@@ -3,11 +3,15 @@ const { StatusCodes } = require('http-status-codes');
 const { ErrorResponse, constants, Helpers, Authentication } = require('../utils/common');
 const AppError = require('../utils/errors/app-error');
 
-function validateSignup(req, res, next){
+function    validateSignup(req, res, next){
 
     const bodyReq = req.body;
     const createrRole = req['user'].role
     const userRole = bodyReq.role;
+
+
+    console.log("BODY REQUEST FOR SIGNUP USER", bodyReq);
+    console.log("USer role", userRole)
 
    
     const permission = Authentication.checkPermission(createrRole,userRole);

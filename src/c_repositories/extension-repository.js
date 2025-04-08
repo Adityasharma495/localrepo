@@ -43,7 +43,6 @@ class ExtensionRepository extends CrudRepository {
         where: { extension: id, is_deleted: false },
       });
 
-      console.log("RESPONSE FOR EXTENSION", response);
 
       if (!response) {
         throw new AppError("Not able to find the Extension", StatusCodes.NOT_FOUND);

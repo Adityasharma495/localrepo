@@ -351,7 +351,6 @@ async function uploadNumbers(req, res) {
 
 async function getAll(req, res) {
 
-  console.log("CAME TO GET ALL USERS HERE");
     try {
         let data;
         if (req.user.role === USERS_ROLE.SUPER_ADMIN) {

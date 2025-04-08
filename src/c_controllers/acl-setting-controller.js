@@ -13,7 +13,6 @@ const aclSettingRepo = new AclSettingsRepository();
 async function getAll(req, res) {
   try {
 
-
     const data = await aclSettingRepo.getAll(req.user.id);
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";

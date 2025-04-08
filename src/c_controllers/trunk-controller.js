@@ -2,6 +2,8 @@ const { StatusCodes } = require("http-status-codes");
 const { TrunkRepository, UserJourneyRepository } = require("../c_repositories");
 const {SuccessRespnose , ErrorResponse , Authentication } = require("../utils/common");
 const {MODULE_LABEL, ACTION_LABEL} = require('../utils/common/constants');
+const Operator = require("../c_db/operator")
+const Codec = require("../c_db/codecs")
 const { Logger } = require("../config");
 const AppError = require("../utils/errors/app-error");
 
@@ -11,55 +13,80 @@ const trunkRepo = new TrunkRepository();
 const userJourneyRepo = new UserJourneyRepository();
 
 async function createTrunk(req, res) {
-    const bodyReq = req.body;
+  const bodyReq = req.body;
 
-  
-    try {
-      const responseData = {};
-      const trunk = await trunkRepo.create(bodyReq.trunk);
-      responseData.trunk = trunk;
+  try {
+    const responseData = {};
+    const trunkPayload = { ...bodyReq.trunk };
+
+    // ✅ Find operator ID from name
+    const operatorName = trunkPayload.operator_id;
+    const codecName = trunkPayload.codec_id
+
+
+    const operatorRecord = await Operator.findOne({ where: { name: operatorName } });
+    const codecRecord = await Codec.findOne({where:{name:codecName}})
 
 
 
-  
-      const userJourneyfields = {
-        module_name: MODULE_LABEL.TRUNKS,
-        action: ACTION_LABEL.ADD,
-        createdBy:  req?.user?.id
-      }
-  
-      // const userJourney = await userJourneyRepo.create(userJourneyfields);
-      // responseData.userJourney = userJourney
-  
-      SuccessRespnose.data = responseData;
-      SuccessRespnose.message = "Successfully created a new trunk";
-  
-      Logger.info(
-        `Trunk -> created successfully: ${JSON.stringify(responseData)}`
-      );
-  
-      return res.status(StatusCodes.CREATED).json(SuccessRespnose);
-    } catch (error) {
-      Logger.error(
-        `Trunk -> unable to create trunk: ${JSON.stringify(
-          bodyReq
-        )} error: ${JSON.stringify(error)}`
-      );
-  
-      let statusCode = error.statusCode;
-      let errorMsg = error.message;
-      if (error.name == "MongoServerError" || error.code == 11000) {
-        statusCode = StatusCodes.BAD_REQUEST;
-        if (error.codeName == "DuplicateKey")
-          errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
-      }
-  
-      ErrorResponse.message = errorMsg;
-      ErrorResponse.error = error;
-  
-      return res.status(statusCode).json(ErrorResponse);
+    if (!operatorRecord) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: `Operator '${operatorName}' not found.`,
+        error: "Invalid operator",
+      });
     }
+    if (!codecRecord) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: `Codec '${codecName}' not found.`,
+        error: "Invalid Codec",
+      });
+    }
+
+    // Replace 'operator' string with 'operator_id'
+    trunkPayload.operator_id = operatorRecord.id;
+    trunkPayload.codec_id = codecRecord.id;
+
+    delete trunkPayload.operator;
+
+    // Create trunk with corrected payload
+    const trunk = await trunkRepo.create(trunkPayload);
+    responseData.trunk = trunk;
+
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.TRUNKS,
+      action: ACTION_LABEL.ADD,
+      createdBy: req?.user?.id
+    };
+
+    const userJourney = await userJourneyRepo.create(userJourneyfields);
+    responseData.userJourney = userJourney;
+
+    SuccessRespnose.data = responseData;
+    SuccessRespnose.message = "Successfully created a new trunk";
+
+    Logger.info(`Trunk -> created successfully: ${JSON.stringify(responseData)}`);
+
+    return res.status(StatusCodes.CREATED).json(SuccessRespnose);
+  } catch (error) {
+    Logger.error(`Trunk -> unable to create trunk: ${JSON.stringify(bodyReq)} error: ${JSON.stringify(error)}`);
+
+    let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    if (error.name === "MongoServerError" || error.code === 11000) {
+      statusCode = StatusCodes.BAD_REQUEST;
+      if (error.codeName === "DuplicateKey") {
+        errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
+      }
+    }
+
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
+
+    return res.status(statusCode).json(ErrorResponse);
   }
+}
+
 
 
   async function getAll(req, res) {
@@ -164,54 +191,85 @@ async function createTrunk(req, res) {
   async function updateTrunk(req, res) {
     const uid = req.params.id;
     const bodyReq = req.body;
+  
     try {
-        const responseData = {};
-        const trunk = await trunkRepo.update(uid, bodyReq.trunk);
-        if (!trunk) {
-            const error = new Error();
-            error.name = 'CastError';
-            throw error;
+      const responseData = {};
+      const trunkPayload = { ...bodyReq.trunk };
+  
+  
+      if (trunkPayload.operator_id && typeof trunkPayload.operator_id === "string") {
+        const operatorRecord = await Operator.findOne({ where: { name: trunkPayload.operator_id } });
+        if (!operatorRecord) {
+          return res.status(StatusCodes.BAD_REQUEST).json({
+            message: `Operator '${trunkPayload.operator_id}' not found.`,
+            error: "Invalid operator",
+          });
         }
-        responseData.trunk = trunk;
+        trunkPayload.operator_id = operatorRecord.id;
+      }
+ 
+      if (trunkPayload.codec_id && typeof trunkPayload.codec_id === "string") {
+        const codecRecord = await Codec.findOne({ where: { name: trunkPayload.codec_id } });
+        if (!codecRecord) {
+          return res.status(StatusCodes.BAD_REQUEST).json({
+            message: `Codec '${trunkPayload.codec_id}' not found.`,
+            error: "Invalid codec",
+          });
+        }
+        trunkPayload.codec_id = codecRecord.id;
+      }
+  
 
-        // const userJourneyfields = {
-        //     module_name: MODULE_LABEL.TRUNKS,
-        //     action: ACTION_LABEL.EDIT,
-        //     createdBy: req?.user?.id
-        // };
-
-        // const userJourney = await userJourneyRepo.create(userJourneyfields);
-        // responseData.userJourney = userJourney;
-
-        SuccessRespnose.message = 'Updated successfully!';
-        SuccessRespnose.data = responseData;
-
-        Logger.info(`Trunk -> ${uid} updated successfully`);
-
-        return res.status(StatusCodes.OK).json(SuccessRespnose);
+      const trunk = await trunkRepo.update(uid, trunkPayload);
+      if (!trunk) {
+        const error = new Error();
+        error.name = "CastError";
+        throw error;
+      }
+  
+      responseData.trunk = trunk;
+  
+      const userJourneyfields = {
+        module_name: MODULE_LABEL.TRUNKS,
+        action: ACTION_LABEL.EDIT,
+        createdBy: req?.user?.id,
+      };
+  
+      const userJourney = await userJourneyRepo.create(userJourneyfields);
+      responseData.userJourney = userJourney;
+  
+      SuccessRespnose.message = "Updated successfully!";
+      SuccessRespnose.data = responseData;
+  
+      Logger.info(`Trunk -> ${uid} updated successfully`);
+  
+      return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {
-        // ✅ Initialize `statusCode` and `errorMsg`
-        let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
-        let errorMsg = error.message || "Something went wrong";
-
-        if (error.name == 'CastError') {
-            statusCode = StatusCodes.BAD_REQUEST;
-            errorMsg = 'Trunk not found';
+      let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+      let errorMsg = error.message || "Something went wrong";
+  
+      if (error.name === "CastError") {
+        statusCode = StatusCodes.BAD_REQUEST;
+        errorMsg = "Trunk not found";
+      } else if (error.name === "MongoServerError") {
+        statusCode = StatusCodes.BAD_REQUEST;
+        if (error.codeName === "DuplicateKey") {
+          errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
         }
-        else if (error.name == 'MongoServerError') {
-            statusCode = StatusCodes.BAD_REQUEST;
-            if (error.codeName == 'DuplicateKey') {
-                errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
-            }
-        }
-
-        ErrorResponse.message = errorMsg;
-
-        Logger.error(`Trunk-> unable to update trunk: ${uid}, data: ${JSON.stringify(bodyReq)}, error: ${JSON.stringify(error)}`);
-
-        return res.status(statusCode).json(ErrorResponse);
+      }
+  
+      ErrorResponse.message = errorMsg;
+  
+      Logger.error(
+        `Trunk-> unable to update trunk: ${uid}, data: ${JSON.stringify(
+          bodyReq
+        )}, error: ${JSON.stringify(error)}`
+      );
+  
+      return res.status(statusCode).json(ErrorResponse);
     }
-}
+  }
+  
 
 
 
