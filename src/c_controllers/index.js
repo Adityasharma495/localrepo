@@ -26,4 +26,5 @@ module.exports = {
     IncomingSummaryController: require("./incoming-summary-controller"),
     HandleFileSaveController: require("./handleFileSave-controller"),
     CallCentreController: require("./call-centre-controller"),
+    CountryCodeController: require("./country-code-controller"),
 }
