@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const archiver = require('archiver');
 const { parse } = require('json2csv');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const {BACKEND_API_BASE_URL} = require('../utils/common/constants');
 const batchLimit = 900000;
 
@@ -87,7 +87,7 @@ const reports = async () => {
                     const query = {
                                      $and: [
                                             { callee_number: { $regex: regex }},
-                                            {  schedule_date: {
+                                            {  start_time: {
                                                               $gte: new Date(startOfDay),
                                                               $lt: new Date(endOfDay)      
                                                }
