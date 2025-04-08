@@ -88,6 +88,31 @@ class AclSettingRepository extends CrudRepository {
     const updated = await this.update(id, { is_deleted: true });
     return updated;
   }
+
+  async deleteMany(idArray) {
+    try {
+      const check = await this.model.findAll({
+        where: { id: idArray, is_deleted: false },
+        attributes: ['id']
+      });
+
+      const checkData = check.map((obj) => obj.id.toString());
+  
+      if (checkData.length !== idArray.length) {
+        const notFoundElement = idArray.filter((x) => !checkData.includes(x));
+        const error = new Error(`Data with id(s) ${notFoundElement.join(', ')} not found.`);
+        throw error;
+      }
+      const response = await this.model.update(
+        { is_deleted: true },
+        { where: { id: idArray } }
+      );
+  
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = AclSettingRepository;
