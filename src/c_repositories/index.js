@@ -28,4 +28,7 @@ module.exports = {
   CompanyRepository:require("./company-repository"),
   TimezoneRepository: require("./timezone-repository"),
   LanguageRepository: require("./language-repository"),
+  CodecsRepository: require("./codec-repository"),
+  ModuleRepository: require("./module-repository"),
+  OperatorsRepository: require("./operator-repository")
 };

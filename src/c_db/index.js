@@ -23,6 +23,9 @@ const Flow = require("./flows");
 const AclSettings = require("./acl-settings")
 const Timezone = require("./timezones");
 const Language = require("./languages");
+const Codecs = require("./codecs");
+const Module = require("./module");
+const Operator = require("./operator");
 
 
 Credit.belongsTo(User, { foreignKey: "user_id",onDelete: 'CASCADE',onUpdate: 'CASCADE', });
@@ -86,5 +89,8 @@ module.exports = {
     Company,
     AclSettings,
     Timezone,
-    Language
+    Language,
+    Codecs,
+    Module,
+    Operator
 };

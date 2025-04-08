@@ -1,23 +1,22 @@
-const CrudRepository = require('./crud-repository');
-const codecModel = require('../c_db/codecs');
+const CrudRepository = require("./crud-repository");
+const { Codecs } = require("../c_db");
 
-class CodecRepository extends CrudRepository{
+class CodecRepository extends CrudRepository {
+  constructor() {
+    super(Codecs);
+  }
 
-    constructor(){
-        super(codecModel);
+  async getAll() {
+    try {
+      const response = await this.model.findAll({
+        order: [["name", "ASC"]],
+        raw: true,
+      });
+      return response;
+    } catch (error) {
+      throw error;
     }
-
-
-      async getAll() {
-        try {
-          const response = await codecModel.findAll({
-            raw: true
-          });
-          return response;
-        } catch (error) {
-          throw error;
-        }
-      }
+  }
 }
 
 module.exports = CodecRepository;

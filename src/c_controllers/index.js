@@ -18,4 +18,7 @@ module.exports = {
     StateController: require("./state-controller"),
     UtilityController: require("./utility-controller"),
     LanguageController: require("./language-controller"),
+    CodecsController: require("./codec-controller"),
+    ModuleController: require("./module-controller"),
+    OperatorController: require("./operator-controller")
 }

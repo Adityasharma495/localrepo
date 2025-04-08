@@ -1,8 +1,7 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/sequelize');
-
-const Codecs = sequelize.define(
-  'codecs',
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/sequelize");
+const Codec = sequelize.define(
+  "Codec",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -19,9 +18,9 @@ const Codecs = sequelize.define(
     },
   },
   {
+    tableName: "codecs",
     timestamps: false,
-    versionKey: false,
   }
 );
 
-module.exports = Codecs;
+module.exports = Codec;

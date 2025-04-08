@@ -1,67 +1,81 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/sequelize');
 const { constants } = require('../utils/common');
-const User = require("./User")
 const OPERATOR_STATUS = constants.OPERATOR_STATUS;
+const OPERATOR_MODEL_NAME = constants.MODEL.OPERATORS;
+const USER_MODEL_NAME = constants.MODEL.USERS;
 
-const Operator = sequelize.define(
-  'operators',
-  {
+
+const Operator = sequelize.define(OPERATOR_MODEL_NAME, {
     id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
+        type: DataTypes.BIGINT,
+        allowNull: true,
+        primaryKey: true,
+        autoIncrement: true,
+      },
     name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-      trim: true,
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+        trim: true
     },
     type: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      trim: true,
+        type: DataTypes.STRING,
+        allowNull: false,
+        trim: true
     },
     status: {
-      type: DataTypes.INTEGER,
-      defaultValue: OPERATOR_STATUS.ACTIVE,
-      validate: {
-        isIn: [[OPERATOR_STATUS.ACTIVE, OPERATOR_STATUS.INACTIVE]],
-      },
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: OPERATOR_STATUS.ACTIVE,
+        validate: {
+            isIn: [Object.values(OPERATOR_STATUS)]
+        }
     },
     created_by: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      references: {
-        model: User,
-        key: 'id',
-      },
-    },
-    is_deleted: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+            model: USER_MODEL_NAME,
+            key: 'id'
+        }
     },
     created_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
+        type: DataTypes.DATE,
+        defaultValue: () => {
+            const now = new Date();
+            const istOffset = 5.5 * 60 * 60 * 1000;
+            return new Date(now.getTime() + istOffset);
+        }
     },
     updated_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
+        type: DataTypes.DATE,
+        defaultValue: () => {
+            const now = new Date();
+            const istOffset = 5.5 * 60 * 60 * 1000;
+            return new Date(now.getTime() + istOffset);
+        }
     },
-  },
-  {
-    timestamps: true,
-    createdAt: 'created_at',
-    updatedAt: 'updated_at',
-    versionKey: false,
-  }
-);
-
-// Optional: Define association (if needed in your app)
-Operator.associate = (models) => {
-  Operator.belongsTo(models.users, { foreignKey: 'created_by', as: 'creator' });
-};
+    is_deleted: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    }
+}, {
+    timestamps: false,
+    hooks: {
+        beforeCreate: (operator) => {
+            const now = new Date();
+            const istOffset = 5.5 * 60 * 60 * 1000;
+            const istDate = new Date(now.getTime() + istOffset);
+            operator.created_at = istDate;
+            operator.updated_at = istDate;
+        },
+        beforeUpdate: (operator) => {
+            const now = new Date();
+            const istOffset = 5.5 * 60 * 60 * 1000;
+            operator.updated_at = new Date(now.getTime() + istOffset);
+        }
+    }
+});
 
 module.exports = Operator;
