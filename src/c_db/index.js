@@ -23,6 +23,12 @@ const Language = require("./languages");
 const Codecs = require("./codecs");
 const Module = require("./module");
 const Operator = require("./operator");
+const DownloadReport = require("./download-report");
+const IncomingSummary = require("./incoming-summary");
+const CallStrategy = require("./call-stratergy");
+const VoiceCategory = require("./voice-category");
+const CallCenter = require("./call-centres");
+const Company = require("./companies");
 
 
 Credit.belongsTo(User, { foreignKey: "user_id" });
@@ -41,6 +47,9 @@ User.hasMany(UserJourney, { foreignKey: "created_by", as: "creator" });
 DataCenter.hasMany(ServerManagement, { foreignKey: 'data_center_id', as: 'server_managements' });
 ServerManagement.belongsTo(DataCenter, { foreignKey: 'data_center_id',  as: 'data_center' });
 
+IncomingSummary.belongsTo(User, { foreignKey: "user_id", as: "user" });
+IncomingSummary.belongsTo(User, { foreignKey: "parent_id", as: "parent" });
+IncomingSummary.belongsTo(User, { foreignKey: "s_parent_id", as: "sParent" });
 
 module.exports = { 
     User,
@@ -67,5 +76,11 @@ module.exports = {
     Language,
     Codecs,
     Module,
-    Operator
+    Operator,
+    DownloadReport,
+    IncomingSummary,
+    CallStrategy,
+    VoiceCategory,
+    CallCenter,
+    Company
 };

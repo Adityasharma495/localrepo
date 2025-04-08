@@ -1,5 +1,3 @@
-const { OperatorsRepository } = require("../repositories");
-
 module.exports = {
   UserRepository: require("./user-repository"),
   CreditsRepository: require("./credits-repository"),
@@ -26,5 +24,9 @@ module.exports = {
   LanguageRepository: require("./language-repository"),
   CodecsRepository: require("./codec-repository"),
   ModuleRepository: require("./module-repository"),
-  OperatorsRepository: require("./operator-repository")
+  OperatorsRepository: require("./operator-repository"),
+  DownloadReportRepository: require("./download-report-repository"),
+  IncomingSummaryRepository: require("./incoming-summary-repository"),
+  HandleFileSaveRepository: require("./handle-FileSave-repositoy"),
+  CallCentreRepository: require("./call-centre-repository"),
 };

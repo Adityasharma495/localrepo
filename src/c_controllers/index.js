@@ -15,5 +15,10 @@ module.exports = {
     LanguageController: require("./language-controller"),
     CodecsController: require("./codec-controller"),
     ModuleController: require("./module-controller"),
-    OperatorController: require("./operator-controller")
+    OperatorController: require("./operator-controller"),
+    ExportListController: require("./export-list-controller"),
+    DownloadReportController: require("./download-report-controller"),
+    IncomingSummaryController: require("./incoming-summary-controller"),
+    HandleFileSaveController: require("./handleFileSave-controller"),
+    CallCentreController: require("./call-centre-controller"),
 }

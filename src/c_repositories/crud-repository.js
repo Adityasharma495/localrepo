@@ -93,7 +93,7 @@ class CrudRepository {
     }
 
     async findAllData() {
-        const response = await this.model.find({ is_deleted: false }).lean();
+        const response = await this.model.findAll({ where: { is_deleted: false } });
         return response;
     }
 

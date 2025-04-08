@@ -8,6 +8,7 @@ const swaggerRoutes = require('./routes/swagger');
 const cors = require('cors');
 const path = require('path');
 
+// const { CallCenter } = require("./c_db");
 
 
 const app = express();
@@ -37,6 +38,7 @@ const startServer = async () => {
 
     // Sync Sequelize models
     // await sequelize.sync({ alter: true, logging: (msg) => Logger.info(`${msg}`) }); // Use { force: true } only in development if needed
+    // await CallCenter.sync({ alter: true, logging: (msg) => Logger.info(`${msg}`) }); // Use { force: true } only in development if needed
     console.log('✅ Database synchronized successfully!');
     Logger.info('CockroachDB -> Database synchronized');
 

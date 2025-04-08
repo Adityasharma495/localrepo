@@ -18,6 +18,10 @@ const languageRoute = require('./language-routes.js');
 const codecRoutes = require('./codec-routes');
 const moduleRoute = require("./module-routes");
 const operatorRoutes = require("./operator-routes");
+const exportLists = require("./export-List-routes");
+const downloadReportRoute = require('./download-report-routes.js');
+const incomingSummaryRoute = require('./incoming-summary-routes.js');
+const callCentreRoutes = require('./call-centre-routes');
 
 
 router.use('/users', userRoutes);
@@ -36,5 +40,9 @@ router.use('/language', languageRoute);
 router.use('/codecs', codecRoutes);
 router.use('/module', moduleRoute);
 router.use('/operators', operatorRoutes);
+router.use("/export", exportLists);
+router.use('/download-report', downloadReportRoute);
+router.use('/incoming-summary', incomingSummaryRoute);
+router.use('/call-centres', callCentreRoutes);
 
 module.exports = router;
