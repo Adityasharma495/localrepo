@@ -14,39 +14,31 @@ class ServerManagementRepository extends CrudRepository {
     async getAll(role, current_user_id) {
         try {
             let response;
-            if (role == constants.USERS_ROLE.SUPER_ADMIN) {
-                response = await ServerManagement.findAll({
-                    where: { is_deleted: false },
-                    include: [
-                        {
-                            model: DataCenter,  
-                            as: "data_center",
-                            attributes: ["id", "name"], 
-                        },
-                    ],
-                    order: [["created_at", "DESC"]], 
-                    raw: true,  
-                });
-            } else {
-                response = await ServerManagement.findAll({
-                    where: { is_deleted: false, created_by: current_user_id },
-                    include: [
-                        {
-                            model: DataCenter,  
-                            as: "data_center",
-                            attributes: ["id", "name"], 
-                        },
-                    ],
-                    order: [["created_at", "DESC"]], 
-                    raw: true,  
-                });
+            const baseOptions = {
+                where: { is_deleted: false },
+                include: [
+                    {
+                        model: DataCenter,
+                        as: "data_center",
+                        attributes: ["id", "name"],
+                    },
+                ],
+                order: [["created_at", "DESC"]],
+            };
+    
+            if (role !== constants.USERS_ROLE.SUPER_ADMIN) {
+                baseOptions.where.created_by = current_user_id;
             }
-            
+    
+            response = await ServerManagement.findAll(baseOptions);
+    
             const formattedResponse = response.map((val) => {
-                val.type = dataCenterLabelType[val.type];
-                return val;
+                return {
+                    ...val.toJSON(),
+                    type: dataCenterLabelType[val.type],
+                };
             });
-
+    
             return formattedResponse;
         } catch (error) {
             throw error;
