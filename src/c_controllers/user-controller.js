@@ -37,16 +37,17 @@ async function signinUser(req, res) {
           
           const userData = await user.generateUserData(true);
   
+
           SuccessRespnose.message = "Successfully signed in";
           SuccessRespnose.data = ResponseFormatter.formatResponseIds(userData, version);
   
-          // const userJourneyfields = {
-          //   module_name: MODULE_LABEL.USERS,
-          //   action: ACTION_LABEL.LOGIN,
-          //   createdBy:  userData._id
-          // }
+          const userJourneyfields = {
+            module_name: MODULE_LABEL.USERS,
+            action: ACTION_LABEL.LOGIN,
+            created_by:  userData._id
+          }
       
-          // await userJourneyRepo.create(userJourneyfields);
+          await userJourneyRepo.create(userJourneyfields);
   
           Logger.info(`User -> ${userData._id} login successfully`);
   
@@ -111,7 +112,7 @@ async function signinUser(req, res) {
       const userJourneyfields = {
         module_name: MODULE_LABEL.USERS,
         action: ACTION_LABEL.LOGOUT,
-        createdBy:  req.user.id
+        created_by:  req.user.id
       }
   
       // await userJourneyRepo.create(userJourneyfields);
@@ -145,7 +146,10 @@ async function signinUser(req, res) {
       let userData = await user.generateUserData();
       userData.companies = user.companies 
       
+
       const availLicence = await licenceRepo.findOne({user_id : uid})
+
+      console.log("AVAIL LICENCE", availLicence);
       userData.licence = availLicence?.total_licence
   
       if (req.user.role === USERS_ROLE.RESELLER) {
@@ -229,7 +233,7 @@ async function signinUser(req, res) {
       const userJourneyfields = {
         module_name: MODULE_LABEL.USERS,
         action: ACTION_LABEL.DELETE,
-        createdBy:  req?.user?.id
+        created_by:  req?.user?.id
       }
   
       await userJourneyRepo.create(userJourneyfields);
@@ -400,9 +404,6 @@ async function signinUser(req, res) {
           let user;
           let subUserLicenceId;
 
-
-          // Assume licenceRepo and other repos are properly imported and available
-          // Check if the user has available licenses
           if (req.user.role === USERS_ROLE.RESELLER) {
               const availLicence = await licenceRepo.findOne({ user_id: req.user.id });
               if (!availLicence || availLicence.available_licence === 0) {
@@ -468,7 +469,7 @@ async function signinUser(req, res) {
           responseData.userJourney = await userJourneyRepo.create({
               module_name: MODULE_LABEL.USERS,
               action: ACTION_LABEL.ADD,
-              createdBy: req.user.id
+              created_by: req.user.id
           });
   
           return res.status(StatusCodes.CREATED).json({

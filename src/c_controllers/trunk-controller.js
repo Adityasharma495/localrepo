@@ -55,8 +55,10 @@ async function createTrunk(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.TRUNKS,
       action: ACTION_LABEL.ADD,
-      createdBy: req?.user?.id
+      created_by: req?.user?.id
     };
+
+    console.log("USER JOURENY", userJourneyfields);
 
     const userJourney = await userJourneyRepo.create(userJourneyfields);
     responseData.userJourney = userJourney;
@@ -232,7 +234,7 @@ async function createTrunk(req, res) {
       const userJourneyfields = {
         module_name: MODULE_LABEL.TRUNKS,
         action: ACTION_LABEL.EDIT,
-        createdBy: req?.user?.id,
+        created_by: req?.user?.id,
       };
   
       const userJourney = await userJourneyRepo.create(userJourneyfields);

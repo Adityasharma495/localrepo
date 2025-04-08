@@ -28,4 +28,6 @@ module.exports = {
     CallCentreController: require("./call-centre-controller"),
     AclSettingsController:require("./acl-setting-controller"),
     CountryCodeController: require("./country-code-controller"),
+    NumberFileListController: require("./number-fileList-controller")
+    
 }
