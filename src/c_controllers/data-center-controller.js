@@ -18,14 +18,8 @@ async function createDataCenter(req, res) {
   try {
     const responseData = {};
 
-    const whereCondition = {
-      where: {
-        name: bodyReq.data_center.name,
-        is_deleted: false,
-      },
-    };
+    const existingDataCenter = await dataCenterRepo.findOne({ name: bodyReq.data_center.name });
 
-    const existingDataCenter = await dataCenterRepo.findOne(whereCondition);
     if (existingDataCenter) {
       Logger.error(
         `Data Center -> unable to create: Duplicate Data Center Name Found`
@@ -167,14 +161,7 @@ async function updateDataCenter(req, res) {
     const newName = bodyReq.data_center.name?.trim();
 
     if (currentName !== newName) {
-      const whereNameCondition = {
-        where: {
-          name: bodyReq.data_center.name,
-          is_deleted: false,
-        }
-      }
-
-      const nameDuplicate = await dataCenterRepo.findOne(whereNameCondition);
+      const nameDuplicate = await dataCenterRepo.findOne({ name: bodyReq.data_center.name });
       if (nameDuplicate) {
         Logger.error(
           `Data Center -> unable to update: Duplicate Data Center Name Found`

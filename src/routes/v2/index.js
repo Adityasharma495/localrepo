@@ -25,6 +25,7 @@ const downloadReportRoute = require('./download-report-routes.js');
 const incomingSummaryRoute = require('./incoming-summary-routes.js');
 const callCentreRoutes = require('./call-centre-routes');
 const acl_settings = require("./acl-settings-routes.js")
+const countryCodeRoutes = require('./country-code-routes');
 
 
 router.use('/users', userRoutes);
@@ -52,5 +53,6 @@ router.use('/incoming-summary', incomingSummaryRoute);
 router.use('/call-centres', callCentreRoutes);
 router.use('/acl-settings', acl_settings);
 
+router.use('/country-codes', countryCodeRoutes);
 
 module.exports = router;
