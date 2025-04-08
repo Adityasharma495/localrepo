@@ -1,8 +1,8 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/sequelize");
 
-const Company = sequelize.define(
-  "Company",
+const CallCentre = sequelize.define(
+  "CallCentre",
   {
     id: {
       type: DataTypes.BIGINT,
@@ -17,41 +17,46 @@ const Company = sequelize.define(
         this.setDataValue("name", value.trim().toLowerCase());
       },
     },
-    phone: {
+    domain: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true,
       set(value) {
-        this.setDataValue("phone", value.trim());
+        this.setDataValue("domain", value.trim().toLowerCase());
       },
     },
-    pincode: {
-      type: DataTypes.STRING,
+    description: {
+      type: DataTypes.TEXT,
       allowNull: false,
-      set(value) {
-        this.setDataValue("pincode", value.trim());
+    },
+    company_id: {
+      type: DataTypes.UUID,
+      references: {
+        model: "companies",
+        key: "id",
       },
     },
-    address: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      set(value) {
-        this.setDataValue("address", value.trim());
+    country_code_id: {
+      type: DataTypes.BIGINT,
+      references: {
+        model: "country_code",
+        key: "id",
       },
     },
-    category: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      validate: {
-        isIn: [["type_reseller", "type_cadmin", "type_sadmin"]],
+    timezone_id: {
+      type: DataTypes.BIGINT,
+      references: {
+        model: "timezones",
+        key: "id",
       },
     },
     created_by: {
       type: DataTypes.UUID,
+      allowNull: true,
       references: {
         model: "users",
         key: "id",
       },
-      allowNull: true,
     },
     created_at: {
       type: DataTypes.DATE,
@@ -75,11 +80,11 @@ const Company = sequelize.define(
     },
   },
   {
-    tableName: "companies",
+    tableName: "call_centres",
     timestamps: true,
     createdAt: "created_at",
     updatedAt: "updated_at",
   }
 );
 
-module.exports = Company;
+module.exports = CallCentre;
