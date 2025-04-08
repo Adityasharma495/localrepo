@@ -227,7 +227,7 @@ async function updateIVR(req, res) {
       const userDetail = await userRepository.get(req.user.id)
       if (userDetail?.flow_type == 1) {
         const currentData = await flowsRepo.getIVRByFlowId(id);
-      
+
         // Check for duplicate flow Name
         if (currentData[0]?.flow_name !== bodyReq.nodesData.flowName) {
           const nameCondition = {
@@ -295,9 +295,8 @@ async function updateIVR(req, res) {
         })
       } else {
         const currentData = await flowJsonRepository.getIVRByFlowId(id);
-
         // Check for duplicate flow Name
-        if (currentData?.flowName !== bodyReq.nodesData.flowName) {
+        if (currentData?.flow_name !== bodyReq.nodesData.flowName) {
           const nameCondition = {
             created_by: req.user.id,
             flow_name: bodyReq.nodesData.flowName
