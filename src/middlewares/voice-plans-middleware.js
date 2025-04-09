@@ -5,6 +5,8 @@ const AppError = require('../utils/errors/app-error');
 function validateVoicePlanRequest(req, res, next) {
     const bodyReq = req.body;
 
+    console.log(bodyReq.plans.length)
+
     if (!req.is('application/json')) {
         ErrorResponse.message = 'Something went wrong while creating Voice Plan';
         ErrorResponse.error = new AppError(['Invalid content type, incoming request must be in application/json format'], StatusCodes.BAD_REQUEST);
@@ -18,15 +20,10 @@ function validateVoicePlanRequest(req, res, next) {
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
-    } else if (bodyReq.pulse_duration == undefined) {
+    } 
+    else if (bodyReq.plans.length < 0) {
         ErrorResponse.message = 'Something went wrong while creating Voice Plan';
-        ErrorResponse.error = new AppError(['pulse_duration not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-        return res
-            .status(StatusCodes.BAD_REQUEST)
-            .json(ErrorResponse);
-    } else if (bodyReq.pulse_price == undefined) {
-        ErrorResponse.message = 'Something went wrong while creating Voice Plan';
-        ErrorResponse.error = new AppError(['pulse_price not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+        ErrorResponse.error = new AppError(['Plans Data not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
@@ -62,8 +59,7 @@ function modifyVoicePlansRequest(req, is_create = true) {
         let inputData = {
             voice_plan: {
                 plan_name : bodyReq.plan_name,
-                pulse_duration: bodyReq.pulse_duration,
-                pulse_price: bodyReq.pulse_price
+                plans: bodyReq.plans,
             }
         }
 

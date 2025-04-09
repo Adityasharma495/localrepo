@@ -4,6 +4,7 @@ const DID_USER_MAPPING_MODEL_NAME = constants.MODEL.DID_USER_MAPPING;
 const NUMBER_MODEL_NAME = constants.MODEL.NUMBERS;
 
 const USER_MODEL_NAME = constants.MODEL.USERS;
+const VOICE_PLAN_MODEL_NAME = constants.MODEL.VOICE_PLAN;
 
 
   const DIDUserMappingSchema = new mongoose.Schema({
@@ -24,6 +25,11 @@ const USER_MODEL_NAME = constants.MODEL.USERS;
       parent_id: {
         type: mongoose.Schema.Types.ObjectId,
         default: null 
+      },
+      voice_plan_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: VOICE_PLAN_MODEL_NAME,
+        default: null
       },
       active: {
         type: Boolean,

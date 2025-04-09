@@ -34,7 +34,12 @@ class DIDUserMappingRepository extends CrudRepository {
         path: 'allocated_to', 
         select: '_id username'
       })
+      .populate({
+        path: 'voice_plan_id', 
+        select: '_id plan_name'
+      })
       .exec();
+
       return totalNumbers
     } catch (error) {
         throw error;

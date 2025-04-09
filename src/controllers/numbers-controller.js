@@ -5,7 +5,7 @@ const { State} = require('country-state-city');
 const { NumbersRepository, DIDUserMappingRepository,
     UserJourneyRepository, NumberFileListRepository,
     NumberStatusRepository, UserRepository ,
-    MemberScheduleRepository, CountryCodeRepository} = require('../repositories');
+    MemberScheduleRepository, CountryCodeRepository, VoicePlansRepository} = require('../repositories');
 const fs = require("fs");
 const {MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, USERS_ROLE, NUMBER_STATUS_LABLE, DID_ALLOCATION_LEVEL} = require('../utils/common/constants');
 const didUserMappingRepository = new DIDUserMappingRepository();
@@ -16,6 +16,8 @@ const numberStatusRepo = new NumberStatusRepository();
 const userRepo = new UserRepository();
 const memberScheduleRepo = new MemberScheduleRepository();
 const countryCodeRepository = new CountryCodeRepository();
+const voicePlanRepo = new VoicePlansRepository();
+
 
 const { constants } = require("../utils/common");
 const numberStatusValues = constants.NUMBER_STATUS_VALUE;
@@ -853,6 +855,7 @@ async function updateStatus(req, res) {
 
 async function DIDUserMapping(req, res) {
     const bodyReq = req.body;
+   
     try {
         if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
             // Iterate over the DID array
@@ -864,21 +867,23 @@ async function DIDUserMapping(req, res) {
                 
                 if (availCheck) {
                     // update did user mapping
-                    await didUserMappingRepository.update(availCheck._id, {active: true});
+                    await didUserMappingRepository.update(availCheck._id, {active: true, voice_plan_id : bodyReq?.voice_plan_id});
 
                     //update numbers
-                    await numberRepo.update(availCheck.DID, {allocated_to : availCheck.allocated_to})
+                    await numberRepo.update(availCheck.DID, {allocated_to : availCheck.allocated_to, voice_plan_id : bodyReq?.voice_plan_id})
                 } else {
                     await didUserMappingRepository.create({
                         DID: did,
                         level: 1,
                         allocated_to: bodyReq.allocated_to,
-                        parent_id: req.user.id
+                        parent_id: req.user.id,
+                        voice_plan_id : bodyReq?.voice_plan_id,
                     });
     
                     // Update numbers for each DID
                     await numberRepo.update(did, {
-                        allocated_to: bodyReq.allocated_to
+                        allocated_to: bodyReq.allocated_to,
+                        voice_plan_id : bodyReq?.voice_plan_id
                     });
                 }
                 
@@ -890,12 +895,40 @@ async function DIDUserMapping(req, res) {
                     allocated_to: bodyReq.allocated_to
                 });
 
+                // find parent voice plan deatil for this particular number
+                const parentVoicePlanDetail = (await numberRepo.findOneWithVoicePlan({_id : did}))?.voice_plan_id
+                const currentPlanDetail =  await voicePlanRepo.findOne({_id : bodyReq?.voice_plan_id})
+                
+                if (parentVoicePlanDetail) {
+                    for (const plan1 of currentPlanDetail.plans) {
+                      const match = parentVoicePlanDetail.plans.find(plan2 => plan2.plan_type === plan1.plan_type);
+                    
+                      if (!match) {
+                        // console.log(`No matching parent plan found for "${plan1.plan_type}".`)
+                        ErrorResponse.message = `No matching parent plan found for "${plan1.plan_type}".`;
+                        return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+                      }
+                    
+                      if (plan1.pulse_price > match.pulse_price) {
+                        // console.log(`Can't allocate pulse price greater than parent pulse price for "${plan1.plan_type}".`)
+                        ErrorResponse.message = `Can't allocate pulse price greater than parent pulse price for "${plan1.plan_type}".`;
+                        return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+                      }
+
+                      if (plan1.pulse_duration < match.pulse_duration) {
+                        // console.log(`Can't allocate pulse duration less than parent duration price for "${plan1.plan_type}".`)
+                        ErrorResponse.message = `Can't allocate pulse duration less than parent duration price for "${plan1.plan_type}".`;
+                        return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+                      }
+                    }
+                  }
+
                 if (availCheck) {
                     // update did user mapping
-                    await didUserMappingRepository.update(availCheck._id, {active: true});
+                    await didUserMappingRepository.update(availCheck._id, {active: true, voice_plan_id : bodyReq?.voice_plan_id});
 
                     //update numbers
-                    await numberRepo.update(availCheck.DID, {allocated_to : availCheck.allocated_to})
+                    await numberRepo.update(availCheck.DID, {allocated_to : availCheck.allocated_to, voice_plan_id : bodyReq?.voice_plan_id})
                 } else {
 
                     const number = await didUserMappingRepository.findOne({
@@ -932,12 +965,14 @@ async function DIDUserMapping(req, res) {
                         DID: did,
                         level: level,
                         allocated_to: bodyReq.allocated_to,
-                        parent_id: number._id
+                        parent_id: number._id,
+                        voice_plan_id : bodyReq?.voice_plan_id
                     });
     
                     // Update numbers for each DID
                     await numberRepo.update(did, {
-                        allocated_to: bodyReq.allocated_to
+                        allocated_to: bodyReq.allocated_to,
+                        voice_plan_id : bodyReq?.voice_plan_id
                     });
                 }
             }
@@ -1008,7 +1043,7 @@ async function getAllocatedNumbers(req, res) {
             return {
               ...item,  
               allocated_name: allocatedTo, 
-              allocated_by: allocatedBy  
+              allocated_by: allocatedBy,  
             };
           });
 
@@ -1073,18 +1108,18 @@ async function removeAllocatedNumbers(req, res) {
 
             if (isSame) {
                 // update did user mapping
-                await didUserMappingRepository.update(allocatedNumbers._id, { active: false });
+                await didUserMappingRepository.update(allocatedNumbers._id, { active: false, voice_plan_id : null });
 
                 // update numbers
-                await numberRepo.update(did, { allocated_to: null });
+                await numberRepo.update(did, { allocated_to: null, voice_plan_id : null  });
             } else {
                 const parentDetail = await didUserMappingRepository.get(allocatedNumbers.parent_id);
                 
                 // update did user mapping
-                await didUserMappingRepository.update(allocatedNumbers._id, { active: false });
+                await didUserMappingRepository.update(allocatedNumbers._id, { active: false, voice_plan_id : null  });
 
                 // update numbers
-                await numberRepo.update(did, { allocated_to: parentDetail.allocated_to });
+                await numberRepo.update(did, { allocated_to: parentDetail.allocated_to, voice_plan_id : parentDetail.voice_plan_id });
             }
         }
 
