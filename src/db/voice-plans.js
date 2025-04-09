@@ -8,20 +8,27 @@ const VoicePlanSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true,
-        unique: true
     },
-    pulse_duration: {
-        type: Number,
-        required: true
-    },
-    price: {
-        type: Number,
-        required: true
-    },
-    pulse_price: {
-        type: Number,
-        required: true
-    },
+    plans:[ 
+        {
+          plan_type: {
+            type: String,
+            required: true,
+            enum: ["INBOUND", "OUTBOUND", "MISSED"],
+          },
+          pulse_price: {
+            type: Number,
+            required: true
+          },
+          pulse_duration: {
+            type: Number,
+            required: true
+          },
+          price: {
+            type: Number,
+            required: true
+          },
+    }],
     plan_status: {
         type: Number,
         required: true,

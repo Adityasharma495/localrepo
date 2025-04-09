@@ -12,26 +12,35 @@ async function createVoicePlans(req, res) {
 
   try {
     const responseData = {};
-    const parentPlan = await userRepo.getForVoicePlan(req.user.id)
-
-    if (parentPlan?.voice_plan_id) {
-      if(Number(parentPlan.voice_plan_id?.price) > Number(bodyReq.voice_plan.pulse_price))
-          ErrorResponse.message = `Can't allocate pulse price less than parent pulse price.`;
-            return res
-              .status(StatusCodes.BAD_REQUEST)
-              .json(ErrorResponse);
+    // check for duplicate Plan name
+    const conditions = {
+      user_id: req.user.id, 
+      plan_name: bodyReq.voice_plan.plan_name 
     }
 
-    const pulse_rupees = (Number(bodyReq.voice_plan.pulse_price) / 100)
-    const price_per_sec = pulse_rupees / Number(bodyReq.voice_plan.pulse_duration)
-    const plan_data = {
-      plan_name : bodyReq.voice_plan.plan_name,
-      pulse_duration : Number(bodyReq.voice_plan.pulse_duration),
-      price : Number(bodyReq.voice_plan.pulse_price),
-      user_id : bodyReq.voice_plan.user_id,
-      pulse_price : price_per_sec,
+    const checkDuplicate = await voicePlansRepo.findOne(conditions);
+              
+    if (checkDuplicate && Object.keys(checkDuplicate).length !== 0) {
+      ErrorResponse.message = `Plan Name Already Exists`;
+        return res
+          .status(StatusCodes.BAD_REQUEST)
+          .json(ErrorResponse);
+      }
+    const updatedPlans = bodyReq.voice_plan.plans.map(plan => {
+      const pulse_rupees = Number(plan.pulse_price) / 100;
+      const price_per_sec = pulse_rupees / Number(plan.pulse_duration);
+    
+      return {
+        ...plan,
+        price: price_per_sec
+      };
+    });
 
-    } 
+    const plan_data = {
+      plan_name: bodyReq.voice_plan.plan_name,
+      plans: updatedPlans,
+      user_id : bodyReq.voice_plan.user_id
+    };
 
     const voice_plan = await voicePlansRepo.create(plan_data);
     responseData.voice_plan = voice_plan;

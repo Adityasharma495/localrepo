@@ -1,5 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
-const { UserRepository, CallCentreRepository, TrunksRepository, NumbersRepository, IVRRepository,
+const { UserRepository, CallCentreRepository, TrunksRepository, NumbersRepository,
   DataCenterRepository, ServerManagementRepository,ModuleRepository,UserJourneyRepository,AclSettingRepository,NumberFileListRepository,
  AgentRepository, AgentGroupRepository, extensionRepository, CreditRepository, VoicePlansRepository} = require("../repositories");
 const { Parser } = require('json2csv');
@@ -14,7 +14,6 @@ async function exportData(req, res) {
       CallCentre: new CallCentreRepository(),
       Trunks: new TrunksRepository(),
       Numbers: new NumbersRepository(),
-      IVR: new IVRRepository(),
       DataCenter: new DataCenterRepository(),
       ServerManagement: new ServerManagementRepository(),
       Module: new ModuleRepository(),
