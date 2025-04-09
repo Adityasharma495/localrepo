@@ -318,7 +318,6 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
                 sub_licence: bodyReq?.sub_licence || {},
                 flow_type: bodyReq?.flow_type,
                 parent_licence: bodyReq?.parent_licence || {},
-                voice_plan_id :  bodyReq?.voice_plan_id || null
             }
         };
 
