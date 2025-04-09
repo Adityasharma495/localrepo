@@ -1,14 +1,17 @@
 const { StatusCodes } = require("http-status-codes");
-const { CreditsRepository, UserRepository } = require("../c_repositories");
+const { CreditsRepository, UserRepository, UserJourneyRepository } = require("../c_repositories");
 const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../utils/common");
 const {
   USER_CREDITS_ACTION,
+  MODULE_LABEL,
   USERS_ROLE,
 } = require("../utils/common/constants");
 const { Logger } = require("../config");
 const creditRepo = new CreditsRepository();
 const userRepo = new UserRepository();
 const version = process.env.API_V || '1';
+
+const userJourneyRepo = new UserJourneyRepository();
 
 async function updateCredit(req, res) {
   const bodyReq = req.body;
@@ -54,6 +57,12 @@ async function updateCredit(req, res) {
             balance: updatedValue,
             action_user: bodyReq.fromUser,
           });
+
+          await userJourneyRepo.create({
+            module_name: MODULE_LABEL.CREDITS,
+            action: USER_CREDITS_ACTION.ADD,
+            created_by: req?.user?.id,
+          });
         } else if (bodyReq.action == USER_CREDITS_ACTION.DEDUCT) {
           let updatedValue =
             Number(updatedUser?.dataValues?.credits_available) -
@@ -89,6 +98,12 @@ async function updateCredit(req, res) {
             action: USER_CREDITS_ACTION.ADD,
             balance: updatedValue,
             action_user: bodyReq.fromUser,
+          });
+
+          await userJourneyRepo.create({
+            module_name: MODULE_LABEL.CREDITS,
+            action: USER_CREDITS_ACTION.DEDUCT,
+            created_by: req?.user?.id,
           });
         }
       } else {
@@ -136,6 +151,12 @@ async function updateCredit(req, res) {
             balance: updatedValueForFromUser,
             action_user: bodyReq.fromUser,
           });
+
+          await userJourneyRepo.create({
+            module_name: MODULE_LABEL.CREDITS,
+            action: USER_CREDITS_ACTION.ADD,
+            created_by: req?.user?.id,
+          });
         } else if (bodyReq.action == USER_CREDITS_ACTION.DEDUCT) {
           let updatedValue =
             Number(updatedUser?.dataValues?.credits_available) -
@@ -177,6 +198,12 @@ async function updateCredit(req, res) {
             action: USER_CREDITS_ACTION.ADD,
             balance: updatedValueForFromUser,
             action_user: bodyReq.id,
+          });
+
+          await userJourneyRepo.create({
+            module_name: MODULE_LABEL.CREDITS,
+            action: USER_CREDITS_ACTION.DEDUCT,
+            created_by: req?.user?.id,
           });
         }
       }
@@ -257,6 +284,7 @@ async function get(req, res) {
       }
     };
     const aclData = await creditRepo.findOne(whereCondition);
+    console.log("aclData", aclData);
     if (aclData.length == 0) {
       const error = new Error();
       error.name = "CastError";
@@ -267,6 +295,7 @@ async function get(req, res) {
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) { 
+    console.log("error", error);
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg = error.message;
 
