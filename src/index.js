@@ -34,6 +34,10 @@ const startServer = async () => {
         //     console.log('✅ Database synchronized!');
         // }
 
+        await sequelize.sync({ alter: true, logging: true });
+        console.log('✅ Successfully synced CockroachDB!');
+        Logger.info('CockroachDB -> Successfully synced');
+
         // Connect to MongoDB
         await connectMongo();
         console.log('✅ Successfully connected to MongoDB!');

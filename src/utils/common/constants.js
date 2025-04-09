@@ -220,7 +220,8 @@ const MODULE_LABEL = {
     AGENT_GROUP: 'Agent Group',
     EXTENSION: 'extension',
     QUEUE: 'queue',
-    PROMPTS: 'Prompts'
+    PROMPTS: 'Prompts',
+    CREDITS: 'Credits'
 }
 
 const ACTION_LABEL = {
