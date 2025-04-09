@@ -49,12 +49,6 @@ const Module = sequelize.define(
     updatedAt: "updated_at",
     createdAt: "created_at",
     hooks: {
-      beforeCreate: (module) => {
-        const now = new Date();
-        const istOffset = 5.5 * 60 * 60 * 1000;
-        module.created_at = new Date(now.getTime() + istOffset);
-        module.updated_at = new Date(now.getTime() + istOffset);
-      },
       beforeUpdate: (module) => {
         const now = new Date();
         const istOffset = 5.5 * 60 * 60 * 1000;
