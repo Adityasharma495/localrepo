@@ -233,6 +233,7 @@ const ACTION_LABEL = {
     ASSIGN_INDIVIDUAL_DID:'Assign Individual DID',
     STATUS_ACTION_APPROVED: 'Status Action Approve',
     STATUS_ACTION_REJECT: 'Status Action Reject',
+    STATUS_UPDATE:"status updated",
     LOGIN: 'Login',
     LOGOUT: 'Logout'
 }

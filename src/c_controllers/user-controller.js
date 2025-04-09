@@ -141,19 +141,10 @@ async function signinUser(req, res) {
 
   async function get(req, res) {
     const uid = req.params.id;
-
-    console.log("UID HER", uid);
     try {
       const user = await userRepo.get(uid);
-
-
-
       
       let userData = await user.generateUserData();
-
-
-
-      
 
       const availLicence = await licenceRepo.findOne({user_id : uid})
 
@@ -294,6 +285,16 @@ async function signinUser(req, res) {
           user.status = 1;
         }
         await userRepo.update(uid, { status: user.status });
+
+        const userJourneyfields = {
+          module_name: MODULE_LABEL.USERS,
+          action: ACTION_LABEL.STATUS_UPDATE,
+          created_by: req?.user?.id
+        }
+
+        const userJourney = await userJourneyRepo.create(userJourneyfields);
+        responseData.userJourney = userJourney
+
     
         SuccessRespnose.message = "User Status Updated Successfully!";
         SuccessRespnose.data = ResponseFormatter.formatResponseIds(responseData, version);
@@ -406,6 +407,9 @@ async function signinUser(req, res) {
   async function signupUser(req, res) {
       const bodyReq = req.body;
 
+      if (bodyReq?.user?.acl_settings) {
+        bodyReq.user.acl_settings_id = bodyReq?.user?.acl_settings;
+      }
       try {
           const responseData = {};
           let user;
@@ -499,6 +503,9 @@ async function signinUser(req, res) {
     const uid = req.params.id;
     const bodyReq = req.body;
 
+    if (bodyReq?.user?.acl_settings) {
+      bodyReq.user.acl_settings_id = bodyReq?.user?.acl_settings;
+      }
     // process.exit(0)
    
     try {
@@ -511,12 +518,21 @@ async function signinUser(req, res) {
 
         const userInstance = await userRepo.get(uid);
 
+
+        console.log("USER INSTANCE", userInstance);
         responseData.user = await userInstance.generateUserData();
 
+
+        console.log("BODY USER COMPANY",bodyReq.user.company );
         if (bodyReq.user.company) {
           await companyRepo.update(bodyReq.user.company.id, bodyReq.user.company);
           const updatedCompanyInstance = await companyRepo.get(bodyReq.user.company.id);
+
+          console.log("UPADTE COMPANY REPO", updatedCompanyInstance);
+
           const updatedCompany = updatedCompanyInstance.get({ plain: true });
+
+          console.log("UPDATED COMPANY", updatedCompany);
         
           bodyReq.user.companies = {
             id: updatedCompany.id,
@@ -526,6 +542,8 @@ async function signinUser(req, res) {
             address: updatedCompany.address
           };
         }
+
+        console.log("BODY REQY",bodyReq.user);
       
        await userRepo.update(uid, bodyReq.user);
         
