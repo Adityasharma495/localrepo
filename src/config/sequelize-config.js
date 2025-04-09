@@ -5,6 +5,7 @@ const sequelize = new Sequelize('kamailio_ct', 'dev', 'ns@4044888', {
     host: '64.227.131.75',
     dialect: 'mysql',
     logging: false,
+    timezone: '+05:30',
 });
 
 const connectSequelize = async () => {

@@ -46,6 +46,7 @@ class UserRepository extends CrudRepository{
       
           let data = await User.findAll({
             where: whereCondition,
+            order: [['created_at', 'DESC']],
             attributes: { exclude: ['password'] },
             include: [
               {

@@ -141,9 +141,18 @@ async function signinUser(req, res) {
 
   async function get(req, res) {
     const uid = req.params.id;
+
+    console.log("UID HER", uid);
     try {
       const user = await userRepo.get(uid);
+
+
+
+      
       let userData = await user.generateUserData();
+
+
+
       
 
       const availLicence = await licenceRepo.findOne({user_id : uid})

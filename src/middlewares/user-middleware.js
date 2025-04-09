@@ -10,9 +10,6 @@ function    validateSignup(req, res, next){
     const userRole = bodyReq.role;
 
 
-    console.log("BODY REQUEST FOR SIGNUP USER", bodyReq);
-    console.log("USer role", userRole)
-
    
     const permission = Authentication.checkPermission(createrRole,userRole);
 

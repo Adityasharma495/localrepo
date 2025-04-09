@@ -46,7 +46,8 @@ const User = sequelize.define(
     },
     status: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      defaultValue:0,
+      allowNull: false,
     },
     flow_type: {
       type: DataTypes.INTEGER,
@@ -140,18 +141,19 @@ User.prototype.generateUserData = async function (tokenGenerate = false) {
     const userData = user.toJSON();
 
 
-    if (userData.companies && userData.companies.id) {
-      const companyDetails = await Company.findByPk(userData.companies.id);
-
+    if (userData.companies && userData.companies._id) {
+      const companyDetails = await Company.findByPk(userData.companies._id);
       if (companyDetails) {
         userData.companies = {
-          _id: companyDetails.id,
+          _id: companyDetails._id,
           name: companyDetails.name,
           phone: companyDetails.phone,
           address: companyDetails.address,
           pincode: companyDetails.pincode,
         };
       }
+
+
     }
 
     if (tokenGenerate) {
