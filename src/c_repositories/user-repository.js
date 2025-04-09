@@ -27,53 +27,56 @@ class UserRepository extends CrudRepository{
     }
 
     async getAllByRoles(current_uid, current_user_role, given_user_role) {
-        
-        
-        // Get user status mapping
-        const userStatusValues = constants.USERS_STATUS_VALUES_LABEL;
-
-    
         let rolesToQuery;
         if (given_user_role) {
-            
-            rolesToQuery = given_user_role;
+          rolesToQuery = given_user_role;
         } else {
-            
-            const PERMISSION_TYPE_READ = constants.PERMISSION_TYPES.READ;
-            [rolesToQuery] = Authentication.getUserAccessRoles(current_user_role, PERMISSION_TYPE_READ);
+          const PERMISSION_TYPE_READ = constants.PERMISSION_TYPES.READ;
+          [rolesToQuery] = Authentication.getUserAccessRoles(current_user_role, PERMISSION_TYPE_READ);
         }
-    
+      
         try {
-            let whereCondition = {
-                is_deleted: false,
+          let whereCondition = {
+            is_deleted: false,
+          };
+      
+          if (current_user_role !== 'role_sadmin') {
+            whereCondition.created_by = current_uid;
+          }
+      
+          let data = await User.findAll({
+            where: whereCondition,
+            attributes: { exclude: ['password'] },
+            include: [
+              {
+                model: User,
+                as: 'createdByUser',
+                attributes: ['username'],
+              },
+            ],
+          });
+      
+          const plainData = data.map(user => {
+            const json = user.toJSON();
+          
+            return {
+              ...json,
+              created_by: {
+                username: json.createdByUser?.username || null
+              },
+              createdByUser: undefined  
             };
-    
-            if (current_user_role !== 'role_sadmin') {
-                whereCondition.created_by = current_uid; // Ensure createdBy matches the current user ID if not superadmin
-            }
-    
-            let data = await User.findAll({
-                where: whereCondition,
-                attributes: { exclude: ['password'] },
-                raw: true,
-                nest: true,
-              });
-              
-
-            // data = data.map(user => ({
-            //     ...user.get({ plain: true }), 
-            //     status: userStatusValues[user.status]
-            // }));
-
-    
-            return data;
-    
+          });
+      
+          return plainData;
+      
         } catch (error) {
-            console.error("Error fetching users by roles:", error);
-            throw error;
+          console.error("Error fetching users by roles:", error);
+          throw error;
         }
-    }
-    
+      }
+      
+      
 
 
     async get(id) {

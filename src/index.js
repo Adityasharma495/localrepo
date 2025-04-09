@@ -29,14 +29,10 @@ const startServer = async () => {
         console.log('✅ Successfully connected to CockroachDB!');
         Logger.info('CockroachDB -> Successfully connected');
 
-        await sequelize.sync({ alter: true, logging: (msg) => Logger.info(`${msg}`) });
-        console.log('✅ Database synchronized successfully!');
-        Logger.info('CockroachDB -> Database synchronized');
-
-        // if (process.env.NODE_ENV === 'development') {
-        //     await sequelize.sync({ alter: true });
-        //     console.log('✅ Database synchronized!');
-        // }
+        if (process.env.NODE_ENV === 'development') {
+            await sequelize.sync({ alter: true });
+            console.log('✅ Database synchronized!');
+        }
 
         // Connect to MongoDB
         await connectMongo();

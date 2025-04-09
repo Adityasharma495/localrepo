@@ -144,12 +144,10 @@ async function signinUser(req, res) {
     try {
       const user = await userRepo.get(uid);
       let userData = await user.generateUserData();
-      userData.companies = user.companies 
       
 
       const availLicence = await licenceRepo.findOne({user_id : uid})
 
-      console.log("AVAIL LICENCE", availLicence);
       userData.licence = availLicence?.total_licence
   
       if (req.user.role === USERS_ROLE.RESELLER) {
@@ -491,6 +489,7 @@ async function signinUser(req, res) {
 
     const uid = req.params.id;
     const bodyReq = req.body;
+
     // process.exit(0)
    
     try {
@@ -500,16 +499,27 @@ async function signinUser(req, res) {
       if (req.user.role === USERS_ROLE.SUPER_ADMIN || req.user.role === USERS_ROLE.SUB_SUPERADMIN || req.user.role === USERS_ROLE.RESELLER) {
         const user = await userRepo.update(uid, bodyReq.user);
 
+
         const userInstance = await userRepo.get(uid);
 
         responseData.user = await userInstance.generateUserData();
 
-        if (bodyReq.company) {
-          responseData.company = await companyRepo.update(
-            bodyReq.company.id,
-            bodyReq.company
-          );
+        if (bodyReq.user.company) {
+          await companyRepo.update(bodyReq.user.company.id, bodyReq.user.company);
+          const updatedCompanyInstance = await companyRepo.get(bodyReq.user.company.id);
+          const updatedCompany = updatedCompanyInstance.get({ plain: true });
+        
+          bodyReq.user.companies = {
+            id: updatedCompany.id,
+            name: updatedCompany.name,
+            phone: updatedCompany.phone,
+            pincode: updatedCompany.pincode,
+            address: updatedCompany.address
+          };
         }
+      
+       await userRepo.update(uid, bodyReq.user);
+        
   
         if (req.user.role === USERS_ROLE.RESELLER) {
           const loggedInData = await userRepo.getForLicence(uid)
@@ -548,6 +558,7 @@ async function signinUser(req, res) {
         }
   
       } else {
+
         const loggedInData = await userRepo.getForLicence(uid)
 
         const total_licence = loggedInData.sub_user_licence_id.total_licence
@@ -582,10 +593,13 @@ async function signinUser(req, res) {
             total_licence: bodyReq.user.sub_licence
         })
   
+
   
         const user = await userRepo.update(uid, bodyReq.user);
         responseData.user = await user.generateUserData();
       
+
+
         if (bodyReq.company) {
           responseData.company = await companyRepo.update(
             bodyReq.company.id,

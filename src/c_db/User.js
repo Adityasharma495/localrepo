@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { ServerConfig } = require('../config');
 const {Authentication} = require('../utils/common');
 const AclSettings = require("./acl-settings")
+const Company = require("./companies")
 
 const User = sequelize.define(
   'users',
@@ -137,6 +138,21 @@ User.prototype.generateUserData = async function (tokenGenerate = false) {
     }
 
     const userData = user.toJSON();
+
+
+    if (userData.companies && userData.companies.id) {
+      const companyDetails = await Company.findByPk(userData.companies.id);
+
+      if (companyDetails) {
+        userData.companies = {
+          _id: companyDetails.id,
+          name: companyDetails.name,
+          phone: companyDetails.phone,
+          address: companyDetails.address,
+          pincode: companyDetails.pincode,
+        };
+      }
+    }
 
     if (tokenGenerate) {
       userData.token = await this.createToken();

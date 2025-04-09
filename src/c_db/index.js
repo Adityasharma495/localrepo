@@ -54,6 +54,8 @@ AclSettings.belongsTo(User, { foreignKey: "created_by", as: "creator" });
 User.hasMany(AclSettings, { foreignKey: "created_by", as: "aclsettings" });
 
 
+
+User.belongsTo(User, {foreignKey: 'created_by',as: 'createdByUser'});
 User.hasMany(Credit, { foreignKey: "user_id" });
 User.hasMany(Credit, { foreignKey: "from_user", as: "fromUser" });
 User.hasMany(Credit, { foreignKey: "to_user", as: "toUser" });
