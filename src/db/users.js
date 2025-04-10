@@ -114,7 +114,6 @@ const SUB_USER_LICENCE_MODEL = constants.MODEL.SUB_USER_LICENCE;
       hookHashPassword(this);
     }
     next();
-
   });
 
   UserSchema.pre('findOneAndUpdate', async function save(next) {

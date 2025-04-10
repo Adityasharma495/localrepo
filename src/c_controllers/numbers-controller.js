@@ -614,15 +614,34 @@ async function getAllStatus(req, res) {
 
     try {
       const roleToCheck = await userRepo.findOne({ id: allocatedToId });
+
+
+
       let data;
-      if (roleToCheck.role === USERS_ROLE.SUPER_ADMIN) {s
+      if (roleToCheck.role === USERS_ROLE.SUPER_ADMIN) {
         data = await numberRepo.getAll({ where: { allocated_to: null } });
       } else {
         data = await numberRepo.getAll({ where: { allocated_to: allocatedToId } });
       }
   
+     
+      
+  
 
+      
       SuccessRespnose.data = formatResponse.formatResponseIds(data,version);
+
+      SuccessRespnose.data = data.map(item => {
+        const obj = { ...item };
+        obj.created_at = obj.createdAt;
+        obj.updated_at = obj.updatedAt;
+        delete obj.createdAt;
+        delete obj.updatedAt;
+        return obj;
+      });
+
+
+      console.log("SUCCESS", SuccessRespnose);
       SuccessRespnose.message = 'Success';
       return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {

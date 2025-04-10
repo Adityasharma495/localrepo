@@ -143,9 +143,6 @@ class UserRepository extends CrudRepository{
             if (loggedUser.role === USERS_ROLE.SUPER_ADMIN || loggedUser.role === USERS_ROLE.SUB_SUPERADMIN) {
                 for (const userId of idArray) {
                     const userData = await this.get(userId);
-
-                    console.log("USER ID CREATED BY STRING",userData.created_by.toString());
-                    console.log("LOGGED USER ID CREATED BY STRING",loggedUser.id.toString());
                     if (userData.created_by.toString() !== loggedUser.id.toString()) {
                         throw new Error("One or more users were not created by the logged-in superadmin, so deletion is not allowed.");
                     }
@@ -153,7 +150,7 @@ class UserRepository extends CrudRepository{
             }
     
             for (const userId of idArray) {
-                const parentDetail = await this.findOne({ createdBy: userId });
+                const parentDetail = await this.findOne({ created_by: userId });
 
                 if (parentDetail !== null) {
                     throw new Error("One or more records cannot be deleted as they have child records.");

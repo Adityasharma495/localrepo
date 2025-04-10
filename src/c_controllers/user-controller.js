@@ -161,6 +161,10 @@ async function signinUser(req, res) {
         userData.companies._id = userData.companies.id;
         delete userData.companies.id;
       }
+      if (userData.acl_settings && userData.acl_settings.id) {
+        userData.acl_settings._id = userData.acl_settings.id;
+        delete userData.acl_settings.id;
+      }
       SuccessRespnose.message = "Success";
       SuccessRespnose.data = ResponseFormatter.formatResponseIds(userData, version);
   
@@ -207,13 +211,13 @@ async function signinUser(req, res) {
 
           const data = await userRepo.findOne({ created_by: userId });
 
-
           if (data) {
             ErrorResponse.message = `Child Present, Reseller Can't Deleted`;
             return res
                   .status(StatusCodes.BAD_REQUEST)
                   .json(ErrorResponse);
           } else {
+
             response = await userRepo.deleteMany(userIds, req.user);
           }
         } 

@@ -975,6 +975,7 @@ async function getToAllocateNumbers(req, res) {
         }
         
         SuccessRespnose.data = data;
+
         SuccessRespnose.message = 'Success';
 
         Logger.info(`Numbers -> to allocated numbers recieved successfully`);

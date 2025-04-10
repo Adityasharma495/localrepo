@@ -82,9 +82,14 @@ class LicenceRepository extends CrudRepository {
   }
 
   async updateByUserId(id, data) {
-    const response = await this.model.findOneAndUpdate({ user_id: id, is_deleted: false }, data, { runValidators: true, new: true });
-    return response;
+    const [rowsUpdated, [updatedRecord]] = await this.model.update(data, {
+      where: { user_id: id, is_deleted: false },
+      returning: true, // important to get the updated record
+    });
+  
+    return updatedRecord;
   }
+  
 
 }
 

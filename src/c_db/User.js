@@ -36,6 +36,10 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    actual_password: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     role: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -46,7 +50,7 @@ const User = sequelize.define(
     },
     status: {
       type: DataTypes.INTEGER,
-      defaultValue:0,
+      defaultValue:1,
       allowNull: false,
     },
     flow_type: {
@@ -95,6 +99,20 @@ const User = sequelize.define(
 );
 
 
+User.beforeCreate(async (user) => {
+  const salt = await bcrypt.genSalt(9);
+  user.actual_password = user.password; 
+  user.password = await bcrypt.hash(user.password, salt);
+});
+
+
+User.beforeUpdate(async (user) => {
+  if (user.changed('password')) {
+    user.actual_password = user.password;
+    const salt = await bcrypt.genSalt(9);
+    user.password = await bcrypt.hash(user.password, salt);
+  }
+});
 
 // Hash password before saving
 User.beforeCreate(async (user) => {
@@ -167,7 +185,6 @@ User.prototype.generateUserData = async function (tokenGenerate = false) {
       userData.token = await this.createToken();
     }
 
-    // Assume getUserAccessRoles is a method that you define to get role access based on the user's role
     userData.roles_access = Authentication.getUserAccessRoles(this.role);
 
     return userData;
