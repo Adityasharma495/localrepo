@@ -44,7 +44,7 @@ async function signinUser(req, res) {
           const userJourneyfields = {
             module_name: MODULE_LABEL.USERS,
             action: ACTION_LABEL.LOGIN,
-            created_by:  userData._id
+            created_by:  userData.id
           }
       
           await userJourneyRepo.create(userJourneyfields);
