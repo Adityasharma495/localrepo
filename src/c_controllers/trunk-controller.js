@@ -19,13 +19,13 @@ async function createTrunk(req, res) {
     const responseData = {};
     const trunkPayload = { ...bodyReq.trunk };
 
-    // ✅ Find operator ID from name
+
     const operatorName = trunkPayload.operator_id;
     const codecName = trunkPayload.codec_id
 
 
-    const operatorRecord = await Operator.findOne({ where: { name: operatorName } });
-    const codecRecord = await Codec.findOne({where:{name:codecName}})
+    const operatorRecord = await Operator.findOne({ name: operatorName });
+    const codecRecord = await Codec.findOne({ name:codecName });
 
 
 
@@ -57,8 +57,6 @@ async function createTrunk(req, res) {
       action: ACTION_LABEL.ADD,
       created_by: req?.user?.id
     };
-
-    console.log("USER JOURENY", userJourneyfields);
 
     const userJourney = await userJourneyRepo.create(userJourneyfields);
     responseData.userJourney = userJourney;
@@ -93,7 +91,7 @@ async function createTrunk(req, res) {
 
   async function getAll(req, res) {
     try {
-      const data = await trunkRepo.getAll(req.user.id);
+      const data = await trunkRepo.getAll(req.user.role, req.user.id);
       SuccessRespnose.data = data;
       SuccessRespnose.message = "Success";
   
@@ -151,17 +149,13 @@ async function createTrunk(req, res) {
     try {
       const response = await trunkRepo.deleteMany(id);
   
-
-      console.log("REPOSNE AFTER DELETE", response);
-
-
-      // const userJourneyfields = {
-      //   module_name: MODULE_LABEL.TRUNKS,
-      //   action: ACTION_LABEL.DELETE,
-      //   createdBy: req?.user?.id
-      // }
+      const userJourneyfields = {
+        module_name: MODULE_LABEL.TRUNKS,
+        action: ACTION_LABEL.DELETE,
+        createdBy: req?.user?.id
+      }
   
-      // await userJourneyRepo.create(userJourneyfields);
+      await userJourneyRepo.create(userJourneyfields);
       SuccessRespnose.message = "Deleted successfully!";
       SuccessRespnose.data = response;
   
@@ -200,7 +194,7 @@ async function createTrunk(req, res) {
   
   
       if (trunkPayload.operator_id && typeof trunkPayload.operator_id === "string") {
-        const operatorRecord = await Operator.findOne({ where: { name: trunkPayload.operator_id } });
+        const operatorRecord = await Operator.findOne({ name: trunkPayload.operator_id });
         if (!operatorRecord) {
           return res.status(StatusCodes.BAD_REQUEST).json({
             message: `Operator '${trunkPayload.operator_id}' not found.`,
@@ -211,7 +205,7 @@ async function createTrunk(req, res) {
       }
  
       if (trunkPayload.codec_id && typeof trunkPayload.codec_id === "string") {
-        const codecRecord = await Codec.findOne({ where: { name: trunkPayload.codec_id } });
+        const codecRecord = await Codec.findOne({ name: trunkPayload.codec_id });
         if (!codecRecord) {
           return res.status(StatusCodes.BAD_REQUEST).json({
             message: `Codec '${trunkPayload.codec_id}' not found.`,

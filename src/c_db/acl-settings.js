@@ -48,13 +48,6 @@ const AclSettings = sequelize.define(
   }
 );
 
-// Optional: IST time adjustment (like in your Mongoose schema)
-AclSettings.beforeCreate((instance) => {
-  const istNow = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
-  instance.created_at = istNow;
-  instance.updated_at = istNow;
-});
-
 AclSettings.beforeUpdate((instance) => {
   const istNow = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
   instance.updated_at = istNow;

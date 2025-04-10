@@ -10,21 +10,22 @@ class TrunksRepository extends CrudRepository {
     super(trunk);
   }
 
-  async getAll(current_uid) {
+  async getAll(current_role, current_uid) {
 
     try {
-      let response = await trunk.findAll({ is_deleted: false, createdBy: current_uid })
-    //   .populate('operator', ["_id", "name"]) 
-    //   .populate('server', ["_id", "server_name"])
-    //   .sort({ createdAt: -1 })
-    //   .lean();
-    //   response = response.map(val => {
-    //     val['status'] = trunkStatusValues[val['status']];
-    //     // val['operator'] = operators[val['operator']];
-    //     val['auth_type'] = authTypeLabels[val['auth_type']];
-    //     return val;
-    //   });
-
+      let response;
+      if (current_role === constants.USERS_ROLE.SUPER_ADMIN) {
+        response = await trunk.findAll({
+          where: { is_deleted: false },
+          order: [['created_at', 'DESC']]
+        });        
+      } else {
+        response = await trunk.findAll({
+          where: { is_deleted: false, created_by: current_uid },
+          order: [['created_at', 'DESC']]
+        });
+        
+      }
       return response;
 
     } catch (error) {

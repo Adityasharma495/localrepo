@@ -1,4 +1,4 @@
-const { DataTypes } = require("sequelize");
+const { DataTypes, STRING } = require("sequelize");
 const sequelize = require("../config/sequelize");
 const { constants } = require("../utils/common");
 
@@ -24,7 +24,7 @@ const Numbers = sequelize.define(
       allowNull: false,
     },
     routing_id: {
-      type: DataTypes.UUID,
+      type: STRING,
       allowNull: true,
       defaultValue: null,
     },

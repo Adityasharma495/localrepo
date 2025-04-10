@@ -140,9 +140,6 @@ User.prototype.generateUserData = async function (tokenGenerate = false) {
 
     const userData = user.toJSON();
 
-
-
-    console.log("USER DATA IN GENERATE ", userData);
     if (userData.companies && userData.companies._id) {
       const companyDetails = await Company.findByPk(userData.companies._id);
 
@@ -156,7 +153,6 @@ User.prototype.generateUserData = async function (tokenGenerate = false) {
           pincode: companyDetails.pincode,
         };
       }
-
 
     }
 

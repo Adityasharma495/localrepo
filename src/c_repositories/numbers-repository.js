@@ -16,17 +16,18 @@ class NumbersRepository extends CrudRepository {
       if (options?.where) {
         whereCondition = { ...whereCondition, ...options.where };
       }
-
       let response = await this.model.findAll({
         where: whereCondition,
         order: [["created_at", "DESC"]],
         raw: true,
       });
 
-      response = response.map((val) => {
-        val["status"] = numberStatusValues[val["status"]];
-        return val;
-      });
+
+
+      // response = response.map((val) => {
+      //   val["status"] = numberStatusValues[val["status"]];
+      //   return val;
+      // });
 
       return response;
     } catch (error) {

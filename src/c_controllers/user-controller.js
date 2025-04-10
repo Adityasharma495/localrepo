@@ -155,6 +155,12 @@ async function signinUser(req, res) {
         userData.sub_licence = subUserLicence
       }
   
+
+      
+      if (userData.companies && userData.companies.id) {
+        userData.companies._id = userData.companies.id;
+        delete userData.companies.id;
+      }
       SuccessRespnose.message = "Success";
       SuccessRespnose.data = ResponseFormatter.formatResponseIds(userData, version);
   
@@ -509,6 +515,7 @@ async function signinUser(req, res) {
     // process.exit(0)
    
     try {
+
       const responseData = {};
       
       // only update licence in case if reseller (reseller only update by superadmin or subsuperadmin)
@@ -519,20 +526,16 @@ async function signinUser(req, res) {
         const userInstance = await userRepo.get(uid);
 
 
-        console.log("USER INSTANCE", userInstance);
         responseData.user = await userInstance.generateUserData();
 
 
-        console.log("BODY USER COMPANY",bodyReq.user.company );
+  
         if (bodyReq.user.company) {
           await companyRepo.update(bodyReq.user.company.id, bodyReq.user.company);
           const updatedCompanyInstance = await companyRepo.get(bodyReq.user.company.id);
 
-          console.log("UPADTE COMPANY REPO", updatedCompanyInstance);
-
           const updatedCompany = updatedCompanyInstance.get({ plain: true });
 
-          console.log("UPDATED COMPANY", updatedCompany);
         
           bodyReq.user.companies = {
             id: updatedCompany.id,
@@ -543,7 +546,6 @@ async function signinUser(req, res) {
           };
         }
 
-        console.log("BODY REQY",bodyReq.user);
       
        await userRepo.update(uid, bodyReq.user);
         

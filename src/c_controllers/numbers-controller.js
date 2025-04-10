@@ -1,6 +1,6 @@
 const { StatusCodes } = require('http-status-codes');
 const { SuccessRespnose, ErrorResponse } = require('../utils/common');
-const {formatResponse} = require("../utils/common")
+const {formatResponse,ResponseFormatter} = require("../utils/common")
 const { Logger } = require('../config');
 const { State} = require('country-state-city');
 const {
@@ -25,7 +25,7 @@ const memberScheduleRepo = new MemberScheduleRepo();
 const countryCodeRepository = new CountryCodeRepository();
 
 const { constants } = require("../utils/common");
-const numberStatusValues = constants.NUMBER_STATUS_VALUE;
+const NUMBER_STATUS = constants.NUMBER_STATUS_LABLE;
 const stream = require('stream');
 const csv = require('csv-parser');
 const version = process.env.API_V || '1';
@@ -350,46 +350,44 @@ async function uploadNumbers(req, res) {
 }
 
 async function getAll(req, res) {
-
-    try {
-        let data;
-        if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
-            data = await didUserMappingRepository.getForSuperadmin(req.user.id);
-        } else {
-            data = await didUserMappingRepository.getForOthers(req.user.id);
-        }
-
-        const uniqueDIDs = [...new Set(data.map(item => item.DID))];
-        data = await numberRepo.getAll(uniqueDIDs);
-
-        data = data
-        .map(val => {
-            val['status'] = numberStatusValues[val['status']];
-            return val;
-        })
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-        SuccessRespnose.data = formatResponse.formatResponseIds(data, version);
-
-        SuccessRespnose.message = 'Success';
-
-        Logger.info(
-            `Number -> recieved all successfully`
-        );
-
-        return res.status(StatusCodes.OK).json(SuccessRespnose);
-
-    } catch (error) {
-        ErrorResponse.message = error.message;
-        ErrorResponse.error = error;
-
-        Logger.error(`Call Centre -> unable to get call centres list, error: ${JSON.stringify(error)}`);
-
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
-
+  try {
+    let data;
+    if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
+      data = await didUserMappingRepository.getForSuperadmin(req.user.id);
+    } else {
+      data = await didUserMappingRepository.getForOthers(req.user.id);
     }
 
+    const uniqueDIDs = [...new Set(data.map(item => item.DID))];
+    data = await numberRepo.getAll(uniqueDIDs);
+
+    const reverseNumberStatus = Object.entries(NUMBER_STATUS).reduce((acc, [key, value]) => {
+      acc[value] = key;
+      return acc;
+    }, {});
+
+    data = data
+      .map(val => {
+        val.status = reverseNumberStatus[val.status] || val.status;
+        return val;
+      })
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    SuccessRespnose.data = formatResponse.formatResponseIds(data, version);
+
+    SuccessRespnose.message = 'Success';
+
+    Logger.info(`Number -> received all successfully`);
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+  } catch (error) {
+    ErrorResponse.message = error.message;
+    ErrorResponse.error = error;
+    Logger.error(`Call Centre -> unable to get call centres list, error: ${JSON.stringify(error)}`);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
 }
+
 
 async function get(req, res) {
     const numberId = req.params.id;
@@ -440,7 +438,9 @@ async function getDIDNumbers(req, res) {
       return res.status(StatusCodes.NOT_FOUND).json(ErrorResponse);
     }
 
-    SuccessRespnose.data = data;
+
+    
+    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
     SuccessRespnose.message = 'Successfully retrieved DID numbers.';
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -516,15 +516,24 @@ async function getAllStatus(req, res) {
   }
 
   async function assignIndividualDID(req, res) {
+
     const bodyReq = req.body;
+
     try {
-      await numberRepo.update(bodyReq.id, {
-        status: bodyReq.status,
-        routing_destination: bodyReq.DID,
-        routing_type: bodyReq.numberType,
-        routing_id: bodyReq.DID_id,
-        expiry_date: bodyReq.expiryDate || null,
-      });
+
+      try {
+        
+        await numberRepo.update(bodyReq._id, {
+          status: bodyReq.status,
+          routing_destination: bodyReq.DID,
+          routing_type: bodyReq.numberType,
+          routing_id: bodyReq.DID_id,
+          expiry_date: bodyReq.expiryDate || null,
+        });
+      } catch (error) {
+        console.log("ERROR HERE", error);
+      }
+      
   
       await userJourneyRepo.create({
         module_name: 'NUMBERS',
@@ -601,16 +610,19 @@ async function getAllStatus(req, res) {
 
   async function getToAllocateNumbers(req, res) {
     const allocatedToId = req.params.id;
+
+
     try {
-      const roleToCheck = await userRepo.findOne({ where: { id: allocatedToId } });
+      const roleToCheck = await userRepo.findOne({ id: allocatedToId });
       let data;
-      if (roleToCheck.role === USERS_ROLE.SUPER_ADMIN) {
+      if (roleToCheck.role === USERS_ROLE.SUPER_ADMIN) {s
         data = await numberRepo.getAll({ where: { allocated_to: null } });
       } else {
         data = await numberRepo.getAll({ where: { allocated_to: allocatedToId } });
       }
   
-      SuccessRespnose.data = data;
+
+      SuccessRespnose.data = formatResponse.formatResponseIds(data,version);
       SuccessRespnose.message = 'Success';
       return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {
