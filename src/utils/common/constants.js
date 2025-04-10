@@ -324,6 +324,8 @@ const BACKEND_BASE_URL =
         2: 'IP',
         '1': 'REGISTRATION',
         '2': 'IP',
+        'IP': "IP",
+        'Registration': "REGISTRATION"
       };
 
 module.exports = {

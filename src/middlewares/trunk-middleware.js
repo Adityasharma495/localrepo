@@ -195,10 +195,9 @@ function modifyTrunkBodyRequest(req, is_create = true) {
 
         if (is_create) inputData.trunk.created_by = req.user.id
 
-        if (bodyReq.auth_type == AUTH_TYPES.IP) {
+        if (resolvedAuthType === 'IP') {
             inputData.trunk.auth_type_identify_by = bodyReq.auth_type_identify_by;
-        }
-        else if (bodyReq.auth_type == AUTH_TYPES.REGISTRATION) {
+        } else if (resolvedAuthType === 'REGISTRATION') {
             inputData.trunk.auth_type_registration = bodyReq.auth_type_registration;
         }
 
