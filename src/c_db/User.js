@@ -131,6 +131,13 @@ User.prototype.generateUserData = async function (tokenGenerate = false) {
     const user = await User.findByPk(this.id, {
       attributes: { exclude: ['password'] }, // Exclude password for security reasons
       // Here, you should include any related entities, like ACL settings or company details
+      include: [
+        {
+          model: AclSettings,
+          as: 'acl_settings',
+          attributes: ['id', 'acl_name', 'module_operations'],
+        }
+      ]
     });
 
     if (!user) {
