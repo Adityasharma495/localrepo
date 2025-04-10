@@ -481,18 +481,12 @@ async function getAll(req, res) {
             data = await didUserMappingRepository.getForOthers(req.user.id);
         }
 
-        const didVoicePlanMap = {};
-        data.forEach(item => {
-            didVoicePlanMap[item.DID] = item.voice_plan_id;
-        });
-
         const uniqueDIDs = [...new Set(data.map(item => item.DID))];
         data = await numberRepo.findMany(uniqueDIDs);
 
         data = data
         .map(val => {
             val['status'] = numberStatusValues[val['status']];
-            val['voice_plan_id'] = didVoicePlanMap[val._id] || null;
             return val;
         })
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -507,11 +501,11 @@ async function getAll(req, res) {
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
     } catch (error) {
-
+        
         ErrorResponse.message = error.message;
         ErrorResponse.error = error;
 
-        Logger.error(`Call Centre -> unable to get call centres list, error: ${JSON.stringify(error)}`);
+        Logger.error(`Number -> unable to get Numbers list, error: ${JSON.stringify(error)}`);
 
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
 
@@ -660,7 +654,7 @@ async function getAllStatus(req, res) {
         ErrorResponse.message = error.message;
         ErrorResponse.error = error;
 
-        Logger.error(`Call Centre -> unable to get Numbers list, error: ${JSON.stringify(error)}`);
+        Logger.error(`Number -> unable to get Numbers list, error: ${JSON.stringify(error)}`);
 
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
 
@@ -1059,7 +1053,10 @@ async function getToAllocateNumbers(req, res) {
 async function getAllocatedNumbers(req, res) {
     try {
         const allocatedToId = req.params.id;
+        console.log('allocatedToId', allocatedToId)
+
         let allocatedNumbers = await didUserMappingRepository.getForOthers(allocatedToId);
+        console.log('allocatedNumbers', allocatedNumbers)
 
         const allocatedTo = allocatedNumbers.length > 0 ? allocatedNumbers[0].allocated_to.username : null 
         const allocatedBy = req.user.username

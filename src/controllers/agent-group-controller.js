@@ -381,7 +381,8 @@ async function getAssignedAgents(req, res) {
             id: agentGroup._id,
             group_name: agentGroup.group_name,
             agent: agentData,
-            schedule: scheduleData
+            schedule: scheduleData,
+            priority: agent?.priority || 0
           };
         })
       );
@@ -435,7 +436,7 @@ async function updateMemberScheduleAgent(req, res) {
 
       const updatedAgents = agentGroup.agents.map(agent => {
         if (agent.agent_id.toString() === bodyReq.agent_id) {
-          return { ...agent, member_schedule_id: scheduleData._id };
+          return { ...agent, member_schedule_id: scheduleData._id, priority : bodyReq?.priority };
         }
         return agent;
       });
@@ -448,6 +449,15 @@ async function updateMemberScheduleAgent(req, res) {
         end_time: bodyReq.end_time,
         week_days: bodyReq.week_days
       })
+
+      const updatedAgents = agentGroup.agents.map(agent => {
+        if (agent.agent_id.toString() === bodyReq.agent_id) {
+          return { ...agent, priority : bodyReq?.priority };
+        }
+        return agent;
+      });
+
+      await agentGroupRepo.update(id, {agents : updatedAgents})
     }
 
 
