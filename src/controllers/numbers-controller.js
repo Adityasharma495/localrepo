@@ -926,10 +926,10 @@ async function DIDUserMapping(req, res) {
                                 throw new Error('Validation failed');
                             }
             
-                            if (plan1.pulse_price > match.pulse_price) {
+                            if (plan1.pulse_price < match.pulse_price) {
                                 failedDIDs.push({
                                     did: didDetail.actual_number,
-                                    reason: `Can't allocate pulse price greater than parent pulse price for "${plan1.plan_type}".`
+                                    reason: `Can't allocate pulse price less than parent pulse price for "${plan1.plan_type}".`
                                 });
                                 throw new Error('Validation failed');
                             }
