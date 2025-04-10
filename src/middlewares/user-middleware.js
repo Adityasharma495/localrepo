@@ -69,22 +69,6 @@ function validateSignup(req, res, next){
                 .json(ErrorResponse);
         }
     }
-    if (
-        req.user.role !== constants.USERS_ROLE.CALLCENTRE_ADMIN &&
-        req.user.role !== constants.USERS_ROLE.CALLCENTRE_AGENT &&
-        req.user.role !== constants.USERS_ROLE.CALLCENTRE_TEAM_LEAD
-    ) {
-        if (bodyReq.voice_plan_id === undefined) {
-            ErrorResponse.message = 'Something went wrong while user signup';
-            ErrorResponse.error = new AppError(
-                ['Voice Plan not found in the incoming request in the correct form'],
-                StatusCodes.BAD_REQUEST
-            );
-            return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
-        }
-    }
-    
-    
 
     if(!permission){
         ErrorResponse.message = 'Something went wrong while user signup';

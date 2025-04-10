@@ -46,7 +46,12 @@ const VoicePlanSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: USER_MODEL_NAME,
         required: true
-    }
+    },
+    is_allocated: {
+      type: Number,
+      required: true,
+      default: 0
+    },
 }, {
     versionKey: false
 });

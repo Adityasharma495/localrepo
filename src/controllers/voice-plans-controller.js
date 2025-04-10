@@ -114,7 +114,17 @@ async function updateVoicePlanStatus(req, res) {
   try {
 
     const responseData = {};
-    const voice_plan = await voicePlansRepo.update(uid, {plan_status : bodyReq.status});
+    let voice_plan;
+    const getVoicePlan = await voicePlansRepo.get(uid)
+    if (getVoicePlan.is_allocated === 0) {
+      voice_plan = await voicePlansRepo.update(uid, {plan_status : bodyReq.status});
+    } else {
+      ErrorResponse.message = `Can't change status as Plan is Allocated`;
+        return res
+          .status(StatusCodes.BAD_REQUEST)
+          .json(ErrorResponse);
+    }
+    
     if (!voice_plan) {
       const error = new Error();
       error.name = 'CastError';

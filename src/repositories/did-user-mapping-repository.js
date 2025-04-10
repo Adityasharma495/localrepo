@@ -34,10 +34,7 @@ class DIDUserMappingRepository extends CrudRepository {
         path: 'allocated_to', 
         select: '_id username'
       })
-      .populate({
-        path: 'voice_plan_id', 
-        select: '_id plan_name'
-      })
+      .populate("voice_plan_id")
       .exec();
 
       return totalNumbers
@@ -56,7 +53,9 @@ class DIDUserMappingRepository extends CrudRepository {
         $and: [
           {active : true}
         ]
-      }).exec(); 
+      })
+      .populate("voice_plan_id")
+      .exec();
       return totalNumbers
     } catch (error) {
         throw error;
