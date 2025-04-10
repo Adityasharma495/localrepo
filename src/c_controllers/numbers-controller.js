@@ -43,7 +43,7 @@ async function create(req, res) {
         country_code: bodyReq.number.country_code,
         state_code: bodyReq.number.state_code,create,
         cost: bodyReq.number.cost,
-        operator: bodyReq.number.operator,
+        operator: bodyReq.number.operator.toUpperCase(),
         number_type: bodyReq.number.number_type,
         created_by: req.user.id,
       });
