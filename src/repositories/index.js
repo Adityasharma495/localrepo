@@ -37,5 +37,6 @@ module.exports = {
     DownloadReportRepository: require('./download-report-repository'),
     TelephonyProfileRepository: require('./telephony-profile-repository'),
     SubscriberRepository: require('./subscriber-repository'),
-    VoicePlansRepository: require('./voice-plans-repository')
+    VoicePlansRepository: require('./voice-plans-repository'),
+    DIDUserMappingRepository : require('./did-user-mapping-repository')
 }

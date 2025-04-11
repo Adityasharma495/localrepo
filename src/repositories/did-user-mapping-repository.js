@@ -1,10 +1,9 @@
 const CrudRepository = require("./crud-repository");
-const didUserMappingModel = require("../db/did-user-mapping");
-const { constants} = require("../utils/common");
+const numberUserMappingModel = require("../db/did-user-mapping");
 
-class DIDUserMappingRepository extends CrudRepository {
+class NumberUserMappingRepository extends CrudRepository {
   constructor() {
-    super(didUserMappingModel);
+    super(numberUserMappingModel);
   }
 
   async insertMany(records) {
@@ -25,50 +24,76 @@ class DIDUserMappingRepository extends CrudRepository {
   async getForOthers(id) {
     try {
       const totalNumbers = await this.model.find({
-        $and: [
-          { allocated_to: id },
-          { active: true }      
-        ]
+        'mapping_detail.allocated_to': id,
+        'mapping_detail.active': true
       })
-      .populate({
-        path: 'allocated_to', 
-        select: '_id username'
-      })
-      .populate("voice_plan_id")
+      .populate('mapping_detail.allocated_to', '_id username')
+      .populate('mapping_detail.voice_plan_id')
+      .populate('DID')
       .exec();
-
-      return totalNumbers
+  
+      // Filter & format
+      const filtered = totalNumbers
+        .map(item => {
+          const filteredMapping = item.mapping_detail.filter(md =>
+            md.allocated_to?._id?.toString() === id.toString() && md.active
+          );
+          return {
+            ...item.toObject(),
+            mapping_detail: filteredMapping
+          };
+        })
+        .filter(item => item.mapping_detail.length > 0); // <-- remove entries with no matching mapping_detail
+  
+      return filtered;
+  
     } catch (error) {
-        throw error;
+      throw error;
     }
   }
+  
 
   async getForSuperadmin(id) {
     try {
       const totalNumbers = await this.model.find({
-        $or: [
-          { allocated_to: id },
-          { parent_id: id }
-        ],
-        $and: [
-          {active : true}
-        ]
+        mapping_detail: {
+          $elemMatch: {
+            $or: [
+              { allocated_to: id },
+              { parent_id: id }
+            ],
+            active: true
+          }
+        }
       })
-      .populate("voice_plan_id")
-      .populate({
-        path: 'allocated_to', 
-        select: '_id username'
-      })
+      .populate('mapping_detail.allocated_to', '_id username')
+      .populate('mapping_detail.voice_plan_id')
+      .populate('DID')
       .exec();
-      return totalNumbers
+  
+      // Optional: filter only relevant mapping_detail entries
+      const filtered = totalNumbers.map(item => {
+        const filteredMapping = item.mapping_detail.filter(md =>
+          (md.allocated_to?.toString() === id.toString() ||
+           md.parent_id?.toString() === id.toString()) &&
+          md.active
+        );
+        return {
+          ...item.toObject(),
+          mapping_detail: filteredMapping
+        };
+      });
+  
+      return filtered;
     } catch (error) {
-        throw error;
+      throw error;
     }
   }
+  
 
   async findOne(conditions) {
     try {
-        const response = await this.model.findOne({ ...conditions});
+        const response = await this.model.findOne({ ...conditions}).populate("DID").exec();
         return response;
     } catch (error) {
         throw error;
@@ -93,6 +118,57 @@ class DIDUserMappingRepository extends CrudRepository {
 
   }
 
- }
+  async addMappingDetail(documentId, newDetail) {
+    await this.model.updateOne(
+      { DID: documentId },
+      {
+        $push: {
+          mapping_detail: newDetail
+        }
+      }
+    );
+  }
 
-module.exports = DIDUserMappingRepository;
+  async updateMappingDetail(did, newDetail) {
+    await this.model.updateOne(
+      {
+        DID: did,
+        'mapping_detail.allocated_to': newDetail.allocated_to
+      },
+      {
+        $set: {
+          'mapping_detail.$.active': newDetail.active,
+          'mapping_detail.$.voice_plan_id': newDetail.voice_plan_id
+        }
+      }
+    );
+  }
+
+  async checkMappingIfNotExists(did, newDetail) {
+    const record = await this.model.findOne({
+      DID: did,
+      mapping_detail: {
+        $elemMatch: { ...newDetail }
+      }
+    });
+  
+    if (!record) return null;
+  
+    const filteredMapping = record.mapping_detail.filter(detail => {
+      return Object.entries(newDetail).every(([key, value]) => {
+        return detail[key]?.toString() === value?.toString();
+      });
+    });
+  
+    const result = {
+      ...record.toObject(),
+      mapping_detail: filteredMapping
+    };
+  
+    return result;
+  }
+  
+
+}
+
+module.exports = NumberUserMappingRepository;

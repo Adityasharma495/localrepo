@@ -8,7 +8,6 @@ const { NumbersRepository, DIDUserMappingRepository,
     MemberScheduleRepository, CountryCodeRepository, VoicePlansRepository} = require('../repositories');
 const fs = require("fs");
 const {MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, USERS_ROLE, NUMBER_STATUS_LABLE, DID_ALLOCATION_LEVEL} = require('../utils/common/constants');
-const didUserMappingRepository = new DIDUserMappingRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const numberRepo = new NumbersRepository();
 const numFileListRepo = new NumberFileListRepository();
@@ -17,7 +16,7 @@ const userRepo = new UserRepository();
 const memberScheduleRepo = new MemberScheduleRepository();
 const countryCodeRepository = new CountryCodeRepository();
 const voicePlanRepo = new VoicePlansRepository();
-
+const didUserMappingRepository = new DIDUserMappingRepository();
 
 const { constants } = require("../utils/common");
 const numberStatusValues = constants.NUMBER_STATUS_VALUE;
@@ -33,8 +32,10 @@ async function create(req, res) {
 
       await didUserMappingRepository.create({
         DID: number?._id,
-        allocated_to: req?.user?.id
-    })
+        mapping_detail: [{
+            allocated_to: req?.user?.id
+        }]
+      })
     Logger.info(
       `Number -> Did Allocation created successfully: ${JSON.stringify(responseData)}`
     );
@@ -124,7 +125,6 @@ async function update(req, res) {
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
     } catch (error) {
-        console.log(error);
         Logger.error(`Numbers -> unable to Update: ${JSON.stringify(data)} error: ${JSON.stringify(error)}`);
 
         let statusCode = error.statusCode;
@@ -279,8 +279,10 @@ async function bulkUpdate(req, res) {
             if (insertedDocumentIds.length > 0) {
                 const insertedDocuments = await numberRepo.model.find({ _id: { $in: insertedDocumentIds } });
                 const DIDAlloction = insertedDocuments.map(item => ({
-                    DID: item._id,
-                    allocated_to: req?.user?.id
+                    DID: item?._id,
+                    mapping_detail: [{
+                        allocated_to: req?.user?.id
+                    }]
                   }));
 
                 await didUserMappingRepository.insertMany(DIDAlloction);
@@ -304,7 +306,6 @@ async function bulkUpdate(req, res) {
               return res.status(StatusCodes.CREATED).json(SuccessRespnose);
             }
           } catch (error) {
-            console.log(error);
             if (!headersSent) {
               const errorResponse = {
                 message: 'Error while saving numbers to the database.',
@@ -328,7 +329,6 @@ async function bulkUpdate(req, res) {
           }
         });
     } catch (error) {
-        console.log(error);
         const errorResponse = {
             message: 'Error while processing the file.',
             error: error
@@ -416,9 +416,12 @@ async function uploadNumbers(req, res) {
                     const insertedRecords = await numberRepo.insertMany(batch);
                     // DID allocation
                     const DIDAlloction = insertedRecords.map(item => ({
-                        DID: item._id,
-                        allocated_to: req?.user?.id
+                        DID: item?._id,
+                        mapping_detail: [{
+                            allocated_to: req?.user?.id
+                        }]
                       }));
+
                     await didUserMappingRepository.insertMany(DIDAlloction);
                 }
 
@@ -472,6 +475,7 @@ async function uploadNumbers(req, res) {
     }
 }
 
+
 async function getAll(req, res) {
     try {
         let data;
@@ -481,7 +485,7 @@ async function getAll(req, res) {
             data = await didUserMappingRepository.getForOthers(req.user.id);
         }
 
-        const uniqueDIDs = [...new Set(data.map(item => item.DID))];
+        const uniqueDIDs = [...new Set(data.map(item => item.DID._id))];
         data = await numberRepo.findMany(uniqueDIDs);
 
         data = data
@@ -863,19 +867,17 @@ async function DIDUserMapping(req, res) {
         if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
             for (const did of bodyReq.DID) {
                 try {
-                    const availCheck = await didUserMappingRepository.findOne({
-                        DID: did,
+                    const availCheck = await didUserMappingRepository.checkMappingIfNotExists(did, {
                         allocated_to: bodyReq.allocated_to,
                     });
 
                     const didDetail = await numberRepo.get(did)
 
                     if (availCheck) {
-                        await didUserMappingRepository.update(availCheck._id, { active: true, voice_plan_id: bodyReq?.voice_plan_id });
-                        await numberRepo.update(availCheck.DID, { allocated_to: availCheck.allocated_to, voice_plan_id: bodyReq?.voice_plan_id });
+                        await didUserMappingRepository.updateMappingDetail(did, { active: true, voice_plan_id: bodyReq?.voice_plan_id , allocated_to :bodyReq.allocated_to});
+                        await numberRepo.update(did, { allocated_to: bodyReq.allocated_to, voice_plan_id: bodyReq?.voice_plan_id });
                     } else {
-                        await didUserMappingRepository.create({
-                            DID: did,
+                        await didUserMappingRepository.addMappingDetail(did, {
                             level: 1,
                             allocated_to: bodyReq.allocated_to,
                             parent_id: req.user.id,
@@ -899,9 +901,8 @@ async function DIDUserMapping(req, res) {
         } else {
             for (const did of bodyReq.DID) {
                 try {
-                    const availCheck = await didUserMappingRepository.findOne({
-                        DID: did,
-                        allocated_to: bodyReq.allocated_to
+                    const availCheck = await didUserMappingRepository.checkMappingIfNotExists(did, {
+                        allocated_to: bodyReq.allocated_to,
                     });
             
                     const parentVoicePlanDetail = (await numberRepo.findOneWithVoicePlan({_id : did}))?.voice_plan_id;
@@ -939,14 +940,9 @@ async function DIDUserMapping(req, res) {
                     }
             
                     if (availCheck) {
-                        await didUserMappingRepository.update(availCheck._id, { active: true, voice_plan_id: bodyReq?.voice_plan_id });
-                        await numberRepo.update(availCheck.DID, { allocated_to: availCheck.allocated_to, voice_plan_id: bodyReq?.voice_plan_id });
+                        await didUserMappingRepository.updateMappingDetail(did, { active: true, voice_plan_id: bodyReq?.voice_plan_id , allocated_to :bodyReq.allocated_to});
+                        await numberRepo.update(did, { allocated_to: bodyReq.allocated_to, voice_plan_id: bodyReq?.voice_plan_id });
                     } else {
-                        const number = await didUserMappingRepository.findOne({
-                            DID: did,
-                            allocated_to: req.user.id,
-                            active: true
-                        });
             
                         const roleOfAllocateTo = await userRepo.get(bodyReq.allocated_to);
                         if (!roleOfAllocateTo) {
@@ -964,13 +960,12 @@ async function DIDUserMapping(req, res) {
                         } else {
                             level = DID_ALLOCATION_LEVEL.CALLCENTER;
                         }
-            
-                        await didUserMappingRepository.create({
-                            DID: did,
+
+                        await didUserMappingRepository.addMappingDetail(did, {
                             level,
                             allocated_to: bodyReq.allocated_to,
-                            parent_id: number._id,
-                            voice_plan_id: bodyReq?.voice_plan_id
+                            parent_id: req.user.id,
+                            voice_plan_id: bodyReq?.voice_plan_id,
                         });
             
                         await numberRepo.update(did, {
@@ -1004,7 +999,6 @@ async function DIDUserMapping(req, res) {
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
     } catch (error) {
-        console.log(error);
         Logger.error(`Numbers -> unable to Allocate Number error: ${JSON.stringify(error)}`);
 
         let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
@@ -1053,12 +1047,10 @@ async function getToAllocateNumbers(req, res) {
 async function getAllocatedNumbers(req, res) {
     try {
         const allocatedToId = req.params.id;
-        console.log('allocatedToId', allocatedToId)
 
         let allocatedNumbers = await didUserMappingRepository.getForOthers(allocatedToId);
-        console.log('allocatedNumbers', allocatedNumbers)
 
-        const allocatedTo = allocatedNumbers.length > 0 ? allocatedNumbers[0].allocated_to.username : null 
+        const allocatedTo = allocatedNumbers.length > 0 ? allocatedNumbers[0].mapping_detail[0].allocated_to.username : null 
         const allocatedBy = req.user.username
 
         const uniqueDIDs = [...new Set(allocatedNumbers.map(item => item.DID))];
@@ -1066,14 +1058,14 @@ async function getAllocatedNumbers(req, res) {
         // Create a map of DID to voiceplan_id
         const didVoicePlanMap = {};
         allocatedNumbers.forEach(item => {
-        didVoicePlanMap[item.DID] = item.voice_plan_id;
+        didVoicePlanMap[item.DID._id] = item.mapping_detail[0].voice_plan_id;
         });
 
         const data = await numberRepo.findMany(uniqueDIDs);
         const updatedData = data.map((item) => {
             return {
               ...item,  
-              voice_plan_id: didVoicePlanMap[item._id] || item.voice_plan_id,
+              voice_plan_id: didVoicePlanMap[item._id] ,
               allocated_name: allocatedTo, 
               allocated_by: allocatedBy
             };
@@ -1114,13 +1106,11 @@ async function removeAllocatedNumbers(req, res) {
         const { DID, user_id } = req.body;
 
         for (const did of DID) {
-            let allocatedNumbers = await didUserMappingRepository.findOne({
-                DID: did,
+            let allocatedNumbers = await didUserMappingRepository.checkMappingIfNotExists(did, {
                 allocated_to: user_id,
             });
 
-            const childDetail = await didUserMappingRepository.findOne({
-                DID: did,
+            const childDetail = await didUserMappingRepository.checkMappingIfNotExists(did, {
                 parent_id: allocatedNumbers._id,
                 active: true
             })
@@ -1136,25 +1126,25 @@ async function removeAllocatedNumbers(req, res) {
             }
 
             const superadminCheck = await userRepo.getByUserRole(USERS_ROLE.SUPER_ADMIN);
-            const isSame = allocatedNumbers.parent_id.toString() === superadminCheck._id.toString();
+            const isSame = allocatedNumbers?.mapping_detail[0].parent_id.toString() === superadminCheck._id.toString();
 
             if (isSame) {
                 // update did user mapping
-                await didUserMappingRepository.update(allocatedNumbers._id, { active: false, voice_plan_id : null });
+                await didUserMappingRepository.updateMappingDetail(allocatedNumbers.DID, { active: false, voice_plan_id : null, allocated_to:allocatedNumbers?.mapping_detail[0].allocated_to });
 
                 // update numbers
                 await numberRepo.update(did, { allocated_to: null, voice_plan_id : null  });
 
                 //update voice plan
-                await voicePlanRepo.update(bodyReq?.voice_plan_id , {is_allocated : 0})
+                await voicePlanRepo.update(allocatedNumbers?.mapping_detail[0].voice_plan_id , {is_allocated : 0})
             } else {
-                const parentDetail = await didUserMappingRepository.get(allocatedNumbers.parent_id);
-                
+                const parentDetail = await didUserMappingRepository.checkMappingIfNotExists(did, {allocated_to : req.user.id});
+
                 // update did user mapping
-                await didUserMappingRepository.update(allocatedNumbers._id, { active: false, voice_plan_id : null  });
+                await didUserMappingRepository.updateMappingDetail(allocatedNumbers.DID, { active: false, voice_plan_id : null , allocated_to :  allocatedNumbers?.mapping_detail[0].allocated_to});
 
                 // update numbers
-                await numberRepo.update(did, { allocated_to: parentDetail.allocated_to, voice_plan_id : parentDetail.voice_plan_id });
+                await numberRepo.update(did, { allocated_to: parentDetail.mapping_detail[0].allocated_to, voice_plan_id : parentDetail.mapping_detail[0].voice_plan_id });
             }
         }
 
