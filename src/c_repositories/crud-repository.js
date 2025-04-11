@@ -112,7 +112,6 @@ class CrudRepository {
     }
 
     async findOne(conditions) {
-
         try {
             const response = await this.model.findOne({
                 where: {

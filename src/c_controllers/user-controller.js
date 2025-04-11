@@ -427,13 +427,15 @@ async function signinUser(req, res) {
 
           if (req.user.role === USERS_ROLE.RESELLER) {
               const availLicence = await licenceRepo.findOne({ user_id: req.user.id });
-              if (!availLicence || availLicence.available_licence === 0) {
+              const availableLicenceValue = Number(availLicence.available_licence);
+              if (!availLicence || availableLicenceValue === 0) {
                   return res.status(StatusCodes.BAD_REQUEST).json({
                       message: 'Licence is not available',
                       error: { statusCode: StatusCodes.BAD_REQUEST }
                   });
               }
           }
+
   
           // Process sub-user licenses if applicable
           if (SUB_LICENCE_ROLE.includes(req.user.role)) {
@@ -452,6 +454,8 @@ async function signinUser(req, res) {
           }
   
           // Create user with the respective role
+
+          console.log("object", bodyReq.user);
           user = await userRepo.create(bodyReq.user);
           
           // Handle company admin specific logic

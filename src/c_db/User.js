@@ -136,7 +136,6 @@ User.prototype.comparePassword = async function (password) {
 User.prototype.createToken = function () {
   try {
     const userData = { id: this.id, username: this.username, role: this.role };
-    console.log("USER DATA", userData);
     return jwt.sign(userData, ServerConfig.JWT_SECRET, { expiresIn: ServerConfig.JWT_EXPIRY });
   } catch (error) {
     console.error("JWT Token Generation Failed:", error);
