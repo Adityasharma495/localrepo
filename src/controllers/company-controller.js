@@ -10,11 +10,23 @@ const userJourneyRepo = new UserJourneyRepository();
 async function create(req, res){
 
     const bodyReq = req.body;
-    const data = { name: bodyReq.name, created_by: req.user.id }
-
     try {
 
-        const response = await companyRepository.create(data);
+        // check for duplicate Company name
+        const conditions = {
+            created_by: req.user.id, 
+            name: bodyReq.company.name 
+        }
+        const checkDuplicate = await companyRepository.findOne(conditions);
+            
+        if (checkDuplicate && Object.keys(checkDuplicate).length !== 0) {
+            ErrorResponse.message = `Company Name Already Exists`;
+                return res
+                .status(StatusCodes.BAD_REQUEST)
+                .json(ErrorResponse);
+        }
+
+        const response = await companyRepository.create(bodyReq.company);
 
         const userJourneyfields = {
             module_name: MODULE_LABEL.COMPANY,
@@ -116,14 +128,26 @@ async function updateCompany(req, res){
 
     const companyId = req.params.id;
 
+
     try {
 
         const bodyReq = req.body;
-        const data = {
-            name: bodyReq.name.trim()
-        }
+        const currentData = await companyRepository.get(companyId);
 
-        const response = await companyRepository.update(companyId, data);
+        // Check for duplicate flow Name
+        if (currentData.name !== bodyReq.company.name) {
+          const nameCondition = {
+            created_by: req.user.id,
+            name: bodyReq.company.name
+          };
+        
+          const nameDuplicate = await companyRepository.findOne(nameCondition);
+          if (nameDuplicate) {
+              ErrorResponse.message = 'Company Name already exists';
+              return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+            }
+        }
+        const response = await companyRepository.update(companyId, bodyReq.company);
 
         const userJourneyfields = {
             module_name: MODULE_LABEL.COMPANY,
