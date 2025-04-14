@@ -485,7 +485,9 @@ async function getAll(req, res) {
             data = await didUserMappingRepository.getForOthers(req.user.id);
         }
 
-        const uniqueDIDs = [...new Set(data.map(item => item.DID._id))];
+        console.log(data)
+
+        const uniqueDIDs = [...new Set(data.map(item => item.DID?._id))];
         data = await numberRepo.findMany(uniqueDIDs);
 
         data = data
@@ -505,7 +507,7 @@ async function getAll(req, res) {
         return res.status(StatusCodes.OK).json(SuccessRespnose);
 
     } catch (error) {
-        
+        console.log(error)
         ErrorResponse.message = error.message;
         ErrorResponse.error = error;
 

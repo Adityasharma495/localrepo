@@ -1,5 +1,5 @@
 const {StatusCodes} = require('http-status-codes');
-const { ErrorResponse, constants } = require('../utils/common');
+const { ErrorResponse, Helpers, Authentication } = require('../utils/common');
 const AppError = require('../utils/errors/app-error');
 
 function validateCompanyRequest(req, res, next) {
@@ -19,7 +19,7 @@ function validateCompanyRequest(req, res, next) {
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
     }
-    else if (bodyReq.phone == undefined) {
+    else if (bodyReq.phone == undefined || !Helpers.validatePhone(bodyReq.phone)) {
         ErrorResponse.message = 'Something went wrong while creating Company';
         ErrorResponse.error = new AppError(['Company Phone not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
         return res
@@ -75,7 +75,12 @@ function modifyCompanyRequest(req, is_create = true) {
             }
         }
 
-        if (is_create) inputData.company.created_by = req.user.id
+        const associatedCompanyCategory = Authentication.getUserAssociatedCompanyCategory(req.user.role);
+
+        if (is_create) {
+            inputData.company.created_by = req.user.id
+            inputData.company.category = associatedCompanyCategory;
+        } 
 
         return inputData;
 
@@ -108,24 +113,4 @@ function modifyCompanyUpdateBodyRequest(req, res, next) {
 
 }
 
-function validateDeleteRequest (req, res, next) {
-    const bodyReq = req.body;
-
-    if (!req.is('application/json')) {
-        ErrorResponse.message = 'Something went wrong while Deleting Server';
-        ErrorResponse.error = new AppError(['Invalid content type, incoming request must be in application/json format'], StatusCodes.BAD_REQUEST);
-        return res
-            .status(StatusCodes.BAD_REQUEST)
-            .json(ErrorResponse);
-    }
-    else if (bodyReq.serverIds == undefined || typeof bodyReq.serverIds !== 'object' || !bodyReq.serverIds.length > 0) {
-        ErrorResponse.message = 'Something went wrong while Deleting Server';
-        ErrorResponse.error = new AppError(['serverIds not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-        return res
-            .status(StatusCodes.BAD_REQUEST)
-            .json(ErrorResponse);
-    }
-    next();
-}
-
-module.exports = {validateCompanyRequest, modifyCompanyCreateBodyRequest, modifyCompanyRequest, modifyCompanyUpdateBodyRequest, validateDeleteRequest}
+module.exports = {validateCompanyRequest, modifyCompanyCreateBodyRequest, modifyCompanyRequest, modifyCompanyUpdateBodyRequest}

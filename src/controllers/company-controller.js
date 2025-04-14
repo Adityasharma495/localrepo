@@ -44,8 +44,8 @@ async function create(req, res){
         return res.status(StatusCodes.CREATED).json(SuccessRespnose);
         
     } catch (error) {
-        
-        Logger.error(`Company -> unable to create: ${ JSON.stringify(data) } error: ${ JSON.stringify(error) }`);
+        console.log(error)
+        Logger.error(`Company -> unable to create error: ${ JSON.stringify(error) }`);
 
         let statusCode = error.statusCode;
         let errorMsg = error.message;
@@ -68,7 +68,7 @@ async function getAll(req, res){
 
     try {
 
-        const data = await companyRepository.getAll();
+        const data = await companyRepository.getAll(req.user.id);
         SuccessRespnose.data = data;
         SuccessRespnose.message = 'Success';
 
