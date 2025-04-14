@@ -512,7 +512,6 @@ async function removeAgent(req, res) {
     } else {
       await agentGroupRepo.update(id, {agents : updatedAgents})
       await agentRepo.update(targetAgentId, {is_allocated: 0})
-      await memberScheduleRepo.delete(removedMemberScheduleId)
     }
 
     // Success response
