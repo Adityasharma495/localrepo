@@ -28,9 +28,9 @@ async function create(req, res) {
       domain: bodyReq.domain.trim(),
       description: bodyReq.description.trim(),
       created_by: req.user.id,
-      company: req.user.companies.id,
-      country_code: bodyReq.countryCode.trim(),
-      timezone: bodyReq.timezone.trim(),
+      company: req.user.companies?.id,
+      country_code_id: bodyReq.countryCode.trim(),
+      timezone_id: bodyReq.timezone.trim(),
     };
 
     const response = await callCentreRepository.create(data);
@@ -75,7 +75,7 @@ async function create(req, res) {
 
 async function getAll(req, res) {
   try {
-    const data = await callCentreRepository.getAll(req.user.id);
+    const data = await callCentreRepository.getAll(req.user.role, req.user.id);
     SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
     SuccessRespnose.message = "Success";
 
@@ -134,8 +134,8 @@ async function updateCallCentre(req, res) {
     name: bodyReq.name.trim(),
     domain: bodyReq.domain.trim(),
     description: bodyReq.description.trim(),
-    country_code: bodyReq.countryCode.trim(),
-    timezone: bodyReq.timezone.trim(),
+    country_code_id: bodyReq.countryCode.trim(),
+    timezone_id: bodyReq.timezone.trim(),
   };
 
   try {

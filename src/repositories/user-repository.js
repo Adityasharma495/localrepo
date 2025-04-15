@@ -177,7 +177,6 @@ class UserRepository extends CrudRepository{
         }
         
     }
-    
 
 }
 

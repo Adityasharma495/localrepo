@@ -106,7 +106,8 @@ const MODEL = {
     INCOMING_REPORTS: 'incoming_report',
     DOWNLOAD_REPORTS: 'download_report',
     VOIP_PROFILE: 'voip_profile',
-    TELEPHONY_PROFILE: 'telephony_profile'
+    TELEPHONY_PROFILE: 'telephony_profile',
+    VOICE_PLAN: 'voice_plans'
 }
 
 const AUTH_TYPES = {
@@ -221,6 +222,7 @@ const MODULE_LABEL = {
     EXTENSION: 'extension',
     QUEUE: 'queue',
     PROMPTS: 'Prompts',
+    VOICE_PLAN: 'Voice Plan',
     CREDITS: 'Credits'
 }
 

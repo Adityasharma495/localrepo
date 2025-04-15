@@ -104,10 +104,12 @@ class NumbersRepository extends CrudRepository {
 
     async getAllocatedNumbers(user_id) {
         try {
-            const response = await this.model.find({ is_deleted: false, allocated_to: user_id }).populate({
+            const response = await this.model.find({ is_deleted: false, allocated_to: user_id })
+            .populate({
                 path: 'allocated_to', 
                 select: '_id username'
-              });
+              })
+              .populate("voice_plan_id");
             return response;
         } catch (error) {
             throw error;
@@ -119,7 +121,7 @@ class NumbersRepository extends CrudRepository {
             const response = await this.model.find({
                 is_deleted: false,
                 _id: { $in: ids }
-            }).lean();
+            }).populate("voice_plan_id").populate("allocated_to").lean();
             return response;
         } catch (error) {
             throw error;
@@ -129,7 +131,16 @@ class NumbersRepository extends CrudRepository {
     async update(id, data) {
         const response = await this.model.findOneAndUpdate({ _id: id}, data, { runValidators: true, new: true });
         return response;
-      }
+    }
+
+    async findOneWithVoicePlan(conditions) {
+        try {
+            const response = await this.model.findOne({ is_deleted: false, ...conditions}).populate('voice_plan_id').lean();
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    }
     
 }
 

@@ -24,9 +24,12 @@ const exportLists = require("./export-List-routes");
 const downloadReportRoute = require('./download-report-routes.js');
 const incomingSummaryRoute = require('./incoming-summary-routes.js');
 const callCentreRoutes = require('./call-centre-routes');
-const acl_settings = require("./acl-settings-routes.js")
+const acl_settings = require("./acl-settings-routes.js");
 const countryCodeRoutes = require('./country-code-routes');
-const numberFileListRoutes = require("./number-file-routes.js")
+const numberFileListRoutes = require("./number-file-routes.js");
+const voicePlanRoutes = require('./voice-plan-routes.js');
+const VoiceCategory = require('./voice-category');
+const extensionRoute = require("./extension-routes");
 
 
 router.use('/users', userRoutes);
@@ -55,5 +58,8 @@ router.use('/incoming-summary', incomingSummaryRoute);
 router.use('/call-centres', callCentreRoutes);
 router.use('/acl-settings', acl_settings);
 router.use('/country-codes', countryCodeRoutes);
+router.use('/voice-plan', voicePlanRoutes);
+router.use("/voice-category",VoiceCategory);
+router.use("/extension", extensionRoute)
 
 module.exports = router;

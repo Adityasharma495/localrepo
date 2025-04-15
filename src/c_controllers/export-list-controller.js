@@ -4,7 +4,6 @@ const {
   CallCentreRepository,
   TrunkRepository,
   NumbersRepository,
-  IVRRepository,
   DataCenterRepository,
   ServerManagementRepository,
   ModuleRepository,
@@ -15,6 +14,8 @@ const {
   AgentGroupRepository,
   ExtensionRepository,
   CreditsRepository,
+  VoicePlansRepository,
+  FlowRepository,
 } = require("../c_repositories");
 
 const { Parser } = require("json2csv");
@@ -25,10 +26,10 @@ async function exportData(req, res) {
 
   const repositories = {
     Users: new UserRepository(),
-    // CallCentre: new CallCentreRepository(),
+    CallCentre: new CallCentreRepository(),
     Trunks: new TrunkRepository(),
     Numbers: new NumbersRepository(),
-    IVR: new IVRRepository(),
+    IVR: new FlowRepository(),
     DataCenter: new DataCenterRepository(),
     ServerManagement: new ServerManagementRepository(),
     Module: new ModuleRepository(),
@@ -39,6 +40,7 @@ async function exportData(req, res) {
     // AgentGroup: new AgentGroupRepository(),
     // Extension: new ExtensionRepository(),
     Credits: new CreditsRepository(),
+    VoicePlan: new VoicePlansRepository(),
   };
 
   try {
@@ -49,7 +51,7 @@ async function exportData(req, res) {
     }
 
     const repo = repositories[model];
-    const data = await repo.findAllData();
+    const data = await repo.findAllData(req.user.role, req.user.id);
 
     if (!data || data.length === 0) {
       return res

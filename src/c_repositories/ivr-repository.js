@@ -37,6 +37,11 @@ class IVRRepository extends CrudRepository {
       throw error;
     }
   }
+
+  async findAllData() {
+    const response = await this.model.findAll();
+    return response;
+  }
 }
 
 module.exports = IVRRepository;

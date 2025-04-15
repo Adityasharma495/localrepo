@@ -1,5 +1,3 @@
-const promptsMiddleware = require('./prompts-middleware');
-
 module.exports = {
     UserMiddleware: require('./user-middleware'),
     AuthMiddleware: require('./auth-middleware'),
@@ -24,5 +22,6 @@ module.exports = {
     CreditMiddleware: require('./credit-middleware'),
     IncomingReportMiddleware: require('./incoming-report-middleware'),
     DownloadReportMiddleware: require('./download-report-middleware'),
+    VoicePlansMiddleware: require('./voice-plans-middleware'),
     CompanyMiddleware: require('./company-middleware'),
 }

@@ -4,7 +4,6 @@ const { constants } = require('../utils/common');
 
 const DID_USER_MAPPING_MODEL_NAME = constants.MODEL.DID_USER_MAPPING;
 const NUMBER_MODEL_NAME = constants.MODEL.NUMBERS;
-const USER_MODEL_NAME = constants.MODEL.USERS;
 
 const DIDUserMapping = sequelize.define(DID_USER_MAPPING_MODEL_NAME, {
   id: {
@@ -21,25 +20,10 @@ const DIDUserMapping = sequelize.define(DID_USER_MAPPING_MODEL_NAME, {
       key: 'id',
     },
   },
-  level: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-  allocated_to: {
-    type: DataTypes.UUID,
+  mapping_detail: {
+    type: DataTypes.JSONB,
     allowNull: true,
-    references: {
-      model: USER_MODEL_NAME,
-      key: 'id',
-    },
-  },
-  parent_id: {
-    type: DataTypes.UUID,
-    allowNull: true,
-  },
-  active: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
+    defaultValue: [],
   },
   created_at: {
     type: DataTypes.DATE,

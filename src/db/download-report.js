@@ -5,13 +5,17 @@ const USER_MODEL_NAME = constants.MODEL.USERS;
 
 const downloadReportSchema = new mongoose.Schema({
         did: {
-            type: Number,
+            type: String,
             required: true
         },
         user_id: {
             type: mongoose.Schema.Types.ObjectId,
             ref: USER_MODEL_NAME,
             default: null 
+        },
+        schedule_date: {
+            type: Date,
+            default: null
         },
         requested_date: {
             type: Date,

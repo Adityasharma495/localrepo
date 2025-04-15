@@ -1,5 +1,6 @@
 const CrudRepository = require("./crud-repository");
 const { CallCenter } = require("../c_db");
+const { constants } = require("../utils/common");
 
 class CallCentreRepository extends CrudRepository {
   constructor() {
@@ -24,6 +25,18 @@ class CallCentreRepository extends CrudRepository {
     } catch (error) {
       throw error;
     }
+  }
+
+  async findAllData(role, id) {
+    let response;
+    if (role === constants.USERS_ROLE.SUPER_ADMIN) {
+      response = await this.model.findAll();
+    } else {
+      response = await this.model.findAll({
+        where: { created_by: id }
+      });
+    }
+    return response;
   }
 }
 

@@ -4,7 +4,7 @@ const COMPANIES_MODEL_NAME = constants.MODEL.COMPANIES;
 const USER_MODEL_NAME = constants.MODEL.USERS;
 const NUMBER_FILES_LIST = constants.MODEL.NUMBER_FILES_LIST;
 const NUMBER_MODEL_NAME = constants.MODEL.NUMBERS;
-
+const VOICE_PLAN_MODEL_NAME = constants.MODEL.VOICE_PLAN;
 
 const NumbersSchema = new mongoose.Schema({
     status: {
@@ -73,6 +73,11 @@ const NumbersSchema = new mongoose.Schema({
         ref: USER_MODEL_NAME,
         default: null
     },
+    voice_plan_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: VOICE_PLAN_MODEL_NAME,
+        default: null
+    },
     created_at: {
         type: Date
     },
@@ -90,7 +95,6 @@ const NumbersSchema = new mongoose.Schema({
     }
 }, {
     versionKey: false,
-    timestamps: true // Enable automatic timestamps
 });
 
 // Pre-save middleware to convert timestamps to IST

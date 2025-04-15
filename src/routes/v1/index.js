@@ -35,7 +35,7 @@ const creditRoute = require('./credit-routes.js')
 const incomingSummaryRoute = require('./incoming-summary-routes.js')
 const incomingReportRoute = require('./incoming-report-routes.js')
 const downloadReportRoute = require('./download-report-routes.js')
-
+const voicePlanRoutes = require('./voice-plan-routes.js')
 
 
 router.use('/users', userRoutes);
@@ -72,5 +72,6 @@ router.use('/credits', creditRoute)
 router.use('/incoming-summary', incomingSummaryRoute)
 router.use('/incoming-report', incomingReportRoute)
 router.use('/download-report', downloadReportRoute)
+router.use('/voice-plan', voicePlanRoutes)
 
 module.exports = router;

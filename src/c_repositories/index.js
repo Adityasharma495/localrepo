@@ -35,4 +35,7 @@ module.exports = {
   IncomingSummaryRepository: require("./incoming-summary-repository"),
   HandleFileSaveRepository: require("./handle-FileSave-repositoy"),
   CallCentreRepository: require("./call-centre-repository"),
+  VoicePlansRepository: require("./voice-plans-repository"),
+  TelephonyProfileRepository: require("./telephony-profile-repository"),
+  SubscriberRepository: require("./subscriber-repository"),
 };

@@ -29,7 +29,12 @@ const AgentsGroupSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: MEMEBER_SCHEDULES_MODEL_NAME,
             required: false
-          }
+          },
+          priority: {
+            type: Number,
+            required: false,
+            default : 0
+          },
         }
     ],
     manager: {

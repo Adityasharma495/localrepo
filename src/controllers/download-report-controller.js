@@ -8,22 +8,18 @@ const downloadReportRepo = new DownloadReportRepository();
 
 async function createDownloadReport(req, res) {
     const bodyReq = req.body;
-    console.log('bodyReqbodyReqbodyReqbodyReqbodyReq', bodyReq)
-    // process.exit(0);
-
     try {
       const responseData = {};
       const getData = await downloadReportRepo.findOne({
         user_id : bodyReq.user_id,
-        did:  bodyReq.did
+        did:  bodyReq.did,
+        status: 0
       })
-
-      console.log('getData', getData)
 
       if (getData) {
         return res.status(StatusCodes.CREATED).json({
           data: responseData,
-          message: "Entry Already Presnet"
+          message: "Entry Already Present"
         });
       }
 
