@@ -36,6 +36,9 @@ const VoicePlan = require("./voice-plans");
 const VoipProfile = require("./voip-profile");
 const TelephonyProfile = require("./telephony-profile");
 const Subscriber = require("./subscriber");
+const Extension = require("./extention");
+const Call = require("./call");
+const Queue = require("./queue");
 
 Credit.belongsTo(User, { foreignKey: "user_id",onDelete: 'CASCADE',onUpdate: 'CASCADE', });
 Credit.belongsTo(User, { foreignKey: "from_user", as: "fromUser" });
@@ -67,7 +70,8 @@ User.hasMany(Credit, { foreignKey: "action_user", as: "actionUser" });
 User.belongsTo(AclSettings, {foreignKey: 'acl_settings_id',as: 'acl_settings'});
 AclSettings.hasMany(User, {foreignKey: 'acl_settings_id',as: 'users'});
 User.hasMany(VoicePlan, { foreignKey: "user_id" });
-  
+
+User.hasMany(Queue, { foreignKey: 'created_by', as: 'created_queues' });
 
 UserJourney.belongsTo(User, { foreignKey: "created_by", as: "creator" });
 User.hasMany(UserJourney, { foreignKey: "created_by", as: "creator" });
@@ -80,6 +84,11 @@ IncomingSummary.belongsTo(User, { foreignKey: "parent_id", as: "parent" });
 IncomingSummary.belongsTo(User, { foreignKey: "s_parent_id", as: "sParent" });
 
 VoicePlan.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
+Queue.belongsTo(Extension, { foreignKey: 'extension', as: 'extension_data' });
+Queue.belongsTo(User, { foreignKey: 'created_by', as: 'created_by_user' });
+
+Extension.hasMany(Queue, { foreignKey: 'extension', as: 'queues' });
 
 module.exports = { 
     Agents,
@@ -120,4 +129,7 @@ module.exports = {
     VoipProfile,
     TelephonyProfile,
     Subscriber,
+    Extension,
+    Call,
+    Queue,
 };

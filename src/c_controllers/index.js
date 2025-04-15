@@ -31,4 +31,6 @@ module.exports = {
     NumberFileListController: require("./number-fileList-controller"),
     VoicePlanController: require("./voice-plans-controller"),
     ExtensionController: require("./extension-controller"),
+    CallsController: require("./calls-controller"),
+    QueueController: require("./queue-controller"),
 }

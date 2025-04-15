@@ -9,8 +9,6 @@ const path = require('path');
 
 const app = express();
 
-const { Subscriber } = require("./c_db");
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors({ origin: '*' }));
@@ -34,8 +32,7 @@ const startServer = async () => {
         //     await sequelize.sync({ alter: true });
         //     console.log('✅ Database synchronized!');
         // }
-
-        // await Subscriber.sync({ alter: true, logging: true });
+        
         // console.log('✅ Successfully synced CockroachDB!');
         // Logger.info('CockroachDB -> Successfully synced');
 

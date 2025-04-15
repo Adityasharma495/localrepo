@@ -30,6 +30,8 @@ const numberFileListRoutes = require("./number-file-routes.js");
 const voicePlanRoutes = require('./voice-plan-routes.js');
 const VoiceCategory = require('./voice-category');
 const extensionRoute = require("./extension-routes");
+const callsRoutes = require("./calls-routes");
+const queueRoute = require('./queue-route');
 
 
 router.use('/users', userRoutes);
@@ -60,6 +62,8 @@ router.use('/acl-settings', acl_settings);
 router.use('/country-codes', countryCodeRoutes);
 router.use('/voice-plan', voicePlanRoutes);
 router.use("/voice-category",VoiceCategory);
-router.use("/extension", extensionRoute)
+router.use("/extension", extensionRoute);
+router.use('/calls', callsRoutes);
+router.use("/queue", queueRoute);
 
 module.exports = router;

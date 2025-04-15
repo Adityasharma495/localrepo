@@ -4,7 +4,7 @@ const { AuthMiddleware, DownloadReportMiddleware } = require('../../middlewares'
 const {DownloadReportController} = require('../../c_controllers');
 
 
-// Create download-report api/v2/download-report/create
+// Create download-report api/v2/download-report/
 router.post('/', AuthMiddleware.validateUser, DownloadReportMiddleware.validateCreateRequest,
 DownloadReportController.createDownloadReport);
 

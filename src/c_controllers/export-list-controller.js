@@ -38,7 +38,7 @@ async function exportData(req, res) {
     NumberFileList: new NumberFileListRepository(),
     // Agent: new AgentRepository(),
     // AgentGroup: new AgentGroupRepository(),
-    // Extension: new ExtensionRepository(),
+    Extension: new ExtensionRepository(),
     Credits: new CreditsRepository(),
     VoicePlan: new VoicePlansRepository(),
   };

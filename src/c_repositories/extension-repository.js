@@ -28,7 +28,7 @@ class ExtensionRepository extends CrudRepository {
         order: [["created_at", "DESC"]], // Sort by created_at DESC
       });
 
-      return response;
+      return response.map(item => item.toJSON());
     } catch (error) {
       throw error;
     }

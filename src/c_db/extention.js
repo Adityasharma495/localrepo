@@ -82,8 +82,8 @@ const Extension = sequelize.define(
 // ✅ Hooks for Password Hashing & Timestamp Conversion
 Extension.beforeCreate(async (extension) => {
   // Convert timestamps to IST
-  extension.created_at = convertToIST(new Date());
-  extension.updated_at = convertToIST(new Date());
+  // extension.created_at = convertToIST(new Date());
+  // extension.updated_at = convertToIST(new Date());
 
   // Hash password
   if (extension.password) {
@@ -93,7 +93,7 @@ Extension.beforeCreate(async (extension) => {
 
 Extension.beforeUpdate(async (extension) => {
   // Convert updated timestamp to IST
-  extension.updated_at = convertToIST(new Date());
+  // extension.updated_at = convertToIST(new Date());
 
   // Hash password if changed
   if (extension.changed('password')) {

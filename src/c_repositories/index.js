@@ -38,4 +38,6 @@ module.exports = {
   VoicePlansRepository: require("./voice-plans-repository"),
   TelephonyProfileRepository: require("./telephony-profile-repository"),
   SubscriberRepository: require("./subscriber-repository"),
+  CallsRepository: require("./calls-repository"),
+  QueueRepository: require("./queue-repository"),
 };
