@@ -63,6 +63,7 @@ class DIDUserMappingRepository extends CrudRepository {
   }
 
   async getForSuperadmin(id) {
+
     try {
       if (!id) {
         throw new AppError("ID is required", StatusCodes.BAD_REQUEST);

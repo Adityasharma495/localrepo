@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { ServerConfig } = require('../config');
 const {Authentication} = require('../utils/common');
 const AclSettings = require("./acl-settings")
+const SubUserLicence = require("./sub-user-licence")
 const Company = require("./companies")
 
 const User = sequelize.define(
@@ -58,12 +59,21 @@ const User = sequelize.define(
       allowNull: true,
       defaultValue: null
     },
+    prefix: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null
+    },
     companies: {
       type: DataTypes.JSONB,  
       allowNull: true,
       defaultValue: null
     },
     acl_settings_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
+    sub_user_licence_id: {
       type: DataTypes.UUID,
       allowNull: true,
     },
@@ -154,6 +164,10 @@ User.prototype.generateUserData = async function (tokenGenerate = false) {
           model: AclSettings,
           as: 'acl_settings',
           attributes: ['id', 'acl_name', 'module_operations'],
+        },
+        {
+          model: SubUserLicence,
+          as: 'sub_user_licence',
         }
       ]
     });

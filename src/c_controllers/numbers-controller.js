@@ -351,6 +351,7 @@ async function uploadNumbers(req, res) {
 
 async function getAll(req, res) {
   try {
+
     let data;
     if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
       data = await didUserMappingRepository.getForSuperadmin(req.user.id);

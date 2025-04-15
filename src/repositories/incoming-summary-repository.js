@@ -13,7 +13,7 @@ class IncomingSummaryRepository extends CrudRepository {
     try {
       const query = userId ? { user_id: userId } : {};
   
-      const response = await incomingSummaryModel.find(query)
+      const response = await incomingSummaryModel.find()
         .populate('user_id', ["_id", "username"])
         .populate('parent_id', ["_id", "username"])
         .populate('s_parent_id', ["_id", "username"])

@@ -4,7 +4,7 @@ const INCOMING_SUMMARY_MODEL = constants.MODEL.INCOMING_SUMMARY;
 
 const IncomingSummarySchema = new mongoose.Schema(
   {
-    did: { type: Number, required: true },
+    did: { type: String, required: true },
     user_id: { type: mongoose.Schema.Types.ObjectId, ref: constants.MODEL.USERS },
     schedule_date: { type: Date, required: true },
     nos_processed: { type: Number, default: 0 },

@@ -1,4 +1,4 @@
-const {UserRepository, CompanyRepository} = require("../c_repositories")
+const {UserRepository, CompanyRepository, SubUserLicenceRepository} = require("../c_repositories")
 const {LicenceRepository, UserJourneyRepository} = require("../c_repositories")
 const { StatusCodes } = require("http-status-codes");
 const {
@@ -17,6 +17,7 @@ const licenceRepo = new LicenceRepository();
 const companyRepo = new CompanyRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const version = process.env.API_V || '1';
+const subUserLicenceRepo = new SubUserLicenceRepository();
 
 
 async function signinUser(req, res) {
@@ -78,6 +79,7 @@ async function signinUser(req, res) {
   }
 
   async function getAll(req, res) {
+
 
     try {
       const userRole = req.query.role;
@@ -222,19 +224,29 @@ async function signinUser(req, res) {
           }
         } 
       } else {
+
         await userRepo.deleteMany(userIds, req.user);
+
+
         for (const userId of userIds) {
 
 
           const loggedInData = await userRepo.getForLicence(userId);
 
-          const availableLicence = loggedInData.sub_user_licence_id.available_licence;
 
-          const data = await userRepo.findOne({ _id: userId });
+
+          const availableLicence = loggedInData.sub_user_licence.available_licence;
+
+
+
+
+          const data = await userRepo.findOneDeleted({ id: userId });
+
+
 
           let updatedData = { ...availableLicence };
           updatedData[data.role] = (updatedData[data.role] || 0) + 1;
-          await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {available_licence: updatedData})
+          await subUserLicenceRepo.updatelicence(loggedInData.sub_user_licence.id, {available_licence: updatedData})
         }
       }
   
@@ -417,30 +429,111 @@ async function signinUser(req, res) {
   async function signupUser(req, res) {
       const bodyReq = req.body;
 
+
+      console.log("BODY REQ USER LICENCE", bodyReq);
       if (bodyReq?.user?.acl_settings) {
         bodyReq.user.acl_settings_id = bodyReq?.user?.acl_settings;
       }
+
       try {
           const responseData = {};
           let user;
           let subUserLicenceId;
 
-          if (req.user.role === USERS_ROLE.RESELLER) {
-              const availLicence = await licenceRepo.findOne({ user_id: req.user.id });
-              const availableLicenceValue = Number(availLicence.available_licence);
-              if (!availLicence || availableLicenceValue === 0) {
-                  return res.status(StatusCodes.BAD_REQUEST).json({
-                      message: 'Licence is not available',
-                      error: { statusCode: StatusCodes.BAD_REQUEST }
-                  });
+
+          console.log("USER ROLE", req.user.role);
+
+                  if (SUB_LICENCE_ROLE.includes(req.user.role)) {
+
+                    //fetch logged in user sub licence data
+                    const loggedInData = await userRepo.getForLicence(req.user.id)
+              
+                    console.log("LOGGED IN DATA",  loggedInData.sub_user_licence);
+
+                    //fetch logged in user sub licence data(available_licence)
+                    const subLicenceData = loggedInData.sub_user_licence.available_licence
+                    
+
+                    console.log("TOTAL LICENCE", loggedInData.sub_user_licence.total_licence);
+                    console.log("SUBLICENCE DATA", subLicenceData);
+
+
+        
+
+
+                    // if available_licence are 0 then return
+                    if (Number(subLicenceData[bodyReq.user.role]) === 0) {
+                       ErrorResponse.message = 'Licence is not available';
+                      return res
+                          .status(StatusCodes.BAD_REQUEST)
+                          .json(ErrorResponse);
+                    }
+              
+                    // if available_licence are not 0 then update sub user licence
+                    // const updatedData = {
+                    //   ...subLicenceData, 
+                    //   [bodyReq.user.role]: Number(subLicenceData[bodyReq.user.role] || 0) - 1
+                    // };
+                    // bodyReq.user.sub_user_licence_id = loggedInData.sub_user_licence_id._id
+
+
+                    console.log("PARENT LICENCSE",bodyReq.user.parent_licence);
+                    
+
+                    await subUserLicenceRepo.updateById(loggedInData.sub_user_licence.id, {available_licence: bodyReq.user.parent_licence})
+              
+                  }
+
+
+
+                  if (req.user.role === USERS_ROLE.COMPANY_ADMIN && bodyReq.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
+                        const campanyAdmin = await userRepo.get(req.user.id)
+                        console.log("COMAPANY ADMIN", campanyAdmin);
+                        const prefix = campanyAdmin.prefix + PREFIX_VALUE
+
+                        console.log("PREFIX", prefix);
+
+                        bodyReq.user.prefix = prefix
+                  
+                        user = await userRepo.create(bodyReq.user);
+
+                        console.log("USSER ", user);
+                        // await licenceCreated(bodyReq, req.user, user);
+                        await userRepo.update(req.user.id, {prefix: prefix})
+                      } else {
+                        user = await userRepo.create(bodyReq.user);
+                        // await licenceCreated(bodyReq, req.user, user);
+                      }
+
+
+                  if (req.user.role === USERS_ROLE.RESELLER || SUB_LICENCE_ROLE.includes(req.user.role)) {
+
+
+                  const data = await subUserLicenceRepo.create({
+                  user_id : user.id,
+                  total_licence: bodyReq.user.sub_licence,
+                  available_licence: bodyReq.user.sub_licence,
+                  created_by: req.user.id
+                })
+          
+                subUserLicenceId = data.id
+
+                
+                await userRepo.update(user.id, {sub_user_licence_id: subUserLicenceId})
               }
-          }
 
   
           // Process sub-user licenses if applicable
           if (SUB_LICENCE_ROLE.includes(req.user.role)) {
+
+            console.log("REQUESTED ID", req.user.id);
               const loggedInData = await userRepo.getForLicence(req.user.id);
-              const availableLicences = loggedInData.sub_user_licence_id.available_licence;
+
+              console.log("LOGGED IN DATA", loggedInData);
+              const availableLicences = loggedInData.sub_user_licence.available_licence;
+
+              console.log("LAST AVA", availableLicences);
+
               if (Number(availableLicences[req.user.role]) === 0) {
                   return res.status(StatusCodes.BAD_REQUEST).json({
                       message: 'Licence is not available',
@@ -448,31 +541,23 @@ async function signinUser(req, res) {
                   });
               }
               const updatedLicenceCount = Number(availableLicences[req.user.role] || 0) - 1;
-              await subUserLicenceRepo.update(loggedInData.sub_user_licence_id._id, {
+
+              console.log("UPDATED", updatedLicenceCount);
+              await subUserLicenceRepo.update(loggedInData.sub_user_licence.id, {
                   available_licence: { ...availableLicences, [req.user.role]: updatedLicenceCount }
               });
           }
-  
-          // Create user with the respective role
-
-          console.log("object", bodyReq.user);
-          user = await userRepo.create(bodyReq.user);
           
-          // Handle company admin specific logic
-          if (req.user.role === USERS_ROLE.COMPANY_ADMIN && bodyReq.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
-              const companyAdmin = await userRepo.get(req.user.id);
-              const prefix = companyAdmin.prefix + PREFIX_VALUE;
-              user = await userRepo.create({ ...bodyReq.user, prefix });
-              await userRepo.update(req.user.id, { prefix });
-          }
+
   
           // Create license if a SUPER_ADMIN or SUB_SUPERADMIN creates a reseller
           if ([USERS_ROLE.SUPER_ADMIN, USERS_ROLE.SUB_SUPERADMIN].includes(req.user.role)) {
   
               await licenceCreated(bodyReq, req.user, user);
           }
+
+
   
-          // Handle company data
           if (bodyReq.company) {
               const companyData = {
                   ...bodyReq.company,
@@ -514,7 +599,9 @@ async function signinUser(req, res) {
 
   async function updateUser(req, res) {
 
+
     const uid = req.params.id;
+
     const bodyReq = req.body;
 
     if (bodyReq?.user?.acl_settings) {
@@ -528,6 +615,9 @@ async function signinUser(req, res) {
       
       // only update licence in case if reseller (reseller only update by superadmin or subsuperadmin)
       if (req.user.role === USERS_ROLE.SUPER_ADMIN || req.user.role === USERS_ROLE.SUB_SUPERADMIN || req.user.role === USERS_ROLE.RESELLER) {
+
+
+
         const user = await userRepo.update(uid, bodyReq.user);
 
 
@@ -537,7 +627,6 @@ async function signinUser(req, res) {
         responseData.user = await userInstance.generateUserData();
 
 
-  
         if (bodyReq.user.company) {
           await companyRepo.update(bodyReq.user.company.id, bodyReq.user.company);
           const updatedCompanyInstance = await companyRepo.get(bodyReq.user.company.id);
@@ -555,13 +644,21 @@ async function signinUser(req, res) {
         }
 
       
-       await userRepo.update(uid, bodyReq.user);
+     await userRepo.update(uid, bodyReq.user);
         
+
   
         if (req.user.role === USERS_ROLE.RESELLER) {
+
+
           const loggedInData = await userRepo.getForLicence(uid)
-          const total_licence = loggedInData.sub_user_licence_id.total_licence
-          const available_licence = loggedInData.sub_user_licence_id.available_licence
+
+          
+    
+          const total_licence = loggedInData.sub_user_licence.total_licence
+
+          const available_licence = loggedInData.sub_user_licence.available_licence
+  
   
           const used_licence = Object.keys(total_licence).reduce((acc, key) => {
             acc[key] = total_licence[key] - (available_licence[key] || 0);

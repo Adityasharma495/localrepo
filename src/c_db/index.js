@@ -31,6 +31,7 @@ const IncomingSummary = require("./incoming-summary");
 const CallStrategy = require("./call-stratergy");
 const VoiceCategory = require("./voice-category");
 const CallCenter = require("./call-centres");
+const SubUserLicence = require('./sub-user-licence');
 // const Company = require("./companies");
 
 
@@ -54,6 +55,7 @@ AclSettings.belongsTo(User, { foreignKey: "created_by", as: "creator" });
 User.hasMany(AclSettings, { foreignKey: "created_by", as: "aclsettings" });
 
 
+User.belongsTo(SubUserLicence, {foreignKey: 'sub_user_licence_id',as: 'sub_user_licence',});
 
 User.belongsTo(User, {foreignKey: 'created_by',as: 'createdByUser'});
 User.hasMany(Credit, { foreignKey: "user_id" });

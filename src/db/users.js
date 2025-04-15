@@ -169,7 +169,7 @@ const SUB_USER_LICENCE_MODEL = constants.MODEL.SUB_USER_LICENCE;
       const user = await this.model(USER_MODEL_NAME)
       .findById(this._id)
       .populate('acl_settings', '_id acl_name module_operations')
-      .populate('sub_user_licence_id')  // Assuming the module schema has a name field
+      .populate('sub_user_licence_id')
       .exec();
       if (!user) throw new Error('User not found');
       const userData = user.toObject();

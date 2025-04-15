@@ -306,8 +306,6 @@ async function get(req, res) {
 async function updateUser(req, res) {
   const uid = req.params.id;
   const bodyReq = req.body;
-  console.log('bodyReq', bodyReq);
-  // process.exit(0)
  
   try {
     const responseData = {};

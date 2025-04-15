@@ -11,7 +11,7 @@ class DownloadReportRepository extends CrudRepository {
 
     try {
       const query = current_uid ? { user_id: current_uid } : {};
-      let response = await downloadReportModel.find(query).lean();
+      let response = await downloadReportModel.find({}).lean();
       return response;
 
     } catch (error) {
@@ -40,6 +40,11 @@ class DownloadReportRepository extends CrudRepository {
     }
 
   }
+
+  async getAllData(filter = {}) {
+    const response = await this.model.find(filter);
+    return response;
+``}
 }
 
 module.exports = DownloadReportRepository;

@@ -253,6 +253,7 @@ async function updateCredit(req, res) {
 async function getAll(req, res) {
   try {
     let data;
+
     if (req.user.role !== USERS_ROLE.SUPER_ADMIN) {
       data = await creditRepo.getAll(req.user.id);
     } else {

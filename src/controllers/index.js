@@ -28,5 +28,6 @@ module.exports = {
     CreditController : require('./credit-controller'),
     IncomingSummaryController: require('./incoming-summary-controller'),
     IncomingReportController: require('./incoming-report-controller'),
-    DownloadReportController: require('./download-report-controller')
+    DownloadReportController: require('./download-report-controller'),
+    VoicePlansController: require('./voice-plans-controller')
 }

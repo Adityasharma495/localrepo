@@ -5,6 +5,7 @@ const incomingReportRepo = new IncomingReportRepository();
 const incomingSummaryRepo = new IncomingSummaryRepository();
 const { Logger } = require("../config");
 const mongoose = require('mongoose');
+const moment = require("moment-timezone");
 
 
 const connectMongo = async() => {
@@ -22,6 +23,19 @@ const mongoConnection = async() =>{
     } catch (error) {
                  Logger.error(`Mongodb -> Error while connecting: ${ JSON.stringify(error) }`)
     }
+}
+
+const getDateTimeFormat = (date) =>{
+
+            const startdateIST = moment.tz(date, "Asia/Kolkata"); // Parse as IST
+            const startdateUTC = startdateIST.utc().toDate(); // Convert to UTC Date Object
+
+            const now = new Date(startdateUTC);
+            const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
+            const istDate = new Date(now.getTime() + istOffset);
+
+            return istDate;
+
 }
 
 (async () => {
@@ -44,20 +58,23 @@ const mongoConnection = async() =>{
 
          subscription
          .on('message', async (message, content, ackOrNack) => {
-            Logger.info("subscribed content : " + content);
+            Logger.info("subscribed content : " + JSON.stringify(content));
             const cdrJson = content;//JSON.parse(content);
             let report_data = {};
             let summary_data = {};
+
             try {
               report_data = {
                  user_id : mongoose.Types.ObjectId.isValid(cdrJson.userId) ? cdrJson.userId : null,
                  call_sid : cdrJson.id,
                  caller_number : cdrJson.callerFrom,
                  callee_number : cdrJson.calleeTo,
-                 start_time : cdrJson.timings.START,
-                 end_time : cdrJson.timings.END,
+                 start_time : getDateTimeFormat(cdrJson.timings.START),
+                 end_time : getDateTimeFormat(cdrJson.timings.END),
                  dtmf : cdrJson.dtmf
             }
+
+            Logger.info("Report Date : "+JSON.stringify(report_data));
   
             const report = await incomingReportRepo.create(report_data);
             Logger.info(`Incoming Report -> added successfully: ${JSON.stringify(report)}`);
@@ -72,8 +89,8 @@ const mongoConnection = async() =>{
 
            try{
               
-              const did = cdrJson.callerFrom;
-              const startDate = cdrJson.timings.START;
+              const did = cdrJson.calleeTo;
+              const startDate = getDateTimeFormat(cdrJson.timings.START);
               const userId = cdrJson.userId;
               const connectedCalls = (cdrJson.billingDuration > 0 ? 1 : 0);
 
@@ -93,14 +110,16 @@ const mongoConnection = async() =>{
                         parent_id : mongoose.Types.ObjectId.isValid(incoming.parentId) ? incoming.parentId : null,
                         s_parent_id :  mongoose.Types.ObjectId.isValid(incoming.sparentId) ? incoming.sparentId : null,              
                    }
+
+                   console.log("summary : "+summary_data);
                    
                    const summary = await incomingSummaryRepo.updateSummary(summary_data);
-                   Logger.info(`Incoming Report -> updated successfully: ${JSON.stringify(summary)}`);
+                   Logger.info(`Incoming Summary -> updated successfully: ${JSON.stringify(summary)}`);
 
 
               }else{
                    summary_data = {
-                       did : did,
+                       did : cdrJson.calleeTo,
                        user_id : mongoose.Types.ObjectId.isValid(userId) ? incoming.userId : null,
                        schedule_date : startDate,
                        nos_processed : 1,
@@ -110,8 +129,10 @@ const mongoConnection = async() =>{
                        sms_count : cdrJson.smsCount ?? 0
                    }
 
+                   console.log("summary : "+summary_data);
+
                    const summary = await incomingSummaryRepo.create(summary_data);
-                   Logger.info(`Incoming Report -> added successfully: ${JSON.stringify(summary)}`);
+                   Logger.info(`Incoming Summary -> added successfully: ${JSON.stringify(summary)}`);
 
               }
            }

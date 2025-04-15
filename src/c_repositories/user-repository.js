@@ -1,5 +1,6 @@
 const CrudRepository = require('./crud-repository');
 const User = require('../c_db/User');
+const SubUserLicence = require("../c_db/sub-user-licence")
 const Company = require("../c_db/companies")
 const { constants, Authentication } = require('../utils/common');
 const {USERS_ROLE} = require('../utils/common/constants');
@@ -166,7 +167,14 @@ class UserRepository extends CrudRepository{
 
     async getForLicence(id) {
         try {
-            const response = await this.model.findById(id).populate('sub_user_licence_id').exec();
+            const response = await User.findByPk(id, {
+                include: [
+                  {
+                    model: SubUserLicence,
+                    as: 'sub_user_licence',
+                  }
+                ]
+              });
             if (!response) {
                 throw new AppError('Not able to find the resource', StatusCodes.NOT_FOUND);
             }

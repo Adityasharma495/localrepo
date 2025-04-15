@@ -22,13 +22,13 @@ class CreditRepository extends CrudRepository {
         ? {
             [Op.or]: [
               { user_id: id },
-              { fromUser: id },
-              { toUser: id },
-              { actionUser: id },
+              { from_user: id },
+              { to_user: id },
+              { action_user: id },
               { user_id: { [Op.in]: userIds } },
-              { fromUser: { [Op.in]: userIds } },
-              { toUser: { [Op.in]: userIds } },
-              { actionUser: { [Op.in]: userIds } },
+              { from_user: { [Op.in]: userIds } },
+              { to_user: { [Op.in]: userIds } },
+              { action_user: { [Op.in]: userIds } },
             ],
           }
         : {};

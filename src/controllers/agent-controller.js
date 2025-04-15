@@ -8,7 +8,6 @@ const AppError = require("../utils/errors/app-error");
 const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE} = require('../utils/common/constants');
 
 const { Logger } = require("../config");
-const { AgentGroupController } = require(".");
 
 const agentRepo = new AgentRepository();
 const userJourneyRepo = new UserJourneyRepository();
@@ -34,9 +33,26 @@ async function toggleStatus(req, res) {
     // Toggle the status
     const newStatus = agent.login_status === "1" ? "0" : "1";
 
-  
+    const subLicenceData = await subUserLicenceRepo.findOne({user_id : req.user.id})
+
+    if (Number(newStatus)) {
+      if (subLicenceData.available_licence.live_agent !== 0) {
+         subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent - 1;
+      } else {
+        ErrorResponse.message = 'Agent Live Limit Exceeds';
+        return res
+          .status(StatusCodes.BAD_REQUEST)
+          .json(ErrorResponse);
+      }
+    } else {
+      subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent + 1;
+    }
+
     // Update the agent's status
     const updatedAgent = await agentRepo.update(id, { login_status: newStatus });
+
+    //update sub user licence
+    await subUserLicenceRepo.updateById(subLicenceData._id, {available_licence: subLicenceData.available_licence})
 
     if (!updatedAgent) {
       return res

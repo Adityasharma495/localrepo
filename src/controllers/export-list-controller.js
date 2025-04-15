@@ -1,7 +1,7 @@
 const { StatusCodes } = require("http-status-codes");
-const { UserRepository, CallCentreRepository, TrunksRepository, NumbersRepository, IVRRepository,
+const { UserRepository, CallCentreRepository, TrunksRepository, NumbersRepository,
   DataCenterRepository, ServerManagementRepository,ModuleRepository,UserJourneyRepository,AclSettingRepository,NumberFileListRepository,
- AgentRepository, AgentGroupRepository, extensionRepository, CreditRepository} = require("../repositories");
+ AgentRepository, AgentGroupRepository, extensionRepository, CreditRepository, VoicePlansRepository} = require("../repositories");
 const { Parser } = require('json2csv');
 
 const { Logger } = require("../config");
@@ -14,7 +14,6 @@ async function exportData(req, res) {
       CallCentre: new CallCentreRepository(),
       Trunks: new TrunksRepository(),
       Numbers: new NumbersRepository(),
-      IVR: new IVRRepository(),
       DataCenter: new DataCenterRepository(),
       ServerManagement: new ServerManagementRepository(),
       Module: new ModuleRepository(),
@@ -24,7 +23,8 @@ async function exportData(req, res) {
       Agent: new AgentRepository(),
       AgentGroup: new AgentGroupRepository(),
       Extension: new extensionRepository(),
-      Credits: new CreditRepository()
+      Credits: new CreditRepository(),
+      VoicePlan: new VoicePlansRepository()
     };
   
     try {

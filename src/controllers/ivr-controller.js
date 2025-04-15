@@ -116,8 +116,8 @@ async function createIVR(req, res) {
         re_prompt: bodyReq.nodesData.rePrompt,
         is_gather_node: bodyReq.nodesData.isGatherNode
       })
-      Logger.info(`Publishing message to queue`);
-      publishIVRUpdate();
+      Logger.info(`${bodyReq.nodesData.flowName}: Publishing message to queue`);
+      publishIVRUpdate(bodyReq.nodesData.flowName);
 
     }
 
@@ -125,7 +125,7 @@ async function createIVR(req, res) {
   
       SuccessRespnose.data = lastResponse;
       SuccessRespnose.message = "Successfully created a new IVR";
-      Logger.info(`IVR -> created successfully: ${JSON.stringify(lastResponse)}`);
+      Logger.info(`${bodyReq.nodesData.flowName} IVR -> created successfully: ${JSON.stringify(lastResponse)}`);
 
       const userJourneyfields = {
         module_name: MODULE_LABEL.IVR,
@@ -146,8 +146,8 @@ async function createIVR(req, res) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse); 
   }
 }
-async function publishIVRUpdate() {
-	Logger.info("Inside Publish IVR");
+async function publishIVRUpdate(flowName) {
+	Logger.info(`${flowName} Inside Publish IVR`);
 	try {
         const connection = await amqp.connect("amqp://dialplan:ns@4044888@localhost:5672");
         const channel = await connection.createChannel();
@@ -227,7 +227,7 @@ async function updateIVR(req, res) {
       const userDetail = await userRepository.get(req.user.id)
       if (userDetail?.flow_type == 1) {
         const currentData = await flowsRepo.getIVRByFlowId(id);
-      
+
         // Check for duplicate flow Name
         if (currentData[0]?.flow_name !== bodyReq.nodesData.flowName) {
           const nameCondition = {
@@ -295,9 +295,8 @@ async function updateIVR(req, res) {
         })
       } else {
         const currentData = await flowJsonRepository.getIVRByFlowId(id);
-
         // Check for duplicate flow Name
-        if (currentData?.flowName !== bodyReq.nodesData.flowName) {
+        if (currentData?.flow_name !== bodyReq.nodesData.flowName) {
           const nameCondition = {
             created_by: req.user.id,
             flow_name: bodyReq.nodesData.flowName

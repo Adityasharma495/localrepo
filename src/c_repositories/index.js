@@ -35,4 +35,5 @@ module.exports = {
   IncomingSummaryRepository: require("./incoming-summary-repository"),
   HandleFileSaveRepository: require("./handle-FileSave-repositoy"),
   CallCentreRepository: require("./call-centre-repository"),
+  SubUserLicenceRepository:require("./sub-user-licence-repository")
 };

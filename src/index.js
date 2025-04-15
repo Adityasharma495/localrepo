@@ -8,6 +8,7 @@ const cors = require('cors');
 const path = require('path');
 
 
+const { MongoDB, connectSequelize } = require('./config');
 const app = express();
 
 app.use(express.json());

@@ -50,6 +50,8 @@ class CrudRepository {
     }
 
     async update(id, data) {
+
+        console.log("CAME HERE TO UPDATE", id, data);
         const options = {
             where: {
                 id: id
@@ -116,6 +118,19 @@ class CrudRepository {
             const response = await this.model.findOne({
                 where: {
                   is_deleted: false,
+                  ...conditions
+                }
+              });
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    }
+    async findOneDeleted(conditions) {
+
+        try {
+            const response = await this.model.findOne({
+                where: {
                   ...conditions
                 }
               });
