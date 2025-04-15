@@ -52,12 +52,13 @@ class IncomingSummaryRepository extends CrudRepository {
     }
 
 
-     async updateSummary(data) {
-        let startOfDay = new Date(data.schedule_date);
+     async updateSummary(data, startdate) {
+        let startOfDay = new Date(startdate);
         startOfDay.setHours(0, 0, 0, 0);
 
-        let endOfDay = new Date(data.schedule_date);
+        let endOfDay = new Date(startdate);
         endOfDay.setHours(23, 59, 59, 999);
+
         const response = await this.model.findOneAndUpdate(
                           {
                             $and: [
