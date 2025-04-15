@@ -40,4 +40,5 @@ module.exports = {
   SubscriberRepository: require("./subscriber-repository"),
   CallsRepository: require("./calls-repository"),
   QueueRepository: require("./queue-repository"),
+  IncomingReportRepository: require("./incoming-report-repository"),
 };

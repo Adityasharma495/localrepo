@@ -69,7 +69,7 @@ async function exportData(req, res) {
     res.attachment(`${model}.csv`);
     res.data = csv;
 
-    Logger.error(`Export List -> data exported successfully for ${model}`);
+    Logger.info(`Export List -> data exported successfully for ${model}`);
 
     return res.status(StatusCodes.OK).json({
       message: `${model} data exported successfully`,

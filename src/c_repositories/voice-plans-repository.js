@@ -71,7 +71,19 @@ class VoicePlansRepository extends CrudRepository {
   }
 
   async findAllData() {
-    const response = await this.model.findAll({ where: { plan_status: 1 } });
+    let response = await this.model.findAll({ where: { plan_status: 1 } });
+    response = response.map(item => {
+      const createdAt = new Date(item.dataValues.created_at);
+      const updatedAt = new Date(item.dataValues.updated_at);
+
+      const formattedCreatedAt = createdAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+      const formattedUpdatedAt = updatedAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+      item.dataValues.created_at = formattedCreatedAt;
+      item.dataValues.updated_at = formattedUpdatedAt;
+
+      return item;
+    });
     return response;
 }
 

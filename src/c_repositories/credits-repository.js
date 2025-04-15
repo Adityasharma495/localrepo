@@ -58,6 +58,18 @@ class CreditRepository extends CrudRepository {
     } else {
       response = await Credit.findAll({ where: { action_user: current_uid } });
     }
+    response = response.map(item => {
+      const createdAt = new Date(item.dataValues.created_at);
+      const updatedAt = new Date(item.dataValues.updated_at);
+
+      const formattedCreatedAt = createdAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+      const formattedUpdatedAt = updatedAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+      item.dataValues.created_at = formattedCreatedAt;
+      item.dataValues.updated_at = formattedUpdatedAt;
+
+      return item;
+    });
     return response;
   }
 }
