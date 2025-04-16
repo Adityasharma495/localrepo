@@ -84,47 +84,21 @@ function validateSignup(req, res, next){
 
         if(bodyReq.company == undefined){
             ErrorResponse.message = 'Something went wrong while user signup';
-            ErrorResponse.error = new AppError(['Company params not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+            ErrorResponse.error = new AppError(['Company not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
             return res
                     .status(StatusCodes.BAD_REQUEST)
                     .json(ErrorResponse);   
         }
-        else if(bodyReq.company.name == undefined || !bodyReq.company.name.trim()){
-            ErrorResponse.message = 'Something went wrong while user signup';
-            ErrorResponse.error = new AppError(['Company name not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-            return res
-                    .status(StatusCodes.BAD_REQUEST)
-                    .json(ErrorResponse);      
-        }
-        else if(bodyReq.company.phone == undefined || !bodyReq.company.phone.trim()){
-            ErrorResponse.message = 'Something went wrong while user signup';
-            ErrorResponse.error = new AppError(['Company phone not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-            return res
-                    .status(StatusCodes.BAD_REQUEST)
-                    .json(ErrorResponse);      
-        }
-        else if(!Helpers.validatePhone(bodyReq.company.phone)){
-            ErrorResponse.message = 'Something went wrong while user signup';
-            ErrorResponse.error = new AppError(['Company phone invalid format in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-            return res
-                    .status(StatusCodes.BAD_REQUEST)
-                    .json(ErrorResponse);  
-        }
-        else if(bodyReq.company.pincode == undefined || !bodyReq.company.pincode.trim()){
-            ErrorResponse.message = 'Something went wrong while user signup';
-            ErrorResponse.error = new AppError(['Company pincode not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-            return res
-                    .status(StatusCodes.BAD_REQUEST)
-                    .json(ErrorResponse);      
-        }
-        else if(bodyReq.company.address == undefined || !bodyReq.company.address.trim()){
-            ErrorResponse.message = 'Something went wrong while user signup';
-            ErrorResponse.error = new AppError(['Company address not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-            return res
-                    .status(StatusCodes.BAD_REQUEST)
-                    .json(ErrorResponse);      
-        }    
+    }
 
+    if (bodyReq.role === constants.USERS_ROLE.CALLCENTRE_ADMIN) {
+        if(bodyReq.callcenterId == undefined){
+            ErrorResponse.message = 'Something went wrong while user signup';
+            ErrorResponse.error = new AppError(['Callcenter Id not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+            return res
+                    .status(StatusCodes.BAD_REQUEST)
+                    .json(ErrorResponse);   
+        }
     }
 
     next();
@@ -229,48 +203,13 @@ function validateUpdateUser(req, res, next){
 
     if(bodyReq.company){
 
-        if(bodyReq.company.name == undefined || !bodyReq.company.name.trim()){
+        if(bodyReq.company == undefined){
             ErrorResponse.message = 'Something went wrong while user signup';
-            ErrorResponse.error = new AppError(['Company name not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+            ErrorResponse.error = new AppError(['Company not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
             return res
                     .status(StatusCodes.BAD_REQUEST)
                     .json(ErrorResponse);      
         }
-        else if(bodyReq.company.phone == undefined || !bodyReq.company.phone.trim()){
-            ErrorResponse.message = 'Something went wrong while user signup';
-            ErrorResponse.error = new AppError(['Company phone not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-            return res
-                    .status(StatusCodes.BAD_REQUEST)
-                    .json(ErrorResponse);      
-        }
-        else if(!Helpers.validatePhone(bodyReq.company.phone)){
-            ErrorResponse.message = 'Something went wrong while user signup';
-            ErrorResponse.error = new AppError(['Company phone invalid format in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-            return res
-                    .status(StatusCodes.BAD_REQUEST)
-                    .json(ErrorResponse);  
-        }
-        else if(bodyReq.company.pincode == undefined || !bodyReq.company.pincode.trim()){
-            ErrorResponse.message = 'Something went wrong while user signup';
-            ErrorResponse.error = new AppError(['Company pincode not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-            return res
-                    .status(StatusCodes.BAD_REQUEST)
-                    .json(ErrorResponse);      
-        }
-        else if(bodyReq.company.address == undefined || !bodyReq.company.address.trim()){
-            ErrorResponse.message = 'Something went wrong while user signup';
-            ErrorResponse.error = new AppError(['Company address not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-            return res
-                    .status(StatusCodes.BAD_REQUEST)
-                    .json(ErrorResponse);      
-        }    
-        // else if(bodyReq.company.id == undefined || !bodyReq.company.id.trim()){
-        //     ErrorResponse.message = 'Something went wrong while user signup';
-        //     ErrorResponse.error = new AppError(['Company id not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-        //     return res
-        //             .status(StatusCodes.BAD_REQUEST)
-        //             .json(ErrorResponse);      
-        // }
 
     }
 
@@ -320,32 +259,17 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
         if (is_create) {
             ifValidateCompany = Authentication.ifAssociateCompany(bodyReq.role);
         } else {
-            ifValidateCompany = Authentication.ifAssociateCompany(inputData.user.role);
+            ifValidateCompany = Authentication.ifAssociateCompany(bodyReq.role);
         }
-
-
-
 
         //If company is to be associated with the user, then append company user details
         if(ifValidateCompany){
 
-            //Pass the user role who is the creator, i.e is who is performing the request
-            const associatedCompanyCategory = Authentication.getUserAssociatedCompanyCategory(req.user.role);
-    
-            inputData.company = {
-                name: bodyReq.company.name.trim(),
-                phone: bodyReq.company.phone.trim(),
-                pincode: bodyReq.company.pincode.trim(),
-                address: bodyReq.company.address.trim()
-            }
+            inputData.company = bodyReq.company
+        }
 
-            if(is_create){
-                inputData.company.created_by = req.user.id;
-                inputData.company.category = associatedCompanyCategory;
-            }else{
-                inputData.company.id = bodyReq.company.id;
-            }
-    
+        if (bodyReq.role === constants.USERS_ROLE.CALLCENTRE_ADMIN) {
+            inputData.callcenterId = bodyReq.callcenterId
         }
     
         req.body = inputData;

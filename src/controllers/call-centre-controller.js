@@ -12,17 +12,16 @@ const userJourneyRepo = new UserJourneyRepository();
 async function create(req, res) {
 
     const bodyReq = req.body;
-    const userId = req.user.id;
     let data = null;
-
     try {
+        const loggedUser = await userRepository.findOne({_id : req.user.id})
 
         data = {
             name: bodyReq.name.trim(),
             domain: bodyReq.domain.trim(),
             description: bodyReq.description.trim(),
             created_by: req.user.id,
-            company: req.user.companies.id,
+            company: loggedUser.companies._id,
             country_code: bodyReq.countryCode.trim(),
             timezone: bodyReq.timezone.trim()
         }
