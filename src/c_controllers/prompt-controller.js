@@ -1,4 +1,4 @@
-const { exec } = require('child_process');
+const { exec } = require("child_process");
 const { StatusCodes } = require("http-status-codes");
 const { ErrorResponse, SuccessRespnose, ResponseFormatter } = require("../utils/common");
 const { MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, STORAGE_PATH, SERVER } = require('../utils/common/constants');
@@ -47,14 +47,11 @@ async function savePrompts(req, res) {
             return res.status(StatusCodes.NOT_FOUND).json({ message: 'File not found' });
         }
 
-        const options = {
-            where: {
-                created_by: req.user.id, 
-                prompt_name: bodyReq.prompt_name
-            }
-        }
+        const duplicates = await promptRepo.findOne({
+            created_by: req.user.id, 
+            prompt_name: bodyReq.prompt_name
+        });
 
-        const duplicates = await promptRepo.findOne(options);
         if (duplicates) {
             fs.unlinkSync(dest);
             return res.status(StatusCodes.BAD_REQUEST).json({ message: 'File Name Already Exists' });
@@ -62,6 +59,38 @@ async function savePrompts(req, res) {
 
         const file_name = req.file.name;
         const file_url = `${BACKEND_API_BASE_URL}/temp/voice/${req.user.id}/prompts/${bodyReq.language}/${file_name}`;
+
+        const fileAlias = req.fileAlias
+        if (process.env.NODE_ENV === SERVER.PROD) {
+            const cmd = `bash -c "${STORAGE_PATH}scripts/checkFormat.sh ${req.user.id} ${file_name} ${fileAlias} ${bodyReq.language}"`;
+            Logger.info(`Executing script: ${cmd}`);
+    
+            const duration = await new Promise((resolve, reject) => {
+                exec(cmd, (error, stdout, stderr) => {
+                    if (error) {
+                        Logger.error(`Script execution error: ${error.message}`);
+                        return reject(new Error('Failed to execute duration script'));
+                    }
+                    if (stderr) {
+                        Logger.error(`Script stderr: ${stderr}`);
+                    }
+                    Logger.info(`Script stdout: ${stdout}`);
+                    resolve(stdout.trim());
+                });
+            });
+
+    
+            if (!duration || duration === '0'|| duration === 0) {
+                const errorResponse = {
+                    message: 'Invalid or zero duration of Uploaded File',
+                    error: new Error('File Duration Issue')
+                };
+                Logger.error('File Duration error:', errorResponse.error);
+                return res.status(StatusCodes.NOT_FOUND).json(errorResponse);
+            } else {
+                bodyReq.duration = duration
+            }
+        }
 
         await promptRepo.create({
             prompt_category: bodyReq.prompt_category,

@@ -222,8 +222,8 @@ const MODULE_LABEL = {
     EXTENSION: 'extension',
     QUEUE: 'queue',
     PROMPTS: 'Prompts',
-    CREDITS: 'Credits',
-    VOICE_PLAN: 'Voice Plan'
+    VOICE_PLAN: 'Voice Plan',
+    CREDITS: 'Credits'
 }
 
 const ACTION_LABEL = {

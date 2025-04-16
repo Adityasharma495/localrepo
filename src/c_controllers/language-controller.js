@@ -24,6 +24,7 @@ async function getAll(req, res) {
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
+    console.log("error ", error);
     ErrorResponse.message = error.message;
     ErrorResponse.error = error;
 

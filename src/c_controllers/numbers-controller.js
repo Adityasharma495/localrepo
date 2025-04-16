@@ -50,7 +50,9 @@ async function create(req, res) {
   
       const didMapping = await didUserMappingRepository.create({
         DID: number.id,
-        allocated_to: req.user.id,
+        mapping_detail: [{
+          allocated_to: req?.user?.id
+        }]
       });
 
       responseData.didMapping = didMapping;

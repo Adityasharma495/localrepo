@@ -7,6 +7,7 @@ module.exports = {
     DataCenterController:require("./data-center-controller"),
     TrunkController: require("./trunk-controller"),
     AgentController:require("./agent-controller"),
+    AgentGroupController:require('./agent-group-controller'),
     CompanyController:require("./company-controller"),
     OperatorController:require("./operator-controller"),
     CodecController:require('./codec-controller'),
@@ -28,6 +29,7 @@ module.exports = {
     CallCentreController: require("./call-centre-controller"),
     AclSettingsController:require("./acl-setting-controller"),
     CountryCodeController: require("./country-code-controller"),
-    NumberFileListController: require("./number-fileList-controller")
-    
+    NumberFileListController: require("./number-fileList-controller"),
+    VoicePlanController: require("./voice-plans-controller"),
+    ExtensionController: require("./extension-controller"),
 }

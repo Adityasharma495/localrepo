@@ -24,9 +24,14 @@ const exportLists = require("./export-List-routes");
 const downloadReportRoute = require('./download-report-routes.js');
 const incomingSummaryRoute = require('./incoming-summary-routes.js');
 const callCentreRoutes = require('./call-centre-routes');
-const acl_settings = require("./acl-settings-routes.js")
+const acl_settings = require("./acl-settings-routes.js");
 const countryCodeRoutes = require('./country-code-routes');
-const numberFileListRoutes = require("./number-file-routes.js")
+const numberFileListRoutes = require("./number-file-routes.js");
+const voicePlanRoutes = require('./voice-plan-routes.js');
+const VoiceCategory = require('./voice-category');
+const extensionRoute = require("./extension-routes");
+const agentGroupRoutes = require('./agent-group-routes.js')
+const callStratergy =require('./call-stratergy')
 
 
 router.use('/users', userRoutes);
@@ -36,6 +41,7 @@ router.use('/server-management', serverManagement);
 router.use('/data-center', dataCenter);
 router.use('/trunks', trunkRoutes);
 router.use('/agents', agentRoutes);
+router.use('/agent-group', agentGroupRoutes);
 router.use('/operators', operatorRoutes);
 router.use('/codecs', CodecRoutes);
 router.use('/prompt', prompt);
@@ -55,5 +61,10 @@ router.use('/incoming-summary', incomingSummaryRoute);
 router.use('/call-centres', callCentreRoutes);
 router.use('/acl-settings', acl_settings);
 router.use('/country-codes', countryCodeRoutes);
+router.use('/voice-plan', voicePlanRoutes);
+router.use("/voice-category",VoiceCategory);
+router.use("/extension", extensionRoute);
+router.use("/call-stratergy",callStratergy)
+
 
 module.exports = router;

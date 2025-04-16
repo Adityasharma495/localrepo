@@ -41,7 +41,7 @@ async function createIVR(req, res) {
       flow_name: bodyReq.nodesData.flowName
     };
     
-    const checkDuplicate = userDetail?.flow_type == 1 
+    const checkDuplicate = Number(userDetail?.flow_type == 1) 
       ? await flowsRepo.findOne(duplicateConditions, { transaction })
       : await flowJsonRepository.findOne(duplicateConditions, { transaction });
 
@@ -78,7 +78,7 @@ async function createIVR(req, res) {
     let flowControlData;
     let flowJsonData;
 
-    if (userDetail?.flow_type == 1) {
+    if (Number(userDetail?.flow_type == 1)) {
       flowRepoData = await flowsRepo.create(bodyReq.nodesData, req.user.id, flowId, { transaction });
       
       if (bodyReq.edges.length > 0) {
@@ -106,10 +106,10 @@ async function createIVR(req, res) {
     await transaction.commit();
     transactionCommitted = true;
 
-    if (userDetail?.flow_type !== 1) {
-      Logger.info('Publishing message to queue');
-      await publishIVRUpdate();
-    }
+    // if (Number(userDetail?.flow_type) !== 1) {
+    //   Logger.info('Publishing message to queue');
+    //   await publishIVRUpdate();
+    // }
 
     SuccessRespnose.message = "Successfully created a new IVR";
     SuccessRespnose.data = {
@@ -122,7 +122,7 @@ async function createIVR(req, res) {
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
 
   } catch (error) {
-    console.log("error here", error);
+    console.log("error while creating ivr", error);
     if (!transactionCommitted) {
       await transaction.rollback();
     }
@@ -194,7 +194,7 @@ async function updateIVR(req, res) {
     const userDetail = await userRepository.get(req.user.id);
 
     // Fetch current IVR data
-    const currentData = userDetail?.flow_type == 1 
+    const currentData = Number(userDetail?.flow_type) == 1 
       ? await flowsRepo.getIVRByFlowId(id, { transaction })
       : await flowJsonRepository.getIVRByFlowId(id, { transaction });
 
@@ -202,7 +202,7 @@ async function updateIVR(req, res) {
 
     // ✅ Skip duplicate check if flow name hasn't changed
     if (currentFlowData?.flow_name !== bodyReq.nodesData.flowName) {
-      const duplicateCheck = await (userDetail?.flow_type == 1 ? flowsRepo : flowJsonRepository)
+      const duplicateCheck = await (Number(userDetail?.flow_type == 1) ? flowsRepo : flowJsonRepository)
         .findOne({
           created_by: req.user.id,
           flow_name: bodyReq.nodesData.flowName
@@ -217,11 +217,9 @@ async function updateIVR(req, res) {
       }
     }
 
-    // ✅ Delete `flows_json` first to prevent foreign key issues
     await flowJsonRepository.deleteIVRByFlowId(id, { transaction });
 
-    // ✅ Delete related data only if `flow_type == 1`
-    if (userDetail?.flow_type == 1) {
+    if (Number(userDetail?.flow_type == 1)) {
       await flowsRepo.deleteIVRByFlowId(id, { transaction });
       await flowsControlRepo.deleteIVRByFlowId(id, { transaction });
       await flowEdgesRepo.deleteIVRByFlowId(id, { transaction });
@@ -255,7 +253,7 @@ async function updateIVR(req, res) {
     };
 
     // ✅ Insert new IVR data
-    if (userDetail?.flow_type == 1) {
+    if (Number(userDetail?.flow_type == 1)) {
       await flowsRepo.create(bodyReq.nodesData, req.user.id, id, { transaction });
 
       if (bodyReq.edges.length > 0) {

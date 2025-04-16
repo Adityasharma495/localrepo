@@ -1,5 +1,6 @@
 const { StatusCodes } = require('http-status-codes');
 const AppError = require('../utils/errors/app-error');
+const { constants } = require('../utils/common');
 class CrudRepository {
 
     constructor(model) {
@@ -108,8 +109,13 @@ class CrudRepository {
         }
     }
     
-    async findAllData() {
-        const response = await this.model.findAll({ where: { is_deleted: false } });
+    async findAllData(current_role, current_uid) {
+        let response;
+        if (current_role === constants.USERS_ROLE.SUPER_ADMIN) {
+            response = await this.model.findAll({ where: { is_deleted: false } });
+        } else {
+            response = await this.model.findAll({ where: { is_deleted: false, created_by: current_uid } });
+        }
         return response;
     }
 

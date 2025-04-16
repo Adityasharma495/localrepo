@@ -7,9 +7,9 @@ const swaggerRoutes = require('./routes/swagger');
 const cors = require('cors');
 const path = require('path');
 
-
-const { MongoDB, connectSequelize } = require('./config');
 const app = express();
+
+const { Subscriber } = require("./c_db");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -35,7 +35,7 @@ const startServer = async () => {
         //     console.log('✅ Database synchronized!');
         // }
 
-        // await sequelize.sync({ alter: true, logging: true });
+        // await Subscriber.sync({ alter: true, logging: true });
         // console.log('✅ Successfully synced CockroachDB!');
         // Logger.info('CockroachDB -> Successfully synced');
 

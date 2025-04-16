@@ -18,7 +18,6 @@ class ExtensionRepository extends CrudRepository {
         created_by: current_uid,
       };
   
-      // Add additional condition if `check` is 'all'
       if (check !== 'all') {
         conditions.is_allocated = 0;
       }

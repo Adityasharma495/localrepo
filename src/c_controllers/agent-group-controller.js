@@ -1,0 +1,329 @@
+
+const { StatusCodes } = require("http-status-codes");
+const { AgentGroupRepository, UserJourneyRepository, MemberScheduleRepo, AgentRepository, AgentGroupAgentRepository} = require("../c_repositories");
+const {SuccessRespnose , ErrorResponse, ResponseFormatter} = require("../utils/common");
+const AppError = require("../utils/errors/app-error");
+const {MODULE_LABEL, ACTION_LABEL} = require('../utils/common/constants');
+const { Logger } = require("../config");
+
+const version = process.env.API_V || "1";
+
+
+const agentGroupRepo = new AgentGroupRepository();
+const userJourneyRepo = new UserJourneyRepository();
+const memberScheduleRepo = new MemberScheduleRepo();
+const agentRepo = new AgentRepository();
+const agentGroupAgentsRepo = new AgentGroupAgentRepository();
+
+
+
+async function createAgentGroup(req, res) {
+  const bodyReq = req.body;
+  try {
+    const responseData = {};
+
+    const conditions = {
+      group_name: bodyReq.agent.group_name
+    };
+    const checkDuplicate = await agentGroupRepo.findOne(conditions);
+    if (checkDuplicate) {
+      ErrorResponse.message = 'Group Name Already Exists';
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(ErrorResponse);
+    }
+
+
+
+    // Create the agent group with the shared _id
+    const agent = await agentGroupRepo.create({
+      ...bodyReq.agent,
+    });
+
+    responseData.agent = agent;
+
+    // Log user journey for this action
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.AGENT_GROUP,
+      action: ACTION_LABEL.ADD,
+      created_by: req?.user?.id
+    };
+    await userJourneyRepo.create(userJourneyfields);
+
+    SuccessRespnose.data = responseData;
+    SuccessRespnose.message = "Successfully created a new Agent Group";
+
+    Logger.info(
+      `Agent Group -> created successfully: ${JSON.stringify(responseData)}`
+    );
+    return res.status(StatusCodes.CREATED).json(SuccessRespnose);
+  } catch (error) {
+    Logger.error(
+      `Agent Group -> unable to create Agent Group: ${JSON.stringify(
+        bodyReq
+      )} error: ${JSON.stringify(error)}`
+    );
+
+    let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    if (error.name === "MongoServerError" || error.code === 11000) {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Duplicate key, record already exists.";
+    }
+
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+async function getAll(req, res) {
+
+  try {
+    const data = await agentGroupRepo.getAll(req.user.id);
+    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data,version);
+    SuccessRespnose.message = "Success";
+
+    Logger.info(
+      `Agent Group -> recieved all successfully`
+    );
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    ErrorResponse.message = error.message;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `Agent Group -> unable to get Agent Groups list, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
+}
+
+async function getById(req, res) {
+  const id = req.params.id;
+
+  try {
+    if (!id) {
+      throw new AppError("Missing Agent Group Id", StatusCodes.BAD_REQUEST);
+     }
+    const agentData = await agentGroupRepo.get(id);
+    if (agentData.length == 0) {
+      const error = new Error();
+      error.name = 'CastError';
+      throw error;
+    }
+    SuccessRespnose.message = "Success";
+    SuccessRespnose.data = agentData;
+
+    Logger.info(
+      `Agent Group -> recieved ${id} successfully`
+    );
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    ErrorResponse.error = error;
+    if (error.name == "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Agent Group not found";
+    }
+    ErrorResponse.message = errorMsg;
+
+    Logger.error(
+      `Agent Group -> unable to get Agent Group ${id}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+async function getAssignedAgents(req, res) {
+  const groupId = req.params.id;
+  let transformedAgents
+
+  try {
+    if (!groupId) {
+      throw new AppError("Missing Agent Group Id", StatusCodes.BAD_REQUEST);
+    }
+
+    // Fetch agent group
+    const agentGroup = await agentGroupRepo.get(groupId);
+    const agentGroupAgents = await agentGroupAgentsRepo.getByGroupId(groupId);
+
+    if (!agentGroupAgents.length) {
+      transformedAgents = [];
+    } else {
+      transformedAgents = await Promise.all(
+        (agentGroup.agents).map(async (agent) => {
+          const agentData = await agentRepo.get(agent.agent_id);
+          let scheduleData = {}
+          if (agent.member_schedule_id) {
+            scheduleData = await memberScheduleRepo.get(agent.member_schedule_id);
+          }
+          return {
+            id: agentGroup._id,
+            group_name: agentGroup.group_name,
+            agent: agentData,
+            schedule: scheduleData,
+            priority: agent?.priority || 0
+          };
+        })
+      );
+    }
+
+    SuccessRespnose.message = "Successfully fetched assigned agents";
+    SuccessRespnose.data = transformedAgents
+
+    Logger.info(`Agent Group -> Successfully fetched assigned agents for Group ID: ${groupId}`);
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+  } catch (error) {
+    let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message || "An error occurred while fetching assigned agents";
+
+    if (error.name === 'CastError') {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Invalid Group ID";
+    }
+
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `Agent Group -> Unable to fetch assigned agents for Group ID: ${groupId}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+async function updateAgentGroup(req, res) {
+
+  const uid = req.params.id;
+  const bodyReq =  req.body;
+
+
+  console.log("BODY REQUEST TO UPDATE", bodyReq);
+  try {
+    const responseData = {};
+    let agent;
+    if (bodyReq?.agent?.type === 'time_schedule') {
+      if (bodyReq.agent.group_schedule_id) {
+        agent = await memberScheduleRepo.update(bodyReq.agent.group_schedule_id, {
+          week_days : bodyReq.agent.weekDays,
+          start_time: bodyReq.agent.startTime,
+          end_time: bodyReq.agent.endTime,
+       })
+      } else {
+        const schedule = await memberScheduleRepo.create({
+          week_days : bodyReq.agent.weekDays,
+          start_time: bodyReq.agent.startTime,
+          end_time: bodyReq.agent.endTime,
+        }) 
+        agent = await agentGroupRepo.update(uid, {group_schedule_id : schedule._id})
+      }
+
+    } 
+    else if (bodyReq?.agent?.type === 'add_member'){
+      const agentIds = bodyReq?.agent?.agent_id;
+      const agentgroup = await agentGroupRepo.get(uid)
+      
+
+      console.log("PREDATA", preData.id);
+      console.log("bodyReq.agent.memberSchedulePayload", bodyReq.agent.memberSchedulePayload);
+
+      const schedule = await memberScheduleRepo.create({
+         week_days : bodyReq.agent.memberSchedulePayload.week_days,
+         start_time: bodyReq.agent.memberSchedulePayload.start_time,
+         end_time: bodyReq.agent.memberSchedulePayload.end_time,
+      })
+
+
+      console.log("SCHEDULE", schedule);
+  
+      const structuredData = agentIds.map(agentId => ({
+        agent_id: agentId,
+        member_schedule_id: schedule._id
+      }));
+
+      console.log("STRUCTURED DATA", structuredData);
+      console.log("LAST PRE", [...preData]);
+
+      // Merge existing agents with new ones (avoiding duplicates)
+      const updatedAgents = [...preData.agents, ...structuredData].reduce((acc, curr) => {
+        if (!acc.some(agent => agent.agent_id === curr.agent_id)) {
+          acc.push(curr);
+        }
+        return acc;
+      }, []);
+  
+      agent = await agentGroupRepo.update(uid, {agents : updatedAgents});
+  
+      await agentRepo.bulkUpdate(
+        { _id: { $in: agentIds } },
+        { is_allocated: 1 } 
+      );
+    } else {
+      agent = await agentGroupRepo.update(uid, bodyReq.agent);
+    }
+    
+    if (!agent) {
+      const error = new Error();
+      error.name = 'CastError';
+      throw error;
+    }
+
+    responseData.agent = agent;
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.AGENT_GROUP,
+      action: ACTION_LABEL.EDIT,
+      created_by: req?.user?.id
+    };
+
+    await userJourneyRepo.create(userJourneyfields);
+
+    SuccessRespnose.message = 'Updated successfully!';
+    SuccessRespnose.data = responseData;
+
+    Logger.info(`Agent Group -> ${uid} updated successfully`);
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+  } catch (error) {
+
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message || "An error occurred"; 
+
+    if (error.name === 'CastError') {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = 'Agent Group not found';
+    } else if (error.name === 'MongoServerError') {
+      statusCode = StatusCodes.BAD_REQUEST;
+      if (error.codeName === 'DuplicateKey') {
+        errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
+      }
+    }
+
+    ErrorResponse.message = errorMsg;
+
+    Logger.error(
+      `Agent Group-> unable to update Agent Group: ${uid}, data: ${JSON.stringify(bodyReq)}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+
+module.exports = {
+    createAgentGroup,
+    getAll,
+    getById,
+    getAssignedAgents,
+    updateAgentGroup
+}

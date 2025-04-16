@@ -20,7 +20,7 @@ const Agents = sequelize.define(
       allowNull: false,
     },
     agent_number: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     is_allocated: {
@@ -30,6 +30,10 @@ const Agents = sequelize.define(
     is_deleted: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+    },
+    telephony_profile: {
+      type: DataTypes.UUID,
+      allowNull: true,
     },
     access: {
       type: DataTypes.STRING,

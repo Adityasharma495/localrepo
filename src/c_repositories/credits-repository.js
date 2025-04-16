@@ -1,6 +1,7 @@
 const CrudRepository = require("./crud-repository");
 const { Credit, User } = require("../c_db");
 const { Op } = require("sequelize");
+const { constants } = require('../utils/common');
 
 class CreditRepository extends CrudRepository {
   constructor() {
@@ -48,6 +49,16 @@ class CreditRepository extends CrudRepository {
     } catch (error) {
       throw error;
     }
+  }
+
+  async findAllData(current_role, current_uid) {
+    let response;
+    if (current_role === constants.USERS_ROLE.SUPER_ADMIN) {
+      response = await Credit.findAll();
+    } else {
+      response = await Credit.findAll({ where: { action_user: current_uid } });
+    }
+    return response;
   }
 }
 

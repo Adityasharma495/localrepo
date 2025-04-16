@@ -49,6 +49,7 @@ class AgentRepository extends CrudRepository {
   }
 
   async update(id, data) {
+
     try {
       const [updatedRows, [updatedAgent]] = await Agents.update(data, {
         where: { id },
@@ -58,7 +59,6 @@ class AgentRepository extends CrudRepository {
       if (!updatedRows) {
         throw new AppError("Agent not found", StatusCodes.NOT_FOUND);
       }
-
       return updatedAgent;
     } catch (error) {
       throw error;
@@ -108,6 +108,7 @@ class AgentRepository extends CrudRepository {
   async getAllActiveAgents(userId) {
     try {
       const agents = await Agents.findAll({
+        raw:true,
         where: { is_deleted: false, created_by: userId },
         order: [['created_at', 'DESC']],
         // include: [{ model: "users", as: "creator" }],

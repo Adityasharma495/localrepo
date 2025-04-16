@@ -184,6 +184,20 @@ class UserRepository extends CrudRepository{
         }
 
     }
+
+    async getByName(name) {
+      try {
+        const user = await User.findOne({
+          where: { name }
+        });
+    
+        return user;
+      } catch (error) {
+        console.log('error', error);
+        throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
+      }
+    }
+    
     
 
 }

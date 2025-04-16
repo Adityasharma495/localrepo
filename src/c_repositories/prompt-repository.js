@@ -9,7 +9,9 @@ class PromptRepository extends CrudRepository {
   async get(conditions = {}) {
     try {
       const response = await this.model.findAll({
-        where: conditions
+        where: conditions,
+        order: [['created_at', 'DESC']],
+        raw:true
       });
       return response;
     } catch (error) {

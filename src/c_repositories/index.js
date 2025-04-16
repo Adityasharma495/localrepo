@@ -35,5 +35,11 @@ module.exports = {
   IncomingSummaryRepository: require("./incoming-summary-repository"),
   HandleFileSaveRepository: require("./handle-FileSave-repositoy"),
   CallCentreRepository: require("./call-centre-repository"),
-  SubUserLicenceRepository:require("./sub-user-licence-repository")
+  SubUserLicenceRepository:require("./sub-user-licence-repository"),
+  VoicePlansRepository: require("./voice-plans-repository"),
+  TelephonyProfileRepository: require("./telephony-profile-repository"),
+  TelephonyProfileItemsRepository: require("./telephony-profile-items-repository"),
+  SubscriberRepository: require("./subscriber-repository"),
+  AgentGroupRepository: require("./agent-group-repository"),
+  AgentGroupAgentRepository:require("./agent-group-agents-repository")
 };

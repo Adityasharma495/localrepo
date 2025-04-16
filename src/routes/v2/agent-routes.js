@@ -12,7 +12,7 @@ router.get("/", AuthMiddleware.validateUser, AgentController.getAll);
 router.get("/:id", AuthMiddleware.validateUser, AgentController.getById);
 
 
-// router.post("/delete", AuthMiddleware.validateUser, AgentMiddleware.validateDeleteRequest,AgentController.deleteAgent);
+router.post("/delete", AuthMiddleware.validateUser, AgentMiddleware.validateDeleteRequest,AgentController.deleteAgent);
 
 
 

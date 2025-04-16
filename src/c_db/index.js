@@ -33,7 +33,11 @@ const VoiceCategory = require("./voice-category");
 const CallCenter = require("./call-centres");
 const SubUserLicence = require('./sub-user-licence');
 // const Company = require("./companies");
-
+const VoicePlan = require("./voice-plans");
+const VoipProfile = require("./voip-profile");
+const TelephonyProfile = require("./telephony-profile");
+const Subscriber = require("./subscriber");
+const TelephonyProfileItem = require("./telephony-profile-items")
 
 Credit.belongsTo(User, { foreignKey: "user_id",onDelete: 'CASCADE',onUpdate: 'CASCADE', });
 Credit.belongsTo(User, { foreignKey: "from_user", as: "fromUser" });
@@ -46,6 +50,19 @@ Credit.belongsTo(User, { foreignKey: "action_user", as: "actionUser" });
 // Company.hasMany(User, { foreignKey: "company_id", as: "companyUsers" });
 
 
+Agents.belongsTo(TelephonyProfile, { foreignKey: 'telephony_profile', as: 'telephonyProfile' });
+
+
+TelephonyProfile.hasMany(TelephonyProfileItem, {
+    foreignKey: 'telephony_profile_id',
+    as: 'items',
+  });
+  
+TelephonyProfileItem.belongsTo(TelephonyProfile, {
+    foreignKey: 'telephony_profile_id',
+    as: 'profile',
+  });
+  
 
 NumberFile.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 User.hasMany(NumberFile, { foreignKey: 'user_id', as: 'userFiles' });
@@ -65,6 +82,7 @@ User.hasMany(Credit, { foreignKey: "action_user", as: "actionUser" });
 
 User.belongsTo(AclSettings, {foreignKey: 'acl_settings_id',as: 'acl_settings'});
 AclSettings.hasMany(User, {foreignKey: 'acl_settings_id',as: 'users'});
+User.hasMany(VoicePlan, { foreignKey: "user_id" });
   
 
 UserJourney.belongsTo(User, { foreignKey: "created_by", as: "creator" });
@@ -76,6 +94,8 @@ ServerManagement.belongsTo(DataCenter, { foreignKey: 'data_center_id',  as: 'dat
 IncomingSummary.belongsTo(User, { foreignKey: "user_id", as: "user" });
 IncomingSummary.belongsTo(User, { foreignKey: "parent_id", as: "parent" });
 IncomingSummary.belongsTo(User, { foreignKey: "s_parent_id", as: "sParent" });
+
+VoicePlan.belongsTo(User, { foreignKey: "user_id", as: "user" });
 
 module.exports = { 
     Agents,
@@ -111,5 +131,10 @@ module.exports = {
     CallStrategy,
     VoiceCategory,
     CallCenter,
-    Company
+    Company,
+    VoicePlan,
+    VoipProfile,
+    TelephonyProfile,
+    Subscriber,
+    TelephonyProfileItem
 };

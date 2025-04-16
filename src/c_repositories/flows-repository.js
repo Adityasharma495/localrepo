@@ -3,6 +3,7 @@ const { Flow } = require("../c_db");
 const { StatusCodes } = require('http-status-codes');
 const AppError = require("../utils/errors/app-error");
 const sequelize = require('../config/sequelize'); 
+const { constants } = require("../utils/common");
 
 class FlowRepository extends CrudRepository {
   constructor() {
@@ -154,6 +155,16 @@ class FlowRepository extends CrudRepository {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  async findAllData(role, id) {
+    let response;
+    if (role === constants.USERS_ROLE.SUPER_ADMIN) {
+      response = await this.model.findAll({ where: { status: 1 } });
+    } else {
+      response = await this.model.findAll({ where: { status: 1, created_by: id} });
+    }
+    return response;
   }
 }
 
