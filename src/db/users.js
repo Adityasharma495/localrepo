@@ -10,6 +10,7 @@ const USERS_ROLE = constants.USERS_ROLE;
 
 const USER_MODEL_NAME = constants.MODEL.USERS;
 const COMPANY_MODEL_NAME = constants.MODEL.COMPANIES;
+const CALL_CENTER_MODEL_NAME = constants.MODEL.CALL_CENTER;
 const ACL_SETTINGS_MODEL = constants.MODEL.ACL_SETTINGS;
 const SUB_USER_LICENCE_MODEL = constants.MODEL.SUB_USER_LICENCE;
 
@@ -90,6 +91,10 @@ const SUB_USER_LICENCE_MODEL = constants.MODEL.SUB_USER_LICENCE;
       flow_type: {
         type: Number,
         default: null
+      },
+      callcenters: {
+        name: String,
+        _id: {type: mongoose.Schema.Types.ObjectId, ref: CALL_CENTER_MODEL_NAME}
       },
       credits_available:{
         type: Number,

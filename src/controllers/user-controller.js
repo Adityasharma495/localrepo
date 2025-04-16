@@ -1,6 +1,7 @@
 const { StatusCodes } = require("http-status-codes");
 const bcrypt = require('bcrypt');
-const { UserRepository, CompanyRepository,UserJourneyRepository, LicenceRepository , SubUserLicenceRepository} = require("../repositories");
+const { UserRepository, CompanyRepository,UserJourneyRepository, LicenceRepository
+  , SubUserLicenceRepository, CallCentreRepository} = require("../repositories");
 const {
   SuccessRespnose,
   ErrorResponse,
@@ -14,10 +15,13 @@ const companyRepo = new CompanyRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const licenceRepo = new LicenceRepository();
 const subUserLicenceRepo = new SubUserLicenceRepository();
+const callCentreRepo = new CallCentreRepository();
 
 
 async function signupUser(req, res) {
   const bodyReq = req.body;
+  // console.log('bodyReq', bodyReq)
+  // process.exit(0)
   try {
     const responseData = {};
     let user;
@@ -69,7 +73,7 @@ async function signupUser(req, res) {
        
     responseData.user = await user.generateUserData();
 
-    if (bodyReq.company) {
+    if (bodyReq.company && bodyReq.user.role !== USERS_ROLE.CALLCENTRE_ADMIN) {
       //Add the created user as a reference to the company
       await companyRepo.addUserIds(bodyReq.company , user._id)
       const companyDetail = await companyRepo.get(bodyReq.company);
@@ -81,6 +85,20 @@ async function signupUser(req, res) {
         companies: companyToadd
       })
       responseData.company = companyDetail;
+    }
+
+    if (bodyReq.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
+      //Add the created user as a reference to the Callcenters
+      await callCentreRepo.addUserIds(bodyReq.callcenterId , user._id)
+      const callcenterDetail = await callCentreRepo.get(bodyReq.callcenterId);
+      const callcenterToadd = {
+        name: callcenterDetail.name,
+        _id : callcenterDetail._id
+      }
+      await userRepo.update(user._id, {
+        callcenters: callcenterToadd
+      })
+      responseData.callcenterToadd = callcenterDetail;
     }
 
     const userJourneyfields = {

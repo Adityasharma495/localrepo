@@ -35,6 +35,10 @@ const CallCentreSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: TIMEZONE_MODEL_NAME
   },
+  users: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: USER_MODEL_NAME
+  }],
   created_by: {
     type: mongoose.Schema.Types.ObjectId,
     ref: USER_MODEL_NAME,

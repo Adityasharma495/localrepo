@@ -105,10 +105,6 @@ class NumbersRepository extends CrudRepository {
     async getAllocatedNumbers(user_id) {
         try {
             const response = await this.model.find({ is_deleted: false, allocated_to: user_id })
-            .populate({
-                path: 'allocated_to', 
-                select: '_id username'
-              })
               .populate("voice_plan_id");
             return response;
         } catch (error) {

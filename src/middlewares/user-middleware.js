@@ -91,6 +91,16 @@ function validateSignup(req, res, next){
         }
     }
 
+    if (bodyReq.role === constants.USERS_ROLE.CALLCENTRE_ADMIN) {
+        if(bodyReq.callcenterId == undefined){
+            ErrorResponse.message = 'Something went wrong while user signup';
+            ErrorResponse.error = new AppError(['Callcenter Id not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+            return res
+                    .status(StatusCodes.BAD_REQUEST)
+                    .json(ErrorResponse);   
+        }
+    }
+
     next();
 
 }
@@ -256,6 +266,10 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
         if(ifValidateCompany){
 
             inputData.company = bodyReq.company
+        }
+
+        if (bodyReq.role === constants.USERS_ROLE.CALLCENTRE_ADMIN) {
+            inputData.callcenterId = bodyReq.callcenterId
         }
     
         req.body = inputData;
