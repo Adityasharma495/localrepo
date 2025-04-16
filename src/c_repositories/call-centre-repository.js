@@ -36,6 +36,18 @@ class CallCentreRepository extends CrudRepository {
         where: { created_by: id }
       });
     }
+    response = response.map(item => {
+      const createdAt = new Date(item.dataValues.created_at);
+      const updatedAt = new Date(item.dataValues.updated_at);
+
+      const formattedCreatedAt = createdAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+      const formattedUpdatedAt = updatedAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+      item.dataValues.created_at = formattedCreatedAt;
+      item.dataValues.updated_at = formattedUpdatedAt;
+
+      return item;
+    });
     return response;
   }
 }

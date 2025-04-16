@@ -107,6 +107,30 @@ class ServerManagementRepository extends CrudRepository {
           throw error;
         }
       }
+
+      async findAllData(current_role, current_uid) {
+        let response;
+        if (current_role === constants.USERS_ROLE.SUPER_ADMIN) {
+            response = await this.model.findAll({ where: { is_deleted: false } });
+        } else {
+            response = await this.model.findAll({ where: { is_deleted: false, created_by: current_uid } });
+        }
+    
+        response = response.map(item => {
+            const createdAt = new Date(item.dataValues.createdAt);
+            const updatedAt = new Date(item.dataValues.updatedAt);
+    
+            const formattedCreatedAt = createdAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+            const formattedUpdatedAt = updatedAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+            item.dataValues.createdAt = formattedCreatedAt;
+            item.dataValues.updatedAt = formattedUpdatedAt;
+    
+            return item;
+        });
+    
+        return response;
+    }
 }
 
 module.exports = ServerManagementRepository;

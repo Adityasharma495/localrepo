@@ -8,11 +8,14 @@ class SubscriberRepository extends CrudRepository {
 
   async addSubscriber(data) {
     try {
+      const username = String(data.username).trim();
+      const domain = String(data.domain).trim();
+
       const existing = await this.model.findOne({
         where: {
-          username: data.username,
-          domain: data.domain
-        }
+          username,
+          domain,
+        },
       });
 
       if (existing) {
@@ -20,7 +23,12 @@ class SubscriberRepository extends CrudRepository {
         return existing;
       }
 
-      const newSubscriber = await this.model.create(data);
+      const newSubscriber = await this.model.create({
+        ...data,
+        username,
+        domain
+      });
+
       console.log("New Subscriber Added:", newSubscriber.toJSON());
       return newSubscriber;
 

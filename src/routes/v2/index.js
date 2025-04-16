@@ -32,6 +32,8 @@ const VoiceCategory = require('./voice-category');
 const extensionRoute = require("./extension-routes");
 const agentGroupRoutes = require('./agent-group-routes.js')
 const callStratergy =require('./call-stratergy')
+const callsRoutes = require("./calls-routes");
+const queueRoute = require('./queue-route');
 
 
 router.use('/users', userRoutes);
@@ -65,6 +67,7 @@ router.use('/voice-plan', voicePlanRoutes);
 router.use("/voice-category",VoiceCategory);
 router.use("/extension", extensionRoute);
 router.use("/call-stratergy",callStratergy)
-
+router.use('/calls', callsRoutes);
+router.use("/queue", queueRoute);
 
 module.exports = router;

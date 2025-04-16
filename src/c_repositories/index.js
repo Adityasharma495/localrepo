@@ -41,5 +41,8 @@ module.exports = {
   TelephonyProfileItemsRepository: require("./telephony-profile-items-repository"),
   SubscriberRepository: require("./subscriber-repository"),
   AgentGroupRepository: require("./agent-group-repository"),
-  AgentGroupAgentRepository:require("./agent-group-agents-repository")
+  AgentGroupAgentRepository:require("./agent-group-agents-repository"),
+  CallsRepository: require("./calls-repository"),
+  QueueRepository: require("./queue-repository"),
+  IncomingReportRepository: require("./incoming-report-repository"),
 };

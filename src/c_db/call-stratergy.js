@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/sequelize');
 
 const CallStrategy = sequelize.define(
-  "CallStrategy",
+  "call_strategies",
   {
     id: {
       type: DataTypes.BIGINT,

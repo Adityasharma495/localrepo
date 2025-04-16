@@ -191,8 +191,6 @@ async function getAll(req, res) {
   try {
     // const agentData = await agentRepo.getAll(req.user.id, data);
     const agentData = await agentRepo.getAllActiveAgents(req.user.id);
-
-    console.log("AGENTS GERE", agentData);
     SuccessRespnose.data = ResponseFormatter.formatResponseIds(agentData, version);
     SuccessRespnose.message = "Success";
 

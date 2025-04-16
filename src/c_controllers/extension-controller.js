@@ -5,7 +5,7 @@ const {
   UserJourneyRepository,
   SubscriberRepository,
 } = require("../c_repositories");
-const { SuccessRespnose, ErrorResponse } = require("../utils/common");
+const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../utils/common");
 const AppError = require("../utils/errors/app-error");
 const {
   BACKEND_BASE_URL,
@@ -14,8 +14,11 @@ const {
 } = require("../utils/common/constants");
 const { Logger } = require("../config");
 
+const version = process.env.API_V || "1";
+
 const extensionRepo = new ExtensionRepository();
 const userJourneyRepo = new UserJourneyRepository();
+const subscriberRepo = new SubscriberRepository();
 
 async function createExtension(req, res) {
   const bodyReq = req.body;
@@ -30,7 +33,7 @@ async function createExtension(req, res) {
       created_by: req.user.id,
     };
 
-    const checkDuplicate = await extensionRepo.findOne({ where: conditions });
+    const checkDuplicate = await extensionRepo.findOne(conditions);
 
     if (checkDuplicate) {
       const duplicateField =
@@ -48,7 +51,7 @@ async function createExtension(req, res) {
     });
     responseData.extension = extension;
 
-    await SubscriberRepository.addSubscriber({
+    await subscriberRepo.addSubscriber({
       username: bodyReq.extension.extension,
       domain: BACKEND_BASE_URL,
       password: bodyReq.extension.password,
@@ -68,6 +71,7 @@ async function createExtension(req, res) {
     );
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
   } catch (error) {
+    console.log("error creating extension", error);
     Logger.error(`Extension -> create failed: ${JSON.stringify(error)}`);
 
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
@@ -91,12 +95,13 @@ async function getAll(req, res) {
       req.query?.data
     );
 
-    SuccessRespnose.data = extensionData;
+    SuccessRespnose.data = ResponseFormatter.formatResponseIds(extensionData, version);
     SuccessRespnose.message = "Success";
 
     Logger.info(`Extension -> received all successfully`);
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
+    console.log("error getting data", error);
     Logger.error(`Extension -> getAll error: ${JSON.stringify(error)}`);
 
     ErrorResponse.message = error.message;
@@ -119,7 +124,7 @@ async function getById(req, res) {
     }
 
     SuccessRespnose.message = "Success";
-    SuccessRespnose.data = extensionData;
+    SuccessRespnose.data = ResponseFormatter.formatResponseIds(extensionData, version);
 
     Logger.info(`Extension -> received ${id} successfully`);
     return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -180,7 +185,7 @@ async function updateExtension(req, res) {
       throw new AppError("Extension not found", StatusCodes.BAD_REQUEST);
     }
 
-    await SubscriberRepository.addSubscriber({
+    await subscriberRepo.addSubscriber({
       username: bodyReq.extension.extension,
       domain: BACKEND_BASE_URL,
       password: bodyReq.extension.password,
@@ -214,7 +219,6 @@ async function updateExtension(req, res) {
 
 async function deleteExtension(req, res) {
   const ids = req.body.extensionIds;
-
   try {
     const allocatedExtensions = await extensionRepo.find({
       where: {
@@ -247,6 +251,7 @@ async function deleteExtension(req, res) {
     Logger.info(`Extension -> ${ids} deleted successfully`);
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
+    console.log("error deleting extension", error);
     Logger.error(`Extension -> delete failed: ${JSON.stringify(error)}`);
 
     ErrorResponse.error = error;

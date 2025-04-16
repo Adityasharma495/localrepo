@@ -106,10 +106,10 @@ async function createIVR(req, res) {
     await transaction.commit();
     transactionCommitted = true;
 
-    // if (Number(userDetail?.flow_type) !== 1) {
-    //   Logger.info('Publishing message to queue');
-    //   await publishIVRUpdate();
-    // }
+    if (Number(userDetail?.flow_type) !== 1) {
+      Logger.info('Publishing message to queue');
+      await publishIVRUpdate();
+    }
 
     SuccessRespnose.message = "Successfully created a new IVR";
     SuccessRespnose.data = {
