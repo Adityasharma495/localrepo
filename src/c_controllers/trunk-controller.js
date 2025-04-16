@@ -24,10 +24,8 @@ async function createTrunk(req, res) {
     const codecName = trunkPayload.codec_id
 
 
-    const operatorRecord = await Operator.findOne({ name: operatorName });
-    const codecRecord = await Codec.findOne({ name:codecName });
-
-
+    const operatorRecord = await Operator.findOne({where: { id: operatorName }});
+    const codecRecord = await Codec.findOne({ where: { id: codecName }});
 
     if (!operatorRecord) {
       return res.status(StatusCodes.BAD_REQUEST).json({
@@ -194,7 +192,7 @@ async function createTrunk(req, res) {
   
   
       if (trunkPayload.operator_id && typeof trunkPayload.operator_id === "string") {
-        const operatorRecord = await Operator.findOne({ name: trunkPayload.operator_id });
+        const operatorRecord = await Operator.findOne({ where: { id: trunkPayload.operator_id }});
         if (!operatorRecord) {
           return res.status(StatusCodes.BAD_REQUEST).json({
             message: `Operator '${trunkPayload.operator_id}' not found.`,
@@ -205,7 +203,7 @@ async function createTrunk(req, res) {
       }
  
       if (trunkPayload.codec_id && typeof trunkPayload.codec_id === "string") {
-        const codecRecord = await Codec.findOne({ name: trunkPayload.codec_id });
+        const codecRecord = await Codec.findOne({ where: { id: trunkPayload.codec_id }});
         if (!codecRecord) {
           return res.status(StatusCodes.BAD_REQUEST).json({
             message: `Codec '${trunkPayload.codec_id}' not found.`,

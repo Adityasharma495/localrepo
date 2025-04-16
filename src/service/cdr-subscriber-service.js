@@ -6,6 +6,7 @@ const incomingSummaryRepo = new IncomingSummaryRepository();
 const { Logger } = require("../config");
 const mongoose = require('mongoose');
 const moment = require("moment-timezone");
+const logger = require('../config/logger-config');
 
 
 const connectMongo = async() => {
@@ -90,14 +91,20 @@ const getDateTimeFormat = (date) =>{
            try{
               
               const did = cdrJson.calleeTo;
+              logger.info(".........."+new Date(cdrJson.timings.START).toISOString());
+              let start =  new Date(cdrJson.timings.START).toISOString();
+              let startOfDay = new Date(start);
+              Logger.info(`Start Of  Date : ${startOfDay} `);
+              startOfDay.setHours(0, 0, 0, 0);
+              const startDateCheck = getDateTimeFormat(startOfDay);
               const startDate = getDateTimeFormat(cdrJson.timings.START);
               const userId = cdrJson.userId;
               const connectedCalls = (cdrJson.billingDuration > 0 ? 1 : 0);
 
-              const incoming = await incomingSummaryRepo.isSummaryExist(userId , did , startDate);
+              const incoming = await incomingSummaryRepo.isSummaryExist(userId , did , startDateCheck);
 
               if(incoming){
-                   console.log("data ... : "+ JSON.stringify(incoming));
+                   console.log("data updating ... : "+ JSON.stringify(incoming));
                    summary_data = {
                         did : incoming.did,
                         user_id : mongoose.Types.ObjectId.isValid(incoming.userId) ? incoming.userId : null,
@@ -111,9 +118,9 @@ const getDateTimeFormat = (date) =>{
                         s_parent_id :  mongoose.Types.ObjectId.isValid(incoming.sparentId) ? incoming.sparentId : null,              
                    }
 
-                   console.log("summary : "+summary_data);
+                   console.log("summary : "+JSON.stringify( summary_data));
                    
-                   const summary = await incomingSummaryRepo.updateSummary(summary_data);
+                   const summary = await incomingSummaryRepo.updateSummary(summary_data,startDateCheck);
                    Logger.info(`Incoming Summary -> updated successfully: ${JSON.stringify(summary)}`);
 
 

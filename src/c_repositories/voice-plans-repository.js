@@ -70,17 +70,18 @@ class VoicePlansRepository extends CrudRepository {
     }
   }
 
-  async findAllData() {
-    let response = await this.model.findAll({ where: { plan_status: 1 } });
+  async findAllData(current_role, current_uid) {
+    let response;
+    if (current_role === constants.USERS_ROLE.SUPER_ADMIN) {
+      response = await this.model.findAll({ where: { plan_status: 1 } });
+    } else {
+      response = await this.model.findAll({ where: { plan_status: 1, user_id: current_uid } });
+    }
+    
     response = response.map(item => {
-      const createdAt = new Date(item.dataValues.created_at);
-      const updatedAt = new Date(item.dataValues.updated_at);
-
+      const createdAt = new Date(item.dataValues.req_date);
       const formattedCreatedAt = createdAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-      const formattedUpdatedAt = updatedAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-
-      item.dataValues.created_at = formattedCreatedAt;
-      item.dataValues.updated_at = formattedUpdatedAt;
+      item.dataValues.req_date = formattedCreatedAt;
 
       return item;
     });
