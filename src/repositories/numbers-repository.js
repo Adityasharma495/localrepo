@@ -117,7 +117,7 @@ class NumbersRepository extends CrudRepository {
             const response = await this.model.find({
                 is_deleted: false,
                 _id: { $in: ids }
-            }).populate("voice_plan_id").populate("allocated_to").lean();
+            }).populate("voice_plan_id").lean();
             return response;
         } catch (error) {
             throw error;

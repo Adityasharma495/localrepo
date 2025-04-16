@@ -29,6 +29,15 @@ class CallCentreRepository extends CrudRepository{
         );
       }
 
+      async findOne(conditions) {
+        try {
+            const response = await this.model.findOne({ ...conditions});
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    }
+
 }
 
 module.exports = CallCentreRepository;

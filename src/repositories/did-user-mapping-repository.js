@@ -42,7 +42,7 @@ class NumberUserMappingRepository extends CrudRepository {
             mapping_detail: filteredMapping
           };
         })
-        .filter(item => item.mapping_detail.length > 0); // <-- remove entries with no matching mapping_detail
+        .filter(item => item.mapping_detail.length > 0);
   
       return filtered;
   

@@ -5,7 +5,7 @@ const { State} = require('country-state-city');
 const { NumbersRepository, DIDUserMappingRepository,
     UserJourneyRepository, NumberFileListRepository,
     NumberStatusRepository, UserRepository ,
-    MemberScheduleRepository, CountryCodeRepository, VoicePlansRepository, CompanyRepository} = require('../repositories');
+    MemberScheduleRepository, CountryCodeRepository, VoicePlansRepository, CompanyRepository, CallCentreRepository} = require('../repositories');
 const fs = require("fs");
 const {MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, USERS_ROLE, NUMBER_STATUS_LABLE, DID_ALLOCATION_LEVEL} = require('../utils/common/constants');
 const userJourneyRepo = new UserJourneyRepository();
@@ -18,6 +18,7 @@ const countryCodeRepository = new CountryCodeRepository();
 const voicePlanRepo = new VoicePlansRepository();
 const didUserMappingRepository = new DIDUserMappingRepository();
 const companyRepo = new CompanyRepository();
+const callCentreRepo = new CallCentreRepository();
 
 const { constants } = require("../utils/common");
 const numberStatusValues = constants.NUMBER_STATUS_VALUE;
@@ -500,12 +501,54 @@ async function getAll(req, res) {
         const uniqueDIDs = [...new Set(data.map(item => item.DID?._id))];
         data = await numberRepo.findMany(uniqueDIDs);
 
-        data = data
-        .map(val => {
-            val['status'] = numberStatusValues[val['status']];
-            return val;
-        })
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        data = await Promise.all(
+            data.map(async (val) => {
+              val['status'] = numberStatusValues[val['status']];
+              let allocatedData = null;
+              let finalData = {};
+          
+              // Try company first
+              allocatedData = await companyRepo.findOne({ _id: val.allocated_to });
+              if (allocatedData) {
+                finalData = {
+                  name: allocatedData.name,
+                  _id: allocatedData._id
+                };
+              }
+          
+              // Try user if not found in company
+              if (!allocatedData) {
+                allocatedData = await userRepo.findOne({ _id: val.allocated_to });
+                if (allocatedData) {
+                  finalData = {
+                    name: allocatedData.username,
+                    _id: allocatedData._id
+                  };
+                }
+              }
+          
+              // Try call center if not found in user
+              if (!allocatedData) {
+                allocatedData = await callCentreRepo.findOne({ _id: val.allocated_to });
+                if (allocatedData) {
+                  finalData = {
+                    name: allocatedData.name,
+                    _id: allocatedData._id
+                  };
+                }
+              }
+          
+              if (allocatedData) {
+                val['allocated_to'] = finalData;
+              }
+          
+              return val;
+            })
+          );
+          
+          // Now safely sort
+          data = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          
 
         SuccessRespnose.data = data;
         SuccessRespnose.message = 'Success';
@@ -1042,17 +1085,30 @@ async function getToAllocateNumbers(req, res) {
 async function getAllocatedNumbers(req, res) {
     try {
         const allocatedToId = req.params.id;
-
         let allocatedNumbers = await didUserMappingRepository.getForOthers(allocatedToId);
 
-        const allocatedTo = allocatedNumbers.length > 0 ? allocatedNumbers[0].mapping_detail[0].allocated_to.username : null 
+        const allocatedId = allocatedNumbers.length > 0 ? allocatedNumbers[0]?.mapping_detail[0].allocated_to: null 
+        let allocatedTo;
+        if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
+            allocatedTo = (await userRepo.get(allocatedId))?.username
+        } else if (req.user.role === USERS_ROLE.RESELLER) {
+            allocatedTo = (await companyRepo.get(allocatedId))?.name
+        } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
+            const company = await companyRepo.findOne({_id : allocatedId})
+            if (company) {
+                allocatedTo = company?.name
+            } else {
+                allocatedTo = (await callCentreRepo.findOne({_id : allocatedId}))?.name
+            }
+        }
         const allocatedBy = req.user.username
 
         const uniqueDIDs = [...new Set(allocatedNumbers.map(item => item.DID))];
 
         // Create a map of DID to voiceplan_id
         const didVoicePlanMap = {};
-        allocatedNumbers.forEach(item => {
+
+        allocatedNumbers.forEach(async (item) => {
         didVoicePlanMap[item.DID._id] = item.mapping_detail[0].voice_plan_id;
         });
 
