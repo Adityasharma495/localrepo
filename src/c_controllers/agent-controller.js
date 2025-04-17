@@ -296,7 +296,7 @@ async function deleteAgent(req, res) {
     let response;
 
     agents.forEach(item => {
-      if (Number(item.is_allocated) === 1) {
+      if (Number(item.is_allocated) == 1) {
         allocated.push(item.agent_name);
       } else {
         notAllocated.push(item);
@@ -324,8 +324,8 @@ async function deleteAgent(req, res) {
       telephonyProfiles.push(agent.telephony_profile);
       deletedAgent.push(agent.id);
       
-      if (telephonyProfile.profile.length > 1) {
-        extensionIds.push(telephonyProfile.profile[1].id);
+      if (telephonyProfiles.length > 0) {
+        extensionIds.push(telephonyProfile[0]);
       }
     }
   }
@@ -389,6 +389,44 @@ async function deleteAgent(req, res) {
 
     Logger.error(
       `Agent -> unable to delete Agent: ${id}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+async function updateAllocation(req, res) {
+  const { agentIds } = req.body;
+
+  try {
+    if (!agentIds || !Array.isArray(agentIds) || agentIds.length === 0) {
+      throw new AppError("Invalid or empty agentIds array", StatusCodes.BAD_REQUEST);
+    }
+
+    const updatedResult = await agentRepo.bulkUpdate(
+      { id: { [Op.in]: agentIds } },
+      { is_allocated: 1 }
+    );
+
+    const updatedCount = updatedResult[0];
+
+    if (updatedCount === 0) {
+      throw new AppError("No agents were updated. Please check the provided IDs.", StatusCodes.BAD_REQUEST);
+    }
+
+    Logger.info(`Agents allocation updated successfully for IDs: ${JSON.stringify(agentIds)}`);
+    SuccessRespnose.message = "Agents successfully allocated.";
+    SuccessRespnose.data = { updatedCount };
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+
+    ErrorResponse.message = error.message || "Internal Server Error";
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `Agent -> failed to allocate agents, error: ${JSON.stringify(error)}`
     );
 
     return res.status(statusCode).json(ErrorResponse);
@@ -568,5 +606,6 @@ module.exports={
     getById,
     deleteAgent,
     updateAgent,
-    toggleStatus
+    toggleStatus,
+    updateAllocation
 }

@@ -227,7 +227,7 @@ async function deleteExtension(req, res) {
       },
     });
 
-    if (allocatedExtensions.length > 0) {
+    if (allocatedExtensions) {
       const allocatedUsernames = allocatedExtensions
         .map((ext) => ext.username)
         .join(", ");

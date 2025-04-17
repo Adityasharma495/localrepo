@@ -19,4 +19,6 @@ router.post('/:id',AuthMiddleware.validateUser, AgentMiddleware.modifyAgentUpdat
 
 router.post("/status/:id", AuthMiddleware.validateUser, AgentController.toggleStatus);
 
+router.post("/allocate",AuthMiddleware.validateUser,AgentController.updateAllocation)
+
 module.exports = router;

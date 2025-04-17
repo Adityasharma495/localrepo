@@ -20,6 +20,8 @@ router.get("/:id/assigned-agents",AuthMiddleware.validateUser, AgentGroupControl
 // Scehdule 
 router.post("/schedule/:id", AuthMiddleware.validateUser,AgentGroupMiddleware.validateSchedule,AgentGroupController.updateMemberScheduleAgent);
 
+// DELETE GROUPS
+router.post("/delete", AuthMiddleware.validateUser, AgentGroupMiddleware.validateDeleteRequest, AgentGroupController.deleteAgentGroup);
 
 // UPDATE GROUPS
 router.post('/:id',AuthMiddleware.validateUser,AgentGroupMiddleware.modifyAgentGroupUpdateBodyRequest,AgentGroupController.updateAgentGroup)

@@ -490,9 +490,6 @@ async function signinUser(req, res) {
                   if (req.user.role === USERS_ROLE.COMPANY_ADMIN && bodyReq.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
                         const campanyAdmin = await userRepo.get(req.user.id)
                         console.log("COMAPANY ADMIN", campanyAdmin);
-
-
-
                         const prefix = Number(campanyAdmin.prefix) + PREFIX_VALUE
 
                         console.log("PREFIX", prefix);
