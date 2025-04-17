@@ -437,11 +437,16 @@ async function deleteAgent(req, res) {
     if (agent.telephony_profile) {
       
       const userDetail = await userRepo.getByName(agent.agent_name);
-      deletedUser.push(userDetail._id);
+
+
+      deletedUser.push(userDetail.id);
 
       const telephonyProfile = await telephonyProfileRepo.get(agent.telephony_profile);
+
+
+
       telephonyProfiles.push(agent.telephony_profile);
-      deletedAgent.push(agent._id);
+      deletedAgent.push(agent.id);
       
       if (telephonyProfile.profile.length > 1) {
         extensionIds.push(telephonyProfile.profile[1].id);

@@ -13,7 +13,7 @@ const TelephonyProfileItem = sequelize.define("telephony_profile_items", {
       allowNull: false,
       references: {
         model: MODEL.TELEPHONY_PROFILE,
-        key: "id",
+        key: "id",  
       },
     },
     type: {
@@ -25,7 +25,7 @@ const TelephonyProfileItem = sequelize.define("telephony_profile_items", {
       allowNull: true,
     },
     number: {
-      type: DataTypes.STRING,
+      type: DataTypes.JSON,
       allowNull: true,
     },
     active_profile: {

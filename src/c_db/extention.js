@@ -21,8 +21,8 @@ const Extension = sequelize.define(
   MODEL.EXTENSION, // Table name from constants
   {
     id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
     username: {

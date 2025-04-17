@@ -9,6 +9,10 @@ const TelephonyProfile = sequelize.define(MODEL.TELEPHONY_PROFILE, {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
+  profile: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+  },
   created_by: {
     type: DataTypes.UUID,
     allowNull: true,

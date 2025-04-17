@@ -12,27 +12,39 @@ class TelephonyProfileRepository extends CrudRepository {
   }
 
   async create(data) {
+    console.log("DATA HERE", data);
     try {
       let response;
   
+      // Bulk create case
       if (Array.isArray(data)) {
-        // optional: handle bulk insert if needed
-        const created = await this.model.bulkCreate(data, {
-          include: [{ association: this.model.associations.items }],
+        const prepared = data.map(profile => ({
+          ...profile,
+          profile: profile.items  // Save items inside JSONB field
+        }));
+  
+        const created = await this.model.bulkCreate(prepared);
+        response = created.map(item => item.get({ plain: true }));
+      } 
+      // Single create case
+      else {
+        const created = await this.model.create({
+          ...data,
+          profile: data.items  // Store entire items array as JSONB
         });
-        response = created.map((item) => item.get({ plain: true }));
-      } else {
-        const created = await this.model.create(data, {
-          include: [{ association: this.model.associations.items }],
-        });
+  
         response = created.get({ plain: true });
       }
   
+      console.log("RETURNING RESPONSE", response);
       return response;
     } catch (error) {
+      console.error("CREATE ERROR", error);
       throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
+  
+  
   
   
   
@@ -68,6 +80,7 @@ class TelephonyProfileRepository extends CrudRepository {
     try {
       const response = await this.model.findOne({
         where: { id },
+        raw:true,
       });
 
       if (!response) {

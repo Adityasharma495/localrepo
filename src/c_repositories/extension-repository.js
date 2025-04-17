@@ -36,11 +36,9 @@ class ExtensionRepository extends CrudRepository {
 
   // ✅ Get a single extension by ID
   async get(id) {
-
-    console.log("SEARCH FOR ID", id);
     try {
       const response = await Extension.findOne({
-        where: { extension: id, is_deleted: false },
+        where: { id: id, is_deleted: false },
       });
 
 
@@ -94,7 +92,6 @@ class ExtensionRepository extends CrudRepository {
 
   async bulkUpdate(ids, data) {
 
-    console.log("BULK UPDTE", ids, data);
     try {
       const response = await Extension.update(data, {
         where: { id: { [Op.in]: ids } },
@@ -103,8 +100,6 @@ class ExtensionRepository extends CrudRepository {
       if (response[0] === 0) {
         throw new AppError("No matching resources found to update", StatusCodes.NOT_FOUND);
       }
-
-      console.log("RESPONSE RETURN", response);
 
       return response;
     } catch (error) {

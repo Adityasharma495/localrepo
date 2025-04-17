@@ -1,5 +1,6 @@
 const CrudRepository = require("./crud-repository");
 const {Agents} = require("../c_db/");
+const Users = require("../c_db/User")
 const AppError = require("../utils/errors/app-error");
 const { StatusCodes } = require("http-status-codes");
 const { Op } = require("sequelize");
@@ -49,6 +50,8 @@ class AgentRepository extends CrudRepository {
   }
 
   async update(id, data) {
+
+    console.log("ID", id,data);
 
     try {
       const [updatedRows, [updatedAgent]] = await Agents.update(data, {
@@ -108,18 +111,36 @@ class AgentRepository extends CrudRepository {
   async getAllActiveAgents(userId) {
     try {
       const agents = await Agents.findAll({
-        raw:true,
         where: { is_deleted: false, created_by: userId },
         order: [['created_at', 'DESC']],
-        // include: [{ model: "users", as: "creator" }],
+        include: [
+          {
+            model: Users,
+            as: 'creator',
+            // Include all user fields
+            attributes: { exclude: ['password'] }
+          }
+        ],
+        raw: true,
+        nest: true
       });
-
-
-      return agents;
+  
+      // Flatten creator -> created_by
+      const transformed = agents.map(agent => {
+        const { creator, ...rest } = agent;
+        return {
+          ...rest,
+          created_by: creator || {}
+        };
+      });
+  
+      return transformed;
     } catch (error) {
       throw new AppError(`Failed to fetch active agents: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
+  
+  
 }
 
 module.exports = AgentRepository;

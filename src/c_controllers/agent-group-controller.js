@@ -34,7 +34,6 @@ async function createAgentGroup(req, res) {
     }
 
 
-
     // Create the agent group with the shared _id
     const agent = await agentGroupRepo.create({
       ...bodyReq.agent,
@@ -154,10 +153,10 @@ async function getAssignedAgents(req, res) {
 
     // Fetch agent group
     const agentGroup = await agentGroupRepo.get(groupId);
-    const agentGroupAgents = await agentGroupAgentsRepo.getByGroupId(groupId);
 
-    if (!agentGroupAgents.length) {
-      transformedAgents = [];
+    if (!agentGroup || agentGroup.agents==null) {
+      console.log("No agents found");
+      transformedAgents = []
     } else {
       transformedAgents = await Promise.all(
         (agentGroup.agents).map(async (agent) => {
@@ -208,8 +207,6 @@ async function updateAgentGroup(req, res) {
   const uid = req.params.id;
   const bodyReq =  req.body;
 
-
-  console.log("BODY REQUEST TO UPDATE", bodyReq);
   try {
     const responseData = {};
     let agent;
@@ -226,17 +223,16 @@ async function updateAgentGroup(req, res) {
           start_time: bodyReq.agent.startTime,
           end_time: bodyReq.agent.endTime,
         }) 
-        agent = await agentGroupRepo.update(uid, {group_schedule_id : schedule._id})
+        agent = await agentGroupRepo.update(uid, {group_schedule_id : schedule.id})
       }
 
     } 
     else if (bodyReq?.agent?.type === 'add_member'){
       const agentIds = bodyReq?.agent?.agent_id;
-      const agentgroup = await agentGroupRepo.get(uid)
+      const preData = await agentGroupRepo.get(uid)
       
 
-      console.log("PREDATA", preData.id);
-      console.log("bodyReq.agent.memberSchedulePayload", bodyReq.agent.memberSchedulePayload);
+
 
       const schedule = await memberScheduleRepo.create({
          week_days : bodyReq.agent.memberSchedulePayload.week_days,
@@ -245,28 +241,25 @@ async function updateAgentGroup(req, res) {
       })
 
 
-      console.log("SCHEDULE", schedule);
+
   
       const structuredData = agentIds.map(agentId => ({
         agent_id: agentId,
-        member_schedule_id: schedule._id
+        member_schedule_id: schedule.id
       }));
-
-      console.log("STRUCTURED DATA", structuredData);
-      console.log("LAST PRE", [...preData]);
-
       // Merge existing agents with new ones (avoiding duplicates)
-      const updatedAgents = [...preData.agents, ...structuredData].reduce((acc, curr) => {
-        if (!acc.some(agent => agent.agent_id === curr.agent_id)) {
-          acc.push(curr);
-        }
-        return acc;
-      }, []);
+      // const updatedAgents = [...preData.agents, ...structuredData].reduce((acc, curr) => {
+      //   if (!acc.some(agent => agent.agent_id === curr.agent_id)) {
+      //     acc.push(curr);
+      //   }
+      //   return acc;
+      // }, []);
+      
   
-      agent = await agentGroupRepo.update(uid, {agents : updatedAgents});
+      agent = await agentGroupRepo.update(uid, {agents : structuredData});
   
       await agentRepo.bulkUpdate(
-        { _id: { $in: agentIds } },
+        { id: agentIds },
         { is_allocated: 1 } 
       );
     } else {
@@ -319,11 +312,90 @@ async function updateAgentGroup(req, res) {
   }
 }
 
+async function updateMemberScheduleAgent(req, res) {
+  const { id } = req.params; 
+  const bodyReq = req.body; 
+
+  try {
+    const agentGroup = await agentGroupRepo.get(id);
+
+    console.log("AGENT GROUPS HERE", agentGroup);
+
+    let scheduleData;
+    const occurrenceCount = agentGroup.agents.filter(agent => 
+      agent.member_schedule_id.toString() === bodyReq.id
+    ).length;
+
+
+
+    if (occurrenceCount > 1) {
+
+      scheduleData = await memberScheduleRepo.create({
+        start_time: bodyReq.start_time,
+        end_time: bodyReq.end_time,
+        week_days: bodyReq.week_days
+      })
+
+      const updatedAgents = agentGroup.agents.map(agent => {
+        if (agent.agent_id.toString() === bodyReq.agent_id) {
+          return { ...agent, member_schedule_id: scheduleData.id, priority : bodyReq?.priority };
+        }
+        return agent;
+      });
+
+      console.log("UPDATED AGENTS", updatedAgents);
+
+      await agentGroupRepo.update(id, {agents : updatedAgents})
+      
+    } else {
+      scheduleData = await memberScheduleRepo.update(bodyReq.id , {
+        start_time: bodyReq.start_time,
+        end_time: bodyReq.end_time,
+        week_days: bodyReq.week_days
+      })
+
+      const updatedAgents = agentGroup.agents.map(agent => {
+        if (agent.agent_id.toString() === bodyReq.agent_id) {
+          return { ...agent, priority : bodyReq?.priority };
+        }
+        return agent;
+      });
+
+      await agentGroupRepo.update(id, {agents : updatedAgents})
+    }
+
+
+    // Success response
+    SuccessRespnose.message = "Agent time schedule updated successfully.";
+    SuccessRespnose.data = scheduleData;
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    if (error.name === "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Invalid agent ID.";
+    }
+
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `Agent -> Failed to update time schedule for Agent ID: ${id}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
 
 module.exports = {
     createAgentGroup,
     getAll,
     getById,
     getAssignedAgents,
-    updateAgentGroup
+    updateAgentGroup,
+    updateMemberScheduleAgent
 }

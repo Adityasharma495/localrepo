@@ -65,12 +65,12 @@ async function createAgent(req, res) {
 
 
       // if available_licence are 0 then return
-      if (Number(subLicenceData.agent) === 0) {
-         ErrorResponse.message = 'Licence is not available';
-        return res
-            .status(StatusCodes.BAD_REQUEST)
-            .json(ErrorResponse);
-      }
+      // if (Number(subLicenceData.agent) === 0) {
+      //    ErrorResponse.message = 'Licence is not available';
+      //   return res
+      //       .status(StatusCodes.BAD_REQUEST)
+      //       .json(ErrorResponse);
+      // }
 
       // if available_licence are not 0 then update sub user licence
       const updatedData = {
@@ -78,11 +78,12 @@ async function createAgent(req, res) {
         agent: Number(subLicenceData.agent || 0) - 1
       };
 
-     const dara= await subUserLicenceRepo.updateById(loggedInData.sub_user_licence.id, {available_licence: updatedData})
+     await subUserLicenceRepo.updateById(loggedInData.sub_user_licence.id, {available_licence: updatedData})
 
     }
     agent = await agentRepo.create(bodyReq.agent);
     responseData.agent = agent;
+
 
     if ((bodyReq.agent?.extension).length !== 0) {
         //update extension
@@ -91,32 +92,47 @@ async function createAgent(req, res) {
         
     }
 
+
   //  Entry in telephony_profile
 
-  const telephonyProfilePayload = {
-    created_by: req.user.id,
-    items: [
-      {
-        type: 'phone',
-        country_code: '91',
-        number: agent.agent_number,
-        active_profile: false
-      }
-    ]
-  };
-  
+  const profiles = [
+    {
+      items: [
+        {
+          id: agent.id,
+          type: 'PSTN',
+          number: {
+            country_code: '91',
+            number: agent.agent_number
+          },
+          active_profile: false
+        }
+      ],
+      created_by: req.user.id
+    }
+  ];
+
+
+  // Include extensionData objects only if extensionData exists
   if (extensionData) {
-    telephonyProfilePayload.items.push(
+
+    profiles[0].items.push(
       {
-        type: 'sip',
-        country_code: null,
-        number: extensionData.extension,
+        id: extensionData.id,
+        type: 'SIP',
+        number: {
+          country_code: null,
+          number: extensionData.extension
+        },
         active_profile: false
       },
       {
-        type: 'webrtc',
-        country_code: null,
-        number: extensionData.extension,
+        id: extensionData.id,
+        type: 'WEBRTC',
+        number: {
+          country_code: null,
+          number: extensionData.extension
+        },
         active_profile: false
       }
     );
@@ -124,12 +140,9 @@ async function createAgent(req, res) {
  
 
 
-    const telephonyProfile = await telephonyProfileRepo.create(telephonyProfilePayload);
+const telephonyProfile = await telephonyProfileRepo.create(profiles);
 
-
-
-    await agentRepo.update(agent.id, {telephony_profile : telephonyProfile.id})
-
+await agentRepo.update(agent.id, {telephony_profile : telephonyProfile[0].id})
 
     // Entry in Users Table
     await userRepo.create({
@@ -141,7 +154,6 @@ async function createAgent(req, res) {
       username: bodyReq.agent.username,
       created_by: req.user.id
     })
-
 
 
     const userJourneyfields = {
@@ -216,27 +228,23 @@ async function getAll(req, res) {
 
 async function getById(req, res) {
   const id = req.params.id;
-
-
-  console.log("IDS FROM PARAMS", id);
   try {
     if (!id) {
       throw new AppError("Missing Agent Id", StatusCodes.BAD_REQUEST);
      }
     const agentData = await agentRepo.get(id);
 
-    console.log("AGENT DATA", agentData);
     const userDetail = await userRepo.getByName(agentData.agent_name);
 
     agentData.username = userDetail?.username
 
-    console.log("AGENT DATA", agentData.telephony_profile);
 
     const telephony_profile_id = agentData.telephony_profile;
     const telephone_profile_data = await telephonyProfileRepo.get(telephony_profile_id)
-    console.log("TELE DATAD", telephone_profile_data.profile);
-    const extensionDetail = await extensionRepo.get(agentData.telephony_profile?.profile[1]?.id);
+    const extensionDetail = await extensionRepo.get(telephone_profile_data.profile[1]?.id);
     agentData.extensionName = extensionDetail?.username
+
+    
 
     if (agentData.length == 0) {
       const error = new Error();
@@ -244,7 +252,12 @@ async function getById(req, res) {
       throw error;
     }
     SuccessRespnose.message = "Success";
-    SuccessRespnose.data = agentData;
+    SuccessRespnose.data = {
+      ...agentData.get({ plain: true }),
+      extensionName: extensionDetail?.username,
+      username: userDetail?.username,
+    };
+
     Logger.info(
       `Agent -> recieved ${id} successfully`
     );
@@ -276,19 +289,19 @@ async function deleteAgent(req, res) {
 
     const agents = await agentRepo.findMany(id);
 
+   
 
     const allocated = [];
     const notAllocated = [];
     let response;
 
     agents.forEach(item => {
-      if (item.is_allocated === 1) {
+      if (Number(item.is_allocated) === 1) {
         allocated.push(item.agent_name);
       } else {
         notAllocated.push(item);
       }
     });
-
 
     const extensionIds = []
     const telephonyProfiles = []
@@ -299,13 +312,15 @@ async function deleteAgent(req, res) {
    // get extension ids from telephony_profile
    for (const agent of notAllocated) {
     if (agent.telephony_profile) {
-      
 
       const userDetail = await userRepo.getByName(agent.agent_name);
 
       deletedUser.push(userDetail.id);
 
       const telephonyProfile = await telephonyProfileRepo.get(agent.telephony_profile);
+
+
+      console.log("telephonyProfile", telephonyProfile);
       telephonyProfiles.push(agent.telephony_profile);
       deletedAgent.push(agent.id);
       
@@ -330,8 +345,6 @@ async function deleteAgent(req, res) {
     if (req.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
       const loggedInData = await userRepo.getForLicence(req.user.id);
       const availableLicence = loggedInData.sub_user_licence.available_licence;
-
-      console.log("AVAILABE LICENCE", availableLicence);
 
       let updatedData = { ...availableLicence };
       for (const _ of id) {
@@ -382,11 +395,178 @@ async function deleteAgent(req, res) {
   }
 }
 
+async function updateAgent(req, res) {
+  const uid = req.params.id;
+  const bodyReq = req.body;
 
+  try {
+    const responseData = {};
+    const currentData = await agentRepo.get(uid);
+
+    // Check for duplicate agent_number if it is being changed
+    if (currentData.agent_number !== bodyReq.agent.agent_number) {
+      const numberCondition = {
+        created_by: req.user.id,
+        agent_number: bodyReq.agent.agent_number
+      };
+      const numberDuplicate = await agentRepo.findOne(numberCondition);
+      if (numberDuplicate) {
+        ErrorResponse.message = 'Agent Number already exists';
+        return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+      }
+    }
+
+    // Check for duplicate agent_name if it is being changed
+    if (currentData.agent_name !== bodyReq.agent.agent_name) {
+      const nameCondition = {
+        created_by: req.user.id,
+        agent_name: bodyReq.agent.agent_name
+      };
+
+      const nameDuplicate = await agentRepo.findOne(nameCondition);
+      if (nameDuplicate) {
+        ErrorResponse.message = 'Agent name already exists';
+        return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+      }
+    }
+
+    //Check for extension change
+    // if (currentData.extension[0] && bodyReq.agent.extension[0] && (currentData.extension[0].toString() !== bodyReq.agent.extension[0].toString())) {
+    //   if ((currentData.extension).length > 0) {
+    //     await extensionRepo.bulkUpdate( currentData.extension, { is_allocated: 0 });
+    //   }
+
+    //   if ((bodyReq.agent.extension).length > 0) {
+    //     await extensionRepo.bulkUpdate( bodyReq.agent.extension, { is_allocated: 1 });
+    //   }
+    // }
+
+    // if ((currentData.extension).length === 0 && (bodyReq.agent.extension).length > 0) {
+    //   if ((bodyReq.agent.extension).length > 0) {
+    //     await extensionRepo.bulkUpdate( bodyReq.agent.extension, { is_allocated: 1 });
+    //   }
+    // }
+
+    const agent = await agentRepo.update(uid, bodyReq.agent);
+    if (!agent) {
+      const error = new Error();
+      error.name = 'CastError';
+      throw error;
+    }
+    responseData.agent = agent;
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.AGENT,
+      action: ACTION_LABEL.EDIT,
+      created_by: req?.user?.id
+    }
+
+    await userJourneyRepo.create(userJourneyfields);
+
+    SuccessRespnose.message = 'Updated successfully!';
+    SuccessRespnose.data = responseData;
+
+    Logger.info(`Agent -> ${uid} updated successfully`);
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+  } catch (error) {
+    let statusCode, errorMsg
+    if (error.name == 'CastError') {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = 'Agent not found';
+    }
+    else if (error.name == 'MongoServerError') {
+      statusCode = StatusCodes.BAD_REQUEST;
+      if (error.codeName == 'DuplicateKey') errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
+    }
+    ErrorResponse.message = errorMsg;
+
+    Logger.error(`Agent-> unable to update Agent: ${uid}, data: ${JSON.stringify(bodyReq)}, error: ${JSON.stringify(error)}`);
+
+    return res.status(statusCode).json(ErrorResponse);
+
+  }
+}
+
+async function toggleStatus(req, res) {
+  const { id } = req.params; // The agent's ID
+
+  try {
+    // Fetch the agent by ID
+    const agent = await agentRepo.get(id);
+
+    if (!agent) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ message: "Agent not found" });
+    }
+
+    // Toggle the status
+    const newStatus = agent.login_status === "1" ? "0" : "1";
+
+    const subLicenceData = await subUserLicenceRepo.findOne({user_id : req.user.id})
+
+    // if (Number(newStatus)) {
+    //   if (subLicenceData.available_licence.live_agent !== 0) {
+    //      subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent - 1;
+    //   } else {
+    //     ErrorResponse.message = 'Agent Live Limit Exceeds';
+    //     return res
+    //       .status(StatusCodes.BAD_REQUEST)
+    //       .json(ErrorResponse);
+    //   }
+    // } else {
+    //   subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent + 1;
+    // }
+
+    // Update the agent's status
+    const updatedAgent = await agentRepo.update(id, { login_status: newStatus });
+
+    
+
+    //update sub user licence
+    await subUserLicenceRepo.updateById(subLicenceData.id, {available_licence: subLicenceData.available_licence})
+
+    if (!updatedAgent) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: "Failed to update agent status" });
+    }
+
+    // Log the status change
+    Logger.info(`Agent -> ${id} status updated to ${newStatus}`);
+
+    // Respond with the updated agent data
+    SuccessRespnose.message = "Agent status updated successfully";
+    SuccessRespnose.data = { ...updatedAgent, status: newStatus };
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    if (error.name === "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Invalid agent ID";
+    }
+
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `Agent -> unable to update status for Agent: ${id}, error: ${JSON.stringify(
+        error
+      )}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
 
 module.exports={
     createAgent,
     getAll,
     getById,
-    deleteAgent
+    deleteAgent,
+    updateAgent,
+    toggleStatus
 }

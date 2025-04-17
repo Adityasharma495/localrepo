@@ -14,6 +14,9 @@ router.get("/:id", AuthMiddleware.validateUser, AgentController.getById);
 
 router.post("/delete", AuthMiddleware.validateUser, AgentMiddleware.validateDeleteRequest,AgentController.deleteAgent);
 
+router.post('/:id',AuthMiddleware.validateUser, AgentMiddleware.modifyAgentUpdateBodyRequest,AgentController.updateAgent);
 
+
+router.post("/status/:id", AuthMiddleware.validateUser, AgentController.toggleStatus);
 
 module.exports = router;

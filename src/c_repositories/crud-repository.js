@@ -1,6 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
 const AppError = require('../utils/errors/app-error');
 const { constants } = require('../utils/common');
+const { Op } = require('sequelize');
 class CrudRepository {
 
     constructor(model) {
@@ -12,6 +13,8 @@ class CrudRepository {
   
         try {
             const response = await this.model.create(data);
+
+
             return response;            
         } catch (error) {
             console.log(error);
@@ -32,17 +35,25 @@ class CrudRepository {
     }
     
 
-    async get(data) {
+    async get(id) {
         try {
-            const response = await this.model.findByPk(data);
-            if(!response) {
-                throw new AppError('Not able to find the resource', StatusCodes.NOT_FOUND);
-            }
-            return response;            
+          const response = await this.model.findAll({
+            where: {
+              telephony_profile_id: id
+            },
+            raw:true,
+          });
+      
+          if (!response) {
+            throw new AppError('Not able to find the resource', StatusCodes.NOT_FOUND);
+          }
+      
+          return response;
         } catch (error) {
-            throw error;
+          throw error;
         }
-    }
+      }
+      
 
     async getAll(filter = {}) {
 
@@ -176,6 +187,29 @@ class CrudRepository {
             throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
         }
     }
+    
+
+    async bulkUpdate(ids, data) {
+      try {
+        const [affectedRows] = await this.model.update(data, {
+          where: {
+            id: {
+              [Op.in]: ids,
+            },
+          },
+          returning: true, // optional: returns updated rows if needed
+        });
+    
+        if (affectedRows === 0) {
+          throw new AppError('No matching resources found to update', StatusCodes.NOT_FOUND);
+        }
+    
+        return { updatedCount: affectedRows };
+      } catch (error) {
+        throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
+      }
+    }
+    
 }
 
 module.exports = CrudRepository;

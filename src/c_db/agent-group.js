@@ -82,6 +82,10 @@ const AgentsGroup = sequelize.define(MODEL.AGENTS_GROUP, {
       key: "id",
     },
   },
+  agents:{
+    type:DataTypes.JSONB,
+    allowNull:true,
+  },
   created_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
@@ -97,47 +101,51 @@ const AgentsGroup = sequelize.define(MODEL.AGENTS_GROUP, {
   updatedAt: 'updated_at',
 });
 
-const AgentGroupAgents = sequelize.define("agent_group_agents", {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  agent_group_id: {
-    type: DataTypes.UUID,
-    allowNull: false,
-    references: {
-      model: AgentsGroup,
-      key: "id",
-    },
-  },
-  agent_id: {
-    type: DataTypes.UUID,
-    allowNull: true,
-    references: {
-      model: Agent,
-      key: "id",
-    },
-  },
-  member_schedule_id: {
-    type: DataTypes.UUID,
-    allowNull: true,
-    references: {
-      model: MemberSchedule,
-      key: "id",
-    },
-  },
-  priority: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-}, {
-  tableName: "agent_group_agents",
-  timestamps: false,
-});
+// const AgentGroupAgents = sequelize.define("agent_group_agents", {
+//   id: {
+//     type: DataTypes.UUID,
+//     defaultValue: DataTypes.UUIDV4,
+//     primaryKey: true,
+//   },
+//   agent_group_id: {
+//     type: DataTypes.UUID,
+//     allowNull: false,
+//     references: {
+//       model: AgentsGroup,
+//       key: "id",
+//     },
+//   },
+//   agent_data:{
+//     type:DataTypes.JSONB,
+//     allowNull:true,
+//   },
+//   // agent_id: {
+//   //   type: DataTypes.UUID,
+//   //   allowNull: true,
+//   //   references: {
+//   //     model: Agent,
+//   //     key: "id",
+//   //   },
+//   // },
+//   // member_schedule_id: {
+//   //   type: DataTypes.UUID,
+//   //   allowNull: true,
+//   //   references: {
+//   //     model: MemberSchedule,
+//   //     key: "id",
+//   //   },
+//   // },
+//   // priority: {
+//   //   type: DataTypes.INTEGER,
+//   //   defaultValue: 0,
+//   // },
+// }, {
+//   tableName: "agent_group_agents",
+//   timestamps: false,
+// });
 
 // Associations
-AgentsGroup.hasMany(AgentGroupAgents, { foreignKey: "agent_group_id", as: "agents" });
-AgentGroupAgents.belongsTo(AgentsGroup, { foreignKey: "agent_group_id" });
+// AgentsGroup.hasMany(AgentGroupAgents, { foreignKey: "agent_group_id", as: "agents" });
+// AgentGroupAgents.belongsTo(AgentsGroup, { foreignKey: "agent_group_id" });
 
-module.exports = { AgentsGroup, AgentGroupAgents };
+module.exports = { AgentsGroup };

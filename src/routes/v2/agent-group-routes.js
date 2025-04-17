@@ -17,6 +17,9 @@ router.get("/:id", AuthMiddleware.validateUser, AgentGroupController.getById);
 // ASSIGNED AGENTS
 router.get("/:id/assigned-agents",AuthMiddleware.validateUser, AgentGroupController.getAssignedAgents)
 
+// Scehdule 
+router.post("/schedule/:id", AuthMiddleware.validateUser,AgentGroupMiddleware.validateSchedule,AgentGroupController.updateMemberScheduleAgent);
+
 
 // UPDATE GROUPS
 router.post('/:id',AuthMiddleware.validateUser,AgentGroupMiddleware.modifyAgentGroupUpdateBodyRequest,AgentGroupController.updateAgentGroup)

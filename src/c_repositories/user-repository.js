@@ -188,7 +188,7 @@ class UserRepository extends CrudRepository{
     async getByName(name) {
       try {
         const user = await User.findOne({
-          where: { name }
+          where: { name : name }
         });
     
         return user;
