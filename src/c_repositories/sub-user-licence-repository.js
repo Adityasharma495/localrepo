@@ -43,9 +43,11 @@ class SubUserLicenceRepository extends CrudRepository {
 
   async update(userId, data) {
 
+    console.log("ID AND DATA GERE", userId, data);
+
     try {
       const [rowsUpdated, [updatedRecord]] = await this.model.update(data, {
-        where: { user_id: userId },
+        where: { id: userId },
         returning: true,
       });
   

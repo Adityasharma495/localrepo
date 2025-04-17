@@ -454,8 +454,9 @@ async function signinUser(req, res) {
                     const subLicenceData = loggedInData.sub_user_licence.available_licence
                     
 
+
                     console.log("TOTAL LICENCE", loggedInData.sub_user_licence.total_licence);
-                    console.log("SUBLICENCE DATA", subLicenceData);
+                    console.log("AVAILABLE LICENCE", loggedInData.sub_user_licence.available_licence);
 
 
         
@@ -480,8 +481,8 @@ async function signinUser(req, res) {
                     console.log("PARENT LICENCSE",bodyReq.user.parent_licence);
                     
 
-                    await subUserLicenceRepo.updateById(loggedInData.sub_user_licence.id, {available_licence: bodyReq.user.parent_licence})
-              
+                  const sub=  await subUserLicenceRepo.updateById(loggedInData.sub_user_licence.id, {available_licence: bodyReq.user.parent_licence})
+                  console.log("SUB", sub);
                   }
 
 
@@ -515,6 +516,8 @@ async function signinUser(req, res) {
                   available_licence: bodyReq.user.sub_licence,
                   created_by: req.user.id
                 })
+
+                console.log("LAST HERE DATA", data);
           
                 subUserLicenceId = data.id
 
@@ -567,6 +570,9 @@ async function signinUser(req, res) {
               const company = await companyRepo.create(companyData);
               responseData.company = company;
 
+
+              console.log("COMPANY", company);
+
               await userRepo.update(user.id, {
                 companies: {
                     _id: company.id,
@@ -576,6 +582,8 @@ async function signinUser(req, res) {
           }
   
           responseData.user = await user.generateUserData();
+
+          console.log("RESPONSE DATA USER", responseData.user);
           responseData.userJourney = await userJourneyRepo.create({
               module_name: MODULE_LABEL.USERS,
               action: ACTION_LABEL.ADD,
