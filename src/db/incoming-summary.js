@@ -59,15 +59,6 @@ IncomingSummarySchema.pre('findOneAndUpdate', function (next) {
   next();
 });
 
-IncomingSummarySchema.pre('findOneAndUpdate', function (next) {
-  const now = new Date();
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const istDate = new Date(now.getTime() + istOffset);
-
-  this._update.schedule_date = istDate;
-  next();
-});
-
 const IncomingSummaryModel = mongoose.model(INCOMING_SUMMARY_MODEL, IncomingSummarySchema, INCOMING_SUMMARY_MODEL);
 
 module.exports = IncomingSummaryModel;
