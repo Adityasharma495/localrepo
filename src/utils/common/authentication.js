@@ -86,7 +86,8 @@ function getUserAccessRoles(user_role, permission_type) {
 
 
 function ifAssociateCompany(create_user_role) {
-    return Boolean([USERS_ROLE.RESELLER, USERS_ROLE.COMPANY_ADMIN, USERS_ROLE.SUB_SUPERADMIN].includes(create_user_role));
+    // return Boolean([USERS_ROLE.RESELLER, USERS_ROLE.COMPANY_ADMIN, USERS_ROLE.SUB_SUPERADMIN].includes(create_user_role));
+    return Boolean([ USERS_ROLE.COMPANY_ADMIN, USERS_ROLE.SUB_SUPERADMIN].includes(create_user_role));
 }
 
 //Function to return the company category as per the CREATOR role, i.e is the creator who is creating the user and corresponding company
