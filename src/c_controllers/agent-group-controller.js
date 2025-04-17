@@ -390,6 +390,47 @@ async function updateMemberScheduleAgent(req, res) {
   }
 }
 
+async function deleteAgentGroup(req, res) {
+  const ids = req.body.agentGroupIds;
+
+  try {
+    const response = await agentGroupRepo.deleteMany(ids);
+    
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.AGENT_GROUP,
+      action: ACTION_LABEL.DELETE,
+      created_by: req?.user?.id
+    }
+
+    await userJourneyRepo.create(userJourneyfields);
+    SuccessRespnose.message = "Deleted successfully!";
+    SuccessRespnose.data = response;
+
+    Logger.info(`Agent Group -> ${ids} deleted successfully`);
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+
+    console.log("error", error);
+
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    ErrorResponse.error = error;
+    if (error.name == "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Agent Group not found";
+    }
+    ErrorResponse.message = errorMsg;
+
+    Logger.error(
+      `Agent Group -> unable to delete Agent Group: ${ids}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
 
 module.exports = {
     createAgentGroup,
@@ -397,5 +438,6 @@ module.exports = {
     getById,
     getAssignedAgents,
     updateAgentGroup,
-    updateMemberScheduleAgent
+    updateMemberScheduleAgent,
+    deleteAgentGroup,
 }

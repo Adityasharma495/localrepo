@@ -1,6 +1,7 @@
 const CrudRepository = require("./crud-repository");
 const { FlowJson } = require("../c_db");
 const sequelize = require('../config/sequelize'); 
+const { constants } = require("../utils/common");
 
 class FlowJsonRepository extends CrudRepository {
   constructor() {
@@ -95,6 +96,30 @@ class FlowJsonRepository extends CrudRepository {
         throw error;
       }
     }
+
+      async findAllData(role, id) {
+        let response;
+        if (role === constants.USERS_ROLE.SUPER_ADMIN) {
+          response = await this.model.findAll();
+        } else {
+          response = await this.model.findAll({ where: {created_by: id} });
+        }
+    
+        response = response.map(item => {
+          const createdAt = new Date(item.dataValues.created_at);
+          const updatedAt = new Date(item.dataValues.updated_at);
+    
+          const formattedCreatedAt = createdAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+          const formattedUpdatedAt = updatedAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+    
+          item.dataValues.created_at = formattedCreatedAt;
+          item.dataValues.updated_at = formattedUpdatedAt;
+    
+          return item;
+        });
+    
+        return response;
+      }
 }
 
 module.exports = FlowJsonRepository;

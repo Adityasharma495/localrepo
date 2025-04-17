@@ -15,7 +15,7 @@ const {
   ExtensionRepository,
   CreditsRepository,
   VoicePlansRepository,
-  FlowRepository,
+  FlowJsonRepository,
 } = require("../c_repositories");
 
 const { Parser } = require("json2csv");
@@ -29,15 +29,15 @@ async function exportData(req, res) {
     CallCentre: new CallCentreRepository(),
     Trunks: new TrunkRepository(),
     Numbers: new NumbersRepository(),
-    IVR: new FlowRepository(),
+    IVR: new FlowJsonRepository(),
     DataCenter: new DataCenterRepository(),
     ServerManagement: new ServerManagementRepository(),
     Module: new ModuleRepository(),
     UserJourney: new UserJourneyRepository(),
     AclSetting: new AclSettingsRepository(),
     NumberFileList: new NumberFileListRepository(),
-    // Agent: new AgentRepository(),
-    // AgentGroup: new AgentGroupRepository(),
+    Agent: new AgentRepository(),
+    AgentGroup: new AgentGroupRepository(),
     Extension: new ExtensionRepository(),
     Credits: new CreditsRepository(),
     VoicePlan: new VoicePlansRepository(),
