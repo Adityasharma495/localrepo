@@ -988,7 +988,11 @@ async function DIDUserMapping(req, res) {
                             const isCompanyUser = await companyRepo.findOne({_id: bodyReq.allocated_to})
                             if (isCompanyUser) {
                                 const count = await didUserMappingRepository.countSubCompanyUserEntry(did)
-                                level = DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN + Number(count)
+                                if (count === 0) {
+                                    level = DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN
+                                } else {
+                                    level = `${DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN}_${Number(count)}`
+                                }
                             } else {
                                 level = DID_ALLOCATION_LEVEL.CALLCENTER
                             }

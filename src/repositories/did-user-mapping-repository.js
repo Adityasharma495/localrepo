@@ -183,7 +183,11 @@ class NumberUserMappingRepository extends CrudRepository {
   
     if (!doc || !doc.mapping_detail) return 0;
   
-    const count = doc.mapping_detail.filter(item => item.level >= 4).length;
+    const count = doc.mapping_detail.filter(item => {
+      const levelStr = item.level;
+      const levelNum = parseInt(levelStr, 10);
+      return levelNum >= 4;
+    }).length;
   
     return count;
   }
