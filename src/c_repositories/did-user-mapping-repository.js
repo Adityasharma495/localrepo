@@ -1,8 +1,9 @@
 const CrudRepository = require("./crud-repository");
 const { DIDUserMapping } = require("../c_db"); 
-const { Op } = require("sequelize");
+const { Op } = require('sequelize');
 const { StatusCodes } = require("http-status-codes");
 const AppError = require("../utils/errors/app-error");
+const Sequelize = require('../config/sequelize');
 
 class DIDUserMappingRepository extends CrudRepository {
   constructor() {
@@ -41,21 +42,30 @@ class DIDUserMappingRepository extends CrudRepository {
 
   async getForOthers(id) {
     try {
-      const numericId = parseInt(id, 10);
-      if (isNaN(numericId)) {
-        throw new AppError("Invalid ID format", StatusCodes.BAD_REQUEST);
+      if (!id) {
+        throw new AppError("ID is required", StatusCodes.BAD_REQUEST);
       }
-
-      return await this.model.findAll({
-        where: { allocated_to: numericId, active: true },
-        include: [
-          {
-            model: require("../db/users"),
-            as: "allocatedUser",
-            attributes: ["id", "username"],
+  
+      const rows = await this.model.findAll({
+        where: {
+          mapping_detail: {
+            [Op.ne]: null,
           },
-        ],
+        },
       });
+  
+      let data = rows.map(row => row.toJSON());
+  
+      const filtered = data.filter(item => {
+        return item.mapping_detail.some(md => {
+          if (md && (md.allocated_to == id) && md.active == true) {
+            return true;
+          }
+          return false;
+        });
+      });
+  
+      return filtered;
     } catch (error) {
       console.error("Error in getForOthers:", error);
       throw error;
@@ -63,23 +73,36 @@ class DIDUserMappingRepository extends CrudRepository {
   }
 
   async getForSuperadmin(id) {
-
     try {
       if (!id) {
         throw new AppError("ID is required", StatusCodes.BAD_REQUEST);
       }
-
-      return await this.model.findAll({
+  
+      const rows = await this.model.findAll({
         where: {
-          [Op.or]: [{ allocated_to: id }, { parent_id: id }],
-          active: true,
+          mapping_detail: {
+            [Op.ne]: null,
+          },
         },
       });
+  
+      let data = rows.map(row => row.toJSON());
+  
+      const filtered = data.filter(item => {
+        return item.mapping_detail.some(md => {
+          if (md && (md.allocated_to == id || md.parent_id == id) && md.active == true) {
+            return true;
+          }
+          return false;
+        });
+      });
+  
+      return filtered;
     } catch (error) {
       console.error("Error in getForSuperadmin:", error);
       throw error;
     }
-  }
+  }  
 
   async findOne(conditions) {
     try {
@@ -103,6 +126,102 @@ class DIDUserMappingRepository extends CrudRepository {
     }
   }
 
+  async addMappingDetail(documentId, newDetail) {
+    try {
+      await this.model.update(
+        {
+          mapping_detail: Sequelize.jsonb.arrayAppend('mapping_detail', newDetail), // Appends newDetail to the mapping_detail array
+        },
+        {
+          where: {
+            DID: documentId,
+          },
+        }
+      );
+      console.log("Mapping detail added successfully.");
+    } catch (error) {
+      console.error("Error adding mapping detail:", error);
+      throw error;
+    }
+  }
+  
+  async checkMappingIfNotExists(did, newDetail) {
+    try {
+      const record = await this.model.findOne({
+        where: {
+          DID: did,
+          mapping_detail: {
+            [Sequelize.Op.contains]: [newDetail], 
+          },
+        },
+      });
+  
+      if (!record) return null;
+
+      const filteredMapping = record.mapping_detail.filter(detail => {
+        return Object.entries(newDetail).every(([key, value]) => {
+          return detail[key]?.toString() === value?.toString();
+        });
+      });
+
+      const result = {
+        ...record.toJSON(), 
+        mapping_detail: filteredMapping,
+      };
+  
+      return result;
+    } catch (error) {
+      console.error("Error in checkMappingIfNotExists:", error);
+      throw error;
+    }
+  }
+
+  async deleteMappingDetail(did, newDetail) {
+    try {
+      await this.model.update(
+        {
+          mapping_detail: Sequelize.fn('jsonb_set', 
+            Sequelize.col('mapping_detail'), 
+            Sequelize.jsonb('mapping_detail'), 
+            Sequelize.fn('jsonb_array_remove', Sequelize.col('mapping_detail'), Sequelize.jsonb(newDetail))
+          )
+        },
+        {
+          where: {
+            DID: did,
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Error in deleteMappingDetail:", error);
+      throw error;
+    }
+  }
+  
+  async countSubCompanyUserEntry(did) {
+    try {
+      const record = await this.model.findOne({
+        where: { DID: did },
+        attributes: ['mapping_detail'],
+      });
+  
+      if (!record || !record.mapping_detail) return 0;
+  
+      const count = await this.model.count({
+        where: Sequelize.jsonb('mapping_detail'),
+        having: Sequelize.jsonb('mapping_detail.level', {
+          [Sequelize.Op.gte]: 4,
+        }),
+      });
+  
+      return count;
+  
+    } catch (error) {
+      console.error("Error in countSubCompanyUserEntry:", error);
+      throw error;
+    }
+  }
+  
   async getAll(options) {
     try {
       let whereCondition = {};

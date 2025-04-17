@@ -11,7 +11,10 @@ const {
     NumberFileListRepository,
     NumberStatusRepository,
     MemberScheduleRepo,
-    CountryCodeRepository
+    CountryCodeRepository,
+    VoicePlansRepository,
+    CompanyRepository,
+    CallCentreRepository,
    } = require('../c_repositories');
 const fs = require("fs");
 const {MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, USERS_ROLE, NUMBER_STATUS_LABLE, DID_ALLOCATION_LEVEL} = require('../utils/common/constants');
@@ -23,6 +26,9 @@ const numberStatusRepo = new NumberStatusRepository();
 const userRepo = new UserRepository();
 const memberScheduleRepo = new MemberScheduleRepo();
 const countryCodeRepository = new CountryCodeRepository();
+const companyRepo = new CompanyRepository();
+const callCentreRepo = new CallCentreRepository();
+const voicePlanRepo = new VoicePlansRepository();
 
 const { constants } = require("../utils/common");
 const NUMBER_STATUS = constants.NUMBER_STATUS_LABLE;
@@ -51,7 +57,11 @@ async function create(req, res) {
       const didMapping = await didUserMappingRepository.create({
         DID: number.id,
         mapping_detail: [{
-          allocated_to: req?.user?.id
+          allocated_to: req?.user?.id,
+          active: true,
+          level: 0,
+          parent_id: null,
+          voice_plan_id: null,
         }]
       });
 
@@ -133,34 +143,6 @@ async function update(req, res) {
       return res.status(statusCode).json(ErrorResponse);
     }
   }
-
-  // async function getAll(req, res) {
-  //   try {
-  //     let data;
-  //     if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
-  //       data = await didUserMappingRepository.findAll({ where: { allocated_to: req.user.id } });
-  //     } else {
-  //       data = await didUserMappingRepository.findAll({ where: { allocated_to: req.user.id } });
-  //     }
-  
-  //     const uniqueDIDs = [...new Set(data.map(item => item.DID))];
-  //     data = await numberRepo.findAll({ where: { id: uniqueDIDs } });
-  
-  //     data = data.map(val => {
-  //       val.status = numberStatusValues[val.status];
-  //       return val;
-  //     }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  
-  //     SuccessRespnose.data = data;
-  //     SuccessRespnose.message = 'Success';
-  
-  //     return res.status(StatusCodes.OK).json(SuccessRespnose);
-  //   } catch (error) {
-  //     ErrorResponse.message = error.message;
-  //     ErrorResponse.error = error;
-  //     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
-  //   }
-  // }
 
 async function bulkUpdate(req, res) {
     const file = req.file;
@@ -353,31 +335,69 @@ async function uploadNumbers(req, res) {
 
 async function getAll(req, res) {
   try {
-
     let data;
-    if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
-      data = await didUserMappingRepository.getForSuperadmin(req.user.id);
+    let idToCheck;
+
+    const getLoggedDetail = await userRepo.get(req.user.id);
+    if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
+      idToCheck = getLoggedDetail?.companies?.id;
+    } else if (req.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
+      idToCheck = getLoggedDetail?.callcenters?.id;
     } else {
-      data = await didUserMappingRepository.getForOthers(req.user.id);
+      idToCheck = req.user.id;
     }
 
-    const uniqueDIDs = [...new Set(data.map(item => item.DID))];
-    data = await numberRepo.getAll(uniqueDIDs);
+    if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
+      data = await didUserMappingRepository.getForSuperadmin(idToCheck);
+    } else {
+      data = await didUserMappingRepository.getForOthers(idToCheck);
+    }
+
+    const uniqueDIDs = [...new Set(data.map(item => item.DID?.id || item.DID))];
+    data = await numberRepo.findMany(uniqueDIDs);
 
     const reverseNumberStatus = Object.entries(NUMBER_STATUS).reduce((acc, [key, value]) => {
       acc[value] = key;
       return acc;
     }, {});
 
-    data = data
-      .map(val => {
+    data = await Promise.all(
+      data.map(async (val) => {
         val.status = reverseNumberStatus[val.status] || val.status;
+
+        let allocatedData = null;
+        let finalData = {};
+
+        allocatedData = await companyRepo.findOne({ id: "09d433c6-3bce-40e7-a9c2-7dba39c6aa0b" });
+        if (allocatedData) {
+          finalData = { name: allocatedData.name, id: allocatedData.id };
+        }
+
+        if (!allocatedData) {
+          allocatedData = await userRepo.findOne({ id: val.allocated_to });
+          if (allocatedData) {
+            finalData = { name: allocatedData.username, id: allocatedData.id };
+          }
+        }
+
+        if (!allocatedData) {
+          allocatedData = await callCentreRepo.findOne({ id: val.allocated_to });
+          if (allocatedData) {
+            finalData = { name: allocatedData.name, id: allocatedData.id };
+          }
+        }
+
+        if (allocatedData) {
+          val.allocated_to = finalData;
+        }
+
         return val;
       })
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    );
 
-    SuccessRespnose.data = formatResponse.formatResponseIds(data, version);
+    data = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
+    SuccessRespnose.data = data;
     SuccessRespnose.message = 'Success';
 
     Logger.info(`Number -> received all successfully`);
@@ -386,7 +406,7 @@ async function getAll(req, res) {
   } catch (error) {
     ErrorResponse.message = error.message;
     ErrorResponse.error = error;
-    Logger.error(`Call Centre -> unable to get call centres list, error: ${JSON.stringify(error)}`);
+    Logger.error(`Number -> unable to get numbers list, error: ${JSON.stringify(error)}`);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
   }
 }

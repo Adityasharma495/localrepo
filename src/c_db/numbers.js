@@ -5,6 +5,7 @@ const { constants } = require("../utils/common");
 const USER_MODEL_NAME = constants.MODEL.USERS;
 const NUMBER_FILES_LIST = constants.MODEL.NUMBER_FILES_LIST;
 const NUMBER_MODEL_NAME = constants.MODEL.NUMBERS;
+const VOICE_PLAN_MODEL_NAME = constants.MODEL.VOICE_PLAN;
 
 const Numbers = sequelize.define(
   NUMBER_MODEL_NAME,
@@ -84,6 +85,14 @@ const Numbers = sequelize.define(
       type: DataTypes.UUID,
       references: {
         model: USER_MODEL_NAME,
+        key: "id",
+      },
+      allowNull: true,
+    },
+    voice_plan_id: {
+      type: DataTypes.BIGINT,
+      references: {
+        model: VOICE_PLAN_MODEL_NAME,
         key: "id",
       },
       allowNull: true,
