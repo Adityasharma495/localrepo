@@ -77,6 +77,7 @@ const MODEL = {
     COMPANIES: 'companies',
     TRUNKS: 'trunks',
     NUMBERS: 'numbers',
+    CALL_CENTER : 'call_centers',
     COUNTRY_CODE: 'countryCode',
     CODEC: 'codecs',
     OPERATORS: 'operators',
@@ -267,8 +268,8 @@ const NUMBER_STATUS_LABLE = {
 const DID_ALLOCATION_LEVEL= {
    RESELLER: 1,
    COMPANY_ADMIN: 2,
-   SUB_COMPANY_ADMIN: 3,
-   CALLCENTER: 4
+   SUB_COMPANY_ADMIN: 4,
+   CALLCENTER: 3
 }
 
 const PREFIX_VALUE = 10

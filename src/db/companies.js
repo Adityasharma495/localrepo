@@ -9,8 +9,7 @@ const COMPANY_MODEL_NAME = constants.MODEL.COMPANIES;
       name: {
         type: String,
         required: true,
-        index: { unique: true },
-        trim: true, lowercase: true
+        trim: true,
       },
       phone: {
         type: String,

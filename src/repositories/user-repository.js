@@ -178,6 +178,15 @@ class UserRepository extends CrudRepository{
         
     }
 
+    async findOneAll(conditions) {
+        try {
+            const response = await this.model.findOne({...conditions});
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    }
+
 }
 
 module.exports = UserRepository;

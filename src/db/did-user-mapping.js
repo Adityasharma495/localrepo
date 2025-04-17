@@ -16,8 +16,8 @@ const VOICE_PLAN_MODEL_NAME = constants.MODEL.VOICE_PLAN;
         mapping_detail:[ 
             {
                 level: {
-                    type: Number,
-                    default: 0
+                    type: String,
+                    default: "0"
                 },
                 allocated_to: {
                     type: mongoose.Schema.Types.ObjectId,

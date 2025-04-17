@@ -27,7 +27,6 @@ class NumberUserMappingRepository extends CrudRepository {
         'mapping_detail.allocated_to': id,
         'mapping_detail.active': true
       })
-      .populate('mapping_detail.allocated_to', '_id username')
       .populate('mapping_detail.voice_plan_id')
       .populate('DID')
       .exec();
@@ -43,7 +42,7 @@ class NumberUserMappingRepository extends CrudRepository {
             mapping_detail: filteredMapping
           };
         })
-        .filter(item => item.mapping_detail.length > 0); // <-- remove entries with no matching mapping_detail
+        .filter(item => item.mapping_detail.length > 0);
   
       return filtered;
   
@@ -167,6 +166,33 @@ class NumberUserMappingRepository extends CrudRepository {
   
     return result;
   }
+
+  async deleteMappingDetail(did, newDetail) {
+    await this.model.updateOne(
+      { DID: did },
+      {
+        $pull: {
+          mapping_detail: { allocated_to: newDetail.allocated_to }
+        }
+      }
+    );
+  }
+
+  async countSubCompanyUserEntry(did) {
+    const doc = await this.model.findOne({ DID: did });
+  
+    if (!doc || !doc.mapping_detail) return 0;
+  
+    const count = doc.mapping_detail.filter(item => {
+      const levelStr = item.level;
+      const levelNum = parseInt(levelStr, 10);
+      return levelNum >= 4;
+    }).length;
+  
+    return count;
+  }
+  
+  
   
 
 }
