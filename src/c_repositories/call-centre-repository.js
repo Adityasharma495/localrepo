@@ -29,6 +29,19 @@ class CallCentreRepository extends CrudRepository {
       throw error;
     }
   }
+
+  async findOne(conditions) {
+    try {
+        const response = await this.model.findOne({
+            where: {
+              ...conditions
+            }
+          });
+        return response;
+    } catch (error) {
+        throw error;
+    }
+}
   
 
   async findAllData(role, id) {

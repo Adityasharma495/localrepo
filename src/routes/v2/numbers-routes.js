@@ -57,4 +57,7 @@ router.get('/to-allocate/:id', AuthMiddleware.validateUser, NumbersController.ge
 //get Allocated Numbers by id: /api/v2/numbers/allocated/:id GET
 router.get('/allocated/:id', AuthMiddleware.validateUser, NumbersController.getAllocatedNumbers);  //done
 
+//get Number to remove by id: /api/v1/numbers/remove/:id GET
+router.get('/remove/:id', AuthMiddleware.validateUser, NumbersController.getNumbersToRemove);
+
 module.exports = router;

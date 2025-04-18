@@ -1,6 +1,6 @@
 const { Op } = require("sequelize");
 const CrudRepository = require("./crud-repository");
-const { Numbers } = require("../c_db");
+const { Numbers, VoicePlan } = require("../c_db");
 const { constants } = require("../utils/common");
 const numberStatusValues = constants.NUMBER_STATUS_VALUE;
 
@@ -171,14 +171,43 @@ class NumbersRepository extends CrudRepository {
     try {
       const response = await this.model.findAll({
         where: { is_deleted: false, allocated_to: user_id },
+        order: [["created_at", "DESC"]],
         include: [
-          { model: Users, as: "allocated_to", attributes: ["id", "username"] },
-        ],
+          {
+            model: VoicePlan,
+            as: 'voice_plan'
+          }
+        ]
       });
       return response;
     } catch (error) {
       throw error;
     }
+  }
+
+  async findAllData(role, id) {
+    let response;
+    if (role === constants.USERS_ROLE.SUPER_ADMIN) {
+      response = await this.model.findAll();
+    } else {
+      response = await this.model.findAll({
+        where: { created_by: id }
+      });
+    }
+
+    response = response.map(item => {
+      const createdAt = new Date(item.dataValues.createdAt);
+      const updatedAt = new Date(item.dataValues.updatedAt);
+
+      const formattedCreatedAt = createdAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+      const formattedUpdatedAt = updatedAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+      item.dataValues.createdAt = formattedCreatedAt;
+      item.dataValues.updatedAt = formattedUpdatedAt;
+
+      return item;
+    });
+    return response;
   }
 
   async findMany(ids) {

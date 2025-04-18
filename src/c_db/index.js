@@ -62,6 +62,16 @@ Company.belongsToMany(User, {
   foreignKey: 'company_id'
 });
 
+Numbers.belongsTo(VoicePlan, {
+  foreignKey: 'voice_plan_id',
+  as: 'voice_plan',
+});
+
+VoicePlan.hasMany(Numbers, {
+  foreignKey: 'voice_plan_id',
+  as: 'numbers',
+});
+
 
 Agents.belongsTo(TelephonyProfile, { foreignKey: 'telephony_profile', as: 'telephonyProfile' });
 

@@ -2,6 +2,7 @@ const { StatusCodes } = require('http-status-codes');
 const { SuccessRespnose, ErrorResponse } = require('../utils/common');
 const {formatResponse,ResponseFormatter} = require("../utils/common")
 const { Logger } = require('../config');
+const { Op } = require("sequelize");
 const { State} = require('country-state-city');
 const {
     NumbersRepository,
@@ -96,6 +97,35 @@ async function create(req, res) {
   
       return res.status(statusCode).json(ErrorResponse);
     }
+  }
+
+  async function getNumbersToRemove(req, res) {
+      try {
+          let data;
+          const allocatedToId = req.params.id
+  
+          if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
+              data = await numberRepo.getAllocatedNumbers(null);
+          } else {
+              data = await numberRepo.getAllocatedNumbers(allocatedToId);
+          }
+  
+          SuccessRespnose.data = data;
+          SuccessRespnose.message = 'Success';
+  
+          Logger.info(`Numbers -> to be removed recieved successfully`);
+  
+          return res.status(StatusCodes.OK).json(SuccessRespnose);
+  
+      } catch (error) {
+  
+          ErrorResponse.message = error.message;
+          ErrorResponse.error = error;
+  
+          Logger.error(`To be removed -> unable to get To be removed list, error: ${JSON.stringify(error)}`);
+  
+          return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+      }
   }
 
 async function update(req, res) {
@@ -368,7 +398,7 @@ async function getAll(req, res) {
         let allocatedData = null;
         let finalData = {};
 
-        allocatedData = await companyRepo.findOne({ id: "09d433c6-3bce-40e7-a9c2-7dba39c6aa0b" });
+        allocatedData = await companyRepo.findOne({ id: val.allocated_to });
         if (allocatedData) {
           finalData = { name: allocatedData.name, id: allocatedData.id };
         }
@@ -597,36 +627,143 @@ async function getAllStatus(req, res) {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
     }
   }
-
+  
   async function DIDUserMapping(req, res) {
     const bodyReq = req.body;
+    const successDIDs = [];
+    const failedDIDs = [];
+    const successActualNumbers = [];
+
+    console.log("bodyReq", bodyReq);
+  
     try {
       for (const did of bodyReq.DID) {
-        const availCheck = await didUserMappingRepository.findOne({
-          DID: did, 
-          allocated_to: bodyReq.allocated_to
-        });
+        try {
+          const didData = await numberRepo.findOne({ where: { id: did } });
+          if (!didData) throw new Error("DID not found");
   
-        if (availCheck) {
-          await didUserMappingRepository.update(availCheck.id, { active: true });
-          await numberRepo.update(did, { allocated_to: availCheck.allocated_to });
-        } else {
-          await didUserMappingRepository.create({
-            DID: did,
-            level: 1,
+          if (req.user.role !== USERS_ROLE.SUPER_ADMIN) {
+            const parentVoicePlan = await voicePlanRepo.findOne({
+              where: { id: didData.voice_plan_id },
+            });
+  
+            const currentPlan = await voicePlanRepo.findOne({
+              where: { id: bodyReq.voice_plan_id },
+            });
+  
+            if (parentVoicePlan && currentPlan) {
+              const parentPlans = parentVoicePlan.plans || [];
+              const childPlans = currentPlan.plans || [];
+  
+              for (const child of childPlans) {
+                const parent = parentPlans.find((p) => p.plan_type === child.plan_type);
+                if (!parent) {
+                  failedDIDs.push({
+                    did: didData.actual_number,
+                    reason: `No matching parent plan for "${child.plan_type}"`,
+                  });
+                  throw new Error("Validation failed");
+                }
+  
+                if (
+                  child.pulse_price < parent.pulse_price ||
+                  child.pulse_duration < parent.pulse_duration
+                ) {
+                  failedDIDs.push({
+                    did: didData.actual_number,
+                    reason: `Plan conflict on "${child.plan_type}": pulse/price mismatch`,
+                  });
+                  throw new Error("Validation failed");
+                }
+              }
+            }
+          }
+  
+          let level = 0;
+          if (req.user.role === USERS_ROLE.RESELLER) {
+            level = DID_ALLOCATION_LEVEL.COMPANY_ADMIN;
+          } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
+            const isCompany = await companyRepo.findOne({ where: { id: bodyReq.allocated_to } });
+            if (isCompany) {
+              const existing = await didUserMappingRepository.findOne({ where: { DID: did } });
+              const count = (existing?.mapping_detail || []).filter(
+                (d) => d.level?.toString().startsWith(DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN)
+              ).length;
+              level =
+                count === 0
+                  ? DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN
+                  : `${DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN}_${count}`;
+            } else {
+              level = DID_ALLOCATION_LEVEL.CALLCENTER;
+            }
+          }
+  
+          const existingMapping = await didUserMappingRepository.findOne({ where: { DID: did } });
+  
+          const newMappingItem = {
+            active: true,
             allocated_to: bodyReq.allocated_to,
             parent_id: req.user.id,
+            voice_plan_id: bodyReq.voice_plan_id,
+            level,
+          };
+  
+          if (existingMapping) {
+            existingMapping.mapping_detail = [
+              ...existingMapping.mapping_detail,
+              newMappingItem,
+            ];
+            await existingMapping.save();
+          } else {
+            await didUserMappingRepository.create({
+              DID: did,
+              mapping_detail: [newMappingItem],
+            });
+          }
+  
+          await numberRepo.update(
+            {
+              allocated_to: bodyReq.allocated_to,
+              voice_plan_id: bodyReq.voice_plan_id,
+            },
+            { where: { id: did } }
+          );
+  
+          if (bodyReq.voice_plan_id) {
+            await voicePlanRepo.update(
+              { is_allocated: true },
+              { where: { id: bodyReq.voice_plan_id } }
+            );
+          }
+  
+          successDIDs.push(did);
+          successActualNumbers.push(didData.actual_number);
+        } catch (err) {
+          failedDIDs.push({
+            did,
+            reason: err.message || "Unknown error",
           });
-          await numberRepo.update(did, { allocated_to: bodyReq.allocated_to });
+          continue;
         }
       }
   
-      SuccessRespnose.message = 'Number(s) Allocated Successfully!';
-      return res.status(StatusCodes.OK).json(SuccessRespnose);
+      return res.status(200).json({
+        message: "DIDs allocated successfully",
+        data: {
+          total: bodyReq.DID.length,
+          processed: successDIDs.length,
+          failed: failedDIDs.length,
+          successDIDs,
+          failedDIDs,
+          successActualNumbers,
+        },
+      });
     } catch (error) {
-      ErrorResponse.message = error.message;
-      ErrorResponse.error = error;
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+      console.error("Allocation error:", error);
+      return res.status(500).json({
+        message: "Something went wrong during allocation",
+        error,
+      });
     }
   }
 
@@ -664,7 +801,7 @@ async function getAllStatus(req, res) {
       });
 
 
-      console.log("SUCCESS", SuccessRespnose);
+      // console.log("SUCCESS", SuccessRespnose);
       SuccessRespnose.message = 'Success';
       return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {
@@ -673,31 +810,109 @@ async function getAllStatus(req, res) {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
     }
   }
-
+  
   async function getAllocatedNumbers(req, res) {
-    const allocatedToId = req.params.id;
     try {
-      const allocatedNumbers = await didUserMappingRepository.getAll({ where: { allocated_to: allocatedToId } });
-      const uniqueDIDs = [...new Set(allocatedNumbers.map(item => item.DID))];
-      const data = await numberRepo.getAll({ where: { id: uniqueDIDs } });
+      const allocatedToId = req.params.id;
+
+      const didMappings = await didUserMappingRepository.findAll({
+        where: {
+          mapping_detail: {
+            [Op.contains]: [
+              {
+                allocated_to: allocatedToId,
+                active: true,
+              },
+            ],
+          },
+        },
+      });
+  
+      if (!didMappings || didMappings.length === 0) {
+        return res.status(StatusCodes.OK).json({
+          message: "No numbers allocated.",
+          data: [],
+          is_removal_button: false,
+        });
+      }
+  
+      // Map allocated info from first mapping_detail of each
+      const voicePlanMap = {};
+      const didIds = [];
+  
+      for (const mapEntry of didMappings) {
+        const firstMapping = mapEntry.mapping_detail[0];
+        voicePlanMap[mapEntry.DID] = firstMapping.voice_plan_id;
+        didIds.push(mapEntry.DID);
+      }
+
+      const numbers = await numberRepo.findAll({
+        where: {
+          id: {
+            [Op.in]: didIds,
+          },
+        },
+      });
+  
+      let allocatedToName = "";
+      const sampleVoicePlan = Object.values(voicePlanMap)[0];
+  
+      if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
+        const user = await userRepo.findOne({ where: { id: allocatedToId } });
+        allocatedToName = user?.username || "N/A";
+      } else if (req.user.role === USERS_ROLE.RESELLER) {
+        const company = await companyRepo.findOne({ where: { id: allocatedToId } });
+        allocatedToName = company?.name || "N/A";
+      } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
+        const company = await companyRepo.findOne({ where: { id: allocatedToId } });
+        if (company) {
+          allocatedToName = company.name;
+        } else {
+          const callCentre = await callCentreRepo.findOne({ where: { id: allocatedToId } });
+          allocatedToName = callCentre?.name || "N/A";
+        }
+      }
+  
+      const allocatedBy = req.user.username;
+  
+      const formattedNumbers = numbers.map((num) => ({
+        ...num.toJSON(),
+        voice_plan_id: voicePlanMap[num.id] || null,
+        allocated_name: allocatedToName,
+        allocated_by: allocatedBy,
+      }));
+  
+      const allocatedAgain = await didUserMappingRepository.findAll({
+        where: {
+          mapping_detail: {
+            [Op.contains]: [
+              {
+                allocated_to: allocatedToId,
+                active: true,
+              },
+            ],
+          },
+        },
+      });
+  
       const response = {
-       
-        data: data.map(item => ({
-          allocated_name: allocatedNumbers[0]?.allocated_to?.username || null,
-          allocated_by: req.user.username,
-        })),
-        is_removal_button: allocatedNumbers.length > 0,
+        data: formattedNumbers,
+        is_removal_button: allocatedAgain.length > 0,
       };
   
-      SuccessRespnose.data = response;
-      SuccessRespnose.message = 'Success';
-      return res.status(StatusCodes.OK).json(SuccessRespnose);
+      return res.status(StatusCodes.OK).json({
+        message: "Success",
+        data: response,
+      });
+  
     } catch (error) {
-      ErrorResponse.message = error.message;
-      ErrorResponse.error = error;
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+      console.error("Error fetching allocated numbers:", error);
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: "Error fetching allocated numbers",
+        error,
+      });
     }
-  }
+  }  
 
   async function removeAllocatedNumbers(req, res) {
     const { DID, user_id } = req.body;
@@ -777,5 +992,6 @@ module.exports = {
     getToAllocateNumbers,
     getAllocatedNumbers,
     removeAllocatedNumbers,
-    setInboundRouting
+    setInboundRouting,
+    getNumbersToRemove,
 }
