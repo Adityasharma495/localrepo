@@ -42,7 +42,8 @@ const Extension = require("./extention");
 const Call = require("./call");
 const Queue = require("./queue");
 const IncomingReport = require("./incoming-report");
-const UserCallCentres = require("./user-call-centres")
+const UserCallCentres = require("./user-call-centres");
+const AgentGroup = require("./agent-group");
 
 Credit.belongsTo(User, { foreignKey: "user_id",onDelete: 'CASCADE',onUpdate: 'CASCADE', });
 Credit.belongsTo(User, { foreignKey: "from_user", as: "fromUser" });
@@ -191,4 +192,5 @@ module.exports = {
     Queue,
     UserCallCentres,
     IncomingReport,
+    AgentGroup,
 };

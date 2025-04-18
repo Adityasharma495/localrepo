@@ -107,6 +107,7 @@ async function get(req, res) {
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
+    console.log("error", error);
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg = error.message;
 

@@ -9,5 +9,10 @@ router.post('/', AuthMiddleware.validateUser, CompanyMiddleware.validateCompanyR
 
 router.get('/', AuthMiddleware.validateUser, CompanyController.getAll);
 
+router.get('/:id', AuthMiddleware.validateUser, CompanyController.get); 
+
+router.post('/:id', AuthMiddleware.validateUser, CompanyMiddleware.validateCompanyRequest, CompanyMiddleware.modifyCompanyUpdateBodyRequest,
+    CompanyController.updateCompany);
+
 
 module.exports = router;

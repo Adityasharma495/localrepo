@@ -31,9 +31,12 @@ const Company = sequelize.define(COMPANY_MODEL_NAME, {
     trim: true
   },
   category: {
-    type: DataTypes.ENUM(...Object.values(constants.COMPANY_TYPES)),
-    allowNull: true
-  },
+    type: DataTypes.STRING,
+    allowNull: true,
+    validate: {
+      isIn: [['type_reseller', 'type_cadmin', 'type_sadmin']] 
+    }
+  },    
   created_by: {
     type: DataTypes.UUID,
     allowNull: true,
