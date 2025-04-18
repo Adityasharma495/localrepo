@@ -1,4 +1,4 @@
-const { UserRepository, CompanyRepository, SubUserLicenceRepository } = require("../c_repositories")
+const { UserRepository, CompanyRepository, SubUserLicenceRepository, CallCentreRepository } = require("../c_repositories")
 const { LicenceRepository, UserJourneyRepository } = require("../c_repositories")
 const { StatusCodes } = require("http-status-codes");
 const {
@@ -13,6 +13,7 @@ const AppError = require("../utils/errors/app-error");
 const { MODULE_LABEL, ACTION_LABEL, USERS_ROLE, PREFIX_VALUE, SUB_LICENCE_ROLE, USER_ROLE_VALUE } = require('../utils/common/constants');
 const UserCompany = require("../c_db/user-companies");
 const { where } = require("../db/users");
+const { UserCallCentres } = require("../c_db");
 
 const userRepo = new UserRepository();
 const licenceRepo = new LicenceRepository();
@@ -20,6 +21,7 @@ const companyRepo = new CompanyRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const version = process.env.API_V || '1';
 const subUserLicenceRepo = new SubUserLicenceRepository();
+const callCentreRepo = new CallCentreRepository();
 
 
 async function signinUser(req, res) {
@@ -441,13 +443,12 @@ async function signupUser(req, res) {
     let subUserLicenceId;
 
 
+    console.log("BODY REQ", bodyReq);
 
     if (SUB_LICENCE_ROLE.includes(req.user.role)) {
 
       //fetch logged in user sub licence data
       const loggedInData = await userRepo.getForLicence(req.user.id)
-
-      console.log("LOGGED IN DATA", loggedInData.sub_user_licence);
 
       //fetch logged in user sub licence data(available_licence)
       const subLicenceData = loggedInData.sub_user_licence.available_licence
@@ -560,11 +561,10 @@ async function signupUser(req, res) {
 
 
 
-    if (bodyReq.company && bodyReq.user.role !== USERS_ROLE.CALLCENTRE_ADMIN) {
+    if (bodyReq.company && req.user.role !== USERS_ROLE.CALLCENTRE_ADMIN) {
 
-      const companyDetail = await companyRepo.findOne({ name: bodyReq.company })
+      const companyDetail = await companyRepo.findOne({ id: bodyReq.company })
       const companyId = companyDetail.id
-
       await UserCompany.create({
         user_id: user.id,
         company_id: companyId
@@ -584,7 +584,37 @@ async function signupUser(req, res) {
 
     }
 
+    if (bodyReq.callcenterId && req.user.role !== USERS_ROLE.CALLCENTRE_ADMIN) {
+
+      const CallCentreDetail = await callCentreRepo.findOne({ id: bodyReq.callcenterId })
+
+      console.log("CALL CENTRE DETAIL",CallCentreDetail );
+
+      const CallCentreId = CallCentreDetail.id
+
+      await UserCallCentres.create({
+        user_id: user.id,
+        call_centre_id: CallCentreId
+      });
+
+      const CallCentreToAdd = {
+        name: CallCentreDetail.name,
+        _id: CallCentreDetail.id
+      }
+
+      console.log("CALL CENTRE TO ADD", CallCentreToAdd);
+
+      await userRepo.update(user.id, {
+        call_centres: CallCentreToAdd
+      })
+
+      responseData.callcenterId = CallCentreDetail;
+    }
+
     responseData.user = await user.generateUserData();
+
+    console.log("LAST RESPONSE", responseData.user);
+    
     responseData.userJourney = await userJourneyRepo.create({
       module_name: MODULE_LABEL.USERS,
       action: ACTION_LABEL.ADD,

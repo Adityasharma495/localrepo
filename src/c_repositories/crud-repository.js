@@ -62,6 +62,8 @@ class CrudRepository {
     }
 
     async update(id, data) {
+
+        console.log("ID AND DATA", id, data);
       
         // Handle nested company → companies (JSONB)
         if (data.company && typeof data.company === 'object') {
@@ -79,6 +81,8 @@ class CrudRepository {
         };
       
         const response = await this.model.update(data, options);
+
+        console.log("RETURNING RESPONSE", response);
         return response;
       }
       
@@ -159,7 +163,6 @@ class CrudRepository {
         try {
             const response = await this.model.findOne({
                 where: {
-                  is_deleted: false,
                   ...conditions
                 }
               });

@@ -42,6 +42,7 @@ const Extension = require("./extention");
 const Call = require("./call");
 const Queue = require("./queue");
 const IncomingReport = require("./incoming-report");
+const UserCallCentres = require("./user-call-centres")
 
 Credit.belongsTo(User, { foreignKey: "user_id",onDelete: 'CASCADE',onUpdate: 'CASCADE', });
 Credit.belongsTo(User, { foreignKey: "from_user", as: "fromUser" });
@@ -122,6 +123,19 @@ CallCenter.belongsTo(CountryCode, { foreignKey: 'country_code_id', as: 'country_
 CallCenter.belongsTo(Timezone, { foreignKey: 'timezone_id', as: 'timezone' });
 CallCenter.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 
+
+User.belongsToMany(CallCenter, {
+  through: UserCallCentres,
+  foreignKey: 'user_id',
+  otherKey: 'call_centre_id',
+});
+
+CallCenter.belongsToMany(User, {
+  through: UserCallCentres,
+  foreignKey: 'call_centre_id',
+  otherKey: 'user_id',
+});
+
 module.exports = { 
     Agents,
     User,
@@ -165,5 +179,6 @@ module.exports = {
     Extension,
     Call,
     Queue,
+    UserCallCentres,
     IncomingReport,
 };

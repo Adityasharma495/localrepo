@@ -69,6 +69,11 @@ const User = sequelize.define(
       allowNull: true,
       defaultValue: null
     },
+    call_centres: {
+      type: DataTypes.JSONB,  
+      allowNull: true,
+      defaultValue: null
+    },
     acl_settings_id: {
       type: DataTypes.UUID,
       allowNull: true,
