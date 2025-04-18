@@ -29,8 +29,8 @@ async function create(req, res) {
       description: bodyReq.description.trim(),
       created_by: req.user.id,
       company: req.user.companies?.id,
-      country_code_id: bodyReq.countryCode.trim(),
-      timezone_id: bodyReq.timezone.trim(),
+      country_code_id: Number(bodyReq.countryCode.trim()),
+      timezone_id: Number(bodyReq.timezone.trim()),
     };
 
     const response = await callCentreRepository.create(data);

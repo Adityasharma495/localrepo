@@ -92,6 +92,8 @@ class ExtensionRepository extends CrudRepository {
 
   async bulkUpdate(ids, data) {
 
+    console.log("ID ADN DATA", ids, data);
+
     try {
       const response = await Extension.update(data, {
         where: { id: { [Op.in]: ids } },
@@ -101,6 +103,8 @@ class ExtensionRepository extends CrudRepository {
         throw new AppError("No matching resources found to update", StatusCodes.NOT_FOUND);
       }
 
+
+      console.log("RETURNINH RESPONSE", response);
       return response;
     } catch (error) {
       throw error;

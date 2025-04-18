@@ -319,23 +319,28 @@ async function deleteAgent(req, res) {
 
       const telephonyProfile = await telephonyProfileRepo.get(agent.telephony_profile);
 
-
-      console.log("telephonyProfile", telephonyProfile);
       telephonyProfiles.push(agent.telephony_profile);
+
+
+
       deletedAgent.push(agent.id);
-      
-      if (telephonyProfiles.length > 0) {
-        extensionIds.push(telephonyProfile[0]);
+
+
+      if (telephonyProfile.profile.length > 0) {
+
+        extensionIds.push(telephonyProfile.profile[1].id);
+
+   
       }
     }
   }
 
     if (notAllocated.length > 0) {
 
-
       await extensionRepo.bulkUpdate( extensionIds, { is_allocated: 0 });
       await userRepo.bulkUpdate( deletedUser, { is_deleted: true });
   
+
       await telephonyProfileRepo.hardDeleteMany(telephonyProfiles)
       response = await agentRepo.deleteMany(id);
     }

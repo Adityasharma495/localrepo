@@ -74,7 +74,9 @@ async function signupUser(req, res) {
     if (bodyReq.company && bodyReq.user.role !== USERS_ROLE.CALLCENTRE_ADMIN) {
       //Add the created user as a reference to the company
       await companyRepo.addUserIds(bodyReq.company , user._id)
+
       const companyDetail = await companyRepo.get(bodyReq.company);
+
       const companyToadd = {
         name: companyDetail.name,
         _id : companyDetail._id

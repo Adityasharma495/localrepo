@@ -32,7 +32,7 @@ const CallCentreSchema = new mongoose.Schema({
     ref: COUNTRY_CODE_MODEL_NAME
   },
   timezone: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId, 
     ref: TIMEZONE_MODEL_NAME
   },
   users: [{

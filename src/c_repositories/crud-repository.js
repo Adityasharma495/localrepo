@@ -62,16 +62,27 @@ class CrudRepository {
     }
 
     async update(id, data) {
-
-        console.log("CAME HERE TO UPDATE", id, data);
-        const options = {
-            where: {
-                id: id
-            }
+      
+        // Handle nested company → companies (JSONB)
+        if (data.company && typeof data.company === 'object') {
+          data.companies = {
+            _id: data.company._id,
+            name: data.company.name,
+          };
+          delete data.company;
         }
-        const response = await this.model.update(data, options, { runValidators: true, new: true });
+      
+        const options = {
+          where: {
+            id: id,
+          },
+        };
+      
+        const response = await this.model.update(data, options);
         return response;
-    }
+      }
+      
+      
 
 
     async delete(id){

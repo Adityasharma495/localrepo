@@ -34,6 +34,7 @@ const agentGroupRoutes = require('./agent-group-routes.js')
 const callStratergy =require('./call-stratergy')
 const callsRoutes = require("./calls-routes");
 const queueRoute = require('./queue-route');
+const companyRoutes = require('./company-routes.js')
 
 
 router.use('/users', userRoutes);
@@ -69,5 +70,6 @@ router.use("/extension", extensionRoute);
 router.use("/call-stratergy",callStratergy)
 router.use('/calls', callsRoutes);
 router.use("/queue", queueRoute);
+router.use("/companies", companyRoutes)
 
 module.exports = router;

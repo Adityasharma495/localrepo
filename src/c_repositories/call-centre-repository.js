@@ -10,22 +10,26 @@ class CallCentreRepository extends CrudRepository {
   async getAll(userRole, createdById) {
     try {
       let response;
+      const queryOptions = {
+        order: [["created_at", "DESC"]],
+        raw: true,
+      };
+  
       if (userRole === constants.USERS_ROLE.SUPER_ADMIN) {
-        response = await this.model.findAll({
-          where: {},
-          order: [["created_at", "DESC"]],
-        });
+        response = await this.model.findAll(queryOptions);
       } else {
         response = await this.model.findAll({
+          ...queryOptions,
           where: { created_by: createdById },
-          order: [["created_at", "DESC"]],
         });
       }
+  
       return response;
     } catch (error) {
       throw error;
     }
   }
+  
 
   async findAllData(role, id) {
     let response;

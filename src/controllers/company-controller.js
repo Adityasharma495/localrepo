@@ -1,6 +1,6 @@
 const { StatusCodes } = require('http-status-codes');
 const { CompanyRepository, UserJourneyRepository } = require('../repositories');
-const { SuccessRespnose, ErrorResponse } = require('../utils/common');
+const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require('../utils/common');
 const { Logger } = require('../config');
 const AppError = require('../utils/errors/app-error');
 const {MODULE_LABEL, ACTION_LABEL} = require('../utils/common/constants');
@@ -69,7 +69,6 @@ async function getAll(req, res){
     try {
 
         const data = await companyRepository.getAll(req.user.id);
-        SuccessRespnose.data = data;
         SuccessRespnose.message = 'Success';
 
         Logger.info(`Company -> recieved all successfully`);

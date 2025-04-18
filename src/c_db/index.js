@@ -49,9 +49,17 @@ Credit.belongsTo(User, { foreignKey: "to_user", as: "toUser" });
 Credit.belongsTo(User, { foreignKey: "action_user", as: "actionUser" });
 
 
+User.belongsToMany(Company, {
+  through: 'user_companies',
+  as: 'companyList',
+  foreignKey: 'user_id'
+});
 
-// User.belongsTo(Company, { foreignKey: "company_id", as: "companies" });
-// Company.hasMany(User, { foreignKey: "company_id", as: "companyUsers" });
+Company.belongsToMany(User, {
+  through: 'user_companies',
+  as: 'userList',
+  foreignKey: 'company_id'
+});
 
 
 Agents.belongsTo(TelephonyProfile, { foreignKey: 'telephony_profile', as: 'telephonyProfile' });
@@ -106,6 +114,13 @@ Queue.belongsTo(Extension, { foreignKey: 'extension', as: 'extension_data' });
 Queue.belongsTo(User, { foreignKey: 'created_by', as: 'created_by_user' });
 
 Extension.hasMany(Queue, { foreignKey: 'extension', as: 'queues' });
+
+
+
+CallCenter.belongsTo(Company, { foreignKey: 'company_id', as: 'company' });
+CallCenter.belongsTo(CountryCode, { foreignKey: 'country_code_id', as: 'country_code' });
+CallCenter.belongsTo(Timezone, { foreignKey: 'timezone_id', as: 'timezone' });
+CallCenter.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 
 module.exports = { 
     Agents,

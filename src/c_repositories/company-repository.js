@@ -6,14 +6,21 @@ class CompanyRepository extends CrudRepository {
     super(Company);
   }
 
-  async getAll() {
-    try {
-      const response = await this.model.find().sort({ created_at: -1 });
-      return response;
-    } catch (error) {
-      throw error;
-    }
+async getAll(userId) {
+  try {
+    const response = await this.model.findAll({
+      where: {
+        created_by: userId
+      },
+      order: [['created_at', 'DESC']],
+      raw: true,
+    });
+    return response;
+  } catch (error) {
+    throw error;
   }
+}
+
 
   async findOne(conditions) {
     try {
