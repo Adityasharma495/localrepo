@@ -178,5 +178,29 @@ async function deleteIncomingReport(req, res) {
     }
   }
 
+  async function getDidSpecificReport(req, res) {
+    try {
+      const {did, startDate, endDate} = req.params;
+      const data = await incomingReportRepo.getByDidByDate({callee_number : did}, startDate, endDate);
+      SuccessRespnose.data = data;
+      SuccessRespnose.message = "Success";
+  
+      Logger.info(
+        `Download Report -> recieved all successfully`
+      );
+  
+      return res.status(StatusCodes.OK).json(SuccessRespnose);
+    } catch (error) {
+      ErrorResponse.message = error.message;
+      ErrorResponse.error = error;
+  
+      Logger.error(
+        `Download Report -> unable to get server list, error: ${JSON.stringify(error)}`
+      );
+  
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+    }
+  }
 
-module.exports = {createIncomingReport, getAll, getById, updateIncomingReport, deleteIncomingReport};
+
+module.exports = {createIncomingReport, getAll, getById, updateIncomingReport, deleteIncomingReport, getDidSpecificReport};
