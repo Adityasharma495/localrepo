@@ -4,6 +4,7 @@ const { Op } = require('sequelize');
 const { StatusCodes } = require("http-status-codes");
 const AppError = require("../utils/errors/app-error");
 const Sequelize = require('../config/sequelize');
+const { literal } = require('sequelize');
 
 class DIDUserMappingRepository extends CrudRepository {
   constructor() {
@@ -54,11 +55,17 @@ class DIDUserMappingRepository extends CrudRepository {
         },
       });
   
+
+      // console.log("ROWS", rows);
       let data = rows.map(row => row.toJSON());
   
+
+      console.log("DATAW HERE", data);
       const filtered = data.filter(item => {
         return item.mapping_detail.some(md => {
-          if (md && (md.allocated_to == id) && md.active == true) {
+
+          console.log("MD", md);
+          if (md && (md.allocated_to == id)) {
             return true;
           }
           return false;
@@ -126,24 +133,48 @@ class DIDUserMappingRepository extends CrudRepository {
     }
   }
 
+
+
+
   async addMappingDetail(documentId, newDetail) {
+    console.log("DOCUEMNT ID NEWDTAIL", documentId, newDetail);
     try {
-      await this.model.update(
-        {
-          mapping_detail: Sequelize.jsonb.arrayAppend('mapping_detail', newDetail), // Appends newDetail to the mapping_detail array
+      const result = await this.model.update(
+        { 
+          mapping_detail: literal(
+            `mapping_detail || '[${JSON.stringify(newDetail)}]'`
+          )
         },
-        {
-          where: {
-            DID: documentId,
-          },
-        }
+        { where: { DID: documentId } }
       );
       console.log("Mapping detail added successfully.");
+      return result;              // ← return the raw update result
     } catch (error) {
       console.error("Error adding mapping detail:", error);
       throw error;
     }
   }
+
+  // async addMappingDetail(documentId, newDetail) {
+
+  //   console.log("DOCUEMNT ID NEWDTAIL", documentId, newDetail);
+  //   try {
+  //     await this.model.update(
+  //       {
+  //         mapping_detail: Sequelize.jsonb.arrayAppend('mapping_detail', newDetail), // Appends newDetail to the mapping_detail array
+  //       },
+  //       {
+  //         where: {
+  //           DID: documentId,
+  //         },
+  //       }
+  //     );
+  //     console.log("Mapping detail added successfully.");
+  //   } catch (error) {
+  //     console.error("Error adding mapping detail:", error);
+  //     throw error;
+  //   }
+  // }
   
   async checkMappingIfNotExists(did, newDetail) {
     try {

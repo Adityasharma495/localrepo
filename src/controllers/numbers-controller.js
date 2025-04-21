@@ -923,17 +923,20 @@ async function DIDUserMapping(req, res) {
                 try {
                     const didDetail = await numberRepo.get(did)
 
-                    await didUserMappingRepository.addMappingDetail(did, {
+                   await didUserMappingRepository.addMappingDetail(did, {
                         level: 1,
                         allocated_to: bodyReq.allocated_to,
                         parent_id: req.user.id,
                         voice_plan_id: bodyReq?.voice_plan_id,
-                    });
+                    }); 
+
 
                     await numberRepo.update(did, {
                         allocated_to: bodyReq.allocated_to,
                         voice_plan_id: bodyReq?.voice_plan_id
                     });
+
+
 
                     await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
                     successDIDs.push(did);

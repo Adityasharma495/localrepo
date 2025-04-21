@@ -67,6 +67,11 @@ Numbers.belongsTo(VoicePlan, {
   as: 'voice_plan',
 });
 
+Numbers.belongsTo(Company, {
+  foreignKey: 'allocated_company_id',
+  as: 'allocated_company'
+});
+
 VoicePlan.hasMany(Numbers, {
   foreignKey: 'voice_plan_id',
   as: 'numbers',

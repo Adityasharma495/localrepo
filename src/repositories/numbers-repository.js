@@ -125,7 +125,9 @@ class NumbersRepository extends CrudRepository {
     }
 
     async update(id, data) {
+
         const response = await this.model.findOneAndUpdate({ _id: id}, data, { runValidators: true, new: true });
+
         return response;
     }
 

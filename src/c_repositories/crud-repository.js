@@ -39,7 +39,7 @@ class CrudRepository {
         try {
           const response = await this.model.findAll({
             where: {
-              telephony_profile_id: id
+              id: id
             },
             raw:true,
           });

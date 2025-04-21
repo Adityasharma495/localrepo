@@ -10,6 +10,8 @@ class NumbersRepository extends CrudRepository {
   }
 
   async getAll(options) {
+
+    console.log("OPTIONS", options);
     try {
       let whereCondition = { is_deleted: false };
 
@@ -167,10 +169,10 @@ class NumbersRepository extends CrudRepository {
     }
   }
 
-  async getAllocatedNumbers(user_id) {
+  async getAllocatedNumbers(company_id) {
     try {
       const response = await this.model.findAll({
-        where: { is_deleted: false, allocated_to: user_id },
+        where: { is_deleted: false, allocated_company_id: company_id },
         order: [["created_at", "DESC"]],
         include: [
           {
@@ -211,9 +213,10 @@ class NumbersRepository extends CrudRepository {
   }
 
   async findMany(ids) {
+
     try {
       const response = await this.model.findAll({
-        where: { is_deleted: false, id: { [Op.in]: ids } },
+        where: { id: { [Op.in]: ids } },
         raw: true,
       });
       return response;
@@ -223,14 +226,48 @@ class NumbersRepository extends CrudRepository {
   }
 
   async update(id, data) {
+  
     try {
-      await this.model.update(data, { where: { id }, returning: true });
+      await this.model.update(data, {
+        where: { id: id }
+      });
+  
       const response = await this.model.findOne({ where: { id } });
+
+      console.log("RETUNING RESPONSE", response);
       return response;
     } catch (error) {
       throw error;
     }
   }
+  
+
+  async findOneWithVoicePlan(conditions) {
+
+    console.log("CONDITIONS", conditions);
+    try {
+        const response = await this.model.findOne({
+            where: {
+                is_deleted: false,
+                ...conditions
+            },
+            include: [
+                {
+                    model: VoicePlan,
+                    as: 'voice_plan'
+                }
+            ],
+            raw: true, // optional: for plain JSON
+            nest: true // optional: nests included data under the alias
+        });
+
+        console.log("RETURNING RESPONSE", response);
+        return response;
+    } catch (error) {
+        throw error;
+    }
+}
+
 }
 
 module.exports = NumbersRepository;

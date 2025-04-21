@@ -89,6 +89,14 @@ const Numbers = sequelize.define(
       },
       allowNull: true,
     },
+    allocated_company_id: {
+      type: DataTypes.UUID,
+      references: {
+        model: 'companies', // or constants.MODEL.COMPANIES if using constants
+        key: 'id',
+      },
+      allowNull: true,
+    },
     voice_plan_id: {
       type: DataTypes.BIGINT,
       references: {

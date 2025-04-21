@@ -369,10 +369,12 @@ async function getAll(req, res) {
     let idToCheck;
 
     const getLoggedDetail = await userRepo.get(req.user.id);
+
+
     if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
-      idToCheck = getLoggedDetail?.companies?.id;
+      idToCheck = getLoggedDetail?.companies?._id;
     } else if (req.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
-      idToCheck = getLoggedDetail?.callcenters?.id;
+      idToCheck = getLoggedDetail?.callcenters?._id;
     } else {
       idToCheck = req.user.id;
     }
@@ -383,7 +385,8 @@ async function getAll(req, res) {
       data = await didUserMappingRepository.getForOthers(idToCheck);
     }
 
-    const uniqueDIDs = [...new Set(data.map(item => item.DID?.id || item.DID))];
+    const uniqueDIDs = [...new Set(data.map(item => Number(item.DID?.id) || Number(item.DID)))];
+
     data = await numberRepo.findMany(uniqueDIDs);
 
     const reverseNumberStatus = Object.entries(NUMBER_STATUS).reduce((acc, [key, value]) => {
@@ -440,7 +443,6 @@ async function getAll(req, res) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
   }
 }
-
 
 async function get(req, res) {
     const numberId = req.params.id;
@@ -635,118 +637,238 @@ async function getAllStatus(req, res) {
     const successActualNumbers = [];
 
     console.log("bodyReq", bodyReq);
-  
+
     try {
-      for (const did of bodyReq.DID) {
-        try {
-          const didData = await numberRepo.findOne({ where: { id: did } });
-          if (!didData) throw new Error("DID not found");
-  
-          if (req.user.role !== USERS_ROLE.SUPER_ADMIN) {
-            const parentVoicePlan = await voicePlanRepo.findOne({
-              where: { id: didData.voice_plan_id },
-            });
-  
-            const currentPlan = await voicePlanRepo.findOne({
-              where: { id: bodyReq.voice_plan_id },
-            });
-  
-            if (parentVoicePlan && currentPlan) {
-              const parentPlans = parentVoicePlan.plans || [];
-              const childPlans = currentPlan.plans || [];
-  
-              for (const child of childPlans) {
-                const parent = parentPlans.find((p) => p.plan_type === child.plan_type);
-                if (!parent) {
-                  failedDIDs.push({
-                    did: didData.actual_number,
-                    reason: `No matching parent plan for "${child.plan_type}"`,
-                  });
-                  throw new Error("Validation failed");
-                }
-  
-                if (
-                  child.pulse_price < parent.pulse_price ||
-                  child.pulse_duration < parent.pulse_duration
-                ) {
-                  failedDIDs.push({
-                    did: didData.actual_number,
-                    reason: `Plan conflict on "${child.plan_type}": pulse/price mismatch`,
-                  });
-                  throw new Error("Validation failed");
-                }
+      if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
+                  for (const did of bodyReq.DID) {
+                      try { 
+                          const didDetail = await numberRepo.get(did)
+      
+                         await didUserMappingRepository.addMappingDetail(did, {
+                              level: 1,
+                              allocated_to: bodyReq.allocated_to,
+                              parent_id: req.user.id,
+                              voice_plan_id: bodyReq?.voice_plan_id,
+                          });
+
+                    
+      
+                          await numberRepo.update(did, {
+                              allocated_to: bodyReq.allocated_to,
+                              voice_plan_id: bodyReq?.voice_plan_id
+                          });
+
+
+
+                          await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
+                          successDIDs.push(did);
+                          successActualNumbers.push(didDetail.actual_number)
+
+            
+
+      
+                      } catch (err) {
+                          failedDIDs.push({ did, reason: err.message || "Failed to allocate number." });
+                      }
+                  }
+              } else {
+
+                  for (const did of bodyReq.DID) {
+                      try {
+                  
+                          const parentVoicePlanDetailId = (await numberRepo.findOneWithVoicePlan({id : Number(did)}))?.voice_plan_id; 
+
+                          const ParentVoicePlanDetails = await voicePlanRepo.get(parentVoicePlanDetailId)
+
+                          const currentPlanDetail = await voicePlanRepo.findOne({id : bodyReq?.voice_plan_id});
+
+                          const didDetail = await numberRepo.get(did)
+                
+                          if (ParentVoicePlanDetails) {
+                              for (const plan1 of currentPlanDetail.plans) {
+                                  const match = ParentVoicePlanDetails.plans.find(plan2 => plan2.plan_type === plan1.plan_type);
+                  
+
+                                  if (!match) {
+                                      failedDIDs.push({
+                                          did: didDetail.actual_number,
+                                          reason: `No matching parent plan found for "${plan1.plan_type}".`
+                                      });
+                                      throw new Error('Validation failed');
+                                  }
+
+                  
+                                  if (plan1.pulse_price < match.pulse_price) {
+                                      failedDIDs.push({
+                                          did: didDetail.actual_number,
+                                          reason: `Can't allocate pulse price less than parent pulse price for "${plan1.plan_type}".`
+                                      });
+                                      throw new Error('Validation failed');
+                                  }
+                  
+                                  if (plan1.pulse_duration < match.pulse_duration) {
+                                      failedDIDs.push({
+                                          did: didDetail.actual_number,
+                                          reason: `Can't allocate pulse duration less than parent duration for "${plan1.plan_type}".`
+                                      });
+                                      throw new Error('Validation failed');
+                                  }
+                              }
+                          }
+      
+                              let level;
+                              if (req.user.role === USERS_ROLE.RESELLER) {
+                                  
+                                  level = DID_ALLOCATION_LEVEL.COMPANY_ADMIN
+
+
+                              } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
+                                  const isCompanyUser = await companyRepo.findOne({_id: bodyReq.allocated_to})
+                                  if (isCompanyUser) {
+                                      const count = await didUserMappingRepository.countSubCompanyUserEntry(did)
+                                      if (count === 0) {
+                                          level = DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN
+                                      } else {
+                                          level = `${DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN}_${Number(count)}`
+                                      }
+                                  } else {
+                                      level = DID_ALLOCATION_LEVEL.CALLCENTER
+                                  }
+                              }
+                              await didUserMappingRepository.addMappingDetail(did, {
+                                  level,
+                                  allocated_to: bodyReq.allocated_to,
+                                  parent_id: req.user.id,
+                                  voice_plan_id: bodyReq?.voice_plan_id,
+                              });
+                  
+                              await numberRepo.update(did, {
+                                allocated_company_id: bodyReq.allocated_to,
+                                  voice_plan_id: bodyReq?.voice_plan_id
+                              });
+                
+                          await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
+                          successDIDs.push(did);
+                          successActualNumbers.push(didDetail.actual_number)
+                      } catch (err) {
+                          continue;
+                      }
+                  }
+                  
               }
-            }
-          }
+      // for (const did of bodyReq.DID) {
+      //   try {
+      //     const didData = await numberRepo.findOne({ where: { id: did } });
+
+      //     console.log("DIDDATA");
+      //     if (!didData) throw new Error("DID not found");
   
-          let level = 0;
-          if (req.user.role === USERS_ROLE.RESELLER) {
-            level = DID_ALLOCATION_LEVEL.COMPANY_ADMIN;
-          } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
-            const isCompany = await companyRepo.findOne({ where: { id: bodyReq.allocated_to } });
-            if (isCompany) {
-              const existing = await didUserMappingRepository.findOne({ where: { DID: did } });
-              const count = (existing?.mapping_detail || []).filter(
-                (d) => d.level?.toString().startsWith(DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN)
-              ).length;
-              level =
-                count === 0
-                  ? DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN
-                  : `${DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN}_${count}`;
-            } else {
-              level = DID_ALLOCATION_LEVEL.CALLCENTER;
-            }
-          }
+      //     if (req.user.role !== USERS_ROLE.SUPER_ADMIN) {
+      //       const parentVoicePlan = await voicePlanRepo.findOne({
+      //         where: { id: didData.voice_plan_id },
+      //       });
   
-          const existingMapping = await didUserMappingRepository.findOne({ where: { DID: did } });
+      //       const currentPlan = await voicePlanRepo.findOne({
+      //         where: { id: bodyReq.voice_plan_id },
+      //       });
   
-          const newMappingItem = {
-            active: true,
-            allocated_to: bodyReq.allocated_to,
-            parent_id: req.user.id,
-            voice_plan_id: bodyReq.voice_plan_id,
-            level,
-          };
+      //       if (parentVoicePlan && currentPlan) {
+      //         const parentPlans = parentVoicePlan.plans || [];
+      //         const childPlans = currentPlan.plans || [];
   
-          if (existingMapping) {
-            existingMapping.mapping_detail = [
-              ...existingMapping.mapping_detail,
-              newMappingItem,
-            ];
-            await existingMapping.save();
-          } else {
-            await didUserMappingRepository.create({
-              DID: did,
-              mapping_detail: [newMappingItem],
-            });
-          }
+      //         for (const child of childPlans) {
+      //           const parent = parentPlans.find((p) => p.plan_type === child.plan_type);
+      //           if (!parent) {
+      //             failedDIDs.push({
+      //               did: didData.actual_number,
+      //               reason: `No matching parent plan for "${child.plan_type}"`,
+      //             });
+      //             throw new Error("Validation failed");
+      //           }
   
-          await numberRepo.update(
-            {
-              allocated_to: bodyReq.allocated_to,
-              voice_plan_id: bodyReq.voice_plan_id,
-            },
-            { where: { id: did } }
-          );
+      //           if (
+      //             child.pulse_price < parent.pulse_price ||
+      //             child.pulse_duration < parent.pulse_duration
+      //           ) {
+      //             failedDIDs.push({
+      //               did: didData.actual_number,
+      //               reason: `Plan conflict on "${child.plan_type}": pulse/price mismatch`,
+      //             });
+      //             throw new Error("Validation failed");
+      //           }
+      //         }
+      //       }
+      //     }
   
-          if (bodyReq.voice_plan_id) {
-            await voicePlanRepo.update(
-              { is_allocated: true },
-              { where: { id: bodyReq.voice_plan_id } }
-            );
-          }
+      //     let level = 0;
+      //     if (req.user.role === USERS_ROLE.RESELLER) {
+      //       level = DID_ALLOCATION_LEVEL.COMPANY_ADMIN;
+      //     } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
+      //       const isCompany = await companyRepo.findOne({ where: { id: bodyReq.allocated_to } });
+      //       if (isCompany) {
+      //         const existing = await didUserMappingRepository.findOne({ where: { DID: did } });
+      //         const count = (existing?.mapping_detail || []).filter(
+      //           (d) => d.level?.toString().startsWith(DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN)
+      //         ).length;
+      //         level =
+      //           count === 0
+      //             ? DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN
+      //             : `${DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN}_${count}`;
+      //       } else {
+      //         level = DID_ALLOCATION_LEVEL.CALLCENTER;
+      //       }
+      //     }
   
-          successDIDs.push(did);
-          successActualNumbers.push(didData.actual_number);
-        } catch (err) {
-          failedDIDs.push({
-            did,
-            reason: err.message || "Unknown error",
-          });
-          continue;
-        }
-      }
+      //     const existingMapping = await didUserMappingRepository.findOne({ where: { DID: did } });
   
+      //     const newMappingItem = {
+      //       active: true,
+      //       allocated_to: bodyReq.allocated_to,
+      //       parent_id: req.user.id,
+      //       voice_plan_id: bodyReq.voice_plan_id,
+      //       level,
+      //     };
+  
+      //     if (existingMapping) {
+      //       existingMapping.mapping_detail = [
+      //         ...existingMapping.mapping_detail,
+      //         newMappingItem,
+      //       ];
+      //       await existingMapping.save();
+      //     } else {
+      //       await didUserMappingRepository.create({
+      //         DID: did,
+      //         mapping_detail: [newMappingItem],
+      //       });
+      //     }
+  
+      //     await numberRepo.update(
+      //       {
+      //         allocated_to: bodyReq.allocated_to,
+      //         voice_plan_id: bodyReq.voice_plan_id,
+      //       },
+      //       { where: { id: did } }
+      //     );
+  
+      //     if (bodyReq.voice_plan_id) {
+      //       await voicePlanRepo.update(
+      //         { is_allocated: true },
+      //         { where: { id: bodyReq.voice_plan_id } }
+      //       );
+      //     }
+  
+      //     successDIDs.push(did);
+      //     successActualNumbers.push(didData.actual_number);
+      //   } catch (err) {
+      //     failedDIDs.push({
+      //       did,
+      //       reason: err.message || "Unknown error",
+      //     });
+      //     continue;
+      //   }
+      // }
+  
+
       return res.status(200).json({
         message: "DIDs allocated successfully",
         data: {
@@ -773,16 +895,28 @@ async function getAllStatus(req, res) {
 
 
     try {
-      const roleToCheck = await userRepo.findOne({ id: allocatedToId });
-
-
 
       let data;
-      if (roleToCheck.role === USERS_ROLE.SUPER_ADMIN) {
-        data = await numberRepo.getAll({ where: { allocated_to: null } });
-      } else {
-        data = await numberRepo.getAll({ where: { allocated_to: allocatedToId } });
+
+      if(req.user.role===USERS_ROLE.COMPANY_ADMIN)
+      {
+        console.log("CAME HERE FOR COMPANY ADMIN");
+        data = await numberRepo.getAll({ where: { allocated_company_id: allocatedToId } });
+        console.log("DATA", data);
       }
+      else
+      {
+        const roleToCheck = await userRepo.findOne({ id: allocatedToId });
+
+        if (roleToCheck.role === USERS_ROLE.SUPER_ADMIN) {
+          console.log("ACEM1");
+          data = await numberRepo.getAll({ where: { allocated_to: null } });
+        } else {
+          console.log("ACEM2");
+          data = await numberRepo.getAll({ where: { allocated_to: allocatedToId } });
+        }
+      }
+      
   
      
       
@@ -799,7 +933,6 @@ async function getAllStatus(req, res) {
         delete obj.updatedAt;
         return obj;
       });
-
 
       // console.log("SUCCESS", SuccessRespnose);
       SuccessRespnose.message = 'Success';
