@@ -33,13 +33,11 @@ const AgentsGroup = sequelize.define(MODEL.AGENTS_GROUP, {
     defaultValue: "Not Assigned",
   },
   strategy: {
-    type: DataTypes.ENUM(
-      "ROUNDROBIN RINGING",
-      "SEQUENTIAL RINGING",
-      "RANDOM RINGING",
-      "LEAST OCCUPIED RINGING",
-      "LEAST IDLE RINGING"
-    ),
+    type: DataTypes.STRING,
+    validate: {
+      isIn: [['ROUNDROBIN RINGING', 'SEQUENTIAL RINGING',
+         'RANDOM RINGING','LEAST OCCUPIED RINGING','LEAST IDLE RINGING']] 
+    },
     defaultValue: "ROUNDROBIN RINGING",
   },
   answered: {
@@ -148,4 +146,4 @@ const AgentsGroup = sequelize.define(MODEL.AGENTS_GROUP, {
 // AgentsGroup.hasMany(AgentGroupAgents, { foreignKey: "agent_group_id", as: "agents" });
 // AgentGroupAgents.belongsTo(AgentsGroup, { foreignKey: "agent_group_id" });
 
-module.exports = { AgentsGroup };
+module.exports = AgentsGroup;

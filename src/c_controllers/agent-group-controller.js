@@ -57,6 +57,7 @@ async function createAgentGroup(req, res) {
     );
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
   } catch (error) {
+    console.log("error", error);
     Logger.error(
       `Agent Group -> unable to create Agent Group: ${JSON.stringify(
         bodyReq

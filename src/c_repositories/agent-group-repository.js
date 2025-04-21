@@ -40,6 +40,19 @@ class AgentGroupRepository extends CrudRepository {
     }
   }
 
+  async findOne(conditions) {
+    try {
+        const response = await this.model.findOne({
+            where: {
+              ...conditions
+            }
+          });
+        return response;
+    } catch (error) {
+        throw error;
+    }
+}
+
   async create(data) {
     try {
       const response = await this.model.create(data);
