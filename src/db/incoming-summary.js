@@ -38,10 +38,9 @@ const IncomingSummarySchema = new mongoose.Schema(
   }
 );
 
-// Pre-save middleware to convert timestamps to IST
 IncomingSummarySchema.pre('save', function (next) {
   const now = new Date();
-  const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
+  const istOffset = 5.5 * 60 * 60 * 1000; 
   const istDate = new Date(now.getTime() + istOffset);
 
   if (this.isNew) {
@@ -51,10 +50,9 @@ IncomingSummarySchema.pre('save', function (next) {
   next();
 });
 
-// Pre-update middleware to update `updated_at` to IST
 IncomingSummarySchema.pre('findOneAndUpdate', function (next) {
   const now = new Date();
-  const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
+  const istOffset = 5.5 * 60 * 60 * 1000; 
   const istDate = new Date(now.getTime() + istOffset);
 
   this._update.updated_at = istDate;
