@@ -8,7 +8,7 @@ const {
 } = require("../utils/common");
 const { Logger } = require("../config");
 const AppError = require("../utils/errors/app-error");
-const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE, PREFIX_VALUE, SUB_LICENCE_ROLE, USER_ROLE_VALUE} = require('../utils/common/constants');
+const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE, PREFIX_VALUE, SUB_LICENCE_ROLE, USER_ROLE_VALUE_LICENCE} = require('../utils/common/constants');
 
 const userRepo = new UserRepository();
 const companyRepo = new CompanyRepository();
@@ -282,6 +282,7 @@ async function updateUser(req, res) {
       if (req.user.role === USERS_ROLE.RESELLER) {
         const loggedInData = await userRepo.getForLicence(uid)
         const total_licence = loggedInData.sub_user_licence_id.total_licence
+
         const available_licence = loggedInData.sub_user_licence_id.available_licence
 
         const used_licence = Object.keys(total_licence).reduce((acc, key) => {
@@ -294,7 +295,7 @@ async function updateUser(req, res) {
         // Compare each role and return immediately if an error is found
         for (const key of Object.keys(used_licence)) {
           if (used_licence[key] > (updated_licence[key] || 0)) {
-            ErrorResponse.message = `Can't Set ${USER_ROLE_VALUE[key]} Licence Because used licence Are greater.`;
+            ErrorResponse.message = `Can't Set ${USER_ROLE_VALUE_LICENCE[key]} Licence Because used licence Are greater.`;
             return res
                   .status(StatusCodes.BAD_REQUEST)
                   .json(ErrorResponse);
@@ -524,9 +525,7 @@ async function deleteUser(req, res) {
     }
 
       for (const userId of userIds) {
-        console.log('userId', userId)
         const data = await userRepo.findOneAll({_id: userId});
-        console.log('data', data)
         if (data?.companies?._id) {
           await companyRepo.removeUserId(data.companies._id, userId);
         }

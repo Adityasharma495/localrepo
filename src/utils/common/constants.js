@@ -49,6 +49,19 @@ const USER_ROLE_VALUE = {
     role_sub_superadmin: 'Sub Superadmin'
 }
 
+const USER_ROLE_VALUE_LICENCE = {
+    role_sadmin: 'Super Admin',
+    role_reseller: 'Reseller',
+    role_cadmin: 'Campany Admin',
+    role_ccadmin: 'Callcenter Admin',
+    role_ccteamlead: 'Callcenter Team Lead',
+    role_ccagent: 'Callcenter Agent',
+    role_sub_superadmin: 'Sub Superadmin',
+    agent: 'Agent',
+    live_agent: 'Live Agent',
+
+}
+
 const COMPANY_TYPES = {
     RESELLER: 'type_reseller',
     CADMIN: 'type_cadmin',
@@ -366,5 +379,6 @@ module.exports = {
     SUB_LICENCE_ROLE,
     USER_ROLE_VALUE,
     USER_CREDITS_ACTION,
-    BACKEND_BASE_URL
+    BACKEND_BASE_URL,
+    USER_ROLE_VALUE_LICENCE
 }
