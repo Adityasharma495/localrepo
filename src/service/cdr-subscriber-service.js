@@ -97,7 +97,6 @@ const getDateTimeFormat = (date) =>{
               const incoming = await incomingSummaryRepo.isSummaryExist(userId , did , startDate);
 
               if(incoming){
-                   console.log("data ... : "+ JSON.stringify(incoming));
                    summary_data = {
                         did : incoming.did,
                         user_id : mongoose.Types.ObjectId.isValid(incoming.userId) ? incoming.userId : null,
@@ -111,9 +110,7 @@ const getDateTimeFormat = (date) =>{
                         s_parent_id :  mongoose.Types.ObjectId.isValid(incoming.sparentId) ? incoming.sparentId : null,              
                    }
 
-                   console.log("summary : "+summary_data);
-                   
-                   const summary = await incomingSummaryRepo.updateSummary(summary_data);
+                   const summary = await incomingSummaryRepo.updateSummary(summary_data, startDate);
                    Logger.info(`Incoming Summary -> updated successfully: ${JSON.stringify(summary)}`);
 
 
@@ -128,8 +125,6 @@ const getDateTimeFormat = (date) =>{
                        retry_count : cdrJson.retryCount ?? 0,
                        sms_count : cdrJson.smsCount ?? 0
                    }
-
-                   console.log("summary : "+summary_data);
 
                    const summary = await incomingSummaryRepo.create(summary_data);
                    Logger.info(`Incoming Summary -> added successfully: ${JSON.stringify(summary)}`);
