@@ -139,6 +139,8 @@ async function update(req, res) {
         bodyReq.number.updated_status = bodyReq.number.status;
         bodyReq.number.status = 9;  
       }
+
+      bodyReq.number.operator = bodyReq.number.operator.toUpperCase()
   
       const number = await numberRepo.update(numberId, bodyReq.number);
   

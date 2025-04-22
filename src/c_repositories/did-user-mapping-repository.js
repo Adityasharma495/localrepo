@@ -1,10 +1,9 @@
 const CrudRepository = require("./crud-repository");
 const { DIDUserMapping } = require("../c_db"); 
-const { Op } = require('sequelize');
+const { Op, literal } = require('sequelize');
 const { StatusCodes } = require("http-status-codes");
 const AppError = require("../utils/errors/app-error");
 const Sequelize = require('../config/sequelize');
-const { literal } = require('sequelize');
 
 class DIDUserMappingRepository extends CrudRepository {
   constructor() {
@@ -86,30 +85,37 @@ class DIDUserMappingRepository extends CrudRepository {
       }
   
       const rows = await this.model.findAll({
-        where: {
-          mapping_detail: {
-            [Op.ne]: null,
-          },
-        },
+        where: literal(`
+          EXISTS (
+            SELECT 1 FROM jsonb_array_elements("mapping_detail") AS elem
+            WHERE 
+              (
+                elem->>'allocated_to' = '${id}' OR
+                elem->>'parent_id' = '${id}'
+              )
+              AND (elem->>'active')::boolean = true
+          )
+        `)
       });
   
-      let data = rows.map(row => row.toJSON());
+      const data = rows.map(row => row.toJSON());
   
-      const filtered = data.filter(item => {
-        return item.mapping_detail.some(md => {
-          if (md && (md.allocated_to == id || md.parent_id == id) && md.active == true) {
-            return true;
-          }
-          return false;
-        });
-      });
+      // Optional: return only matched mapping_detail elements
+      const result = data.map(item => ({
+        ...item,
+        mapping_detail: item.mapping_detail.filter(md =>
+          (md.allocated_to == id || md.parent_id == id) && md.active === true
+        )
+      }));
   
-      return filtered;
+      return result;
+  
     } catch (error) {
       console.error("Error in getForSuperadmin:", error);
       throw error;
     }
-  }  
+  }
+  
 
   async findOne(conditions) {
     try {

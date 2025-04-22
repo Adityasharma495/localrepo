@@ -25,6 +25,8 @@ class NumbersRepository extends CrudRepository {
       });
 
 
+      console.log("RESPONSE", response);
+
 
       // response = response.map((val) => {
       //   val["status"] = numberStatusValues[val["status"]];
@@ -213,11 +215,20 @@ class NumbersRepository extends CrudRepository {
   }
 
   async findMany(ids) {
-
     try {
       const response = await this.model.findAll({
-        where: { id: { [Op.in]: ids } },
-        raw: true,
+        where: {
+          id: { [Op.in]: ids },
+          is_deleted: false,
+        },
+        include: [
+          {
+            model: VoicePlan,
+            as: 'voice_plan', // must match the alias you used in the association
+            attributes: ['id', 'plan_name', 'plans'], // specify fields you need
+          },
+        ],
+        raw: false, // Must be false to retain nested data
       });
       return response;
     } catch (error) {
