@@ -34,4 +34,5 @@ module.exports = {
     ExtensionController: require("./extension-controller"),
     CallsController: require("./calls-controller"),
     QueueController: require("./queue-controller"),
+    IncomingReportController: require("./incoming-report-controller"),
 }

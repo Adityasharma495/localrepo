@@ -10,7 +10,7 @@ const downloadReportRepo = new DownloadReportRepository();
 
 const version = process.env.API_V || "1";
 
-// const { constants } = require("../utils/common");
+const { constants } = require("../utils/common");
 
 async function createDownloadReport(req, res) {
   const bodyReq = req.body;
@@ -69,8 +69,8 @@ async function createDownloadReport(req, res) {
 
 async function getAll(req, res) {
   try {
-    // const data = await downloadReportRepo.getAll(constants.USERS_ROLE.SUPER_ADMIN, req.user.id);
-    const data = await downloadReportRepo.getAll(req.user.role, req.user.id);
+    const data = await downloadReportRepo.getAll(constants.USERS_ROLE.SUPER_ADMIN, req.user.id);
+    // const data = await downloadReportRepo.getAll(req.user.role, req.user.id);
     SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
     SuccessRespnose.message = "Success";
 
