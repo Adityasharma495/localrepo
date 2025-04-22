@@ -3,11 +3,12 @@
 const { StatusCodes } = require("http-status-codes");
 const {SuccessRespnose , ErrorResponse} = require("../utils/common");
 const {MODULE_LABEL, ACTION_LABEL} = require('../utils/common/constants');
-const {NumberFileListRepository} = require("../c_repositories")
+const {NumberFileListRepository, NumbersRepository} = require("../c_repositories")
 const { Logger } = require("../config");
 
 
 const numberFileListRepo = new NumberFileListRepository();
+const numberRepo = new NumbersRepository();
 
 async function getAll(req, res) {
   try {
@@ -30,5 +31,46 @@ async function getAll(req, res) {
   }
 }
 
+async function deleteNumberFile(req, res) {
+  const id = req.body.fileListIds;
 
-module.exports={getAll}
+  try {
+    const response = await numberFileListRepo.deleteMany(id);
+
+    await numberRepo.deleteNumberByFileId(id);
+
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.NUMBER_FILE_LIST,
+      action: ACTION_LABEL.DELETE,
+      created_by: req?.user?.id
+    }
+
+    await userJourneyRepo.create(userJourneyfields);
+    SuccessRespnose.message = "Deleted successfully!";
+    SuccessRespnose.data = response;
+
+    Logger.info(`Number File List -> ${id} deleted successfully`);
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    ErrorResponse.error = error;
+    if (error.name == "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Number File not found";
+    }
+    ErrorResponse.message = errorMsg;
+
+    Logger.error(
+      `Number File List -> unable to delete Number File: ${id}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+
+module.exports={getAll, deleteNumberFile}
