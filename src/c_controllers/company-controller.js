@@ -122,11 +122,11 @@ async function updateCompany(req, res) {
   try {
     const bodyReq = req.body;
     const data = {
-      name: bodyReq.name?.trim().toLowerCase(),
-      phone: bodyReq.phone?.trim(),
-      pincode: bodyReq.pincode?.trim(),
-      address: bodyReq.address?.trim(),
-      category: bodyReq.category || null,
+      name: bodyReq?.company?.name?.trim().toLowerCase(),
+      phone: bodyReq?.company?.phone?.trim(),
+      pincode: bodyReq?.company?.pincode?.trim(),
+      address: bodyReq?.company?.address?.trim(),
+      category: bodyReq?.company?.category || null,
     };
 
     const response = await companyRepository.update(companyId, data);

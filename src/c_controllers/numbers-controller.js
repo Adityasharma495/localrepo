@@ -309,8 +309,14 @@ async function uploadNumbers(req, res) {
                     const insertedRecords = await numberRepo.insertMany(batch);
                     // DID allocation
                     const DIDAlloction = insertedRecords.map(item => ({
-                        DID: item._id,
-                        allocated_to: req?.user?.id
+                        DID: item.id,
+                        mapping_detail: [{
+                        allocated_to: req?.user?.id,
+                        active: true,
+                        level: 0,
+                        parent_id: null,
+                        voice_plan_id: null,
+                      }]
                       }));
                     await didUserMappingRepository.insertMany(DIDAlloction);
                 }
