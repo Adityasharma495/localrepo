@@ -25,9 +25,6 @@ class NumbersRepository extends CrudRepository {
       });
 
 
-      console.log("RESPONSE", response);
-
-
       // response = response.map((val) => {
       //   val["status"] = numberStatusValues[val["status"]];
       //   return val;
@@ -273,7 +270,6 @@ class NumbersRepository extends CrudRepository {
             nest: true // optional: nests included data under the alias
         });
 
-        console.log("RETURNING RESPONSE", response);
         return response;
     } catch (error) {
         throw error;

@@ -95,7 +95,6 @@ async update(id, data) {
 }
 
 async updateGroup(id, data) {
-  console.log("ID AND DATA", id, data);
 
   try {
     // Fetch the existing agent group

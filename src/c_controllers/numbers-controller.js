@@ -906,9 +906,7 @@ async function getAllStatus(req, res) {
 
       if(req.user.role===USERS_ROLE.COMPANY_ADMIN)
       {
-        console.log("CAME HERE FOR COMPANY ADMIN");
         data = await numberRepo.getAll({ where: { allocated_company_id: allocatedToId } });
-        console.log("DATA", data);
       }
       else
       {

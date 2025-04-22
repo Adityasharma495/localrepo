@@ -12,7 +12,6 @@ class TelephonyProfileRepository extends CrudRepository {
   }
 
   async create(data) {
-    console.log("DATA HERE", data);
     try {
       let response;
   
@@ -36,7 +35,6 @@ class TelephonyProfileRepository extends CrudRepository {
         response = created.get({ plain: true });
       }
   
-      console.log("RETURNING RESPONSE", response);
       return response;
     } catch (error) {
       console.error("CREATE ERROR", error);

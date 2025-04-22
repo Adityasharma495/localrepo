@@ -59,8 +59,6 @@ class DIDUserMappingRepository extends CrudRepository {
       // console.log("ROWS", rows);
       let data = rows.map(row => row.toJSON());
   
-
-      console.log("DATAW HERE", data);
       const filtered = data.filter(item => {
         return item.mapping_detail.some(md => {
 

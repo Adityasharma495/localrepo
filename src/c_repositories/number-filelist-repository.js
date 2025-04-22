@@ -10,7 +10,6 @@ class NumberFileListRepository extends CrudRepository {
 
   async getAll() {
 
-    console.log("CAME TO GET ALL");
     try {
       let response = await NumberFile.findAll({
         where: { is_deleted: false },

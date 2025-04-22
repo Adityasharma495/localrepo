@@ -848,8 +848,6 @@ async function updateUser(req, res) {
         const userInstance = await userRepo.get(uid);
         responseData.user = await userInstance.generateUserData();
 
-
-        console.log("RESPONSE DARA", responseData);
       await subUserLicenceRepo.updatelicence(req.user.id, { available_licence: bodyReq.user.parent_licence })
     }
 

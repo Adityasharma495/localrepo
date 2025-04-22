@@ -55,8 +55,6 @@ class ExtensionRepository extends CrudRepository {
   // ✅ Update an extension by ID
   async update(id, data) {
 
-    console.log("ID CAME TO UPDATE", id);
-    console.log("DATA CAME TO UPDATE", data);
     try {
       const [updatedRows, [updatedExtension]] = await Extension.update(data, {
         where: { id, is_deleted: false },
