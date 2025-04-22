@@ -643,6 +643,8 @@ async function getAllStatus(req, res) {
                   for (const did of bodyReq.DID) {
                       try { 
                           const didDetail = await numberRepo.get(did)
+
+                          console.log("DID DEATIL", didDetail);
       
                          await didUserMappingRepository.addMappingDetail(did, {
                               level: 1,
@@ -662,10 +664,7 @@ async function getAllStatus(req, res) {
 
                           await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
                           successDIDs.push(did);
-                          successActualNumbers.push(didDetail.actual_number)
-
-            
-
+                          successActualNumbers.push(didDetail.map((data)=> data.actual_number))
       
                       } catch (err) {
                           failedDIDs.push({ did, reason: err.message || "Failed to allocate number." });

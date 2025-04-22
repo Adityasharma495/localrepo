@@ -1,11 +1,11 @@
 const CrudRepository = require("./crud-repository");
-const { AgentsGroup } = require("../c_db/agent-group");
+const  {AgentGroup}  = require("../c_db");
 const AppError = require("../utils/errors/app-error");
 const { StatusCodes } = require("http-status-codes");
 
 class AgentGroupRepository extends CrudRepository {
   constructor() {
-    super(AgentsGroup);
+    super(AgentGroup);
   }
 
   async getAll(current_uid) {

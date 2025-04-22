@@ -26,6 +26,7 @@ async function createAgentGroup(req, res) {
       group_name: bodyReq.agent.group_name
     };
     const checkDuplicate = await agentGroupRepo.findOne(conditions);
+    
     if (checkDuplicate) {
       ErrorResponse.message = 'Group Name Already Exists';
       return res
