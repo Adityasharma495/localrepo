@@ -62,7 +62,6 @@ class DIDUserMappingRepository extends CrudRepository {
       const filtered = data.filter(item => {
         return item.mapping_detail.some(md => {
 
-          console.log("MD", md);
           if (md && (md.allocated_to == id)) {
             return true;
           }
