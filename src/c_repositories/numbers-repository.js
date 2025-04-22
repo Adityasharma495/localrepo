@@ -221,6 +221,7 @@ class NumbersRepository extends CrudRepository {
           id: { [Op.in]: ids },
           is_deleted: false,
         },
+        order: [['created_at', 'DESC']],
         include: [
           {
             model: VoicePlan,

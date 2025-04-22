@@ -52,6 +52,7 @@ class DIDUserMappingRepository extends CrudRepository {
             [Op.ne]: null,
           },
         },
+        order: [['created_at', 'DESC']],
       });
   
 
@@ -95,7 +96,8 @@ class DIDUserMappingRepository extends CrudRepository {
               )
               AND (elem->>'active')::boolean = true
           )
-        `)
+        `),
+        order: [['created_at', 'DESC']],
       });
   
       const data = rows.map(row => row.toJSON());

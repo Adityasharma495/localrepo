@@ -383,6 +383,7 @@ async function getAll(req, res) {
 
     if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
       data = await didUserMappingRepository.getForSuperadmin(idToCheck);
+
     } else {
       data = await didUserMappingRepository.getForOthers(idToCheck);
     }
@@ -637,8 +638,6 @@ async function getAllStatus(req, res) {
     const successDIDs = [];
     const failedDIDs = [];
     const successActualNumbers = [];
-
-    console.log("bodyReq", bodyReq);
 
     try {
       if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
