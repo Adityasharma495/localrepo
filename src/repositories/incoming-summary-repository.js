@@ -28,10 +28,10 @@ class IncomingSummaryRepository extends CrudRepository {
   async isSummaryExist(userId,incomingdid,startDate) {
         
         let startOfDay = new Date(startDate);
-        startOfDay.setHours(0, 0, 0, 0);
+        startOfDay.setUTCHours(0, 0, 0, 0);
 
         let endOfDay = new Date(startDate);
-        endOfDay.setHours(23, 59, 59, 999);
+        endOfDay.setUTCHours(23, 59, 59, 999);
         try {
             let response = await this.model.findOne({
                 $and: [
@@ -52,12 +52,13 @@ class IncomingSummaryRepository extends CrudRepository {
     }
 
 
-     async updateSummary(data) {
-        let startOfDay = new Date(data.schedule_date);
-        startOfDay.setHours(0, 0, 0, 0);
+     async updateSummary(data, startdate) {
+        let startOfDay = new Date(startdate);
+        startOfDay.setUTCHours(0, 0, 0, 0);
 
-        let endOfDay = new Date(data.schedule_date);
-        endOfDay.setHours(23, 59, 59, 999);
+        let endOfDay = new Date(startdate);
+        endOfDay.setUTCHours(23, 59, 59, 999);
+
         const response = await this.model.findOneAndUpdate(
                           {
                             $and: [

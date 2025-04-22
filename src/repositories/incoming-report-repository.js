@@ -2,6 +2,7 @@ const CrudRepository = require("./crud-repository");
 const incomingReportModel = require("../db/incoming-report");
 const { constants} = require("../utils/common");
 const dataCenterLabelType = constants.DATA_CENTER_TYPE_LABEL;
+const moment = require("moment-timezone");
 
 class IncomingReportRepository extends CrudRepository {
     constructor() {
@@ -64,6 +65,28 @@ class IncomingReportRepository extends CrudRepository {
     }
 
   }
+
+  async getByDidByDate(data, todayStart, todayEnd) {
+    try {
+
+      const isoStart = moment.utc(todayStart, 'YYYY-MM-DD HH:mm:ss').format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+      const isoEnd = moment.utc(todayEnd, 'YYYY-MM-DD HH:mm:ss').format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+
+      const query = {
+        ...data, 
+        start_time: { $gte: isoStart },
+        end_time: { $lte: isoEnd },
+      };
+  
+      const response = await this.model.find(query);
+      return response;
+  
+    } catch (error) {
+      console.log(error)
+      throw error;
+    }
+  }
+  
 
 }
 

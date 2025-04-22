@@ -11,6 +11,9 @@ router.post("/delete", AuthMiddleware.validateUser, IncomingReportMiddleware.val
 router.post('/create', AuthMiddleware.validateUser, IncomingReportMiddleware.validateIncomingReportRequest,
 IncomingReportMiddleware.modifyIncomingReportCreateBodyRequest, IncomingReportController.createIncomingReport);
 
+// get did-specific download-report api/v1/download-report/:did
+router.get('/get-report/:did/:startDate/:endDate', AuthMiddleware.validateUser, IncomingReportController.getDidSpecificReport);
+
 // get all incoming-report api/v1/incoming-report/
 router.get('/', AuthMiddleware.validateUser, IncomingReportController.getAll);
 
@@ -20,5 +23,7 @@ router.get('/:id', AuthMiddleware.validateUser, IncomingReportController.getById
 //Update incoming-report api/v1/incoming-report/:id
 router.post('/:id', AuthMiddleware.validateUser, IncomingReportMiddleware.validateIncomingReportRequest,
 IncomingReportMiddleware.modifyIncomingReportUpdateBodyRequest, IncomingReportController.updateIncomingReport);
+
+
 
 module.exports = router;
