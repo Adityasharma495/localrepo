@@ -433,12 +433,20 @@ async function getAll(req, res) {
           val.allocated_to = finalData;
         }
 
+        if (val.voice_plan) {
+          val.voice_plan_id = val.voice_plan;
+        }
+        delete val.voice_plan_id;              
+        delete val.voice_plan; 
+
         return val;
       })
     );
 
     data = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
+
+    
     SuccessRespnose.data = data;
     SuccessRespnose.message = 'Success';
 
