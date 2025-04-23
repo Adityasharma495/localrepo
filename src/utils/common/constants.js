@@ -49,6 +49,19 @@ const USER_ROLE_VALUE = {
     role_sub_superadmin: 'Sub Superadmin'
 }
 
+const USER_ROLE_VALUE_LICENCE = {
+    role_sadmin: 'Super Admin',
+    role_reseller: 'Reseller',
+    role_cadmin: 'Campany Admin',
+    role_ccadmin: 'Callcenter Admin',
+    role_ccteamlead: 'Callcenter Team Lead',
+    role_ccagent: 'Callcenter Agent',
+    role_sub_superadmin: 'Sub Superadmin',
+    agent: 'Agent',
+    live_agent: 'Live Agent',
+
+}
+
 const COMPANY_TYPES = {
     RESELLER: 'type_reseller',
     CADMIN: 'type_cadmin',
@@ -267,9 +280,10 @@ const NUMBER_STATUS_LABLE = {
 
 const DID_ALLOCATION_LEVEL= {
    RESELLER: 1,
-   COMPANY_ADMIN: 2,
-   SUB_COMPANY_ADMIN: 4,
-   CALLCENTER: 3
+   SUB_RESELLER: 2,
+   COMPANY_ADMIN: 3,
+   SUB_COMPANY_ADMIN: 5,
+   CALLCENTER: 4
 }
 
 const PREFIX_VALUE = 10
@@ -378,5 +392,5 @@ module.exports = {
     USER_ROLE_VALUE,
     USER_CREDITS_ACTION,
     BACKEND_BASE_URL,
-    AUTH_TYPE_NUM_TO_STRING
+    USER_ROLE_VALUE_LICENCE
 }

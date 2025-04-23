@@ -40,14 +40,15 @@ class UserRepository extends CrudRepository{
             // If role is "Superadmin", show all users
             if (current_user_role === 'role_sadmin') {
                 data = await userModel.find({ is_deleted: false })
-                    .populate('created_by', 'username')
+                    .populate('created_by')
                     .sort({ created_at: -1 });
             } else {
-               
-                data = await userModel.find({
-                    is_deleted: false,
-                    created_by: current_uid
-                }).sort({ created_at: -1 });
+                data = await userModel.find({ 
+                        is_deleted: false, 
+                        created_by: current_uid 
+                    })
+                    .populate('created_by')
+                    .sort({ created_at: -1 });
             }
     
             // Remove password field and convert status to labels
@@ -60,6 +61,7 @@ class UserRepository extends CrudRepository{
             return data;
     
         } catch (error) {
+            console.log(error)
             throw error;
         }
     }

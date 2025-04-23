@@ -178,7 +178,7 @@ class NumberUserMappingRepository extends CrudRepository {
     );
   }
 
-  async countSubCompanyUserEntry(did) {
+  async countLevelEntry(did, level) {
     const doc = await this.model.findOne({ DID: did });
   
     if (!doc || !doc.mapping_detail) return 0;
@@ -186,7 +186,7 @@ class NumberUserMappingRepository extends CrudRepository {
     const count = doc.mapping_detail.filter(item => {
       const levelStr = item.level;
       const levelNum = parseInt(levelStr, 10);
-      return levelNum >= 4;
+      return levelNum >= level;
     }).length;
   
     return count;
