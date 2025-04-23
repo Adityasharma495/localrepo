@@ -983,11 +983,22 @@ async function DIDUserMapping(req, res) {
 
                         let level;
                         if (req.user.role === USERS_ROLE.RESELLER) {
-                            level = DID_ALLOCATION_LEVEL.COMPANY_ADMIN
+                            const isCompanyUser = await companyRepo.findOne({_id: bodyReq.allocated_to})
+                            if (isCompanyUser) {
+                                level = DID_ALLOCATION_LEVEL.COMPANY_ADMIN
+                            } else {
+                                const count = await didUserMappingRepository.countLevelEntry(did, 2)
+                                if (count === 0) {
+                                    level = DID_ALLOCATION_LEVEL.SUB_RESELLER
+                                } else {
+                                    level = `${DID_ALLOCATION_LEVEL.SUB_RESELLER}_${Number(count)}`
+                                }
+                            }
+                            
                         } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
                             const isCompanyUser = await companyRepo.findOne({_id: bodyReq.allocated_to})
                             if (isCompanyUser) {
-                                const count = await didUserMappingRepository.countSubCompanyUserEntry(did)
+                                const count = await didUserMappingRepository.countLevelEntry(did, 5)
                                 if (count === 0) {
                                     level = DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN
                                 } else {
@@ -997,6 +1008,7 @@ async function DIDUserMapping(req, res) {
                                 level = DID_ALLOCATION_LEVEL.CALLCENTER
                             }
                         } 
+
                         await didUserMappingRepository.addMappingDetail(did, {
                             level,
                             allocated_to: bodyReq.allocated_to,
@@ -1096,7 +1108,12 @@ async function getAllocatedNumbers(req, res) {
         if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
             allocatedTo = (await userRepo.get(allocatedId))?.username
         } else if (req.user.role === USERS_ROLE.RESELLER) {
-            allocatedTo = (await companyRepo.get(allocatedId))?.name
+            const company = await companyRepo.findOne({_id : allocatedId})
+            if (company) {
+                allocatedTo = company?.name
+            } else {
+                allocatedTo = (await userRepo.findOne({_id : allocatedId}))?.username
+            }
         } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
             const company = await companyRepo.findOne({_id : allocatedId})
             if (company) {
@@ -1196,7 +1213,7 @@ async function removeAllocatedNumbers(req, res) {
                 await voicePlanRepo.update(allocatedNumbers?.mapping_detail[0].voice_plan_id , {is_allocated : 0})
             } else {
                 let allocatedToId
-                if (req.user.role !== USERS_ROLE.RESELLER && req.user.role !== USERS_ROLE.RESELLER) {
+                if (req.user.role !== USERS_ROLE.RESELLER) {
                     const getLoggedDetail = await userRepo.get(req.user.id)
                     allocatedToId = getLoggedDetail?.companies?._id?._id
                 } else {
@@ -1276,7 +1293,7 @@ async function getNumbersToRemove(req, res) {
         const allocatedToId = req.params.id
 
         if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
-            data = await numberRepo.getAllocatedNumbers(null);
+            data = await numberRepo.getAllocatedNumbers(allocatedToId);
         } else {
             data = await numberRepo.getAllocatedNumbers(allocatedToId);
         }

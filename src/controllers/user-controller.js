@@ -20,6 +20,7 @@ const callCentreRepo = new CallCentreRepository();
 
 async function signupUser(req, res) {
   const bodyReq = req.body;
+  console.log('bodyReq', bodyReq)
   try {
     const responseData = {};
     let user;
