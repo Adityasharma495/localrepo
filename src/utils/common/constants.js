@@ -254,7 +254,7 @@ const ACTION_LABEL = {
 const BACKEND_API_BASE_URL =
   process.env.NODE_ENV == "production"
     ? "https://voiceboxapi.nspl.cloud"
-    : "http://localhost:3900";
+    : "https://voiceboxapi.nspl.cloud";
     
 //  const BACKEND_API_BASE_URL =
 //   process.env.NODE_ENV == "production"

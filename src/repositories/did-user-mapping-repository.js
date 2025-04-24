@@ -191,6 +191,53 @@ class NumberUserMappingRepository extends CrudRepository {
   
     return count;
   }
+
+  async findDidMappingDetails(data){
+
+        try{
+
+           const didMapping = await this.model.find({
+                   DID : data.did
+           })
+           .limit(1)
+           .populate({
+              path: 'mapping_detail.voice_plan_id',
+              select: 'plans user_id'
+           })
+           .lean();
+            
+           const mappingDetialsPlans = [];
+
+           let responseObj = {};
+
+           if(didMapping){
+               didMapping.forEach(didMapping => {
+                 if (didMapping.mapping_detail && didMapping.mapping_detail.length > 0) {
+                       didMapping.mapping_detail.forEach(mappingDetials => {
+                           mappingDetialsPlans.push({
+                                 level : mappingDetials.level,
+                                 allocated_to : mappingDetials.allocated_to,
+                                 parent_id : mappingDetials.parent_id,
+                                 voice_plan_id : mappingDetials.voice_plan_id,
+                                 voice_plan_user_id : (mappingDetials.voice_plan_id==null ) ? null :  mappingDetials.voice_plan_id.user_id
+                           })
+                                  
+                       });
+                 }
+                });
+
+
+                 responseObj = {
+                      DID : didMapping[0].DID,
+                      mapping_detial : mappingDetialsPlans
+                 }
+           }
+           return responseObj;
+        }
+        catch(error){
+             throw error;
+        }
+    }
   
   
   
