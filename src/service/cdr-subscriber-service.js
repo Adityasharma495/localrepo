@@ -122,10 +122,10 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
               if(incoming){
                    summary_data = {
                         did : incoming.did,
-                        user_id : mongoose.Types.ObjectId.isValid(incoming.userId) ? incoming.userId : null,
+                        user_id : mongoose.Types.ObjectId.isValid(userId) ? userId : null,
                         schedule_date : startDate,
                         nos_processed : (Number(incoming.nos_processed) || 0)+1,
-                        connected_calls : (connectedCalls > 0 ? (Number(connectedCalls))+1 : connectedCalls),
+                        connected_calls : (connectedCalls > 0 ? (Number(incoming.connected_calls))+1 : connectedCalls),
                         dtmf_count : (Number(incoming.dtmf_count) || 0) + (Number(cdrJson.dtmfCount) || 0),
                         retry_count : (Number(incoming.retry_count)||0) + (Number(cdrJson.retryCount) || 0),
                         sms_count : (Number(incoming.sms_count) || 0) + (Number(cdrJson.smsCount) || 0), 
