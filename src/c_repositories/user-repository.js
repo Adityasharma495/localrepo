@@ -53,7 +53,6 @@ class UserRepository extends CrudRepository{
               {
                 model: User,
                 as: 'createdByUser',
-                attributes: ['username'],
               },
             ],
           });
@@ -63,9 +62,7 @@ class UserRepository extends CrudRepository{
           
             return {
               ...json,
-              created_by: {
-                username: json.createdByUser?.username || null
-              },
+              created_by: json.createdByUser || null,
               createdByUser: undefined  
             };
           });

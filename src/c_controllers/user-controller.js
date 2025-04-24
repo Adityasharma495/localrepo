@@ -95,7 +95,7 @@ async function getAll(req, res) {
       userRole
     );
 
-    SuccessRespnose.message = "Success";
+
     SuccessRespnose.data = ResponseFormatter.formatResponseIds(response, version);
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);

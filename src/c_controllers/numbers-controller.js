@@ -960,13 +960,14 @@ async function getAllStatus(req, res) {
     try {
       const allocatedToId = req.params.id;
 
+
       const didMappings = await didUserMappingRepository.findAll({
         where: {
           mapping_detail: {
             [Op.contains]: [
               {
                 allocated_to: allocatedToId,
-                active: true,
+                // active: true,
               },
             ],
           },
@@ -987,33 +988,33 @@ async function getAllStatus(req, res) {
   
       for (const mapEntry of didMappings) {
         const firstMapping = mapEntry.mapping_detail[0];
+
+
+
         voicePlanMap[mapEntry.DID] = firstMapping.voice_plan_id;
         didIds.push(mapEntry.DID);
       }
 
-      const numbers = await numberRepo.findAll({
-        where: {
-          id: {
-            [Op.in]: didIds,
-          },
-        },
-      });
+      const numbers = await numberRepo.findMany(didIds);
+
   
       let allocatedToName = "";
       const sampleVoicePlan = Object.values(voicePlanMap)[0];
   
       if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
-        const user = await userRepo.findOne({ where: { id: allocatedToId } });
+
+
+        const user = await userRepo.findOne({id: allocatedToId });
         allocatedToName = user?.username || "N/A";
       } else if (req.user.role === USERS_ROLE.RESELLER) {
-        const company = await companyRepo.findOne({ where: { id: allocatedToId } });
+        const company = await companyRepo.findOne({id: allocatedToId });
         allocatedToName = company?.name || "N/A";
       } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
-        const company = await companyRepo.findOne({ where: { id: allocatedToId } });
+        const company = await companyRepo.findOne({id: allocatedToId });
         if (company) {
           allocatedToName = company.name;
         } else {
-          const callCentre = await callCentreRepo.findOne({ where: { id: allocatedToId } });
+          const callCentre = await callCentreRepo.findOne({id: allocatedToId });
           allocatedToName = callCentre?.name || "N/A";
         }
       }

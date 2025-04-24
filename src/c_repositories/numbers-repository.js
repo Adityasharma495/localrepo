@@ -212,18 +212,22 @@ class NumbersRepository extends CrudRepository {
   }
 
   async findMany(ids) {
+    const cleanedIds = ids.map(id => Number(id));
+
+    console.log("CLEAN IDS", cleanedIds);
+
     try {
       const response = await this.model.findAll({
         where: {
-          id: { [Op.in]: ids },
+          id: { [Op.in]: cleanedIds },
           is_deleted: false,
         },
         order: [['created_at', 'DESC']],
         include: [
           {
             model: VoicePlan,
-            as: 'voice_plan', // must match the alias you used in the association
-            attributes: ['id', 'plan_name', 'plans'], // specify fields you need
+            as: 'voice_plan', 
+            attributes: ['id', 'plan_name', 'plans'],
           },
         ],
         raw: false, // Must be false to retain nested data
