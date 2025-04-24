@@ -100,7 +100,8 @@ const CallRecordSchema = new mongoose.Schema({
     },
     report_time: {
         type: Date,
-    }
+    },
+    billing_duration: { type: Number, default: 0 }
 },);
 
 CallRecordSchema.pre('save', function (next) {

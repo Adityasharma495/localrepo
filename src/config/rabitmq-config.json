@@ -19,17 +19,29 @@
 		      "options":{
 			      "durable":true
 		      }
-	      }
+	      },
+        "billing_queue": {
+            "options": {
+              "durable": true
+            }
+          }
       },
       "publications": {
         "cdr_publisher": {
           "queue": "cdr_queue"
+        },
+        "billing_publisher": {
+            "queue": "billing_queue"
         }
       },
       "subscriptions": {
         "cdr_subscriber": {
           "queue": "cdr_queue",
           "prefetch": 3
+        },
+        "billing_subscriber": {
+            "queue": "billing_queue",
+            "prefetch": 3
         }
       }
     }

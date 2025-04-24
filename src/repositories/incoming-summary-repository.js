@@ -2,6 +2,7 @@ const CrudRepository = require("./crud-repository");
 const incomingSummaryModel = require("../db/incoming-summary");
 const { constants} = require("../utils/common");
 const statusValues = constants.STATUS_LABEL;
+const mongoose = require('mongoose');
 
 
 class IncomingSummaryRepository extends CrudRepository {
@@ -32,19 +33,22 @@ class IncomingSummaryRepository extends CrudRepository {
 
         let endOfDay = new Date(startDate);
         endOfDay.setUTCHours(23, 59, 59, 999);
+
+        console.log("comesss 1");
         try {
-            let response = await this.model.findOne({
-                $and: [
-                    { did: incomingdid },
-                    { user_id : userId },
-                    {  schedule_date: {
-                                       $gte: startOfDay,
-                                       $lt: endOfDay      
-                                      }
-                    }
-                ]
-            });
-            return response;
+            const filters = [
+                           { did: incomingdid },
+                           { schedule_date: { $gte: startOfDay, $lt: endOfDay } }
+            ];
+
+           if(mongoose.Types.ObjectId.isValid(userId)) {
+                  filters.push({ user_id: new mongoose.Types.ObjectId(userId) });
+           }
+
+           let response = await this.model.findOne({
+                   $and: filters
+           });
+           return response;
         }
         catch (error) {
             throw error;
@@ -59,22 +63,21 @@ class IncomingSummaryRepository extends CrudRepository {
         let endOfDay = new Date(startdate);
         endOfDay.setUTCHours(23, 59, 59, 999);
 
+        const filters = [
+                           { did: data.did },
+                           { schedule_date: { $gte: startOfDay, $lt: endOfDay } }
+        ];
+
+        if (mongoose.Types.ObjectId.isValid(data.user_id)) {
+                  filters.push({ user_id: new mongoose.Types.ObjectId(data.user_id) });
+        }
         const response = await this.model.findOneAndUpdate(
                           {
-                            $and: [
-                                    { user_id: data.user_id },
-                                    { did: data.did },
-                                    {  schedule_date:
-                                                    {
-                                                     $gte: startOfDay,
-                                                     $lt: endOfDay
-                                                    }
-                                    }
-                                  ]
+                            $and: filters
                           }, 
                           data, 
                           { runValidators: true, new: true }
-                        );
+         );
         return response;
     }
 }
