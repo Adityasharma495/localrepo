@@ -1,9 +1,10 @@
 const Broker = require('rascal').BrokerAsPromised;
 const config = require('../config/rabitmq-config.json');
-const {  DIDUserMappingRepository , UserRepository , AgentRepository} = require("../repositories");
+const {  DIDUserMappingRepository , UserRepository , AgentRepository, CreditRepository} = require("../repositories");
 const didUserMappingRepo = new DIDUserMappingRepository();
 const agentRepo = new AgentRepository();
 const userRepo = new UserRepository();
+const creditHistoryRepo = new CreditRepository();
 const { Logger } = require("../config");
 const mongoose = require('mongoose');
 const moment = require("moment-timezone");
@@ -26,7 +27,7 @@ const mongoConnection = async() =>{
     }
 }
 
-const inboundPlanDuration = (detail,level) =>{
+const inbound = (detail,level) =>{
 
     let inboundDuration = null;
     if (detail.level === level && detail.voice_plan_id && Array.isArray(detail.voice_plan_id.plans))
@@ -41,6 +42,57 @@ const inboundPlanDuration = (detail,level) =>{
 
     return inboundDuration;
    
+}
+
+const updateCredits = async(finalUpdateCredits)=>{
+    
+    if(finalUpdateCredits.length>0){
+
+        for(let i=0;i<finalUpdateCredits.length;i++){
+            
+            let credits = 0.0;
+            if(finalUpdateCredits[i].level === "1"){
+                credits = finalUpdateCredits[i].resellerParentNewCredits;
+            }else if(finalUpdateCredits[i].level === "2"){
+                credits = finalUpdateCredits[i].resellerNewCredits;
+            }
+            else if(finalUpdateCredits[i].level === "4"){
+                credits = finalUpdateCredits[i].companyParentNewCredits;
+            }
+            else if(finalUpdateCredits[i].level === "5"){
+                credits = finalUpdateCredits[i].companyNewCredits;
+            }
+            const userDetail = await userRepo.get(finalUpdateCredits[i].userId);
+            if(userDetail){
+                 
+                const availableCredits = userDetail.credits_available;
+                const updatedCredtis = availableCredits - credits;
+                Logger.info(`USER ID : ${finalUpdateCredits[i].userId} , Updated Credits : ${updatedCredtis} `);
+                const user = await userRepo.update(finalUpdateCredits[i].userId, {credits_available : updatedCredtis});
+                 
+                if(user){
+                    Logger.info(` Credits Updated for USER ID : ${finalUpdateCredits[i].userId}`);
+
+                    const data = {
+                          user_id : finalUpdateCredits[i].userId,
+                          from_user : finalUpdateCredits[i].userId,
+                          to_user : finalUpdateCredits[i].userId,
+                          action_user : finalUpdateCredits[i].userId,
+                          credits_rupees : credits,
+                          balance : updatedCredtis,
+                          action : "inbound_deduction"
+                    }
+                    const creditHistory = await creditHistoryRepo.create(data);
+                    if(creditHistory){
+                        console.log('Credit History Added : ',JSON.stringify(creditHistory));
+                    }
+                }
+                
+            }
+        }
+
+    }
+
 }
 
 const billingCalculation = async(mappingDetails,billingDuration) =>{
@@ -66,17 +118,14 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
             const mappingArray = mappingDetails.mapping_detial;
 
             for(let i =1;i<mappingArray.length;i++){
-                const userDetails  = await userRepo.get(mappingArray[i].allocated_to);
-                if(userDetails){
-                    if(mappingArray[i].level === "1"){
-                           
-                           resellerParentAvailableCredits = userDetails.credits_available;
 
-                           const planDuration = inboundPlanDuration(mappingArray[i],mappingArray[i].level);
-                           if(planDuration!=null){
-                                const pulseCount =  Math.ceil(billingDuration/planDuration);
-                                resellerParentNewCredits = pulseCount*billingDuration;
-                                console.log("......"+resellerParentNewCredits);
+                    if(mappingArray[i].level === "1"){
+                           const userDetails  = await userRepo.get(mappingArray[i].allocated_to);  
+                           resellerParentAvailableCredits = userDetails.credits_available;
+                           const pulsePrice = inbound(mappingArray[i],mappingArray[i].level);
+                           if(pulsePrice!=null){
+                                const pulsePrice1 =  (pulsePrice/100)*billingDuration
+                                resellerParentNewCredits = pulsePrice1;
 
                                 if(resellerParentAvailableCredits < resellerParentNewCredits){
                                     const response = {
@@ -96,13 +145,14 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
 
                     }
                     else if(mappingArray[i].level === "2"){
+                        const userDetails  = await userRepo.get(mappingArray[i].allocated_to);
 
                         resellerAvailableCredits = userDetails.credits_available;
 
-                        const planDuration = inboundPlanDuration(mappingArray[i],mappingArray[i].level);
-                           if(planDuration!=null){
-                                const pulseCount =  Math.ceil(billingDuration/planDuration);
-                                resellerNewCredits = pulseCount*billingDuration;
+                        const pulsePrice = inbound(mappingArray[i],mappingArray[i].level);
+                           if(pulsePrice!=null){
+                                const pulsePrice1 =  (pulsePrice/100)*billingDuration;
+                                resellerNewCredits = pulsePrice1;
 
                                 if(resellerAvailableCredits < resellerNewCredits){
                                     const response = {
@@ -120,15 +170,14 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
                                 }
                            }
                     }
-                    else if(mappingArray[i].level === "3"){
-
+                    else if(mappingArray[i].level === "4"){
+                        const userDetails  = await userRepo.get(mappingArray[i].parent_id);
                         companyParentAvailableCredits = userDetails.credits_available;
 
-                        const planDuration = inboundPlanDuration(mappingArray[i],mappingArray[i].level);
-                           if(planDuration!=null){
-                                const pulseCount =  Math.ceil(billingDuration/planDuration);
-                                companyParentNewCredits = pulseCount*billingDuration;
-
+                        const pulsePrice = inbound(mappingArray[i],mappingArray[i].level);
+                           if(pulsePrice!=null){
+                                const pulsePrice1 =  (pulsePrice/100)*billingDuration;
+                                companyParentNewCredits = pulsePrice1;
                                 if(companyParentAvailableCredits < companyParentNewCredits){
                                     const response = {
                                         code : -1,
@@ -138,21 +187,21 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
                                     return response;
                                 }else{
                                     finalUserCreditsDeduction.push({
-                                        level : "2",
-                                        userId : mappingArray[i].allocated_to,
+                                        level : mappingArray[i].level,
+                                        userId : mappingArray[i].parent_id,
                                         companyParentNewCredits : companyParentNewCredits
                                     });
                                 }
                            }
                     }
                     else if(mappingArray[i].level === "5"){
-
+                        const userDetails  = await userRepo.get(mappingArray[i].parent_id);
                         companyAvailableCredits = userDetails.credits_available;
 
-                        const planDuration = inboundPlanDuration(mappingArray[i],mappingArray[i].level);
-                           if(planDuration!=null){
-                                const pulseCount =  Math.ceil(billingDuration/planDuration);
-                                companyNewCredits = pulseCount*billingDuration;
+                        const pulsePrice = inbound(mappingArray[i],mappingArray[i].level);
+                           if(pulsePrice!=null){
+                                const pulsePrice =  (pulsePrice/100)*billingDuration;
+                                companyNewCredits = pulsePrice;
 
                                 if(companyAvailableCredits < companyNewCredits){
                                     const response = {
@@ -164,14 +213,12 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
                                 }else{
                                     finalUserCreditsDeduction.push({
                                         level : "2",
-                                        userId : mappingArray[i].allocated_to,
+                                        userId : mappingArray[i].parent_id,
                                         companyNewCredits : companyNewCredits
                                     });
                                 }
                            }
                     }
-
-                }
             }          
         }
          return finalUserCreditsDeduction;
@@ -201,19 +248,15 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
 
          await mongoConnection();
 
-         const agent = await agentRepo.getAllAgentss();
+         const didMappingDetails = await didUserMappingRepo.findDidMappingDetails({did : '680b6036e1d4ee7621ff6b12'});
 
-         console.log("............"+JSON.stringify(agent));
+         console.log("User DID Mapping Detials : "+JSON.stringify(didMappingDetails));
 
+         const finalDeduction = await billingCalculation(didMappingDetails,billingDuration=15);
 
+         console.log("Billing Structure Deduction : "+JSON.stringify(finalDeduction));
 
-        //  const didMappingDetails = await didUserMappingRepo.findDidMappingDetails({did : '6805f97335b5efe71489b484'});
-
-        //  console.log("User DID Mapping Detials : "+JSON.stringify(didMappingDetails));
-
-        //  const finalDeduction = await billingCalculation(didMappingDetails,billingDuration=15);
-
-        //  console.log("Billing Structure Deduction : "+JSON.stringify(finalDeduction));
+         const credits = await updateCredits(finalDeduction);
 
 
          subscription
