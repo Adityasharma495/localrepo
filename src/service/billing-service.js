@@ -8,6 +8,7 @@ const creditHistoryRepo = new CreditRepository();
 const { Logger } = require("../config");
 const mongoose = require('mongoose');
 const moment = require("moment-timezone");
+const {DID_LEVELS } = require('../utils/common/constants');
 
 
 const connectMongo = async() => {
@@ -51,15 +52,15 @@ const updateCredits = async(finalUpdateCredits)=>{
         for(let i=0;i<finalUpdateCredits.length;i++){
             
             let credits = 0.0;
-            if(finalUpdateCredits[i].level === "1"){
+            if(finalUpdateCredits[i].level === DID_LEVELS.PARENT_RESELLER){
                 credits = finalUpdateCredits[i].resellerParentNewCredits;
-            }else if(finalUpdateCredits[i].level === "2"){
+            }else if(finalUpdateCredits[i].level === DID_LEVELS.RESELLER){
                 credits = finalUpdateCredits[i].resellerNewCredits;
             }
-            else if(finalUpdateCredits[i].level === "4"){
+            else if(finalUpdateCredits[i].level === DID_LEVELS.CALL_CENTER){
                 credits = finalUpdateCredits[i].companyParentNewCredits;
             }
-            else if(finalUpdateCredits[i].level === "5"){
+            else if(finalUpdateCredits[i].level === DID_LEVELS.COMPANY){
                 credits = finalUpdateCredits[i].companyNewCredits;
             }
             const userDetail = await userRepo.get(finalUpdateCredits[i].userId);
@@ -119,7 +120,7 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
 
             for(let i =1;i<mappingArray.length;i++){
 
-                    if(mappingArray[i].level === "1"){
+                    if(mappingArray[i].level === DID_LEVELS.PARENT_RESELLER){
                            const userDetails  = await userRepo.get(mappingArray[i].allocated_to);  
                            resellerParentAvailableCredits = userDetails.credits_available;
                            const pulsePrice = inbound(mappingArray[i],mappingArray[i].level);
@@ -144,7 +145,7 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
                            }
 
                     }
-                    else if(mappingArray[i].level === "2"){
+                    else if(mappingArray[i].level === DID_LEVELS.RESELLER){
                         const userDetails  = await userRepo.get(mappingArray[i].allocated_to);
 
                         resellerAvailableCredits = userDetails.credits_available;
@@ -170,7 +171,7 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
                                 }
                            }
                     }
-                    else if(mappingArray[i].level === "4"){
+                    else if(mappingArray[i].level === DID_LEVELS.CALL_CENTER){
                         const userDetails  = await userRepo.get(mappingArray[i].parent_id);
                         companyParentAvailableCredits = userDetails.credits_available;
 
@@ -194,7 +195,7 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
                                 }
                            }
                     }
-                    else if(mappingArray[i].level === "5"){
+                    else if(mappingArray[i].level === DID_LEVELS.COMPANY){
                         const userDetails  = await userRepo.get(mappingArray[i].parent_id);
                         companyAvailableCredits = userDetails.credits_available;
 
@@ -212,7 +213,7 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
                                     return response;
                                 }else{
                                     finalUserCreditsDeduction.push({
-                                        level : "2",
+                                        level : DID_LEVELS.COMPANY,
                                         userId : mappingArray[i].parent_id,
                                         companyNewCredits : companyNewCredits
                                     });

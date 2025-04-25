@@ -333,6 +333,15 @@ const BACKEND_BASE_URL =
     ? "voiceboxapi.nspl.cloud"
     : "voiceboxapi.nspl.cloud";
 
+const DID_LEVELS = {
+       "SUPERADMIN" : "0",
+       "PARENT_RESELLER" : "1",
+       "RESELLER" : "2",
+       "COMPANY_PARENT" : "3",
+       "CALL_CENTER" : "4",
+       "COMPANY" : "5"
+}
+
 
 
 module.exports = {
@@ -381,5 +390,6 @@ module.exports = {
     USER_ROLE_VALUE,
     USER_CREDITS_ACTION,
     BACKEND_BASE_URL,
-    USER_ROLE_VALUE_LICENCE
+    USER_ROLE_VALUE_LICENCE,
+    DID_LEVELS
 }
