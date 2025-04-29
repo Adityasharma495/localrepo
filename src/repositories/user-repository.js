@@ -188,6 +188,18 @@ class UserRepository extends CrudRepository{
         }
     }
 
+    async getByNameBulk(names) {
+        try {
+            const users = await userModel.find({ name: { $in: names } });
+            return users;    
+    
+        } catch (error) {
+            console.log('error', error);
+            throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+
 }
 
 module.exports = UserRepository;

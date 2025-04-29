@@ -48,6 +48,7 @@ class CrudRepository {
     }
 
     async update(id, data) {
+        console.log(id, data)
         const response = await this.model.findOneAndUpdate({_id: id}, data, { runValidators: true, new: true });
         return response;
     }

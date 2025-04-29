@@ -25,5 +25,4 @@ router.post("/schedule/:id", AuthMiddleware.validateUser,AgentGroupMiddleware.va
 
 router.post("/remove-agent/:id", AuthMiddleware.validateUser,AgentGroupMiddleware.validateAgentRemove,AgentGroupController.removeAgent);
 
-
 module.exports = router;

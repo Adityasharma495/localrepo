@@ -100,6 +100,18 @@ const SUB_USER_LICENCE_MODEL = constants.MODEL.SUB_USER_LICENCE;
         type: Number,
         default: 0,
       },
+      login_at: {
+        type: Date,
+        default: null
+      },
+      logout_at: {
+        type: Date,
+        default: null
+      },
+      duration: {
+        type: Number,
+        default: null
+      },
       created_at: {
           type: Date,
           default: Date.now
@@ -224,7 +236,7 @@ const SUB_USER_LICENCE_MODEL = constants.MODEL.SUB_USER_LICENCE;
     // Pre-save middleware to convert timestamps to IST
     UserSchema.pre('save', function (next) {
     const now = new Date();
-    const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
+    const istOffset = 5.5 * 60 * 60 * 1000; 
     const istDate = new Date(now.getTime() + istOffset);
 
     // Set created_at and updated_at fields to IST
@@ -236,16 +248,34 @@ const SUB_USER_LICENCE_MODEL = constants.MODEL.SUB_USER_LICENCE;
     next();
   });
 
-  // Pre-update middleware to convert updated_at to IST
   UserSchema.pre('findOneAndUpdate', function (next) {
     const now = new Date();
-    const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
+    const istOffset = 5.5 * 60 * 60 * 1000; 
     const istDate = new Date(now.getTime() + istOffset);
-
+  
+    if (!this._update) {
+      this._update = {};
+    }
+  
     this._update.updated_at = istDate;
-
+  
+    if (Object.prototype.hasOwnProperty.call(this._update, 'login_at')) {
+      this._update.login_at = istDate;
+      this._update.logout_at = null; 
+    }
+  
+    if (
+      Object.prototype.hasOwnProperty.call(this._update, 'logout_at') &&
+      this._update.logout_at !== null
+    ) {
+      this._update.logout_at = istDate;
+    }
+  
     next();
   });
+  
+  
+  
 
   const userSchema = mongoose.model(USER_MODEL_NAME, UserSchema);
 
