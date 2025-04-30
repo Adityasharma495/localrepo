@@ -67,54 +67,46 @@ class IncomingSummaryRepository extends CrudRepository {
 
   async isSummaryExist(userId, incomingDid, scheduleDate) {
     const startOfDay = new Date(scheduleDate);
-    startOfDay.setHours(0, 0, 0, 0);
+    startOfDay.setUTCHours(0, 0, 0, 0);
 
     const endOfDay = new Date(scheduleDate);
     endOfDay.setHours(23, 59, 59, 999);
 
-    try {
-      const response = await this.model.findOne({
-        where: {
-          did: incomingDid,
-          user_id: userId,
-          schedule_date: {
+
+    const conditions = {
+        did: Number(incomingDid),
+        user_id: userId,
+        schedule_date: {
             [Op.gte]: startOfDay,
             [Op.lt]: endOfDay,
-          },
         },
-      });
+    };
 
-      return response;
-    } catch (error) {
-      throw error;
-    }
+    console.log("conditions", conditions);
+    return await this.findOne(conditions);
   }
 
-  async updateSummary(data, startdate) {
-    let startOfDay = new Date(startdate);
-    startOfDay.setHours(0, 0, 0, 0);
+async updateSummary(data, startDate) {
+  const startOfDay = new Date(startDate);
+  startOfDay.setUTCHours(0, 0, 0, 0);
 
-    let endOfDay = new Date(startdate);
-    endOfDay.setHours(23, 59, 59, 999);
+  const endOfDay = new Date(startDate);
+  endOfDay.setUTCHours(23, 59, 59, 999);
 
-    try {
-      const [_, [updated]] = await this.model.update(data, {
-        where: {
+  const [_, [updated]] = await this.model.update(data, {
+      where: {
           user_id: data.user_id,
           did: data.did,
           schedule_date: {
-            [Op.gte]: startOfDay,
-            [Op.lt]: endOfDay,
+              [Op.gte]: startOfDay,
+              [Op.lt]: endOfDay,
           },
-        },
-        returning: true,
-      });
+      },
+      returning: true,  
+  });
 
-      return updated;
-    } catch (error) {
-      throw error;
-    }
-  }
+  return updated;
+}
 }
 
 module.exports = IncomingSummaryRepository;

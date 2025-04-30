@@ -23,6 +23,10 @@ const DownloadReport = sequelize.define(
         key: "id",
       },
     },
+    schedule_date: {
+      type: DataTypes.DATE,
+      default: null
+    },
     requested_date: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

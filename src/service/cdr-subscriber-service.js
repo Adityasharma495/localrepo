@@ -1,12 +1,13 @@
 const Broker = require('rascal').BrokerAsPromised;
 const config = require('../config/rabitmq-config.json');
-const { IncomingReportRepository , IncomingSummaryRepository } = require("../repositories");
+const { IncomingReportRepository , IncomingSummaryRepository } = require("../c_repositories");
 const incomingReportRepo = new IncomingReportRepository();
 const incomingSummaryRepo = new IncomingSummaryRepository();
 const { Logger } = require("../config");
 const mongoose = require('mongoose');
 const moment = require("moment-timezone");
 const logger = require('../config/logger-config');
+const sequelize = require('../config/sequelize');
 
 
 const connectMongo = async() => {
@@ -15,6 +16,14 @@ const connectMongo = async() => {
     } catch (error) {
         throw error;
     }   
+}
+
+const connectCockroach = async () => {
+  try {
+    await sequelize.authenticate();
+  } catch(error) {
+    throw error;
+  }
 }
 
 const mongoConnection = async() =>{
@@ -52,7 +61,9 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
       Logger.error(`Exception while publishing to Rabbit MQ: ${e}`);
     }
   }
-
+  function isValidUUID(uuid) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid);
+  }
 (async () => {
      
     try {
@@ -69,7 +80,8 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
          const subscription = await broker.subscribe('cdr_subscriber');
          Logger.info("subscribed");
 
-         await mongoConnection();
+        //  await mongoConnection();
+         await connectCockroach();
 
          let reportFlag = false;
          let summaryFlag = false;
@@ -77,13 +89,13 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
          subscription
          .on('message', async (message, content, ackOrNack) => {
             Logger.info("subscribed content : " + JSON.stringify(content));
-            const cdrJson = content;//JSON.parse(content);
+            const cdrJson = JSON.parse(content);//JSON.parse(content);
             let report_data = {};
             let summary_data = {};
 
             try {
               report_data = {
-                 user_id : mongoose.Types.ObjectId.isValid(cdrJson.userId) ? cdrJson.userId : null,
+                 user_id : isValidUUID(cdrJson.userId) ? cdrJson.userId : null,
                  call_sid : cdrJson.id,
                  caller_number : cdrJson.callerFrom,
                  callee_number : cdrJson.calleeTo,
@@ -129,15 +141,15 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
               if(incoming){
                    summary_data = {
                         did : incoming.did,
-                        user_id : mongoose.Types.ObjectId.isValid(userId) ? userId : null,
+                        user_id: isValidUUID(cdrJson.userId) ? cdrJson.userId : null,
                         schedule_date : startDate,
                         nos_processed : (Number(incoming.nos_processed) || 0)+1,
                         connected_calls : (connectedCalls > 0 ? (Number(incoming.connected_calls))+1 : connectedCalls),
                         dtmf_count : (Number(incoming.dtmf_count) || 0) + (Number(cdrJson.dtmfCount) || 0),
                         retry_count : (Number(incoming.retry_count)||0) + (Number(cdrJson.retryCount) || 0),
                         sms_count : (Number(incoming.sms_count) || 0) + (Number(cdrJson.smsCount) || 0), 
-                        parent_id : mongoose.Types.ObjectId.isValid(incoming.parentId) ? incoming.parentId : null,
-                        s_parent_id :  mongoose.Types.ObjectId.isValid(incoming.sparentId) ? incoming.sparentId : null,
+                        parent_id : isValidUUID(cdrJson.userId) ? cdrJson.userId : null,
+                        s_parent_id :  isValidUUID(cdrJson.userId) ? cdrJson.userId : null,
                         billing_duration: incoming.billing_duration+cdrJson.duration.billing   
                    }
 
@@ -151,7 +163,7 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
               }else{
                    summary_data = {
                        did : cdrJson.calleeTo,
-                       user_id : mongoose.Types.ObjectId.isValid(userId) ? new mongoose.Types.ObjectId(userId) : null,
+                       user_id: isValidUUID(cdrJson.userId) ? cdrJson.userId : null,
                        schedule_date : startDate,
                        nos_processed : 1,
                        connected_calls : connectedCalls,

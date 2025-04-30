@@ -1,14 +1,15 @@
 const Broker = require('rascal').BrokerAsPromised;
 const config = require('../config/rabitmq-config.json');
-const {  DIDUserMappingRepository , UserRepository , AgentRepository, CreditRepository} = require("../repositories");
+const {  DIDUserMappingRepository , UserRepository , AgentRepository, CreditsRepository} = require("../c_repositories");
 const didUserMappingRepo = new DIDUserMappingRepository();
 const agentRepo = new AgentRepository();
 const userRepo = new UserRepository();
-const creditHistoryRepo = new CreditRepository();
+const creditHistoryRepo = new CreditsRepository();
 const { Logger } = require("../config");
 const mongoose = require('mongoose');
 const moment = require("moment-timezone");
 const {DID_LEVELS } = require('../utils/common/constants');
+const sequelize = require('../config/sequelize');
 
 
 const connectMongo = async() => {
@@ -27,6 +28,14 @@ const mongoConnection = async() =>{
                  Logger.error(`Mongodb -> Error while connecting: ${ JSON.stringify(error) }`)
     }
 }
+
+const connectCockroach = async () => {
+    try {
+      await sequelize.authenticate();
+    } catch(error) {
+      throw error;
+    }
+  }
 
 const inbound = (detail,level) =>{
 
@@ -114,9 +123,9 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
         
         let finalUserCreditsDeduction = [];
 
-        if(mappingDetails && mappingDetails.mapping_detial.length>0){
+        if(mappingDetails && mappingDetails.mapping_detail.length>0){
              
-            const mappingArray = mappingDetails.mapping_detial;
+            const mappingArray = mappingDetails.mapping_detail;
 
             for(let i =1;i<mappingArray.length;i++){
 
@@ -247,7 +256,8 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
          const subscription = await broker.subscribe('billing_subscriber');
          Logger.info("subscribed");
 
-         await mongoConnection();
+        //  await mongoConnection();
+         await connectCockroach();
 
          const didMappingDetails = await didUserMappingRepo.findDidMappingDetails({did : '680b6036e1d4ee7621ff6b12'});
 
