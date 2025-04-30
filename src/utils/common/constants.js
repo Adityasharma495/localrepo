@@ -256,7 +256,7 @@ const ACTION_LABEL = {
 const BACKEND_API_BASE_URL =
   process.env.NODE_ENV == "production"
     ? "https://voiceboxapi.nspl.cloud"
-    : "http://localhost:3900";
+    : "https://voiceboxapi.nspl.cloud";
     
 //  const BACKEND_API_BASE_URL =
 //   process.env.NODE_ENV == "production"
@@ -335,6 +335,15 @@ const BACKEND_BASE_URL =
     ? "voiceboxapi.nspl.cloud"
     : "voiceboxapi.nspl.cloud";
 
+const DID_LEVELS = {
+       "SUPERADMIN" : "0",
+       "PARENT_RESELLER" : "1",
+       "RESELLER" : "2",
+       "COMPANY_PARENT" : "3",
+       "CALL_CENTER" : "4",
+       "COMPANY" : "5"
+}
+
 
 
     const AUTH_TYPE_NUM_TO_STRING = {
@@ -392,5 +401,6 @@ module.exports = {
     USER_ROLE_VALUE,
     USER_CREDITS_ACTION,
     BACKEND_BASE_URL,
-    USER_ROLE_VALUE_LICENCE
+    USER_ROLE_VALUE_LICENCE,
+    DID_LEVELS
 }

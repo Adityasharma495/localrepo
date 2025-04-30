@@ -37,7 +37,7 @@ const CREDITS = constants.MODEL.CREDITS;
     action: {
         type: String,
         required: true,
-        enum: ['addition', 'deduction']
+        enum: ['addition', 'deduction','inbound_deduction']
     },
     req_date: {
         type: Date,
