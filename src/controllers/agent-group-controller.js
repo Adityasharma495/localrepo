@@ -367,7 +367,6 @@ async function getAssignedAgents(req, res) {
     const agentGroup = await agentGroupRepo.get(groupId);
 
     if (!agentGroup || !agentGroup.agents.length) {
-      console.log("No agents found");
       transformedAgents = []
     } else {
       transformedAgents = await Promise.all(

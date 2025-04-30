@@ -18,7 +18,6 @@ const version = process.env.API_V || "1";
 
 async function createModule(req, res) {
   const bodyReq = req.body;
-  console.log("bodyReq", bodyReq);
   try {
     const responseData = {};
     const module = await moduleRepo.create(bodyReq.module);

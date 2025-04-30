@@ -285,7 +285,6 @@ async function get(req, res) {
       }
     };
     const aclData = await creditRepo.findOne(whereCondition);
-    console.log("aclData", aclData);
     if (aclData.length == 0) {
       const error = new Error();
       error.name = "CastError";

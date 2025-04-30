@@ -294,6 +294,19 @@ class DIDUserMappingRepository extends CrudRepository {
     }
   }
   
+  async countLevelEntry(did, level) {
+    const doc = await this.model.findOne({ DID: did });
+  
+    if (!doc || !doc.mapping_detail) return 0;
+  
+    const count = doc.mapping_detail.filter(item => {
+      const levelStr = item.level;
+      const levelNum = parseInt(levelStr, 10);
+      return levelNum >= level;
+    }).length;
+  
+    return count;
+  }
   async getAll(options) {
     try {
       let whereCondition = {};

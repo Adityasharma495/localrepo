@@ -454,10 +454,6 @@ async function signupUser(req, res) {
 
 
 
-      console.log("TOTAL LICENCE", loggedInData.sub_user_licence.total_licence);
-      console.log("AVAILABLE LICENCE", loggedInData.sub_user_licence.available_licence);
-
-
 
 
 
@@ -477,27 +473,21 @@ async function signupUser(req, res) {
       // bodyReq.user.sub_user_licence_id = loggedInData.sub_user_licence_id._id
 
 
-      console.log("PARENT LICENCSE", bodyReq.user.parent_licence);
 
 
       const sub = await subUserLicenceRepo.updateById(loggedInData.sub_user_licence.id, { available_licence: bodyReq.user.parent_licence })
-      console.log("SUB", sub);
+  
     }
 
 
 
     if (req.user.role === USERS_ROLE.COMPANY_ADMIN && bodyReq.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
       const campanyAdmin = await userRepo.get(req.user.id)
-      console.log("COMAPANY ADMIN", campanyAdmin);
       const prefix = Number(campanyAdmin.prefix) + PREFIX_VALUE
-
-      console.log("PREFIX", prefix);
 
       bodyReq.user.prefix = prefix
 
       user = await userRepo.create(bodyReq.user);
-
-      console.log("USSER ", user);
       // await licenceCreated(bodyReq, req.user, user);
       await userRepo.update(req.user.id, { prefix: prefix })
     } else {
@@ -527,13 +517,9 @@ async function signupUser(req, res) {
     // Process sub-user licenses if applicable
     if (SUB_LICENCE_ROLE.includes(req.user.role)) {
 
-      console.log("REQUESTED ID", req.user.id);
       const loggedInData = await userRepo.getForLicence(req.user.id);
-
-      console.log("LOGGED IN DATA", loggedInData);
       const availableLicences = loggedInData.sub_user_licence.available_licence;
 
-      console.log("LAST AVA", availableLicences);
 
       if (Number(availableLicences[req.user.role]) === 0) {
         return res.status(StatusCodes.BAD_REQUEST).json({
@@ -542,8 +528,6 @@ async function signupUser(req, res) {
         });
       }
       const updatedLicenceCount = Number(availableLicences[req.user.role] || 0) - 1;
-
-      console.log("UPDATED", updatedLicenceCount);
       await subUserLicenceRepo.update(loggedInData.sub_user_licence.id, {
         available_licence: { ...availableLicences, [req.user.role]: updatedLicenceCount }
       });
@@ -586,8 +570,6 @@ async function signupUser(req, res) {
 
       const CallCentreDetail = await callCentreRepo.findOne({ id: bodyReq.callcenterId })
 
-      console.log("CALL CENTRE DETAIL",CallCentreDetail );
-
       const CallCentreId = CallCentreDetail.id
 
       await UserCallCentres.create({
@@ -599,8 +581,6 @@ async function signupUser(req, res) {
         name: CallCentreDetail.name,
         _id: CallCentreDetail.id
       }
-
-      console.log("CALL CENTRE TO ADD", CallCentreToAdd);
 
       await userRepo.update(user.id, {
         call_centres: CallCentreToAdd
@@ -834,9 +814,6 @@ async function updateUser(req, res) {
     
           bodyReq.user.company = companyToadd;
         }
-
-
-        console.log("BODYRE ", bodyReq.user);
 
 
         await userRepo.update(uid, bodyReq.user);
