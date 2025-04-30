@@ -249,15 +249,15 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
 
          await mongoConnection();
 
-         const didMappingDetails = await didUserMappingRepo.findDidMappingDetails({did : '680b6036e1d4ee7621ff6b12'});
+        //  const didMappingDetails = await didUserMappingRepo.findDidMappingDetails({did : '680b6036e1d4ee7621ff6b12'});
 
-         console.log("User DID Mapping Detials : "+JSON.stringify(didMappingDetails));
+        //  console.log("User DID Mapping Detials : "+JSON.stringify(didMappingDetails));
 
-         const finalDeduction = await billingCalculation(didMappingDetails,billingDuration=15);
+        //  const finalDeduction = await billingCalculation(didMappingDetails,billingDuration=15);
 
-         console.log("Billing Structure Deduction : "+JSON.stringify(finalDeduction));
+        //  console.log("Billing Structure Deduction : "+JSON.stringify(finalDeduction));
 
-         const credits = await updateCredits(finalDeduction);
+        //  const credits = await updateCredits(finalDeduction);
 
 
          subscription
@@ -267,18 +267,20 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
 
             try {
 
-                // const did = billingJson.did;
-                // const billingDuration = billingJson.billingDuration;
+                const did = billingJson.did;
+                const billingDuration = billingJson.billingDuration;
 
-                // console.log("Did :"+did);
+                console.log(`DID : ${did} , Billing Duration : ${billingDuration} `);
 
-                // const didMappingDetails = didUserMappingRepo.findDidMappingDetails({did : did});
+                const didMappingDetails = didUserMappingRepo.findDidMappingDetails({did : did});
 
-                // console.log("User DID Mapping Detials : "+JSON.stringify(didMappingDetails));
+                console.log("User DID Mapping Detials : "+JSON.stringify(didMappingDetails));
 
-                // const finalDeduction = await billingCalculation(didMappingDetails,billingDuration);
+                const finalDeduction = await billingCalculation(didMappingDetails,billingDuration = billingJson.billingDuration);
 
-                // console.log("Billing Structure Deduction : "+JSON.stringify(finalDeduction));
+                console.log("Billing Structure Deduction : "+JSON.stringify(finalDeduction));
+
+                const credits = await updateCredits(finalDeduction);
             
             }
             catch (error) {

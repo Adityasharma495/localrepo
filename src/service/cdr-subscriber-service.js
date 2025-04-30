@@ -171,9 +171,10 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
            }
            if(reportFlag === true && summaryFlag === true){
             const data = {
-                  did : cdrJson.calleeTo
+                  did : cdrJson.calleeTo,
+                  billingDuration : cdrJson.duration.billing 
             }
-               //insertDataInBillingQueue(broker, "billing_queue" , {data});
+            insertDataInBillingQueue(broker, "billing_queue" , {data});
            }
 
             ackOrNack();
