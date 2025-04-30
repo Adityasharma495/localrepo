@@ -166,8 +166,6 @@ class CrudRepository {
                 }
               });
 
-
-              console.log("RESTU", response);
             return response;
         } catch (error) {
             throw error;

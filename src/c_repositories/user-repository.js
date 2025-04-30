@@ -125,7 +125,7 @@ class UserRepository extends CrudRepository{
         
         try {
             
-            const user = await userModel.findOne({ role:  userRole});
+            const user = await this.model.findOne({ role:  userRole});
             return user;    
 
         } catch (error) {

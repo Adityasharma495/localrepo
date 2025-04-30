@@ -1,6 +1,6 @@
 const CrudRepository = require("./crud-repository");
 const { DIDUserMapping } = require("../c_db"); 
-const { Op, literal } = require('sequelize');
+const { Op, fn, col, literal } = require('sequelize');
 const { StatusCodes } = require("http-status-codes");
 const AppError = require("../utils/errors/app-error");
 const Sequelize = require('../config/sequelize');
@@ -156,7 +156,6 @@ class DIDUserMappingRepository extends CrudRepository {
 
 
   async addMappingDetail(documentId, newDetail) {
-    console.log("DOCUEMNT ID NEWDTAIL", documentId, newDetail);
     try {
       const result = await this.model.update(
         { 
@@ -166,7 +165,6 @@ class DIDUserMappingRepository extends CrudRepository {
         },
         { where: { DID: documentId } }
       );
-      console.log("Mapping detail added successfully.");
       return result;              // ← return the raw update result
     } catch (error) {
       console.error("Error adding mapping detail:", error);
@@ -201,7 +199,7 @@ class DIDUserMappingRepository extends CrudRepository {
         where: {
           DID: did,
           mapping_detail: {
-            [Sequelize.Op.contains]: [newDetail], 
+            [Op.contains]: [newDetail],
           },
         },
       });
@@ -226,27 +224,51 @@ class DIDUserMappingRepository extends CrudRepository {
     }
   }
 
+  
   async deleteMappingDetail(did, newDetail) {
     try {
-      await this.model.update(
-        {
-          mapping_detail: Sequelize.fn('jsonb_set', 
-            Sequelize.col('mapping_detail'), 
-            Sequelize.jsonb('mapping_detail'), 
-            Sequelize.fn('jsonb_array_remove', Sequelize.col('mapping_detail'), Sequelize.jsonb(newDetail))
-          )
-        },
-        {
-          where: {
-            DID: did,
-          },
-        }
+      const record = await this.model.findOne({
+        where: { DID: did },
+        raw: false,
+      });
+  
+  
+      if (!record) return;
+  
+      // ✅ Correct way to access mapping_detail
+      let originalDetails = record.dataValues?.mapping_detail || record.mapping_detail;
+  
+      if (typeof originalDetails === 'string') {
+        originalDetails = JSON.parse(originalDetails);
+      }
+
+  
+      if (!Array.isArray(originalDetails)) {
+        console.error("mapping_detail is not an array!");
+        return;
+      }
+  
+      const updatedDetails = (originalDetails || []).filter(detail => {
+        if (!detail || !detail.allocated_to) return true; 
+        return !Object.entries(newDetail).every(([key, value]) =>
+          detail[key]?.toString() === value?.toString()
+        );
+    });
+  
+  
+      const updatedstate = await this.model.update(
+        { mapping_detail: updatedDetails },
+        { where: { DID: did } }
       );
+
+  
     } catch (error) {
       console.error("Error in deleteMappingDetail:", error);
       throw error;
     }
   }
+  
+  
   
   async countSubCompanyUserEntry(did) {
     try {

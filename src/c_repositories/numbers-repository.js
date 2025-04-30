@@ -11,7 +11,6 @@ class NumbersRepository extends CrudRepository {
 
   async getAll(options) {
 
-    console.log("OPTIONS", options);
     try {
       let whereCondition = { is_deleted: false };
 
@@ -214,8 +213,6 @@ class NumbersRepository extends CrudRepository {
   async findMany(ids) {
     const cleanedIds = ids.map(id => Number(id));
 
-    console.log("CLEAN IDS", cleanedIds);
-
     try {
       const response = await this.model.findAll({
         where: {
@@ -239,6 +236,9 @@ class NumbersRepository extends CrudRepository {
   }
 
   async update(id, data) {
+
+    console.log("LAST UPDATE AND DATA", id, data);
+
   
     try {
       await this.model.update(data, {

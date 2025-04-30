@@ -443,7 +443,6 @@ async function signupUser(req, res) {
     let subUserLicenceId;
 
 
-    console.log("BODY REQ", bodyReq);
 
     if (SUB_LICENCE_ROLE.includes(req.user.role)) {
 
@@ -517,7 +516,6 @@ async function signupUser(req, res) {
         created_by: req.user.id
       })
 
-      console.log("LAST HERE DATA", data);
 
       subUserLicenceId = data.id
 
@@ -613,7 +611,6 @@ async function signupUser(req, res) {
 
     responseData.user = await user.generateUserData();
 
-    console.log("LAST RESPONSE", responseData.user);
     
     responseData.userJourney = await userJourneyRepo.create({
       module_name: MODULE_LABEL.USERS,
