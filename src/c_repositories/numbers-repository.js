@@ -10,30 +10,46 @@ class NumbersRepository extends CrudRepository {
   }
 
   async getAll(options) {
-
     try {
       let whereCondition = { is_deleted: false };
-
+  
       if (options?.where) {
         whereCondition = { ...whereCondition, ...options.where };
       }
+  
       let response = await this.model.findAll({
         where: whereCondition,
-        order: [["created_at", "DESC"]],
-        raw: true,
+        include: [
+          {
+            model: VoicePlan,  // your Sequelize model
+            as: 'voice_plan',       // your alias
+            attributes: ['id', 'plan_name', 'plans'], // fields you need
+          },
+        ],
+        order: [['created_at', 'DESC']],
+        raw: true,  // <-- keeping raw true
       });
-
-
-      // response = response.map((val) => {
-      //   val["status"] = numberStatusValues[val["status"]];
-      //   return val;
-      // });
-
+  
+      // Post-process: reshape 'voice_plan.*' keys into nested voice_plan object
+      response = response.map((item) => {
+        const voicePlan = {};
+        Object.keys(item).forEach((key) => {
+          if (key.startsWith('voice_plan.')) {
+            const nestedKey = key.replace('voice_plan.', '');
+            voicePlan[nestedKey] = item[key];
+            delete item[key];
+          }
+        });
+        item.voice_plan = voicePlan;
+        return item;
+      });
+  
       return response;
     } catch (error) {
       throw error;
     }
   }
+  
 
   async deleteMany(idArray) {
     try {
