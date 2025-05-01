@@ -1,24 +1,24 @@
 const { StatusCodes } = require('http-status-codes');
 const { SuccessRespnose, ErrorResponse } = require('../utils/common');
-const {formatResponse,ResponseFormatter} = require("../utils/common")
+const { formatResponse, ResponseFormatter } = require("../utils/common")
 const { Logger } = require('../config');
 const { Op } = require("sequelize");
-const { State} = require('country-state-city');
+const { State } = require('country-state-city');
 const {
-    NumbersRepository,
-    DIDUserMappingRepository,
-    UserJourneyRepository,
-    UserRepository,
-    NumberFileListRepository,
-    NumberStatusRepository,
-    MemberScheduleRepo,
-    CountryCodeRepository,
-    VoicePlansRepository,
-    CompanyRepository,
-    CallCentreRepository,
-   } = require('../c_repositories');
+  NumbersRepository,
+  DIDUserMappingRepository,
+  UserJourneyRepository,
+  UserRepository,
+  NumberFileListRepository,
+  NumberStatusRepository,
+  MemberScheduleRepo,
+  CountryCodeRepository,
+  VoicePlansRepository,
+  CompanyRepository,
+  CallCentreRepository,
+} = require('../c_repositories');
 const fs = require("fs");
-const {MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, USERS_ROLE, NUMBER_STATUS_LABLE, DID_ALLOCATION_LEVEL} = require('../utils/common/constants');
+const { MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, USERS_ROLE, NUMBER_STATUS_LABLE, DID_ALLOCATION_LEVEL } = require('../utils/common/constants');
 const didUserMappingRepository = new DIDUserMappingRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const numberRepo = new NumbersRepository();
@@ -38,337 +38,337 @@ const csv = require('csv-parser');
 const version = process.env.API_V || '1';
 
 async function create(req, res) {
-    const bodyReq = req.body;
-    try {
-      const responseData = {};
-  
-      const number = await numberRepo.create({
-        actual_number: bodyReq.number.actual_number,
-        status: bodyReq.number.status,
-        category: bodyReq.number.category,
-        currency: bodyReq.number.currency,
-        country_code: bodyReq.number.country_code,
-        state_code: bodyReq.number.state_code,create,
-        cost: bodyReq.number.cost,
-        operator: bodyReq.number.operator.toUpperCase(),
-        number_type: bodyReq.number.number_type,
-        created_by: req.user.id,
-      });
-  
-      const didMapping = await didUserMappingRepository.create({
-        DID: number.id,
-        mapping_detail: [{
-          allocated_to: req?.user?.id,
-          active: true,
-          level: 0,
-          parent_id: null,
-          voice_plan_id: null,
-        }]
-      });
+  const bodyReq = req.body;
+  try {
+    const responseData = {};
 
-      responseData.didMapping = didMapping;
-      responseData.number = number;
-  
-      const userJourney = await userJourneyRepo.create({
-        module_name: 'NUMBERS',
-        action: 'ADD',
-        created_by: req.user.id,
-      });
-  
-      responseData.userJourney = userJourney;
-  
-      SuccessRespnose.data = responseData;
-      SuccessRespnose.message = "Successfully created a new Number";
-  
-      return res.status(StatusCodes.CREATED).json(SuccessRespnose);
-    } catch (error) {
-      Logger.error(`Number -> unable to create Number: ${JSON.stringify(bodyReq)} error: ${JSON.stringify(error)}`);
-  
-      let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
-      let errorMsg = error.message;
-  
-      if (error.name === "SequelizeUniqueConstraintError") {
-        statusCode = StatusCodes.BAD_REQUEST;
-        errorMsg = `Duplicate key, record already exists for ${error.errors[0].value}`;
-      }
-  
-      ErrorResponse.message = errorMsg;
-      ErrorResponse.error = error;
-  
-      return res.status(statusCode).json(ErrorResponse);
+    const number = await numberRepo.create({
+      actual_number: bodyReq.number.actual_number,
+      status: bodyReq.number.status,
+      category: bodyReq.number.category,
+      currency: bodyReq.number.currency,
+      country_code: bodyReq.number.country_code,
+      state_code: bodyReq.number.state_code, create,
+      cost: bodyReq.number.cost,
+      operator: bodyReq.number.operator.toUpperCase(),
+      number_type: bodyReq.number.number_type,
+      created_by: req.user.id,
+    });
+
+    const didMapping = await didUserMappingRepository.create({
+      DID: number.id,
+      mapping_detail: [{
+        allocated_to: req?.user?.id,
+        active: true,
+        level: 0,
+        parent_id: null,
+        voice_plan_id: null,
+      }]
+    });
+
+    responseData.didMapping = didMapping;
+    responseData.number = number;
+
+    const userJourney = await userJourneyRepo.create({
+      module_name: 'NUMBERS',
+      action: ACTION_LABEL.ADD,
+      created_by: req.user.id,
+    });
+
+    responseData.userJourney = userJourney;
+
+    SuccessRespnose.data = responseData;
+    SuccessRespnose.message = "Successfully created a new Number";
+
+    return res.status(StatusCodes.CREATED).json(SuccessRespnose);
+  } catch (error) {
+    Logger.error(`Number -> unable to create Number: ${JSON.stringify(bodyReq)} error: ${JSON.stringify(error)}`);
+
+    let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    if (error.name === "SequelizeUniqueConstraintError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = `Duplicate key, record already exists for ${error.errors[0].value}`;
     }
-  }
 
-  async function getNumbersToRemove(req, res) {
-      try {
-          let data;
-          const allocatedToId = req.params.id
-  
-          if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
-              data = await numberRepo.getAllocatedNumbers(null);
-          } else {
-              data = await numberRepo.getAllocatedNumbers(allocatedToId);
-          }
-  
-          SuccessRespnose.data = data;
-          SuccessRespnose.message = 'Success';
-  
-          Logger.info(`Numbers -> to be removed recieved successfully`);
-  
-          return res.status(StatusCodes.OK).json(SuccessRespnose);
-  
-      } catch (error) {
-  
-          ErrorResponse.message = error.message;
-          ErrorResponse.error = error;
-  
-          Logger.error(`To be removed -> unable to get To be removed list, error: ${JSON.stringify(error)}`);
-  
-          return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
-      }
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
+
+    return res.status(statusCode).json(ErrorResponse);
   }
+}
+
+async function getNumbersToRemove(req, res) {
+  try {
+    let data;
+    const allocatedToId = req.params.id
+
+    if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
+      data = await numberRepo.getAllocatedNumbers(null);
+    } else {
+      data = await numberRepo.getAllocatedNumbers(allocatedToId);
+    }
+
+    SuccessRespnose.data = data;
+    SuccessRespnose.message = 'Success';
+
+    Logger.info(`Numbers -> to be removed recieved successfully`);
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+  } catch (error) {
+
+    ErrorResponse.message = error.message;
+    ErrorResponse.error = error;
+
+    Logger.error(`To be removed -> unable to get To be removed list, error: ${JSON.stringify(error)}`);
+
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
+}
 
 async function update(req, res) {
-    const numberId = req.params.id;
-    const bodyReq = req.body;
-  
-    try {
-      const numberData = await numberRepo.findOne({ id: numberId });
-  
-      if (numberData.status !== bodyReq.number.status && req.user.role !== USERS_ROLE.SUPER_ADMIN) {
-        bodyReq.number.updated_status = bodyReq.number.status;
-        bodyReq.number.status = 9;  
-      }
+  const numberId = req.params.id;
+  const bodyReq = req.body;
 
-      bodyReq.number.operator = bodyReq.number.operator.toUpperCase()
-  
-      const number = await numberRepo.update(numberId, bodyReq.number);
-  
-      if (!number) {
-        throw new Error('Number not found');
-      }
-  
-      await userJourneyRepo.create({
-        module_name: 'NUMBERS',
-        action: 'EDIT',
-        created_by: req.user.id,
-      });
-  
-      SuccessRespnose.message = 'Updated successfully!';
-      SuccessRespnose.data = number;
-  
-      return res.status(StatusCodes.OK).json(SuccessRespnose);
-    } catch (error) {
-      Logger.error(`Numbers -> unable to Update: ${JSON.stringify(error)} error: ${JSON.stringify(error)}`);
-  
-      let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
-      let errorMsg = error.message;
-  
-      if (error.name === "SequelizeUniqueConstraintError") {
-        statusCode = StatusCodes.BAD_REQUEST;
-        errorMsg = `Duplicate key, record already exists for ${error.errors[0].value}`;
-      }
-  
-      ErrorResponse.message = errorMsg;
-      ErrorResponse.error = error;
-  
-      return res.status(statusCode).json(ErrorResponse);
+  try {
+    const numberData = await numberRepo.findOne({ id: numberId });
+
+    if (numberData.status !== bodyReq.number.status && req.user.role !== USERS_ROLE.SUPER_ADMIN) {
+      bodyReq.number.updated_status = bodyReq.number.status;
+      bodyReq.number.status = 9;
     }
+
+    bodyReq.number.operator = bodyReq.number.operator.toUpperCase()
+
+    const number = await numberRepo.update(numberId, bodyReq.number);
+
+    if (!number) {
+      throw new Error('Number not found');
+    }
+
+    await userJourneyRepo.create({
+      module_name: 'NUMBERS',
+      action: ACTION_LABEL.EDIT,
+      created_by: req.user.id,
+    });
+
+    SuccessRespnose.message = 'Updated successfully!';
+    SuccessRespnose.data = number;
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    Logger.error(`Numbers -> unable to Update: ${JSON.stringify(error)} error: ${JSON.stringify(error)}`);
+
+    let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    if (error.name === "SequelizeUniqueConstraintError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = `Duplicate key, record already exists for ${error.errors[0].value}`;
+    }
+
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
+
+    return res.status(statusCode).json(ErrorResponse);
   }
+}
 
 async function bulkUpdate(req, res) {
-    const file = req.file;
-    const bodyReq = req.body;
-  
-    try {
-      if (!file) {
-        throw new Error('File not found');
-      }
-  
-      const records = [];
-      const dataPromises = [];
-  
-      const readableStream = new stream.PassThrough();
-      readableStream.end(file.buffer);
-  
-      readableStream
-        .pipe(csv())
-        .on('data', (row) => {
-          const dataPromise = (async () => {
-            
-            records.push({
-              status: row.Status,
-              actual_number: row['DID'],
-              category: row?.Category || null,
-              currency: row.Currency,
-              country_code: row['Country Code'],
-              state_code: row?.['State Code'] || null,
-              cost: row.Cost,
-              operator: row.Operator.toUpperCase(),
-              number_type: bodyReq.numberType,
-              created_by: req.user.id
-            });
-          })();
-          dataPromises.push(dataPromise);
-        })
-        .on('end', async () => {
-          await Promise.all(dataPromises);
-  
-          const bulkOps = records.map(record => ({
-            insertOne: { document: record },
-          }));
-  
-          await numberRepo.bulkCreate(records);
-  
-          SuccessRespnose.message = 'Successfully Uploaded Numbers.';
-          return res.status(StatusCodes.CREATED).json(SuccessRespnose);
-        });
-    } catch (error) {
-      Logger.error(`File processing error: ${error}`);
-      ErrorResponse.message = 'Error while processing the file.';
-      ErrorResponse.error = error;
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  const file = req.file;
+  const bodyReq = req.body;
+
+  try {
+    if (!file) {
+      throw new Error('File not found');
     }
+
+    const records = [];
+    const dataPromises = [];
+
+    const readableStream = new stream.PassThrough();
+    readableStream.end(file.buffer);
+
+    readableStream
+      .pipe(csv())
+      .on('data', (row) => {
+        const dataPromise = (async () => {
+
+          records.push({
+            status: row.Status,
+            actual_number: row['DID'],
+            category: row?.Category || null,
+            currency: row.Currency,
+            country_code: row['Country Code'],
+            state_code: row?.['State Code'] || null,
+            cost: row.Cost,
+            operator: row.Operator.toUpperCase(),
+            number_type: bodyReq.numberType,
+            created_by: req.user.id
+          });
+        })();
+        dataPromises.push(dataPromise);
+      })
+      .on('end', async () => {
+        await Promise.all(dataPromises);
+
+        const bulkOps = records.map(record => ({
+          insertOne: { document: record },
+        }));
+
+        await numberRepo.bulkCreate(records);
+
+        SuccessRespnose.message = 'Successfully Uploaded Numbers.';
+        return res.status(StatusCodes.CREATED).json(SuccessRespnose);
+      });
+  } catch (error) {
+    Logger.error(`File processing error: ${error}`);
+    ErrorResponse.message = 'Error while processing the file.';
+    ErrorResponse.error = error;
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
   }
+}
 
 const toIST = (date) => {
-    const istOffset = 5.5 * 60 * 60 * 1000; 
-    return new Date(date.getTime() + istOffset);
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  return new Date(date.getTime() + istOffset);
 };
 
 async function uploadNumbers(req, res) {
-    const dest = req.file.path;
-    const bodyReq = Object.assign({}, req.body);
-    try {
-        if (!fs.existsSync(dest)) {
-            const errorResponse = {
-                message: 'File not foundd',
-                error: new Error('File not found')
+  const dest = req.file.path;
+  const bodyReq = Object.assign({}, req.body);
+  try {
+    if (!fs.existsSync(dest)) {
+      const errorResponse = {
+        message: 'File not foundd',
+        error: new Error('File not found')
+      };
+      Logger.error('File processing error:', errorResponse.error);
+      return res.status(StatusCodes.NOT_FOUND).json(errorResponse);
+    }
+
+    const file_name = req.file.name;
+    const file_url = `${BACKEND_API_BASE_URL}/assets/number/${req.user.id}/${file_name}`;
+
+    const uploadFile = await numFileListRepo.create({
+      user_id: req.user.id,
+      file_name: file_name,
+      file_url: file_url
+    });
+
+    const records = [];
+    const dataPromises = []
+    let headersSent = false;
+
+    fs.createReadStream(dest)
+      .pipe(csv())
+      .on('data', (row) => {
+        const dataPromise = (async () => {
+          if (row['Country Code'].length !== 2) {
+            const data = await countryCodeRepository.getAll();
+            const sanitizedInput = row['Country Code'].trim().toLowerCase();
+            const country = data.find(item => item.name.toLowerCase() === sanitizedInput);
+            row['Country Code'] = country ? country.code : null;
+          }
+
+          if (row?.['State Code'] && row['State Code'].length !== 2) {
+            const states = State.getStatesOfCountry(row['Country Code']);
+            const sanitizedInput = row['State Code'].trim().toLowerCase();
+            const state = states.find(item => item.name.toLowerCase() === sanitizedInput);
+            row['State Code'] = state ? state.isoCode : null;
+          }
+
+          records.push({
+            status: 1,
+            actual_number: Number(row['DID']),
+            category: bodyReq.category,
+            currency: bodyReq.currency,
+            country_code: row['Country Code'],
+            state_code: row?.['State Code'] || null,
+            cost: row.Cost,
+            operator: row.Operator.toUpperCase(),
+            created_by: req.user.id,
+            number_type: bodyReq.numberType,
+            uploaded_file_id: uploadFile._id,
+            created_at: toIST(new Date()),
+            updatedAt: toIST(new Date())
+          });
+        })();
+
+        dataPromises.push(dataPromise);
+      })
+      .on('end', async () => {
+        await Promise.all(dataPromises);
+
+        try {
+          const batchSize = 100;
+          for (let i = 0; i < records.length; i += batchSize) {
+            const batch = records.slice(i, i + batchSize);
+            const insertedRecords = await numberRepo.insertMany(batch);
+            // DID allocation
+            const DIDAlloction = insertedRecords.map(item => ({
+              DID: item.id,
+              mapping_detail: [{
+                allocated_to: req?.user?.id,
+                active: true,
+                level: 0,
+                parent_id: null,
+                voice_plan_id: null,
+              }]
+            }));
+            await didUserMappingRepository.insertMany(DIDAlloction);
+          }
+
+          if (!headersSent) {
+            const SuccessRespnose = {
+              message: 'Successfully Uploaded Numbers.',
+              data: { file_destination: dest }
             };
-            Logger.error('File processing error:', errorResponse.error);
-            return res.status(StatusCodes.NOT_FOUND).json(errorResponse);
+            Logger.info('Numbers uploaded successfully');
+            headersSent = true;
+
+            const userJourneyfields = {
+              module_name: MODULE_LABEL.NUMBERS,
+              action: ACTION_LABEL.UPLOAD,
+              created_by: req?.user?.id
+            };
+
+            await userJourneyRepo.create(userJourneyfields);
+            return res.status(StatusCodes.CREATED).json(SuccessRespnose);
+          }
+        } catch (error) {
+          if (!headersSent) {
+            const errorResponse = {
+              message: 'Error while saving numbers to the database.',
+              error: error
+            };
+            Logger.error('Database error:', error);
+            headersSent = true;
+            return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+          }
         }
-
-        const file_name = req.file.name;
-        const file_url = `${BACKEND_API_BASE_URL}/assets/number/${req.user.id}/${file_name}`;
-
-        const uploadFile = await numFileListRepo.create({
-            user_id: req.user.id,
-            file_name: file_name,
-            file_url: file_url
-        });
-
-        const records = [];
-        const dataPromises = []
-        let headersSent = false;
-
-        fs.createReadStream(dest)
-            .pipe(csv())
-            .on('data', (row) => {
-                const dataPromise = (async () => {
-                    if (row['Country Code'].length !== 2) {
-                       const data = await countryCodeRepository.getAll();
-                       const sanitizedInput = row['Country Code'].trim().toLowerCase();
-                       const country = data.find(item => item.name.toLowerCase() === sanitizedInput);
-                       row['Country Code'] = country ? country.code : null;
-                    }
-
-                    if (row?.['State Code'] && row['State Code'].length !== 2) {
-                        const states = State.getStatesOfCountry(row['Country Code']);
-                        const sanitizedInput = row['State Code'].trim().toLowerCase();
-                        const state = states.find(item => item.name.toLowerCase() === sanitizedInput);
-                        row['State Code'] = state ? state.isoCode : null;
-                     }
-
-                records.push({
-                    status: 1,
-                    actual_number: Number(row['DID']),
-                    category: bodyReq.category,
-                    currency: bodyReq.currency,
-                    country_code: row['Country Code'],
-                    state_code: row?.['State Code'] || null,
-                    cost: row.Cost,
-                    operator: row.Operator.toUpperCase(),
-                    created_by: req.user.id,
-                    number_type: bodyReq.numberType,
-                    uploaded_file_id: uploadFile._id,
-                    created_at: toIST(new Date()),
-                    updatedAt: toIST(new Date())
-                });
-                })();
-
-                dataPromises.push(dataPromise);
-            })
-            .on('end', async () => {
-                await Promise.all(dataPromises);
-
-                try {
-                const batchSize = 100;
-                for (let i = 0; i < records.length; i += batchSize) {
-                    const batch = records.slice(i, i + batchSize);
-                    const insertedRecords = await numberRepo.insertMany(batch);
-                    // DID allocation
-                    const DIDAlloction = insertedRecords.map(item => ({
-                        DID: item.id,
-                        mapping_detail: [{
-                        allocated_to: req?.user?.id,
-                        active: true,
-                        level: 0,
-                        parent_id: null,
-                        voice_plan_id: null,
-                      }]
-                      }));
-                    await didUserMappingRepository.insertMany(DIDAlloction);
-                }
-
-                if (!headersSent) {
-                    const SuccessRespnose = {
-                    message: 'Successfully Uploaded Numbers.',
-                    data: { file_destination: dest }
-                    };
-                    Logger.info('Numbers uploaded successfully');
-                    headersSent = true;
-
-                    const userJourneyfields = {
-                    module_name: MODULE_LABEL.NUMBERS,
-                    action: ACTION_LABEL.UPLOAD,
-                    created_by: req?.user?.id
-                    };
-
-                    await userJourneyRepo.create(userJourneyfields);
-                    return res.status(StatusCodes.CREATED).json(SuccessRespnose);
-                }
-                } catch (error) {
-                if (!headersSent) {
-                    const errorResponse = {
-                    message: 'Error while saving numbers to the database.',
-                    error: error
-                    };
-                    Logger.error('Database error:', error);
-                    headersSent = true;
-                    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
-                }
-                }
-            })
-            .on('error', (error) => {
-                if (!headersSent) {
-                const errorResponse = {
-                    message: 'Error while processing the file.',
-                    error: error
-                };
-                Logger.error('File processing error:', error);
-                headersSent = true;
-                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
-                }
-            });
-    } catch (error) {
-        const errorResponse = {
+      })
+      .on('error', (error) => {
+        if (!headersSent) {
+          const errorResponse = {
             message: 'Error while processing the file.',
             error: error
-        };
-        Logger.error('File processing error:', error);
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
-    }
+          };
+          Logger.error('File processing error:', error);
+          headersSent = true;
+          return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+        }
+      });
+  } catch (error) {
+    const errorResponse = {
+      message: 'Error while processing the file.',
+      error: error
+    };
+    Logger.error('File processing error:', error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+  }
 }
 
 async function getAll(req, res) {
@@ -436,8 +436,8 @@ async function getAll(req, res) {
         if (val.voice_plan) {
           val.voice_plan_id = val.voice_plan;
         }
-        delete val.voice_plan_id;              
-        delete val.voice_plan; 
+        delete val.voice_plan_id;
+        delete val.voice_plan;
 
         return val;
       })
@@ -446,7 +446,7 @@ async function getAll(req, res) {
     data = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
 
-    
+
     SuccessRespnose.data = data;
     SuccessRespnose.message = 'Success';
 
@@ -462,43 +462,43 @@ async function getAll(req, res) {
 }
 
 async function get(req, res) {
-    const numberId = req.params.id;
+  const numberId = req.params.id;
 
-    try {
-      const data = await numberRepo.findOne({ id: numberId });
-  
-      if (data.is_deleted) {
-        ErrorResponse.message = `Number ${numberId} is deleted`;
-        return res.status(StatusCodes.NOT_FOUND).json(ErrorResponse);
-      }
-      SuccessRespnose.data = data;
-      return res.status(StatusCodes.OK).json(SuccessRespnose);
-    } catch (error) {
-      ErrorResponse.message = error.message;
-      ErrorResponse.error = error;
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
-    }
-  }
+  try {
+    const data = await numberRepo.findOne({ id: numberId });
 
-  async function deleteNumber(req, res) {
-    const ids = req.body.numberIds;
-    try {
-      await numberRepo.deleteMany(ids);
-  
-      await userJourneyRepo.create({
-        module_name: 'NUMBERS',
-        action: 'DELETE',
-        created_by: req.user.id,
-      });
-  
-      SuccessRespnose.message = 'Deleted successfully!';
-      return res.status(StatusCodes.OK).json(SuccessRespnose);
-    } catch (error) {
-      ErrorResponse.message = error.message;
-      ErrorResponse.error = error;
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+    if (data.is_deleted) {
+      ErrorResponse.message = `Number ${numberId} is deleted`;
+      return res.status(StatusCodes.NOT_FOUND).json(ErrorResponse);
     }
+    SuccessRespnose.data = data;
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    ErrorResponse.message = error.message;
+    ErrorResponse.error = error;
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
   }
+}
+
+async function deleteNumber(req, res) {
+  const ids = req.body.numberIds;
+  try {
+    await numberRepo.deleteMany(ids);
+
+    await userJourneyRepo.create({
+      module_name: 'NUMBERS',
+      action: ACTION_LABEL.DELETE,
+      created_by: req.user.id,
+    });
+
+    SuccessRespnose.message = 'Deleted successfully!';
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    ErrorResponse.message = error.message;
+    ErrorResponse.error = error;
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
+}
 
 async function getDIDNumbers(req, res) {
   const numberType = 'DID';
@@ -511,7 +511,7 @@ async function getDIDNumbers(req, res) {
     }
 
 
-    
+
     SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
     SuccessRespnose.message = 'Successfully retrieved DID numbers.';
     return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -523,667 +523,717 @@ async function getDIDNumbers(req, res) {
 }
 
 async function getAllStatus(req, res) {
-    try {
-      const data = await numberStatusRepo.getAll();
+  try {
+    const data = await numberStatusRepo.getAll();
 
-      const filteredData = data.filter(item => item.status_code !== 9 && item.status_code !== 10);
-  
+    const filteredData = data.filter(item => item.status_code !== 9 && item.status_code !== 10);
 
 
-      SuccessRespnose.data = formatResponse.formatResponseIds(filteredData, version);
-      SuccessRespnose.message = 'Success';
-      return res.status(StatusCodes.OK).json(SuccessRespnose);
-    } catch (error) {
-      ErrorResponse.message = error.message;
-      ErrorResponse.error = error;
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
-    }
+
+    SuccessRespnose.data = formatResponse.formatResponseIds(filteredData, version);
+    SuccessRespnose.message = 'Success';
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    ErrorResponse.message = error.message;
+    ErrorResponse.error = error;
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
   }
+}
 
-  async function assignBulkDID(req, res) {
-    const dest = req.file.path;
-    const bodyReq = req.body;
-    try {
-      if (!fs.existsSync(dest)) {
-        throw new Error('File not found');
-      }
-  
-      const records = [];
-      fs.createReadStream(dest)
-        .pipe(csv())
-        .on('data', (row) => {
-          records.push(row);
-        })
-        .on('end', async () => {
-          for (const record of records) {
-            const numberType = bodyReq.type === 'VMN' ? 'VMN' : 'TOLL FREE';
-            const existingNumber = await numberRepo.findOne({
-              actual_number: record[numberType],
-              number_type: numberType
+async function assignBulkDID(req, res) {
+  const dest = req.file.path;
+  const bodyReq = req.body;
+  try {
+    if (!fs.existsSync(dest)) {
+      throw new Error('File not found');
+    }
+
+    const records = [];
+    fs.createReadStream(dest)
+      .pipe(csv())
+      .on('data', (row) => {
+        records.push(row);
+      })
+      .on('end', async () => {
+        for (const record of records) {
+          const numberType = bodyReq.type === 'VMN' ? 'VMN' : 'TOLL FREE';
+          const existingNumber = await numberRepo.findOne({
+            actual_number: record[numberType],
+            number_type: numberType
+          });
+
+          if (existingNumber) {
+            await numberRepo.update(existingNumber.id, {
+              status: NUMBER_STATUS_LABLE[record['STATUS']],
+              routing_destination: Number(record.DID),
+              routing_type: numberType,
             });
+          }
+        }
+
+        await userJourneyRepo.create({
+          module_name: 'NUMBERS',
+          action: ACTION_LABEL.ASSIGN_BULK_DID,
+          created_by: req.user.id,
+        });
+
+        SuccessRespnose.message = 'Successfully assigned Bulk DID.';
+        return res.status(StatusCodes.CREATED).json(SuccessRespnose);
+      });
+  } catch (error) {
+    ErrorResponse.message = 'Error while processing assigning bulk DID file.';
+    ErrorResponse.error = error;
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
+}
+
+async function assignIndividualDID(req, res) {
+
+  const bodyReq = req.body;
+
+  try {
+
+    try {
+
+      await numberRepo.update(bodyReq._id, {
+        status: bodyReq.status,
+        routing_destination: bodyReq.DID,
+        routing_type: bodyReq.numberType,
+        routing_id: bodyReq.DID_id,
+        expiry_date: bodyReq.expiryDate || null,
+      });
+    } catch (error) {
+      console.log("ERROR HERE", error);
+    }
+
+
+    await userJourneyRepo.create({
+      module_name: 'NUMBERS',
+      action: ACTION_LABEL.ASSIGN_INDIVIDUAL_DID,
+      created_by: req.user.id,
+    });
+
+    SuccessRespnose.message = 'Successfully assigned Individual DID.';
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    ErrorResponse.message = 'Error while assigning Individual DID.';
+    ErrorResponse.error = error;
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
+}
+
+async function updateStatus(req, res) {
+  const bodyReq = req.body;
+  try {
+    const number = await numberRepo.update(bodyReq.updateId, {
+      status: Number(bodyReq.status),
+      updated_status: bodyReq.updated_status,
+    });
+
+    const action = bodyReq.action === 'Reject' ? 'STATUS_ACTION_REJECT' : 'STATUS_ACTION_APPROVED';
+    await userJourneyRepo.create({
+      module_name: 'NUMBERS',
+      action: action,
+      created_by: req.user.id,
+    });
+
+    SuccessRespnose.message = 'Status updated successfully!';
+    SuccessRespnose.data = number;
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    ErrorResponse.message = error.message;
+    ErrorResponse.error = error;
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
+}
+
+async function DIDUserMapping(req, res) {
+  const bodyReq = req.body;
+  const successDIDs = [];
+  const failedDIDs = [];
+  const successActualNumbers = [];
+
+
   
-            if (existingNumber) {
-              await numberRepo.update(existingNumber.id, {
-                status: NUMBER_STATUS_LABLE[record['STATUS']],
-                routing_destination: Number(record.DID),
-                routing_type: numberType,
-              });
+
+  try {
+    if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
+      for (const did of bodyReq.DID) {
+        try {
+          const didDetail = await numberRepo.get(did)
+
+          await didUserMappingRepository.addMappingDetail(did, {
+            level: 1,
+            allocated_to: bodyReq.allocated_to,
+            parent_id: req.user.id,
+            voice_plan_id: bodyReq?.voice_plan_id,
+          });
+
+
+
+          await numberRepo.update(did, {
+            allocated_to: bodyReq.allocated_to,
+            voice_plan_id: bodyReq?.voice_plan_id
+          });
+
+
+
+          await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
+          successDIDs.push(did);
+
+          successActualNumbers.push(didDetail.map((data) => data.actual_number))
+
+        } catch (err) {
+          failedDIDs.push({ did, reason: err.message || "Failed to allocate number." });
+        }
+      }
+    } else {
+
+      console.log("BODY REQM", bodyReq);
+
+      for (const did of bodyReq.DID) {
+        try {
+
+          const parentVoicePlanDetailId = (await numberRepo.findOneWithVoicePlan({ id: Number(did) }))?.voice_plan_id;
+
+          
+
+          const ParentVoicePlanDetails = await voicePlanRepo.get(parentVoicePlanDetailId)
+
+          console.log("PARENT VOICE PLAN DETAIL", ParentVoicePlanDetails);
+
+          const currentPlanDetail = await voicePlanRepo.findOne({ id: bodyReq?.voice_plan_id });
+
+
+          console.log("CURRENT PLAN DETAIL", currentPlanDetail);
+
+          const didDetail = await numberRepo.get(did)
+
+          console.log("DID DEATIL", didDetail);
+
+          if (ParentVoicePlanDetails) {
+            for (const plan1 of currentPlanDetail.plans) {
+              const match = ParentVoicePlanDetails.plans.find(plan2 => plan2.plan_type === plan1.plan_type);
+
+
+              if (!match) {
+                failedDIDs.push({
+                  did: didDetail.actual_number,
+                  reason: `No matching parent plan found for "${plan1.plan_type}".`
+                });
+                throw new Error('Validation failed');
+              }
+
+
+              if (plan1.pulse_price < match.pulse_price) {
+                failedDIDs.push({
+                  did: didDetail.actual_number,
+                  reason: `Can't allocate pulse price less than parent pulse price for "${plan1.plan_type}".`
+                });
+                throw new Error('Validation failed');
+              }
+
+              if (plan1.pulse_duration < match.pulse_duration) {
+                failedDIDs.push({
+                  did: didDetail.actual_number,
+                  reason: `Can't allocate pulse duration less than parent duration for "${plan1.plan_type}".`
+                });
+                throw new Error('Validation failed');
+              }
             }
           }
-  
-          await userJourneyRepo.create({
-            module_name: 'NUMBERS',
-            action: 'ASSIGN_BULK_DID',
-            created_by: req.user.id,
-          });
-  
-          SuccessRespnose.message = 'Successfully assigned Bulk DID.';
-          return res.status(StatusCodes.CREATED).json(SuccessRespnose);
-        });
-    } catch (error) {
-      ErrorResponse.message = 'Error while processing assigning bulk DID file.';
-      ErrorResponse.error = error;
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
-    }
-  }
 
-  async function assignIndividualDID(req, res) {
+          let level;
 
-    const bodyReq = req.body;
+          if (req.user.role === USERS_ROLE.RESELLER) {
 
-    try {
-
-      try {
-        
-        await numberRepo.update(bodyReq._id, {
-          status: bodyReq.status,
-          routing_destination: bodyReq.DID,
-          routing_type: bodyReq.numberType,
-          routing_id: bodyReq.DID_id,
-          expiry_date: bodyReq.expiryDate || null,
-        });
-      } catch (error) {
-        console.log("ERROR HERE", error);
-      }
-      
-  
-      await userJourneyRepo.create({
-        module_name: 'NUMBERS',
-        action: 'ASSIGN_INDIVIDUAL_DID',
-        created_by: req.user.id,
-      });
-  
-      SuccessRespnose.message = 'Successfully assigned Individual DID.';
-      return res.status(StatusCodes.OK).json(SuccessRespnose);
-    } catch (error) {
-      ErrorResponse.message = 'Error while assigning Individual DID.';
-      ErrorResponse.error = error;
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
-    }
-  }
-
-  async function updateStatus(req, res) {
-    const bodyReq = req.body;
-    try {
-      const number = await numberRepo.update(bodyReq.updateId, {
-        status: Number(bodyReq.status),
-        updated_status: bodyReq.updated_status,
-      });
- 
-      const action = bodyReq.action === 'Reject' ? 'STATUS_ACTION_REJECT' : 'STATUS_ACTION_APPROVED';
-      await userJourneyRepo.create({
-        module_name: 'NUMBERS',
-        action: action,
-        created_by: req.user.id,
-      });
-  
-      SuccessRespnose.message = 'Status updated successfully!';
-      SuccessRespnose.data = number;
-      return res.status(StatusCodes.OK).json(SuccessRespnose);
-    } catch (error) {
-      ErrorResponse.message = error.message;
-      ErrorResponse.error = error;
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
-    }
-  }
-  
-  async function DIDUserMapping(req, res) {
-    const bodyReq = req.body;
-    const successDIDs = [];
-    const failedDIDs = [];
-    const successActualNumbers = [];
-
-    try {
-      if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
-                  for (const did of bodyReq.DID) {
-                      try { 
-                          const didDetail = await numberRepo.get(did)
-      
-                         await didUserMappingRepository.addMappingDetail(did, {
-                              level: 1,
-                              allocated_to: bodyReq.allocated_to,
-                              parent_id: req.user.id,
-                              voice_plan_id: bodyReq?.voice_plan_id,
-                          });
-
-                    
-      
-                          await numberRepo.update(did, {
-                              allocated_to: bodyReq.allocated_to,
-                              voice_plan_id: bodyReq?.voice_plan_id
-                          });
+            const isCompanyUser = await companyRepo.findOne({ id: bodyReq.allocated_to })
 
 
+            console.log("IS COMPANY USER", isCompanyUser);
 
-                          await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
-                          successDIDs.push(did);
-                          successActualNumbers.push(didDetail.map((data)=> data.actual_number))
-      
-                      } catch (err) {
-                          failedDIDs.push({ did, reason: err.message || "Failed to allocate number." });
-                      }
-                  }
+            if (isCompanyUser) {
+              level = DID_ALLOCATION_LEVEL.COMPANY_ADMIN
+
+              console.log("EVEL", level);
+
+            } else {
+              // const count = await didUserMappingRepository.countLevelEntry(did, 2)
+
+              // console.log("COUNT", count);
+
+              // if (count === 0) {
+              //   level = DID_ALLOCATION_LEVEL.SUB_RESELLER
+              // } else {
+              //   level = `${DID_ALLOCATION_LEVEL.SUB_RESELLER}_${Number(count)}`
+              // }
+
+              level = DID_ALLOCATION_LEVEL.SUB_RESELLER
+
+            }
+
+
+            console.log("LAST LEVEL", level);
+
+
+          }
+          else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
+            const isCompanyUser = await companyRepo.findOne({ _id: bodyReq.allocated_to })
+            if (isCompanyUser) {
+              const count = await didUserMappingRepository.countSubCompanyUserEntry(did)
+              if (count === 0) {
+                level = DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN
               } else {
-
-                  for (const did of bodyReq.DID) {
-                      try {
-                  
-                          const parentVoicePlanDetailId = (await numberRepo.findOneWithVoicePlan({id : Number(did)}))?.voice_plan_id; 
-
-                          const ParentVoicePlanDetails = await voicePlanRepo.get(parentVoicePlanDetailId)
-
-                          const currentPlanDetail = await voicePlanRepo.findOne({id : bodyReq?.voice_plan_id});
-
-                          const didDetail = await numberRepo.get(did)
-                
-                          if (ParentVoicePlanDetails) {
-                              for (const plan1 of currentPlanDetail.plans) {
-                                  const match = ParentVoicePlanDetails.plans.find(plan2 => plan2.plan_type === plan1.plan_type);
-                  
-
-                                  if (!match) {
-                                      failedDIDs.push({
-                                          did: didDetail.actual_number,
-                                          reason: `No matching parent plan found for "${plan1.plan_type}".`
-                                      });
-                                      throw new Error('Validation failed');
-                                  }
-
-                  
-                                  if (plan1.pulse_price < match.pulse_price) {
-                                      failedDIDs.push({
-                                          did: didDetail.actual_number,
-                                          reason: `Can't allocate pulse price less than parent pulse price for "${plan1.plan_type}".`
-                                      });
-                                      throw new Error('Validation failed');
-                                  }
-                  
-                                  if (plan1.pulse_duration < match.pulse_duration) {
-                                      failedDIDs.push({
-                                          did: didDetail.actual_number,
-                                          reason: `Can't allocate pulse duration less than parent duration for "${plan1.plan_type}".`
-                                      });
-                                      throw new Error('Validation failed');
-                                  }
-                              }
-                          }
-      
-                              let level;
-                              if (req.user.role === USERS_ROLE.RESELLER) {
-                                  
-                                  level = DID_ALLOCATION_LEVEL.COMPANY_ADMIN
-
-
-                              } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
-                                  const isCompanyUser = await companyRepo.findOne({_id: bodyReq.allocated_to})
-                                  if (isCompanyUser) {
-                                      const count = await didUserMappingRepository.countSubCompanyUserEntry(did)
-                                      if (count === 0) {
-                                          level = DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN
-                                      } else {
-                                          level = `${DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN}_${Number(count)}`
-                                      }
-                                  } else {
-                                      level = DID_ALLOCATION_LEVEL.CALLCENTER
-                                  }
-                              }
-                              await didUserMappingRepository.addMappingDetail(did, {
-                                  level,
-                                  allocated_to: bodyReq.allocated_to,
-                                  parent_id: req.user.id,
-                                  voice_plan_id: bodyReq?.voice_plan_id,
-                              });
-                  
-                              await numberRepo.update(did, {
-                                allocated_company_id: bodyReq.allocated_to,
-                                  voice_plan_id: bodyReq?.voice_plan_id
-                              });
-                
-                          await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
-                          successDIDs.push(did);
-                          successActualNumbers.push(didDetail.actual_number)
-                      } catch (err) {
-                          continue;
-                      }
-                  }
-                  
+                level = `${DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN}_${Number(count)}`
               }
-      // for (const did of bodyReq.DID) {
-      //   try {
-      //     const didData = await numberRepo.findOne({ where: { id: did } });
-
-      //     console.log("DIDDATA");
-      //     if (!didData) throw new Error("DID not found");
-  
-      //     if (req.user.role !== USERS_ROLE.SUPER_ADMIN) {
-      //       const parentVoicePlan = await voicePlanRepo.findOne({
-      //         where: { id: didData.voice_plan_id },
-      //       });
-  
-      //       const currentPlan = await voicePlanRepo.findOne({
-      //         where: { id: bodyReq.voice_plan_id },
-      //       });
-  
-      //       if (parentVoicePlan && currentPlan) {
-      //         const parentPlans = parentVoicePlan.plans || [];
-      //         const childPlans = currentPlan.plans || [];
-  
-      //         for (const child of childPlans) {
-      //           const parent = parentPlans.find((p) => p.plan_type === child.plan_type);
-      //           if (!parent) {
-      //             failedDIDs.push({
-      //               did: didData.actual_number,
-      //               reason: `No matching parent plan for "${child.plan_type}"`,
-      //             });
-      //             throw new Error("Validation failed");
-      //           }
-  
-      //           if (
-      //             child.pulse_price < parent.pulse_price ||
-      //             child.pulse_duration < parent.pulse_duration
-      //           ) {
-      //             failedDIDs.push({
-      //               did: didData.actual_number,
-      //               reason: `Plan conflict on "${child.plan_type}": pulse/price mismatch`,
-      //             });
-      //             throw new Error("Validation failed");
-      //           }
-      //         }
-      //       }
-      //     }
-  
-      //     let level = 0;
-      //     if (req.user.role === USERS_ROLE.RESELLER) {
-      //       level = DID_ALLOCATION_LEVEL.COMPANY_ADMIN;
-      //     } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
-      //       const isCompany = await companyRepo.findOne({ where: { id: bodyReq.allocated_to } });
-      //       if (isCompany) {
-      //         const existing = await didUserMappingRepository.findOne({ where: { DID: did } });
-      //         const count = (existing?.mapping_detail || []).filter(
-      //           (d) => d.level?.toString().startsWith(DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN)
-      //         ).length;
-      //         level =
-      //           count === 0
-      //             ? DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN
-      //             : `${DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN}_${count}`;
-      //       } else {
-      //         level = DID_ALLOCATION_LEVEL.CALLCENTER;
-      //       }
-      //     }
-  
-      //     const existingMapping = await didUserMappingRepository.findOne({ where: { DID: did } });
-  
-      //     const newMappingItem = {
-      //       active: true,
-      //       allocated_to: bodyReq.allocated_to,
-      //       parent_id: req.user.id,
-      //       voice_plan_id: bodyReq.voice_plan_id,
-      //       level,
-      //     };
-  
-      //     if (existingMapping) {
-      //       existingMapping.mapping_detail = [
-      //         ...existingMapping.mapping_detail,
-      //         newMappingItem,
-      //       ];
-      //       await existingMapping.save();
-      //     } else {
-      //       await didUserMappingRepository.create({
-      //         DID: did,
-      //         mapping_detail: [newMappingItem],
-      //       });
-      //     }
-  
-      //     await numberRepo.update(
-      //       {
-      //         allocated_to: bodyReq.allocated_to,
-      //         voice_plan_id: bodyReq.voice_plan_id,
-      //       },
-      //       { where: { id: did } }
-      //     );
-  
-      //     if (bodyReq.voice_plan_id) {
-      //       await voicePlanRepo.update(
-      //         { is_allocated: true },
-      //         { where: { id: bodyReq.voice_plan_id } }
-      //       );
-      //     }
-  
-      //     successDIDs.push(did);
-      //     successActualNumbers.push(didData.actual_number);
-      //   } catch (err) {
-      //     failedDIDs.push({
-      //       did,
-      //       reason: err.message || "Unknown error",
-      //     });
-      //     continue;
-      //   }
-      // }
-  
-
-      return res.status(200).json({
-        message: "DIDs allocated successfully",
-        data: {
-          total: bodyReq.DID.length,
-          processed: successDIDs.length,
-          failed: failedDIDs.length,
-          successDIDs,
-          failedDIDs,
-          successActualNumbers,
-        },
-      });
-    } catch (error) {
-      console.error("Allocation error:", error);
-      return res.status(500).json({
-        message: "Something went wrong during allocation",
-        error,
-      });
-    }
-  }
+            } else {
+              level = DID_ALLOCATION_LEVEL.CALLCENTER
+            }
+          }
+          const mapp = await didUserMappingRepository.addMappingDetail(did, {
+            level,
+            allocated_to: bodyReq.allocated_to,
+            parent_id: req.user.id,
+            voice_plan_id: bodyReq?.voice_plan_id,
+          });
 
 
-  async function getToAllocateNumbers(req, res) {
-    const allocatedToId = req.params.id;
+          console.log("MAP", mapp);
 
 
-    try {
+          const upadtedNumber =  await numberRepo.update(did, {
+            allocated_company_id: bodyReq.allocated_to,
+            voice_plan_id: bodyReq?.voice_plan_id
+          });
 
-      let data;
+            console.log("UPDATED NUMBER", upadtedNumber);
 
-      if(req.user.role===USERS_ROLE.COMPANY_ADMIN)
-      {
-        data = await numberRepo.getAll({ where: { allocated_company_id: allocatedToId } });
-      }
-      else
-      {
-        const roleToCheck = await userRepo.findOne({ id: allocatedToId });
 
-        if (roleToCheck.role === USERS_ROLE.SUPER_ADMIN) {
-          data = await numberRepo.getAll({ where: { allocated_to: null } });
-        } else {
-          data = await numberRepo.getAll({ where: { allocated_to: allocatedToId } });
+          const voicePlane= await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
+
+          console.log("VOICE PLANE", voicePlane);
+
+          successDIDs.push(did);
+          successActualNumbers.push(didDetail.map((data) => data.actual_number))
+        } catch (err) {
+          continue;
         }
       }
-      
-  
-     
-      
-  
 
-      
-      SuccessRespnose.data = formatResponse.formatResponseIds(data,version);
-
-      SuccessRespnose.data = data.map(item => {
-        const obj = { ...item };
-        obj.created_at = obj.createdAt;
-        obj.updated_at = obj.updatedAt;
-        delete obj.createdAt;
-        delete obj.updatedAt;
-        return obj;
-      });
-
-      // console.log("SUCCESS", SuccessRespnose);
-      SuccessRespnose.message = 'Success';
-      return res.status(StatusCodes.OK).json(SuccessRespnose);
-    } catch (error) {
-      ErrorResponse.message = error.message;
-      ErrorResponse.error = error;
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
     }
+    // for (const did of bodyReq.DID) {
+    //   try {
+    //     const didData = await numberRepo.findOne({ where: { id: did } });
+
+    //     console.log("DIDDATA");
+    //     if (!didData) throw new Error("DID not found");
+
+    //     if (req.user.role !== USERS_ROLE.SUPER_ADMIN) {
+    //       const parentVoicePlan = await voicePlanRepo.findOne({
+    //         where: { id: didData.voice_plan_id },
+    //       });
+
+    //       const currentPlan = await voicePlanRepo.findOne({
+    //         where: { id: bodyReq.voice_plan_id },
+    //       });
+
+    //       if (parentVoicePlan && currentPlan) {
+    //         const parentPlans = parentVoicePlan.plans || [];
+    //         const childPlans = currentPlan.plans || [];
+
+    //         for (const child of childPlans) {
+    //           const parent = parentPlans.find((p) => p.plan_type === child.plan_type);
+    //           if (!parent) {
+    //             failedDIDs.push({
+    //               did: didData.actual_number,
+    //               reason: `No matching parent plan for "${child.plan_type}"`,
+    //             });
+    //             throw new Error("Validation failed");
+    //           }
+
+    //           if (
+    //             child.pulse_price < parent.pulse_price ||
+    //             child.pulse_duration < parent.pulse_duration
+    //           ) {
+    //             failedDIDs.push({
+    //               did: didData.actual_number,
+    //               reason: `Plan conflict on "${child.plan_type}": pulse/price mismatch`,
+    //             });
+    //             throw new Error("Validation failed");
+    //           }
+    //         }
+    //       }
+    //     }
+
+    //     let level = 0;
+    //     if (req.user.role === USERS_ROLE.RESELLER) {
+    //       level = DID_ALLOCATION_LEVEL.COMPANY_ADMIN;
+    //     } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
+    //       const isCompany = await companyRepo.findOne({ where: { id: bodyReq.allocated_to } });
+    //       if (isCompany) {
+    //         const existing = await didUserMappingRepository.findOne({ where: { DID: did } });
+    //         const count = (existing?.mapping_detail || []).filter(
+    //           (d) => d.level?.toString().startsWith(DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN)
+    //         ).length;
+    //         level =
+    //           count === 0
+    //             ? DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN
+    //             : `${DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN}_${count}`;
+    //       } else {
+    //         level = DID_ALLOCATION_LEVEL.CALLCENTER;
+    //       }
+    //     }
+
+    //     const existingMapping = await didUserMappingRepository.findOne({ where: { DID: did } });
+
+    //     const newMappingItem = {
+    //       active: true,
+    //       allocated_to: bodyReq.allocated_to,
+    //       parent_id: req.user.id,
+    //       voice_plan_id: bodyReq.voice_plan_id,
+    //       level,
+    //     };
+
+    //     if (existingMapping) {
+    //       existingMapping.mapping_detail = [
+    //         ...existingMapping.mapping_detail,
+    //         newMappingItem,
+    //       ];
+    //       await existingMapping.save();
+    //     } else {
+    //       await didUserMappingRepository.create({
+    //         DID: did,
+    //         mapping_detail: [newMappingItem],
+    //       });
+    //     }
+
+    //     await numberRepo.update(
+    //       {
+    //         allocated_to: bodyReq.allocated_to,
+    //         voice_plan_id: bodyReq.voice_plan_id,
+    //       },
+    //       { where: { id: did } }
+    //     );
+
+    //     if (bodyReq.voice_plan_id) {
+    //       await voicePlanRepo.update(
+    //         { is_allocated: true },
+    //         { where: { id: bodyReq.voice_plan_id } }
+    //       );
+    //     }
+
+    //     successDIDs.push(did);
+    //     successActualNumbers.push(didData.actual_number);
+    //   } catch (err) {
+    //     failedDIDs.push({
+    //       did,
+    //       reason: err.message || "Unknown error",
+    //     });
+    //     continue;
+    //   }
+    // }
+
+
+    return res.status(200).json({
+      message: "DIDs allocated successfully",
+      data: {
+        total: bodyReq.DID.length,
+        processed: successDIDs.length,
+        failed: failedDIDs.length,
+        successDIDs,
+        failedDIDs,
+        successActualNumbers,
+      },
+    });
+  } catch (error) {
+    console.error("Allocation error:", error);
+    return res.status(500).json({
+      message: "Something went wrong during allocation",
+      error,
+    });
   }
-  
-  async function getAllocatedNumbers(req, res) {
-    try {
-      const allocatedToId = req.params.id;
-      const didMappings = await didUserMappingRepository.findAll({
-        where: {
-          mapping_detail: {
-            [Op.contains]: [
-              {
-                allocated_to: allocatedToId,
-                // active: true,
-              },
-            ],
-          },
-        },
-      });
-  
-      if (!didMappings || didMappings.length === 0) {
-        return res.status(StatusCodes.OK).json({
-          message: "No numbers allocated.",
-          data: [],
-          is_removal_button: false,
-        });
-      }
-  
-      // Map allocated info from first mapping_detail of each
-      const voicePlanMap = {};
-      const didIds = [];
-  
-      for (const mapEntry of didMappings) {
-        const firstMapping = mapEntry.mapping_detail[0];
-        voicePlanMap[mapEntry.DID] = firstMapping.voice_plan_id;
-        didIds.push(mapEntry.DID);
-      }
-
-      const numbers = await numberRepo.findMany(didIds);
-
-  
-      let allocatedToName = "";
-      const sampleVoicePlan = Object.values(voicePlanMap)[0];
-  
-      if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
+}
 
 
-        const user = await userRepo.findOne({id: allocatedToId });
-        allocatedToName = user?.username || "N/A";
-      } else if (req.user.role === USERS_ROLE.RESELLER) {
-        const company = await companyRepo.findOne({id: allocatedToId });
-        allocatedToName = company?.name || "N/A";
-      } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
-        const company = await companyRepo.findOne({id: allocatedToId });
-        if (company) {
-          allocatedToName = company.name;
-        } else {
-          const callCentre = await callCentreRepo.findOne({id: allocatedToId });
-          allocatedToName = callCentre?.name || "N/A";
-        }
-      }
-  
-      const allocatedBy = req.user.username;
-  
-      const formattedNumbers = numbers.map((num) => ({
-        ...num.toJSON(),
-        voice_plan_id: voicePlanMap[num.id] || null,
-        allocated_name: allocatedToName,
-        allocated_by: allocatedBy,
-      }));
-  
-      const allocatedAgain = await didUserMappingRepository.findAll({
-        where: {
-          mapping_detail: {
-            [Op.contains]: [
-              {
-                allocated_to: allocatedToId,
-                active: true,
-              },
-            ],
-          },
-        },
-      });
-  
-      const response = {
-        data: formattedNumbers,
-        is_removal_button: true,
-      };
-  
-      return res.status(StatusCodes.OK).json({
-        message: "Success",
-        data: response,
-      });
-  
-    } catch (error) {
-      console.error("Error fetching allocated numbers:", error);
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        message: "Error fetching allocated numbers",
-        error,
-      });
+async function getToAllocateNumbers(req, res) {
+  const allocatedToId = req.params.id;
+
+
+  try {
+
+    let data;
+
+    if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
+      data = await numberRepo.getAll({ where: { allocated_company_id: allocatedToId } });
     }
-  }  
+    else {
+      const roleToCheck = await userRepo.findOne({ id: allocatedToId });
 
-  async function removeAllocatedNumbers(req, res) {
-    const { DID, user_id } = req.body;
-
-    try {
-              for (const did of DID) {
-                  let allocatedNumbers = await didUserMappingRepository.checkMappingIfNotExists(did, {
-                      allocated_to: user_id,
-                  });
-      
-
-                  const childDetail = await didUserMappingRepository.checkMappingIfNotExists(did, {
-                      parent_id: allocatedNumbers.id,
-                      active: true
-                  })
-    
-                  if (childDetail) {
-                      ErrorResponse.message = `DID(s) assigned to child. Remove from that first!`;
-                      return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
-                  }
-      
-                  if (!allocatedNumbers) {
-                      ErrorResponse.message = `DID ${did} not found or not allocated to user.`;
-                      return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
-                  }
-      
-                  const superadminCheck = await userRepo.getByUserRole(USERS_ROLE.SUPER_ADMIN);
-
-                  const isSame = allocatedNumbers?.mapping_detail[0].parent_id.toString() === superadminCheck.id.toString();
-      
-      
-
-                  if (isSame) {
-                      // update did user mapping
-                      // await didUserMappingRepository.updateMappingDetail(allocatedNumbers.DID, { active: false, voice_plan_id : null, allocated_to:allocatedNumbers?.mapping_detail[0].allocated_to });
-      
-                      await didUserMappingRepository.deleteMappingDetail(did, {allocated_to: user_id})
-      
-                      // update numbers
-                      await numberRepo.update(did, { allocated_to: null, voice_plan_id : null  });
-      
-                      //update voice plan
-                      await voicePlanRepo.update(allocatedNumbers?.mapping_detail[0].voice_plan_id , {is_allocated : 0})
-                  } else {
-                      let allocatedToId
-
-                      if(req.user.role ===USERS_ROLE.SUPER_ADMIN)
-                      {
-                        allocatedToId = req.user.id
-                      }
-                      else if (req.user.role !== USERS_ROLE.RESELLER) {
-                          const getLoggedDetail = await userRepo.get(req.user.id)
-
-                          allocatedToId = getLoggedDetail?.companies?._id?.id
-                      } else {
-                          allocatedToId = req.user.id
-                      }
-      
-
-                      const parentDetail = await didUserMappingRepository.checkMappingIfNotExists(did, {allocated_to : allocatedToId});
-      
-    
-
-                      // update did user mapping
-                      await didUserMappingRepository.deleteMappingDetail(did, {allocated_to: user_id})
-
-        
-                      // await didUserMappingRepository.updateMappingDetail(allocatedNumbers.DID, { active: false, voice_plan_id : null , allocated_to :  allocatedNumbers?.mapping_detail[0].allocated_to});
-      
-                      // update numbers
-                      await numberRepo.update(did, { allocated_to: parentDetail.mapping_detail[0].allocated_to, voice_plan_id : parentDetail.mapping_detail[0].voice_plan_id });
-                  }
-              }
-  
-      SuccessRespnose.message = 'Success';
-      return res.status(StatusCodes.OK).json(SuccessRespnose);
-    } catch (error) {
-      ErrorResponse.message = error.message;
-      ErrorResponse.error = error;
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
-    }
-  }
-
-  async function setInboundRouting(req, res) {
-    const bodyReq = req.body;
-    try {
-      if (bodyReq.numberType === 'DID') {
-        await numberRepo.update(bodyReq.number, {
-          routing_id: bodyReq.id,
-          routing_type: bodyReq.action.toUpperCase(),
-          routing_destination: bodyReq.name,
-        });
+      if (roleToCheck.role === USERS_ROLE.SUPER_ADMIN) {
+        data = await numberRepo.getAll({ where: { allocated_to: null } });
       } else {
-        const getDetail = await numberRepo.findOne({ id: bodyReq.number });
-        const getDID = await numberRepo.findOne({ id: getDetail.routing_id });
-  
-        await numberRepo.update(getDID.id, {
-          routing_id: bodyReq.id,
-          routing_type: bodyReq.action.toUpperCase(),
-          routing_destination: bodyReq.name,
-        });
+        data = await numberRepo.getAll({ where: { allocated_to: allocatedToId } });
       }
-  
-      if (bodyReq.action === 'agent') {
-        await memberScheduleRepo.create({ ...bodyReq.agentSchedule, module_id: bodyReq.id });
-      }
-  
-      SuccessRespnose.message = 'Success';
-      return res.status(StatusCodes.OK).json(SuccessRespnose);
-    } catch (error) {
-      ErrorResponse.message = error.message;
-      ErrorResponse.error = error;
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
     }
+
+
+
+
+
+
+
+    SuccessRespnose.data = formatResponse.formatResponseIds(data, version);
+
+    SuccessRespnose.data = data.map(item => {
+      const obj = { ...item };
+      obj.created_at = obj.createdAt;
+      obj.updated_at = obj.updatedAt;
+      delete obj.createdAt;
+      delete obj.updatedAt;
+      return obj;
+    });
+
+    // console.log("SUCCESS", SuccessRespnose);
+    SuccessRespnose.message = 'Success';
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    ErrorResponse.message = error.message;
+    ErrorResponse.error = error;
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
   }
+}
+
+async function getAllocatedNumbers(req, res) {
+  try {
+    const allocatedToId = req.params.id;
+    const didMappings = await didUserMappingRepository.findAll({
+      where: {
+        mapping_detail: {
+          [Op.contains]: [
+            {
+              allocated_to: allocatedToId,
+              // active: true,
+            },
+          ],
+        },
+      },
+    });
+
+    if (!didMappings || didMappings.length === 0) {
+      return res.status(StatusCodes.OK).json({
+        message: "No numbers allocated.",
+        data: [],
+        is_removal_button: false,
+      });
+    }
+
+    // Map allocated info from first mapping_detail of each
+    const voicePlanMap = {};
+    const didIds = [];
+
+    for (const mapEntry of didMappings) {
+      const firstMapping = mapEntry.mapping_detail[0];
+      voicePlanMap[mapEntry.DID] = firstMapping.voice_plan_id;
+      didIds.push(mapEntry.DID);
+    }
+
+    const numbers = await numberRepo.findMany(didIds);
+
+
+    let allocatedToName = "";
+    const sampleVoicePlan = Object.values(voicePlanMap)[0];
+
+    if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
+
+
+      const user = await userRepo.findOne({ id: allocatedToId });
+      allocatedToName = user?.username || "N/A";
+    } else if (req.user.role === USERS_ROLE.RESELLER) {
+      const company = await companyRepo.findOne({ id: allocatedToId });
+      allocatedToName = company?.name || "N/A";
+    } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
+      const company = await companyRepo.findOne({ id: allocatedToId });
+      if (company) {
+        allocatedToName = company.name;
+      } else {
+        const callCentre = await callCentreRepo.findOne({ id: allocatedToId });
+        allocatedToName = callCentre?.name || "N/A";
+      }
+    }
+
+    const allocatedBy = req.user.username;
+
+    const formattedNumbers = numbers.map((num) => ({
+      ...num.toJSON(),
+      voice_plan_id: voicePlanMap[num.id] || null,
+      allocated_name: allocatedToName,
+      allocated_by: allocatedBy,
+    }));
+
+    const allocatedAgain = await didUserMappingRepository.findAll({
+      where: {
+        mapping_detail: {
+          [Op.contains]: [
+            {
+              allocated_to: allocatedToId,
+              active: true,
+            },
+          ],
+        },
+      },
+    });
+
+    const response = {
+      data: formattedNumbers,
+      is_removal_button: true,
+    };
+
+    return res.status(StatusCodes.OK).json({
+      message: "Success",
+      data: response,
+    });
+
+  } catch (error) {
+    console.error("Error fetching allocated numbers:", error);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: "Error fetching allocated numbers",
+      error,
+    });
+  }
+}
+
+async function removeAllocatedNumbers(req, res) {
+  const { DID, user_id } = req.body;
+
+  try {
+    for (const did of DID) {
+      let allocatedNumbers = await didUserMappingRepository.checkMappingIfNotExists(did, {
+        allocated_to: user_id,
+      });
+
+
+      const childDetail = await didUserMappingRepository.checkMappingIfNotExists(did, {
+        parent_id: allocatedNumbers.id,
+        active: true
+      })
+
+      if (childDetail) {
+        ErrorResponse.message = `DID(s) assigned to child. Remove from that first!`;
+        return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+      }
+
+      if (!allocatedNumbers) {
+        ErrorResponse.message = `DID ${did} not found or not allocated to user.`;
+        return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+      }
+
+      const superadminCheck = await userRepo.getByUserRole(USERS_ROLE.SUPER_ADMIN);
+
+      const isSame = allocatedNumbers?.mapping_detail[0].parent_id.toString() === superadminCheck.id.toString();
+
+
+
+      if (isSame) {
+        // update did user mapping
+        // await didUserMappingRepository.updateMappingDetail(allocatedNumbers.DID, { active: false, voice_plan_id : null, allocated_to:allocatedNumbers?.mapping_detail[0].allocated_to });
+
+        await didUserMappingRepository.deleteMappingDetail(did, { allocated_to: user_id })
+
+        // update numbers
+        await numberRepo.update(did, { allocated_to: null, voice_plan_id: null });
+
+        //update voice plan
+        await voicePlanRepo.update(allocatedNumbers?.mapping_detail[0].voice_plan_id, { is_allocated: 0 })
+      } else {
+        let allocatedToId
+
+        if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
+          allocatedToId = req.user.id
+        }
+        else if (req.user.role !== USERS_ROLE.RESELLER) {
+          const getLoggedDetail = await userRepo.get(req.user.id)
+
+          allocatedToId = getLoggedDetail?.companies?._id?.id
+        } else {
+          allocatedToId = req.user.id
+        }
+
+
+        const parentDetail = await didUserMappingRepository.checkMappingIfNotExists(did, { allocated_to: allocatedToId });
+
+
+
+        // update did user mapping
+        await didUserMappingRepository.deleteMappingDetail(did, { allocated_to: user_id })
+
+
+        // await didUserMappingRepository.updateMappingDetail(allocatedNumbers.DID, { active: false, voice_plan_id : null , allocated_to :  allocatedNumbers?.mapping_detail[0].allocated_to});
+
+        // update numbers
+        await numberRepo.update(did, { allocated_to: parentDetail.mapping_detail[0].allocated_to, voice_plan_id: parentDetail.mapping_detail[0].voice_plan_id });
+      }
+    }
+
+    SuccessRespnose.message = 'Success';
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    ErrorResponse.message = error.message;
+    ErrorResponse.error = error;
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
+}
+
+async function setInboundRouting(req, res) {
+  const bodyReq = req.body;
+  try {
+    if (bodyReq.numberType === 'DID') {
+      await numberRepo.update(bodyReq.number, {
+        routing_id: bodyReq.id,
+        routing_type: bodyReq.action.toUpperCase(),
+        routing_destination: bodyReq.name,
+      });
+    } else {
+      const getDetail = await numberRepo.findOne({ id: bodyReq.number });
+      const getDID = await numberRepo.findOne({ id: getDetail.routing_id });
+
+      await numberRepo.update(getDID.id, {
+        routing_id: bodyReq.id,
+        routing_type: bodyReq.action.toUpperCase(),
+        routing_destination: bodyReq.name,
+      });
+    }
+
+    if (bodyReq.action === 'agent') {
+      await memberScheduleRepo.create({ ...bodyReq.agentSchedule, module_id: bodyReq.id });
+    }
+
+    SuccessRespnose.message = 'Success';
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    ErrorResponse.message = error.message;
+    ErrorResponse.error = error;
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
+}
 
 
 module.exports = {
-    create,
-    uploadNumbers,
-    getAll,
-    get,
-    deleteNumber,
-    update,
-    bulkUpdate,
-    getDIDNumbers,
-    getAllStatus,
-    assignBulkDID,
-    assignIndividualDID,
-    updateStatus,
-    DIDUserMapping,
-    getToAllocateNumbers,
-    getAllocatedNumbers,
-    removeAllocatedNumbers,
-    setInboundRouting,
-    getNumbersToRemove,
+  create,
+  uploadNumbers,
+  getAll,
+  get,
+  deleteNumber,
+  update,
+  bulkUpdate,
+  getDIDNumbers,
+  getAllStatus,
+  assignBulkDID,
+  assignIndividualDID,
+  updateStatus,
+  DIDUserMapping,
+  getToAllocateNumbers,
+  getAllocatedNumbers,
+  removeAllocatedNumbers,
+  setInboundRouting,
+  getNumbersToRemove,
 }

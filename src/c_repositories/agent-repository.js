@@ -51,8 +51,6 @@ class AgentRepository extends CrudRepository {
 
   async update(id, data) {
 
-    console.log("ID", id,data);
-
     try {
       const [updatedRows, [updatedAgent]] = await Agents.update(data, {
         where: { id },

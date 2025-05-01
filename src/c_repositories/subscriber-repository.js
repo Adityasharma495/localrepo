@@ -10,7 +10,7 @@ class SubscriberRepository extends CrudRepository {
     try {
       const username = String(data.username).trim();
       const domain = String(data.domain).trim();
-
+      
       const existing = await this.model.findOne({
         where: {
           username,
@@ -19,7 +19,6 @@ class SubscriberRepository extends CrudRepository {
       });
 
       if (existing) {
-        console.log("Subscriber already exists:", existing.toJSON());
         return existing;
       }
 
@@ -28,8 +27,6 @@ class SubscriberRepository extends CrudRepository {
         username,
         domain
       });
-
-      console.log("New Subscriber Added:", newSubscriber.toJSON());
       return newSubscriber;
 
     } catch (error) {

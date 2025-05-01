@@ -3,8 +3,9 @@ const { Op } = require("sequelize");
 const {
   ExtensionRepository,
   UserJourneyRepository,
-  SubscriberRepository,
 } = require("../c_repositories");
+
+const {SubscriberRepository} = require("../repositories")
 const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../utils/common");
 const AppError = require("../utils/errors/app-error");
 const {
@@ -18,7 +19,7 @@ const version = process.env.API_V || "1";
 
 const extensionRepo = new ExtensionRepository();
 const userJourneyRepo = new UserJourneyRepository();
-const subscriberRepo = new SubscriberRepository();
+
 
 async function createExtension(req, res) {
   const bodyReq = req.body;
@@ -51,7 +52,7 @@ async function createExtension(req, res) {
     });
     responseData.extension = extension;
 
-    await subscriberRepo.addSubscriber({
+    await SubscriberRepository.addSubscriber({
       username: bodyReq.extension.extension,
       domain: BACKEND_BASE_URL,
       password: bodyReq.extension.password,

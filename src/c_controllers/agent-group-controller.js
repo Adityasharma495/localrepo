@@ -157,7 +157,6 @@ async function getAssignedAgents(req, res) {
     const agentGroup = await agentGroupRepo.get(groupId);
 
     if (!agentGroup || agentGroup.agents==null) {
-      console.log("No agents found");
       transformedAgents = []
     } else {
       transformedAgents = await Promise.all(
@@ -321,8 +320,6 @@ async function updateMemberScheduleAgent(req, res) {
   try {
     const agentGroup = await agentGroupRepo.get(id);
 
-    console.log("AGENT GROUPS HERE", agentGroup);
-
     let scheduleData;
     const occurrenceCount = agentGroup.agents.filter(agent => 
       agent.member_schedule_id.toString() === bodyReq.id
@@ -344,8 +341,6 @@ async function updateMemberScheduleAgent(req, res) {
         }
         return agent;
       });
-
-      console.log("UPDATED AGENTS", updatedAgents);
 
       await agentGroupRepo.update(id, {agents : updatedAgents})
       

@@ -120,8 +120,6 @@ function modifyIVRUpdateBodyRequest(req,res,next){
 
 function validateDeleteRequest(req, res, next) {
     const bodyReq = req.body;
-
-  console.log('bodyReq')
     // Check if content type is JSON
     if (!req.is('application/json')) {
         ErrorResponse.message = 'Something went wrong while Deleting IVR';

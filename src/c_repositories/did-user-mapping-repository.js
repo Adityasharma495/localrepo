@@ -167,7 +167,13 @@ class DIDUserMappingRepository extends CrudRepository {
         },
         { where: { DID: documentId } }
       );
-      return result;              // ← return the raw update result
+      const updatedRecord = await this.model.findOne({
+        where: { DID: documentId }
+      });
+  
+
+      console.log("MAPPING DETAILS", JSON.stringify(updatedRecord.mapping_detail, null, 2));
+      return updatedRecord;  // ✅ return the full updated data
     } catch (error) {
       console.error("Error adding mapping detail:", error);
       throw error;
@@ -296,6 +302,19 @@ class DIDUserMappingRepository extends CrudRepository {
     }
   }
   
+  async countLevelEntry(did, level) {
+    const doc = await this.model.findOne({ DID: did });
+  
+    if (!doc || !doc.mapping_detail) return 0;
+  
+    const count = doc.mapping_detail.filter(item => {
+      const levelStr = item.level;
+      const levelNum = parseInt(levelStr, 10);
+      return levelNum >= level;
+    }).length;
+  
+    return count;
+  }
   async getAll(options) {
     try {
       let whereCondition = {};

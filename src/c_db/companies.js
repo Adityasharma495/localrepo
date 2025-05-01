@@ -60,14 +60,14 @@ const Company = sequelize.define(COMPANY_MODEL_NAME, {
   underscored: true,
   hooks: {
     beforeCreate: (company) => {
-      const istOffset = 5.5 * 60 * 60 * 1000;
-      const istDate = new Date(Date.now() + istOffset);
+      // const istOffset = 5.5 * 60 * 60 * 1000;
+      const istDate = new Date(Date.now());
       company.created_at = istDate;
       company.updated_at = istDate;
     },
     beforeUpdate: (company) => {
-      const istOffset = 5.5 * 60 * 60 * 1000;
-      const istDate = new Date(Date.now() + istOffset);
+      // const istOffset = 5.5 * 60 * 60 * 1000;
+      const istDate = new Date(Date.now());
       company.updated_at = istDate;
     },
     afterUpdate: async (company, options) => {

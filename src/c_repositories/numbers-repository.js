@@ -1,6 +1,6 @@
 const { Op } = require("sequelize");
 const CrudRepository = require("./crud-repository");
-const { Numbers, VoicePlan } = require("../c_db");
+const { Numbers, VoicePlan , Company} = require("../c_db");
 const { constants } = require("../utils/common");
 const numberStatusValues = constants.NUMBER_STATUS_VALUE;
 
@@ -236,28 +236,43 @@ class NumbersRepository extends CrudRepository {
   }
 
   async update(id, data) {
-
-    console.log("LAST UPDATE AND DATA", id, data);
-
   
     try {
-      await this.model.update(data, {
-        where: { id: id }
+      // Check company validity only if allocated_company_id is present
+      if (data.allocated_company_id) {
+        const companyExists = await Company.findOne({
+          where: { id: data.allocated_company_id }
+        });
+  
+        if (!companyExists) {
+          console.warn(`Company not found: ${data.allocated_company_id}. Skipping company update.`);
+          delete data.allocated_company_id; // Remove invalid company ID to avoid FK constraint error
+        }
+      }
+  
+      // Proceed to update with remaining valid data
+      const [updateCount] = await this.model.update(data, {
+        where: { id }
       });
   
-      const response = await this.model.findOne({ where: { id } });
-
-      console.log("RETUNING RESPONSE", response);
-      return response;
+      if (updateCount === 0) {
+        console.warn(`No rows updated for ID: ${id}`);
+        return null;
+      }
+  
+      const updatedRecord = await this.model.findOne({ where: { id } });
+      return updatedRecord;
+  
     } catch (error) {
+      console.error("ERROR in update():", error);
       throw error;
     }
   }
   
+  
+  
 
   async findOneWithVoicePlan(conditions) {
-
-    console.log("CONDITIONS", conditions);
     try {
         const response = await this.model.findOne({
             where: {
