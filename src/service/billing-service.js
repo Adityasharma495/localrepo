@@ -40,7 +40,7 @@ const connectCockroach = async () => {
 const inbound = (detail,level) =>{
 
     let inboundDuration = null;
-    if (detail.level === level && detail.voice_plan_id && Array.isArray(detail.voice_plan_id.plans))
+    if (detail.level === String(level) && detail.voice_plan_id && Array.isArray(detail.voice_plan_id.plans))
     {
        const inboundPlan = detail.voice_plan_id.plans.find(plan => plan.plan_type === "INBOUND");
        if (inboundPlan) 
@@ -123,9 +123,9 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
         
         let finalUserCreditsDeduction = [];
 
-        if(mappingDetails && mappingDetails.mapping_detail.length>0){
+        if(mappingDetails && mappingDetails.mapping_detial.length>0){
              
-            const mappingArray = mappingDetails.mapping_detail;
+            const mappingArray = mappingDetails.mapping_detial;
 
             for(let i =1;i<mappingArray.length;i++){
 
@@ -282,11 +282,11 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
 
                 console.log(`DID : ${did} , Billing Duration : ${billingDuration} `);
 
-                const didMappingDetails = didUserMappingRepo.findDidMappingDetails({did : did});
+                const didMappingDetails = await didUserMappingRepo.findDidMappingDetails({did : did});
 
                 console.log("User DID Mapping Detials : "+JSON.stringify(didMappingDetails));
 
-                const finalDeduction = await billingCalculation(didMappingDetails,billingDuration = billingJson.billingDuration);
+                const finalDeduction = await billingCalculation(didMappingDetails,billingDuration);
 
                 console.log("Billing Structure Deduction : "+JSON.stringify(finalDeduction));
 
@@ -296,7 +296,7 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
             catch (error) {
                  Logger.error(
                    `Incoming Report -> unable to create Incoming Report: ${JSON.stringify(
-                     report_data
+                     error
                    )} error: ${JSON.stringify(error)}`
             );
            }
