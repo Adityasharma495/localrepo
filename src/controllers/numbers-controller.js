@@ -1080,7 +1080,6 @@ async function getToAllocateNumbers(req, res) {
         } else {
             data = await numberRepo.getAllocatedNumbers(allocatedToId);
         }
-
         SuccessRespnose.data = data;
 
         SuccessRespnose.message = 'Success';
