@@ -71,7 +71,7 @@ async function create(req, res) {
 
     const userJourney = await userJourneyRepo.create({
       module_name: 'NUMBERS',
-      action: 'ADD',
+      action: ACTION_LABEL.ADD,
       created_by: req.user.id,
     });
 
@@ -150,7 +150,7 @@ async function update(req, res) {
 
     await userJourneyRepo.create({
       module_name: 'NUMBERS',
-      action: 'EDIT',
+      action: ACTION_LABEL.EDIT,
       created_by: req.user.id,
     });
 
@@ -487,7 +487,7 @@ async function deleteNumber(req, res) {
 
     await userJourneyRepo.create({
       module_name: 'NUMBERS',
-      action: 'DELETE',
+      action: ACTION_LABEL.DELETE,
       created_by: req.user.id,
     });
 
@@ -573,7 +573,7 @@ async function assignBulkDID(req, res) {
 
         await userJourneyRepo.create({
           module_name: 'NUMBERS',
-          action: 'ASSIGN_BULK_DID',
+          action: ACTION_LABEL.ASSIGN_BULK_DID,
           created_by: req.user.id,
         });
 
@@ -609,7 +609,7 @@ async function assignIndividualDID(req, res) {
 
     await userJourneyRepo.create({
       module_name: 'NUMBERS',
-      action: 'ASSIGN_INDIVIDUAL_DID',
+      action: ACTION_LABEL.ASSIGN_INDIVIDUAL_DID,
       created_by: req.user.id,
     });
 
@@ -653,6 +653,9 @@ async function DIDUserMapping(req, res) {
   const failedDIDs = [];
   const successActualNumbers = [];
 
+
+  
+
   try {
     if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
       for (const did of bodyReq.DID) {
@@ -677,6 +680,7 @@ async function DIDUserMapping(req, res) {
 
           await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
           successDIDs.push(did);
+
           successActualNumbers.push(didDetail.map((data) => data.actual_number))
 
         } catch (err) {
@@ -685,16 +689,27 @@ async function DIDUserMapping(req, res) {
       }
     } else {
 
+      console.log("BODY REQM", bodyReq);
+
       for (const did of bodyReq.DID) {
         try {
 
           const parentVoicePlanDetailId = (await numberRepo.findOneWithVoicePlan({ id: Number(did) }))?.voice_plan_id;
 
+          
+
           const ParentVoicePlanDetails = await voicePlanRepo.get(parentVoicePlanDetailId)
+
+          console.log("PARENT VOICE PLAN DETAIL", ParentVoicePlanDetails);
 
           const currentPlanDetail = await voicePlanRepo.findOne({ id: bodyReq?.voice_plan_id });
 
+
+          console.log("CURRENT PLAN DETAIL", currentPlanDetail);
+
           const didDetail = await numberRepo.get(did)
+
+          console.log("DID DEATIL", didDetail);
 
           if (ParentVoicePlanDetails) {
             for (const plan1 of currentPlanDetail.plans) {
@@ -732,24 +747,34 @@ async function DIDUserMapping(req, res) {
 
           if (req.user.role === USERS_ROLE.RESELLER) {
 
-            console.log("RESSLER CAME HGERE", bodyReq);
-
             const isCompanyUser = await companyRepo.findOne({ id: bodyReq.allocated_to })
 
-            console.log("IS COMAPNY", isCompanyUser);
+
+            console.log("IS COMPANY USER", isCompanyUser);
+
             if (isCompanyUser) {
               level = DID_ALLOCATION_LEVEL.COMPANY_ADMIN
+
+              console.log("EVEL", level);
+
             } else {
-              const count = await didUserMappingRepository.countLevelEntry(did, 2)
+              // const count = await didUserMappingRepository.countLevelEntry(did, 2)
 
-              console.log("COUNT", count);
+              // console.log("COUNT", count);
 
-              if (count === 0) {
-                level = DID_ALLOCATION_LEVEL.SUB_RESELLER
-              } else {
-                level = `${DID_ALLOCATION_LEVEL.SUB_RESELLER}_${Number(count)}`
-              }
+              // if (count === 0) {
+              //   level = DID_ALLOCATION_LEVEL.SUB_RESELLER
+              // } else {
+              //   level = `${DID_ALLOCATION_LEVEL.SUB_RESELLER}_${Number(count)}`
+              // }
+
+              level = DID_ALLOCATION_LEVEL.SUB_RESELLER
+
             }
+
+
+            console.log("LAST LEVEL", level);
+
 
           }
           else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
@@ -772,14 +797,24 @@ async function DIDUserMapping(req, res) {
             voice_plan_id: bodyReq?.voice_plan_id,
           });
 
-           await numberRepo.update(did, {
+
+          console.log("MAP", mapp);
+
+
+          const upadtedNumber =  await numberRepo.update(did, {
             allocated_company_id: bodyReq.allocated_to,
             voice_plan_id: bodyReq?.voice_plan_id
           });
 
-          await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
+            console.log("UPDATED NUMBER", upadtedNumber);
+
+
+          const voicePlane= await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
+
+          console.log("VOICE PLANE", voicePlane);
+
           successDIDs.push(did);
-          successActualNumbers.push(didDetail.actual_number)
+          successActualNumbers.push(didDetail.map((data) => data.actual_number))
         } catch (err) {
           continue;
         }

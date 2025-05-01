@@ -10,7 +10,7 @@ class SubscriberRepository extends CrudRepository {
     try {
       const username = String(data.username).trim();
       const domain = String(data.domain).trim();
-
+      
       const existing = await this.model.findOne({
         where: {
           username,

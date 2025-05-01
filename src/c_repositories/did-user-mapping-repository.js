@@ -165,7 +165,13 @@ class DIDUserMappingRepository extends CrudRepository {
         },
         { where: { DID: documentId } }
       );
-      return result;              // ← return the raw update result
+      const updatedRecord = await this.model.findOne({
+        where: { DID: documentId }
+      });
+  
+
+      console.log("MAPPING DETAILS", JSON.stringify(updatedRecord.mapping_detail, null, 2));
+      return updatedRecord;  // ✅ return the full updated data
     } catch (error) {
       console.error("Error adding mapping detail:", error);
       throw error;

@@ -236,7 +236,6 @@ class NumbersRepository extends CrudRepository {
   }
 
   async update(id, data) {
-    console.log("IDS AND DATA", id, data);
   
     try {
       // Check company validity only if allocated_company_id is present
@@ -262,7 +261,6 @@ class NumbersRepository extends CrudRepository {
       }
   
       const updatedRecord = await this.model.findOne({ where: { id } });
-      console.log("RETURNING RESULT", updatedRecord);
       return updatedRecord;
   
     } catch (error) {
