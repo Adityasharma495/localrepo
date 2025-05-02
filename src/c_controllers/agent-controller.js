@@ -3,9 +3,10 @@ const {SuccessRespnose , ErrorResponse, ResponseFormatter} = require("../utils/c
 const AppError = require("../utils/errors/app-error");
 const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE} = require('../utils/common/constants');
 const { Logger } = require("../config");
-const {AgentRepository, ExtensionRepository, UserRepository, SubUserLicenceRepository, TelephonyProfileRepository, UserJourneyRepository, TelephonyProfileItemsRepository} = require('../c_repositories');
+const {AgentRepository, ExtensionRepository, UserRepository, SubUserLicenceRepository, TelephonyProfileRepository, UserJourneyRepository, TelephonyProfileItemsRepository, AgentGroupRepository} = require('../c_repositories');
 const { Op } = require("sequelize");
 
+const agentGroupRepo = new AgentGroupRepository();
 
 
 
@@ -537,6 +538,8 @@ async function toggleStatus(req, res) {
     // Fetch the agent by ID
     const agent = await agentRepo.get(id);
 
+    const agentUser = await userRepo.getByName(agent.agent_name)
+
     if (!agent) {
       return res
         .status(StatusCodes.NOT_FOUND)
@@ -548,18 +551,47 @@ async function toggleStatus(req, res) {
 
     const subLicenceData = await subUserLicenceRepo.findOne({user_id : req.user.id})
 
-    // if (Number(newStatus)) {
-    //   if (subLicenceData.available_licence.live_agent !== 0) {
-    //      subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent - 1;
-    //   } else {
-    //     ErrorResponse.message = 'Agent Live Limit Exceeds';
-    //     return res
-    //       .status(StatusCodes.BAD_REQUEST)
-    //       .json(ErrorResponse);
-    //   }
-    // } else {
-    //   subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent + 1;
-    // }
+    if (Number(newStatus)) {
+      if (subLicenceData.available_licence.live_agent !== 0) {
+         subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent - 1;
+
+         const userLoginCount = await userRepo.getAll({
+            where: {
+              id: agentUser.id,
+              logout_at: null
+            }
+         });
+
+         if (userLoginCount && userLoginCount.length > 0) {
+            ErrorResponse.message = 'User already logged in';
+            return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+         }
+
+         await userRepo.update(agentUser.id, {
+            login_at: Date.now(),
+            logout_at: null,
+            duration: null
+         });
+      } else {
+        ErrorResponse.message = 'Agent Live Limit Exceeds';
+        return res
+          .status(StatusCodes.BAD_REQUEST)
+          .json(ErrorResponse);
+      }
+    } else {
+      subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent + 1;
+
+      await userRepo.update(agentUser.id, {
+        logout_at: Date.now(),
+      })
+
+      const userData = await userRepo.findOne({id: agentUser.id})
+      const duration = getTimeDifferenceInSeconds(userData.login_at, userData.logout_at)
+
+      await userRepo.update(agentUser.id, {
+        duration
+      })
+    }
 
     // Update the agent's status
     const updatedAgent = await agentRepo.update(id, { login_status: newStatus });
@@ -605,6 +637,125 @@ async function toggleStatus(req, res) {
   }
 }
 
+function getTimeDifferenceInSeconds(login, logout) {
+  const loginTimestamp = Date.parse(login);
+  const logoutTimestamp = Date.parse(logout);
+
+  const diffMs = logoutTimestamp - loginTimestamp;
+  const diffSeconds = Math.floor(diffMs / 1000);
+  return diffSeconds;
+}
+
+async function getAgentRealTimeData(req, res) {
+  //headers for server-sent events
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  let isClientConnected = { value: true };
+
+  try {
+    req.on('close', () => {
+      isClientConnected.value = false;
+      res.end();
+    });
+
+    await sendRealTimeAgentData(res, isClientConnected);
+
+  } catch (error) {
+    ErrorResponse.error = { name: error.name, message: error.message };
+    ErrorResponse.message = error.message;
+
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    if (error instanceof AppError) {
+      statusCode = error.statusCode;
+    }
+
+    Logger.error(`Real Time Data -> Error retrieving Real Time Data Of Agents, error: ${error}`);
+
+    return res.status(statusCode).json(ErrorResponse);
+
+  }
+
+}
+
+async function sendRealTimeAgentData(res, isClientConnected) {
+  try {
+    if (!isClientConnected.value) return;
+    const realTimeAgentData = await agentRealTimeData();
+
+    res.write(`data: ${JSON.stringify(realTimeAgentData)}\n\n`);
+
+  } catch (error) {
+    ErrorResponse.error = { name: error.name, message: error.message };
+    ErrorResponse.message = error.message;
+
+    Logger.error(`Report -> Error retrieving Agent real time data, error: ${error}`);
+  }
+
+  if (isClientConnected.value) {
+      setTimeout(() => sendRealTimeAgentData(res, isClientConnected), 4000);
+  }
+}
+
+async function agentRealTimeData() {
+  try {
+    const agentData = await agentRepo.findAllData();
+    const agentNames = agentData.map(agent => agent.agent_name);
+    const agentIds = agentData.map(agent => agent.id);
+
+    // Fetch users and agent groups
+    const users = await userRepo.getByNameBulk(agentNames);
+    const agentGroups = await agentGroupRepo.getAll(agentData[0]?.created_by); // Full group list
+
+    // Map users by name
+    const userMap = new Map();
+    users.forEach(user => userMap.set(user.name, user));
+
+    // Map agent_id to all associated groups
+    const agentToGroupsMap = new Map();
+    agentGroups.forEach(group => {
+      group.agents.forEach(agentEntry => {
+        const agentId = agentEntry.agent_id.toString();
+        if (!agentToGroupsMap.has(agentId)) {
+          agentToGroupsMap.set(agentId, []);
+        }
+        agentToGroupsMap.get(agentId).push(group);
+      });
+    });
+
+    // Combine data
+    const combinedData = agentData.map(agent => {
+      const agentIdStr = agent.id.toString();
+      const assignedGroups = agentToGroupsMap.get(agentIdStr) || [];
+
+      // Get groups where this agent is NOT assigned
+      const noAssignedGroup = agentGroups.filter(group =>
+        group.agents.every(entry => entry.agent_id.toString() !== agentIdStr)
+      );
+
+      return {
+        agent: agent,
+        user: userMap.get(agent.agent_name) || null,
+        agentGroup: assignedGroups,
+        noAssignedGroup: noAssignedGroup,
+      };
+    });
+
+    SuccessRespnose.data = combinedData;
+    SuccessRespnose.message = "Success";
+
+    Logger.info(`Real Time Data -> received all successfully`);
+    return SuccessRespnose;
+
+  } catch (error) {
+    ErrorResponse.error = { name: error.name, message: error.message };
+    ErrorResponse.message = error.message;
+
+    Logger.error(`Report -> Error retrieving Agent real time data, error: ${error}`);
+  }
+}
+
 module.exports={
     createAgent,
     getAll,
@@ -612,5 +763,8 @@ module.exports={
     deleteAgent,
     updateAgent,
     toggleStatus,
-    updateAllocation
+    updateAllocation,
+    agentRealTimeData,
+    sendRealTimeAgentData,
+    getAgentRealTimeData,
 }

@@ -152,6 +152,15 @@ CallCenter.belongsToMany(User, {
   otherKey: 'user_id',
 });
 
+Agents.hasOne(TelephonyProfile, {
+  foreignKey: 'created_by',
+  as: 'agentTelephony',
+});
+
+TelephonyProfile.belongsTo(User, {
+  foreignKey: 'user_id',
+});
+
 module.exports = { 
     Agents,
     User,

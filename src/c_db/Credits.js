@@ -79,7 +79,7 @@ const Credit = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        isIn: [['addition', 'deduction']] 
+        isIn: [['addition', 'deduction', 'inbound_deduction']] 
       }
     },    
     created_at: {
