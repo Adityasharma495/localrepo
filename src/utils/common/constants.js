@@ -150,8 +150,8 @@ const OPERATOR_TYPES = {
 }
 
 const USER_CREDITS_ACTION = {
-    ADD: "addition",
-    DEDUCT: "deduction"
+    ADD: "Add",
+    DEDUCT: "Deduct"
   }
 
 const OPERATOR_TYPES_LABEL = {
