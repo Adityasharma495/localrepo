@@ -253,6 +253,8 @@ async function validateAgentRemove(req,res,next)
 {
     const bodyReq = req.body
 
+    console.log("BODY REQUEST", );
+
     if (!req.is('application/json')) {
         ErrorResponse.message = 'Something went wrong while scheduling time';
         ErrorResponse.error = new AppError(['Invalid content type, incoming request must be in application/json format'], StatusCodes.BAD_REQUEST);

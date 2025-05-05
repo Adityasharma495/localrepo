@@ -26,4 +26,7 @@ router.post("/delete", AuthMiddleware.validateUser, AgentGroupMiddleware.validat
 // UPDATE GROUPS
 router.post('/:id',AuthMiddleware.validateUser,AgentGroupMiddleware.modifyAgentGroupUpdateBodyRequest,AgentGroupController.updateAgentGroup)
 
+
+router.post("/remove-agent/:id", AuthMiddleware.validateUser,AgentGroupMiddleware.validateAgentRemove,AgentGroupController.removeAgent);
+
 module.exports = router;

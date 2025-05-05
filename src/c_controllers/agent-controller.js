@@ -446,13 +446,16 @@ async function updateAgent(req, res) {
     const responseData = {};
     const currentData = await agentRepo.get(uid);
 
+
     // Check for duplicate agent_number if it is being changed
-    if (currentData.agent_number !== bodyReq.agent.agent_number) {
+    if (Number(currentData.agent_number) !== bodyReq.agent.agent_number) {
       const numberCondition = {
         created_by: req.user.id,
         agent_number: bodyReq.agent.agent_number
       };
+
       const numberDuplicate = await agentRepo.findOne(numberCondition);
+
       if (numberDuplicate) {
         ErrorResponse.message = 'Agent Number already exists';
         return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);

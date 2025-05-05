@@ -634,10 +634,10 @@ async function updateUser(req, res) {
     if (req.user.role === USERS_ROLE.SUPER_ADMIN || req.user.role === USERS_ROLE.SUB_SUPERADMIN || req.user.role === USERS_ROLE.RESELLER) {
 
 
-      if(req.user.role === USERS_ROLE.SUB_SUPERADMIN || req.user.role === USERS_ROLE.RESELLER)
+      if((req.user.role === USERS_ROLE.SUB_SUPERADMIN || req.user.role === USERS_ROLE.RESELLER) && bodyReq.company)
       {
-        const companyDetail = await companyRepo.findOne({ id: bodyReq.company }) //null
-        const companyId = companyDetail.id // null
+        const companyDetail = await companyRepo.findOne({ id: bodyReq.company }) 
+        const companyId = companyDetail.id 
 
         if (companyId) {
           const existingUserCompany = await UserCompany.findOne({
@@ -747,6 +747,7 @@ async function updateUser(req, res) {
 
       
 
+
       const total_licence = loggedInData.sub_user_licence.total_licence
       const available_licence = loggedInData.sub_user_licence.available_licence
 
@@ -757,6 +758,8 @@ async function updateUser(req, res) {
 
 
       const updated_licence = bodyReq.user.sub_licence
+
+
       // Compare each role and return immediately if an error is found
       for (const key of Object.keys(used_licence)) {
         if (used_licence[key] > (updated_licence[key] || 0)) {
@@ -782,6 +785,7 @@ async function updateUser(req, res) {
 
       if(bodyReq.user.company)
         {
+          
           const companyDetail = await companyRepo.findOne({ id: bodyReq.company }) 
           const companyId = companyDetail.id 
   

@@ -429,6 +429,66 @@ async function deleteAgentGroup(req, res) {
 }
 
 
+
+async function removeAgent(req, res) {
+  const { id } = req.params; 
+  const bodyReq = req.body; 
+
+  try {
+    const agentGroup = await agentGroupRepo.get(id);
+    const targetAgentId = bodyReq.agent_id
+
+
+    console.log("AGENT GROUP", agentGroup);
+    console.log("TARGET AGENT ID", targetAgentId);
+
+    
+    const removedAgent = agentGroup.agents.find(agent => agent.agent_id.toString() === targetAgentId);
+    const removedMemberScheduleId = removedAgent ? removedAgent.member_schedule_id : null;
+
+    // Filter out the agent from the array
+    const updatedAgents = agentGroup.agents.filter(agent => agent.agent_id.toString() !== targetAgentId);
+
+
+    const occurrenceCount = updatedAgents.filter(agent => 
+      agent.member_schedule_id.toString() === removedMemberScheduleId
+    ).length;
+
+    if (occurrenceCount !== 0) {
+      await agentGroupRepo.update(id, {agents : updatedAgents})
+      await agentRepo.update(targetAgentId, {is_allocated: 0})
+      
+    } else {
+      await agentGroupRepo.update(id, {agents : updatedAgents})
+      await agentRepo.update(targetAgentId, {is_allocated: 0})
+    }
+
+    // Success response
+    SuccessRespnose.message = "Agent time schedule updated successfully.";
+    SuccessRespnose.data = updatedAgents;
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    if (error.name === "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Invalid agent ID.";
+    }
+
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `Agent -> Failed to update time schedule for Agent ID: ${id}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+
 module.exports = {
     createAgentGroup,
     getAll,
@@ -437,4 +497,5 @@ module.exports = {
     updateAgentGroup,
     updateMemberScheduleAgent,
     deleteAgentGroup,
+    removeAgent
 }

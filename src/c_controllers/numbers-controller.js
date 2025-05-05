@@ -378,11 +378,11 @@ async function getAll(req, res) {
 
     const getLoggedDetail = await userRepo.get(req.user.id);
 
-
     if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
       idToCheck = getLoggedDetail?.companies?._id;
     } else if (req.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
-      idToCheck = getLoggedDetail?.callcenters?._id;
+      console.log("CAME HERE");
+      idToCheck = getLoggedDetail?.call_centres?._id;
     } else {
       idToCheck = req.user.id;
     }
