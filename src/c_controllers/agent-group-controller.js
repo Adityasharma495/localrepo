@@ -167,7 +167,7 @@ async function getAssignedAgents(req, res) {
             scheduleData = await memberScheduleRepo.get(agent.member_schedule_id);
           }
           return {
-            id: agentGroup._id,
+            id: agentGroup.id,
             group_name: agentGroup.group_name,
             agent: agentData,
             schedule: scheduleData,
@@ -427,6 +427,57 @@ async function deleteAgentGroup(req, res) {
     return res.status(statusCode).json(ErrorResponse);
   }
 }
+async function removeAgent(req, res) {
+  const { id } = req.params;
+  const { agent_id: targetAgentId } = req.body;
+
+  try {
+    const agentGroup = await agentGroupRepo.get(id);
+    if (!agentGroup) {
+      ErrorResponse.message = "Agent group not found";
+      return res.status(StatusCodes.NOT_FOUND).json(ErrorResponse);
+    }
+
+    const agents = agentGroup.agents || [];
+    const removedAgent = agents.find(agent => agent.agent_id.toString() === targetAgentId);
+    const removedMemberScheduleId = removedAgent?.member_schedule_id;
+
+    // 2. Filter out the agent
+    const updatedAgents = agents.filter(agent => agent.agent_id.toString() !== targetAgentId);
+ 
+
+    // 4. Update agent group and agent allocation
+    await agentGroupRepo.update(id, { agents: updatedAgents });
+    await agentRepo.update(targetAgentId, { is_allocated: 0 });
+
+    SuccessRespnose.message = "Agent removed from group successfully.";
+    SuccessRespnose.data = updatedAgents;
+
+    Logger.info(`Agent Group -> Agent ${targetAgentId} removed from group ${id}`);
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+  } catch (error) {
+    console.error("Remove Agent Error:", error);
+
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    if (error.name === "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Invalid agent ID.";
+    }
+
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `Agent Group -> Failed to remove agent ${targetAgentId} from group ${id}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
 
 
 module.exports = {
@@ -437,4 +488,5 @@ module.exports = {
     updateAgentGroup,
     updateMemberScheduleAgent,
     deleteAgentGroup,
+    removeAgent,
 }

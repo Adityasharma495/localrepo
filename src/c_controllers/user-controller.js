@@ -89,7 +89,7 @@ async function signinUser(req, res) {
 
         await userJourneyRepo.create(userJourneyfields);
 
-        userRepo.update(user._id, {
+        userRepo.update(user.id, {
           login_at: Date.now(),
           logout_at: null,
           duration: null
@@ -165,7 +165,7 @@ async function logoutUser(req, res) {
       const agentData = await agentRepo.getByName(userData?.name)
       subLicenceData.available_licence.live_agent += 1;
 
-      await subUserLicenceRepo.updateById(subLicenceData.id, { available_licence: subLicenceData.available_licence });
+      await subUserLicenceRepo.update(subLicenceData.id, { available_licence: subLicenceData.available_licence });
       await agentRepo.update(agentData.id, {
         login_status : "0"
       })

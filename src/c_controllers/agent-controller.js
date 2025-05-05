@@ -715,7 +715,7 @@ async function agentRealTimeData() {
     // Map agent_id to all associated groups
     const agentToGroupsMap = new Map();
     agentGroups.forEach(group => {
-      group.agents.forEach(agentEntry => {
+      group?.agents?.forEach(agentEntry => {
         const agentId = agentEntry.agent_id.toString();
         if (!agentToGroupsMap.has(agentId)) {
           agentToGroupsMap.set(agentId, []);
@@ -749,6 +749,7 @@ async function agentRealTimeData() {
     return SuccessRespnose;
 
   } catch (error) {
+    console.log("error",error);
     ErrorResponse.error = { name: error.name, message: error.message };
     ErrorResponse.message = error.message;
 

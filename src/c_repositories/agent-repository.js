@@ -117,15 +117,19 @@ class AgentRepository extends CrudRepository {
     }
   }
 
-  async findAllData() {
-    const response = await this.model.findAll({ 
-      where: { is_deleted: false },
-      include: [
-        { model: TelephonyProfile, as: 'agentTelephony', attributes: ['id', 'profile', 'created_by'] },
-      ],
-    });
-    return response;
-  }
+async findAllData() {
+  const response = await this.model.findAll({
+    where: { is_deleted: false },
+    include: [
+      {
+        model: TelephonyProfile,
+        as: 'agentTelephony',
+        attributes: ['id', 'profile', 'created_by'],
+      },
+    ],
+  });
+  return response;
+}
 
   async getAllActiveAgents(userId) {
     try {

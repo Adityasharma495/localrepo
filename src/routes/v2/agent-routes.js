@@ -4,7 +4,7 @@ const { AuthMiddleware, AgentMiddleware } = require("../../middlewares")
 const {AgentController} = require("../../c_controllers")
 
 
-//get: /api/v1/agent/real-time POST
+//get: /api/v2/agent/real-time POST
 router.get('/real-time', AgentController.getAgentRealTimeData);
 
 router.post('/',AuthMiddleware.validateUser,AgentMiddleware.validateAgentCreate,AgentMiddleware.modifyAgentCreateBodyRequest,AgentController.createAgent);
