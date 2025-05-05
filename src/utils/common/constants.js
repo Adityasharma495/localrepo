@@ -150,10 +150,14 @@ const OPERATOR_TYPES = {
 }
 
 const USER_CREDITS_ACTION = {
+    ADD: "addition",
+    DEDUCT: "deduction"
+  }
+
+  const USER_CREDITS_ACTION_SEND = {
     ADD: "Add",
     DEDUCT: "Deduct"
   }
-
 const OPERATOR_TYPES_LABEL = {
     [OPERATOR_TYPES.AIRTEL]: 'Airtel',
     [OPERATOR_TYPES.JIO]: 'Jio'
@@ -391,6 +395,7 @@ module.exports = {
     SUB_LICENCE_ROLE,
     USER_ROLE_VALUE,
     USER_CREDITS_ACTION,
+    USER_CREDITS_ACTION_SEND,
     BACKEND_BASE_URL,
     USER_ROLE_VALUE_LICENCE
 }

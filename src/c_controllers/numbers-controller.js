@@ -1001,6 +1001,7 @@ async function getToAllocateNumbers(req, res) {
 
 async function getAllocatedNumbers(req, res) {
   try {
+
     const allocatedToId = req.params.id;
     const didMappings = await didUserMappingRepository.findAll({
       where: {
@@ -1083,6 +1084,9 @@ async function getAllocatedNumbers(req, res) {
       data: formattedNumbers,
       is_removal_button: true,
     };
+
+
+    console.log("SENDING RES", response);
 
     return res.status(StatusCodes.OK).json({
       message: "Success",

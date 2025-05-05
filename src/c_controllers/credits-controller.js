@@ -3,6 +3,7 @@ const { CreditsRepository, UserRepository, UserJourneyRepository } = require("..
 const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../utils/common");
 const {
   USER_CREDITS_ACTION,
+  USER_CREDITS_ACTION_SEND,
   MODULE_LABEL,
   USERS_ROLE,
 } = require("../utils/common/constants");
@@ -60,7 +61,7 @@ async function updateCredit(req, res) {
 
           await userJourneyRepo.create({
             module_name: MODULE_LABEL.CREDITS,
-            action: USER_CREDITS_ACTION.ADD,
+            action: USER_CREDITS_ACTION_SEND.ADD,
             created_by: req?.user?.id,
           });
         } else if (bodyReq.action == USER_CREDITS_ACTION.DEDUCT) {
@@ -102,7 +103,7 @@ async function updateCredit(req, res) {
 
           await userJourneyRepo.create({
             module_name: MODULE_LABEL.CREDITS,
-            action: USER_CREDITS_ACTION.DEDUCT,
+            action: USER_CREDITS_ACTION_SEND.DEDUCT,
             created_by: req?.user?.id,
           });
         }
