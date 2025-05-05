@@ -1133,7 +1133,7 @@ async function getAllocatedNumbers(req, res) {
         const didVoicePlanMap = {};
 
         allocatedNumbers.forEach(async (item) => {
-        didVoicePlanMap[item.DID._id] = item.mapping_detail[0].voice_plan_id;
+        didVoicePlanMap[item?.DID?._id] = item.mapping_detail[0]?.voice_plan_id;
         });
 
         const data = await numberRepo.findMany(uniqueDIDs);

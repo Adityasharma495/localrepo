@@ -1,5 +1,5 @@
 const config = require('../config/rabitmq-config.json');
-const { DownloadReportRepository , IncomingReportRepository } = require("../repositories");
+const { DownloadReportRepository , IncomingReportRepository } = require("../c_repositories");
 const incomingReportRepo = new IncomingReportRepository();
 const downloadReportRepo = new DownloadReportRepository();
 const { Logger } = require("../config");
@@ -11,6 +11,8 @@ const { parse } = require('json2csv');
 const moment = require('moment-timezone');
 const {BACKEND_API_BASE_URL} = require('../utils/common/constants');
 const batchLimit = 900000;
+const sequelize = require('../config/sequelize');
+const { Op } = require('sequelize');
 
 
 const connectMongo = async() => {
@@ -33,6 +35,14 @@ const mongoConnection = async() =>{
     }
 }
 
+const connectCockroach = async () => {
+    try {
+      await sequelize.authenticate();
+    } catch(error) {
+      throw error;
+    }
+  }
+
 const getDateTimeFormat = (date) =>{
 
             const startdateIST = moment.tz(date, "Asia/Kolkata"); // Parse as IST
@@ -49,7 +59,8 @@ const getDateTimeFormat = (date) =>{
 const reports = async () => {
      
     try {
-         await mongoConnection();
+        //  await mongoConnection();
+         await connectCockroach();
          const downloadReportData = await downloadReportRepo.getAllData({status : 0},{ limit: batchLimit })
          if (downloadReportData.length > 0) {
             for (const report of downloadReportData) {
@@ -57,7 +68,7 @@ const reports = async () => {
                 console.log("::::::::::::::: "+report.schedule_date.toISOString());
                 try {
                     await downloadReportRepo.update(
-                        report._id,
+                        report.id,
                         {status : 1}
                     );
 
@@ -84,25 +95,32 @@ const reports = async () => {
 
                     Logger.info(`Start Date : ${typeof startOfDay.toISOString()} , End Date : ${endOfDay.toISOString()}`)
 
-                    const query = {
-                                     $and: [
-                                            { callee_number: { $regex: regex }},
-                                            {  start_time: {
-                                                              $gte: new Date(startOfDay),
-                                                              $lt: new Date(endOfDay)      
-                                               }
-                                            }
-                                           ]
-                   }
+                    const didWithPlus = `+${rawDid}`;
+                    const didWithoutPlus = rawDid;
 
-                    // const incomingReportData = await incomingReportRepo.getByDid({ callee_number: { $regex: regex } });
+                    const query = {
+                        [Op.and]: [
+                          {
+                            [Op.or]: [
+                              { callee_number: didWithPlus },
+                              { callee_number: didWithoutPlus }
+                            ]
+                          },
+                          {
+                            start_time: {
+                              [Op.gte]: new Date(startOfDay),
+                              [Op.lt]: new Date(endOfDay)
+                            }
+                          }
+                        ]
+                      };
                     const incomingReportData = await incomingReportRepo.getByDid(query);
                     Logger.info(`Incomming Report Data Count : ${incomingReportData.length} `);
                     if (incomingReportData.length > 0) {
                         const extractedData = incomingReportData.map(record => ({
-                            ...record._doc,
-                            caller_number: `'${record._doc.caller_number}'`,
-                            callee_number: `'${record._doc.callee_number}'`
+                            ...record.dataValues,
+                            caller_number: `'${record.dataValues.caller_number}'`,
+                            callee_number: `'${record.dataValues.callee_number}'`
                         }));
 
                         const csvData = parse(extractedData);
@@ -127,7 +145,7 @@ const reports = async () => {
                         const file_url = `${BACKEND_API_BASE_URL}/assets/reports/${report.did}/${fileName}`;
                         Logger.info(`File URL : ${file_url} `);
                         await downloadReportRepo.update(
-                        report._id,
+                        report.id,
                         {download_link : file_url , status : 2}
                         );
                     }

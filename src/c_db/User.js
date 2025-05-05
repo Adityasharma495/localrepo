@@ -89,6 +89,18 @@ const User = sequelize.define(
       validate: {
         min: 0
       }
+    },
+    login_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    logout_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    duration: {
+      type: DataTypes.INTEGER,
+      allowNull: true
     }, 
     created_at: {
       type: DataTypes.DATE,
@@ -113,15 +125,28 @@ const User = sequelize.define(
   }
 );
 
-
+// Hash password before saving
 User.beforeCreate(async (user) => {
   const salt = await bcrypt.genSalt(9);
   user.actual_password = user.password; 
   user.password = await bcrypt.hash(user.password, salt);
 });
 
-
 User.beforeUpdate(async (user) => {
+  const now = new Date();
+  const istDate = new Date(now.getTime());
+
+  user.updated_at = istDate;
+
+  if (user.changed('login_at')) {
+    user.login_at = istDate;
+    user.logout_at = null;
+  }
+
+  if (user.changed('logout_at') && user.logout_at !== null) {
+    user.logout_at = istDate;
+  }
+
   if (user.changed('password')) {
     user.actual_password = user.password;
     const salt = await bcrypt.genSalt(9);
@@ -129,18 +154,7 @@ User.beforeUpdate(async (user) => {
   }
 });
 
-// Hash password before saving
-User.beforeCreate(async (user) => {
-  const salt = await bcrypt.genSalt(9);
-  user.password = await bcrypt.hash(user.password, salt);
-});
 
-User.beforeUpdate(async (user) => {
-  if (user.changed('password')) {
-    const salt = await bcrypt.genSalt(9);
-    user.password = await bcrypt.hash(user.password, salt);
-  }
-});
 
 // Compare passwords
 User.prototype.comparePassword = async function (password) {

@@ -4,6 +4,8 @@ const { Op, fn, col, literal } = require('sequelize');
 const { StatusCodes } = require("http-status-codes");
 const AppError = require("../utils/errors/app-error");
 const Sequelize = require('../config/sequelize');
+const VoicePlansRepository = require('./voice-plans-repository');
+const voicePlansRepo = new VoicePlansRepository();
 
 class DIDUserMappingRepository extends CrudRepository {
   constructor() {
@@ -330,6 +332,61 @@ class DIDUserMappingRepository extends CrudRepository {
       return response;
     } catch (error) {
       throw error;
+    }
+  }
+
+  async findDidMappingDetails(data) {
+    try {
+        const didMapping = await DIDUserMapping.findOne({
+            where: {
+                DID: data.did
+            },
+            raw: true
+        });
+
+        if (!didMapping) return {};
+
+        const mappingDetails = didMapping.mapping_detail || [];
+        const mappingDetialsPlans = [];
+
+        const voicePlanIds = mappingDetails
+            .filter(md => md.voice_plan_id)
+            .map(md => md.voice_plan_id);
+
+        const uniqueVoicePlanIds = [...new Set(voicePlanIds)];
+
+        const voicePlans = await voicePlansRepo.find({
+            where: {
+                id: {
+                    [Op.in]: uniqueVoicePlanIds
+                }
+            },
+            attributes: ['id', 'plans', 'user_id'],
+            raw: true
+        });
+
+        const voicePlanMap = {};
+        voicePlans.forEach(plan => {
+            voicePlanMap[plan.id] = plan;
+        });
+
+        mappingDetails.forEach(mappingDetail => {
+            const plan = mappingDetail.voice_plan_id ? voicePlanMap[mappingDetail.voice_plan_id] : null;
+            mappingDetialsPlans.push({
+                level: String(mappingDetail.level),
+                allocated_to: mappingDetail.allocated_to,
+                parent_id: mappingDetail.parent_id,
+                voice_plan_id: plan,
+                voice_plan_user_id: plan ? plan.user_id : null
+            });
+        });
+
+        return {
+            DID: didMapping.DID,
+            mapping_detial: mappingDetialsPlans
+        };
+    } catch (error) {
+        throw error;
     }
   }
 }

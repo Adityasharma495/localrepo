@@ -33,6 +33,24 @@ class DownloadReportRepository extends CrudRepository {
     }
   }
 
+  async getAllData(where = {}, options = {}) {
+    try {
+      const defaultWhere = { is_deleted: false };
+      const finalWhere = { ...defaultWhere, ...where };
+
+      const response = await DownloadReport.findAll({
+        where: finalWhere,
+        order: [["created_at", "DESC"]],
+        ...options,  
+      });
+
+      return response;
+    } catch (error) {
+      console.error("Error in getAllData:", error);
+      throw error;
+    }
+  }
+
   async get(data) {
     try {
       const response = await this.model.findOne({

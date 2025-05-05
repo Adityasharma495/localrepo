@@ -129,14 +129,13 @@ const IncomingReport = sequelize.define(
   {
     tableName: 'incoming_reports',
     timestamps: false,
-    // hooks: {
-    //   beforeCreate: (record) => {
-    //     const now = new Date();
-    //     const istOffset = 5.5 * 60 * 60 * 1000;
-    //     const istDate = new Date(now.getTime() + istOffset);
-    //     record.report_time = istDate;
-    //   },
-    // },
+    hooks: {
+      beforeCreate: (record) => {
+        const now = new Date();
+        const istDate = new Date(now.getTime());
+        record.report_time = istDate;
+      },
+    },
   }
 );
 

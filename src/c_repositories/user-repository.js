@@ -4,6 +4,7 @@ const SubUserLicence = require("../c_db/sub-user-licence")
 const Company = require("../c_db/companies")
 const { constants, Authentication } = require('../utils/common');
 const {USERS_ROLE} = require('../utils/common/constants');
+const { Op } = require("sequelize");
 
 const AppError = require('../utils/errors/app-error');
 const { StatusCodes } = require('http-status-codes');
@@ -194,8 +195,22 @@ class UserRepository extends CrudRepository{
         throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
       }
     }
-    
-    
+
+    async getByNameBulk(names) {
+      try {
+        const users = await User.findAll({ 
+          where: {
+            name: {
+              [Op.in]: names
+            }
+          }
+        });
+        return users;    
+      } catch (error) {
+          console.log('error', error);
+          throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
+      }
+    } 
 
 }
 
