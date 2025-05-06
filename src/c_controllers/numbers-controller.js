@@ -105,7 +105,7 @@ async function getNumbersToRemove(req, res) {
     const allocatedToId = req.params.id
 
     if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
-      data = await numberRepo.getAllocatedNumbers(null);
+      data = await numberRepo.getAllocatedNumbers(allocatedToId);
     } else {
       data = await numberRepo.getAllocatedNumbers(allocatedToId);
     }
@@ -378,11 +378,10 @@ async function getAll(req, res) {
 
     const getLoggedDetail = await userRepo.get(req.user.id);
 
-
     if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
-      idToCheck = getLoggedDetail?.companies?._id;
+      idToCheck = getLoggedDetail?.company?.id;
     } else if (req.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
-      idToCheck = getLoggedDetail?.callcenters?._id;
+      idToCheck = getLoggedDetail?.callcenter?.id;
     } else {
       idToCheck = req.user.id;
     }
@@ -682,27 +681,16 @@ async function DIDUserMapping(req, res) {
       }
     } else {
 
-      console.log("BODY REQM", bodyReq);
 
       for (const did of bodyReq.DID) {
         try {
 
           const parentVoicePlanDetailId = (await numberRepo.findOneWithVoicePlan({ id: Number(did) }))?.voice_plan_id;
 
-          
-
           const ParentVoicePlanDetails = await voicePlanRepo.get(parentVoicePlanDetailId)
-
-          console.log("PARENT VOICE PLAN DETAIL", ParentVoicePlanDetails);
-
           const currentPlanDetail = await voicePlanRepo.findOne({ id: bodyReq?.voice_plan_id });
 
-
-          console.log("CURRENT PLAN DETAIL", currentPlanDetail);
-
-          const didDetail = await numberRepo.get(did)
-
-          console.log("DID DEATIL", didDetail);
+          const didDetail = await numberRepo.findOne({id: did})
 
           if (ParentVoicePlanDetails) {
             for (const plan1 of currentPlanDetail.plans) {
@@ -737,204 +725,45 @@ async function DIDUserMapping(req, res) {
           }
 
           let level;
-
           if (req.user.role === USERS_ROLE.RESELLER) {
-
-            const isCompanyUser = await companyRepo.findOne({ id: bodyReq.allocated_to })
-
-
-            console.log("IS COMPANY USER", isCompanyUser);
-
-            if (isCompanyUser) {
-              level = DID_ALLOCATION_LEVEL.COMPANY_ADMIN
-
-              console.log("EVEL", level);
-
-            } else {
-              // const count = await didUserMappingRepository.countLevelEntry(did, 2)
-
-              // console.log("COUNT", count);
-
-              // if (count === 0) {
-              //   level = DID_ALLOCATION_LEVEL.SUB_RESELLER
-              // } else {
-              //   level = `${DID_ALLOCATION_LEVEL.SUB_RESELLER}_${Number(count)}`
-              // }
-
-              level = DID_ALLOCATION_LEVEL.SUB_RESELLER
-
-            }
-
-
-            console.log("LAST LEVEL", level);
-
-
-          }
-          else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
-            const isCompanyUser = await companyRepo.findOne({ _id: bodyReq.allocated_to })
-            if (isCompanyUser) {
-              const count = await didUserMappingRepository.countSubCompanyUserEntry(did)
-              if (count === 0) {
-                level = DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN
+              const isCompanyUser = await companyRepo.findOne({id: bodyReq.allocated_to})
+              if (isCompanyUser) {
+                  level = DID_ALLOCATION_LEVEL.COMPANY_ADMIN
               } else {
-                level = `${DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN}_${Number(count)}`
+                const data = await userRepo.get(req.user.id)
+                  if (data?.createdByUser?.role === USERS_ROLE.SUPER_ADMIN) {
+                      level = DID_ALLOCATION_LEVEL.SUB_RESELLER
+                  } else {
+                      level = DID_ALLOCATION_LEVEL.SUB_SUB_RESELLER
+                  }
               }
-            } else {
-              level = DID_ALLOCATION_LEVEL.CALLCENTER
-            }
+              
+          } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
+                  level = DID_ALLOCATION_LEVEL.CALLCENTER
           }
-          const mapp = await didUserMappingRepository.addMappingDetail(did, {
+
+          await didUserMappingRepository.addMappingDetail(did, {
             level,
             allocated_to: bodyReq.allocated_to,
             parent_id: req.user.id,
             voice_plan_id: bodyReq?.voice_plan_id,
           });
 
-
-          console.log("MAP", mapp);
-
-
-
-          if(req.user.role===USERS_ROLE.RESELLER)
-          {
-             await numberRepo.update(did, {
+          await numberRepo.update(did, {
               allocated_to: bodyReq.allocated_to,
               voice_plan_id: bodyReq?.voice_plan_id
-            });
-          }
-          else
-          {
-             await numberRepo.update(did, {
-              allocated_company_id: bodyReq.allocated_to,
-              voice_plan_id: bodyReq?.voice_plan_id
-            });
-          }
+          });
 
-          const voicePlane= await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
-
-          console.log("VOICE PLANE", voicePlane);
-
+          await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
           successDIDs.push(did);
-          successActualNumbers.push(didDetail.map((data) => data.actual_number))
+          successActualNumbers.push(didDetail.actual_number)
+
         } catch (err) {
           continue;
         }
       }
 
     }
-    // for (const did of bodyReq.DID) {
-    //   try {
-    //     const didData = await numberRepo.findOne({ where: { id: did } });
-
-    //     console.log("DIDDATA");
-    //     if (!didData) throw new Error("DID not found");
-
-    //     if (req.user.role !== USERS_ROLE.SUPER_ADMIN) {
-    //       const parentVoicePlan = await voicePlanRepo.findOne({
-    //         where: { id: didData.voice_plan_id },
-    //       });
-
-    //       const currentPlan = await voicePlanRepo.findOne({
-    //         where: { id: bodyReq.voice_plan_id },
-    //       });
-
-    //       if (parentVoicePlan && currentPlan) {
-    //         const parentPlans = parentVoicePlan.plans || [];
-    //         const childPlans = currentPlan.plans || [];
-
-    //         for (const child of childPlans) {
-    //           const parent = parentPlans.find((p) => p.plan_type === child.plan_type);
-    //           if (!parent) {
-    //             failedDIDs.push({
-    //               did: didData.actual_number,
-    //               reason: `No matching parent plan for "${child.plan_type}"`,
-    //             });
-    //             throw new Error("Validation failed");
-    //           }
-
-    //           if (
-    //             child.pulse_price < parent.pulse_price ||
-    //             child.pulse_duration < parent.pulse_duration
-    //           ) {
-    //             failedDIDs.push({
-    //               did: didData.actual_number,
-    //               reason: `Plan conflict on "${child.plan_type}": pulse/price mismatch`,
-    //             });
-    //             throw new Error("Validation failed");
-    //           }
-    //         }
-    //       }
-    //     }
-
-    //     let level = 0;
-    //     if (req.user.role === USERS_ROLE.RESELLER) {
-    //       level = DID_ALLOCATION_LEVEL.COMPANY_ADMIN;
-    //     } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
-    //       const isCompany = await companyRepo.findOne({ where: { id: bodyReq.allocated_to } });
-    //       if (isCompany) {
-    //         const existing = await didUserMappingRepository.findOne({ where: { DID: did } });
-    //         const count = (existing?.mapping_detail || []).filter(
-    //           (d) => d.level?.toString().startsWith(DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN)
-    //         ).length;
-    //         level =
-    //           count === 0
-    //             ? DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN
-    //             : `${DID_ALLOCATION_LEVEL.SUB_COMPANY_ADMIN}_${count}`;
-    //       } else {
-    //         level = DID_ALLOCATION_LEVEL.CALLCENTER;
-    //       }
-    //     }
-
-    //     const existingMapping = await didUserMappingRepository.findOne({ where: { DID: did } });
-
-    //     const newMappingItem = {
-    //       active: true,
-    //       allocated_to: bodyReq.allocated_to,
-    //       parent_id: req.user.id,
-    //       voice_plan_id: bodyReq.voice_plan_id,
-    //       level,
-    //     };
-
-    //     if (existingMapping) {
-    //       existingMapping.mapping_detail = [
-    //         ...existingMapping.mapping_detail,
-    //         newMappingItem,
-    //       ];
-    //       await existingMapping.save();
-    //     } else {
-    //       await didUserMappingRepository.create({
-    //         DID: did,
-    //         mapping_detail: [newMappingItem],
-    //       });
-    //     }
-
-    //     await numberRepo.update(
-    //       {
-    //         allocated_to: bodyReq.allocated_to,
-    //         voice_plan_id: bodyReq.voice_plan_id,
-    //       },
-    //       { where: { id: did } }
-    //     );
-
-    //     if (bodyReq.voice_plan_id) {
-    //       await voicePlanRepo.update(
-    //         { is_allocated: true },
-    //         { where: { id: bodyReq.voice_plan_id } }
-    //       );
-    //     }
-
-    //     successDIDs.push(did);
-    //     successActualNumbers.push(didData.actual_number);
-    //   } catch (err) {
-    //     failedDIDs.push({
-    //       did,
-    //       reason: err.message || "Unknown error",
-    //     });
-    //     continue;
-    //   }
-    // }
-
-
     return res.status(200).json({
       message: "DIDs allocated successfully",
       data: {
@@ -964,7 +793,7 @@ async function getToAllocateNumbers(req, res) {
     let data;
 
     if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
-      data = await numberRepo.getAll({ where: { allocated_company_id: allocatedToId } });
+      data = await numberRepo.getAll({ where: { allocated_to: allocatedToId } });
     }
     else {
       const roleToCheck = await userRepo.findOne({ id: allocatedToId });
@@ -986,10 +815,6 @@ async function getToAllocateNumbers(req, res) {
       return obj;
     });
 
-
-    
-
-    // console.log("SUCCESS", SuccessRespnose);
     SuccessRespnose.message = 'Success';
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -1001,127 +826,96 @@ async function getToAllocateNumbers(req, res) {
 
 async function getAllocatedNumbers(req, res) {
   try {
+      const allocatedToId = req.params.id;
+      let allocatedNumbers = await didUserMappingRepository.getForOthers(allocatedToId);
 
-    const allocatedToId = req.params.id;
-    const didMappings = await didUserMappingRepository.findAll({
-      where: {
-        mapping_detail: {
-          [Op.contains]: [
-            {
-              allocated_to: allocatedToId,
-              // active: true,
-            },
-          ],
-        },
-      },
-    });
-
-    if (!didMappings || didMappings.length === 0) {
-      return res.status(StatusCodes.OK).json({
-        message: "No numbers allocated.",
-        data: [],
-        is_removal_button: false,
-      });
-    }
-
-    // Map allocated info from first mapping_detail of each
-    const voicePlanMap = {};
-    const didIds = [];
-
-    for (const mapEntry of didMappings) {
-      const firstMapping = mapEntry.mapping_detail[0];
-      voicePlanMap[mapEntry.DID] = firstMapping.voice_plan_id;
-      didIds.push(mapEntry.DID);
-    }
-
-    const numbers = await numberRepo.findMany(didIds);
-
-
-    let allocatedToName = "";
-    const sampleVoicePlan = Object.values(voicePlanMap)[0];
-
-    if (req.user.role === USERS_ROLE.SUPER_ADMIN ||req.user.role === USERS_ROLE.RESELLER) {
-      const user = await userRepo.findOne({ id: allocatedToId });
-      allocatedToName = user?.username || "N/A";
-    } 
-    // else if (req.user.role === USERS_ROLE.RESELLER) {
-    //   const company = await companyRepo.findOne({ id: allocatedToId });
-    //   allocatedToName = company?.name || "N/A";
-    // } 
-    else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
-      const company = await companyRepo.findOne({ id: allocatedToId });
-      if (company) {
-        allocatedToName = company.name;
-      } else {
-        const callCentre = await callCentreRepo.findOne({ id: allocatedToId });
-        allocatedToName = callCentre?.name || "N/A";
+      const allocatedId = allocatedNumbers.length > 0 ? allocatedNumbers[0]?.mapping_detail[0].allocated_to: null 
+      let allocatedTo;
+      if (req.user.role === USERS_ROLE.SUPER_ADMIN && allocatedId) {
+          allocatedTo = (await userRepo.get(allocatedId))?.username
+      } else if (req.user.role === USERS_ROLE.RESELLER && allocatedId) {
+          const company = await companyRepo.findOne({id : allocatedId})
+          if (company) {
+              allocatedTo = company?.name
+          } else {
+              allocatedTo = (await userRepo.findOne({id : allocatedId}))?.username
+          }
+      } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN && allocatedId) {
+          const company = await companyRepo.findOne({id : allocatedId})
+          if (company) {
+              allocatedTo = company?.name
+          } else {
+              allocatedTo = (await callCentreRepo.findOne({id : allocatedId}))?.name
+          }
       }
-    }
-
-    const allocatedBy = req.user.username;
-
-    const formattedNumbers = numbers.map((num) => ({
-      ...num.toJSON(),
-      voice_plan_id: voicePlanMap[num.id] || null,
-      allocated_name: allocatedToName,
-      allocated_by: allocatedBy,
-    }));
-
-    const allocatedAgain = await didUserMappingRepository.findAll({
-      where: {
-        mapping_detail: {
-          [Op.contains]: [
-            {
-              allocated_to: allocatedToId,
-              active: true,
-            },
-          ],
-        },
-      },
-    });
-
-    const response = {
-      data: formattedNumbers,
-      is_removal_button: true,
-    };
+      const allocatedBy = req.user.username
 
 
-    console.log("SENDING RES", response);
+      const uniqueDIDs = [...new Set(allocatedNumbers.map(item => item.DID))];
 
-    return res.status(StatusCodes.OK).json({
-      message: "Success",
-      data: response,
-    });
+      // Create a map of DID to voiceplan_id
+      const didVoicePlanMap = {};
+
+      allocatedNumbers.forEach(async (item) => {
+      didVoicePlanMap[item?.did?.id] = item.mapping_detail[0]?.voice_plan_id;
+      });
+
+      let data = await numberRepo.findMany(uniqueDIDs);
+      data = data.map(item => item.toJSON());
+
+      const updatedData = data.map((item) => {
+          return {
+            ...item,  
+            voice_plan_id: didVoicePlanMap[item.id] ,
+            allocated_name: allocatedTo, 
+            allocated_by: allocatedBy
+          };
+        });
+
+
+      const response = {};
+      response.data = updatedData
+
+      //Remove Button permission
+      const check = await numberRepo.getAllocatedNumbers(allocatedToId);
+      if (check.length > 0) {
+          response.is_removal_button = true
+      } else {
+          response.is_removal_button = false 
+      }
+      SuccessRespnose.data = response;
+      SuccessRespnose.message = 'Success';
+
+      Logger.info(`Numbers -> allocated numbers recieved successfully`);
+
+      return res.status(StatusCodes.OK).json(SuccessRespnose);
 
   } catch (error) {
-    console.error("Error fetching allocated numbers:", error);
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: "Error fetching allocated numbers",
-      error,
-    });
+
+      ErrorResponse.message = error.message;
+      ErrorResponse.error = error;
+
+      Logger.error(`Allocated numbers -> unable to get Allocated numbers list, error: ${JSON.stringify(error)}`);
+
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+
   }
+
 }
+
 
 async function removeAllocatedNumbers(req, res) {
   const { DID, user_id } = req.body;
-
-
-  console.log("DID AND USER_ID");
   try {
     for (const did of DID) {
       let allocatedNumbers = await didUserMappingRepository.checkMappingIfNotExists(did, {
         allocated_to: user_id,
       });
 
-
-      console.log("ALLOCATED NUMBERS", allocatedNumbers);
-
       const childDetail = await didUserMappingRepository.checkMappingIfNotExists(did, {
         parent_id: allocatedNumbers.id,
         active: true
       })
-
-      console.log("CHILD MAPPING", childDetail);
 
       if (childDetail) {
         ErrorResponse.message = `DID(s) assigned to child. Remove from that first!`;
@@ -1137,8 +931,6 @@ async function removeAllocatedNumbers(req, res) {
 
       const isSame = allocatedNumbers?.mapping_detail[0].parent_id.toString() === superadminCheck.id.toString();
 
-
-
       if (isSame) {
         // update did user mapping
         // await didUserMappingRepository.updateMappingDetail(allocatedNumbers.DID, { active: false, voice_plan_id : null, allocated_to:allocatedNumbers?.mapping_detail[0].allocated_to });
@@ -1149,7 +941,7 @@ async function removeAllocatedNumbers(req, res) {
         await numberRepo.update(did, { allocated_to: null, voice_plan_id: null });
 
         //update voice plan
-        await voicePlanRepo.update(allocatedNumbers?.mapping_detail[0].voice_plan_id, { is_allocated: 0 })
+        // await voicePlanRepo.update(allocatedNumbers?.mapping_detail[0].voice_plan_id, { is_allocated: 0 })
       } else {
         let allocatedToId
 

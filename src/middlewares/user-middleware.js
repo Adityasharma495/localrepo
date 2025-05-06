@@ -244,8 +244,7 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
                 name: bodyReq.name.trim(),
                 email: bodyReq.email.trim(),
                 module: bodyReq.module,
-                company:bodyReq.company,
-                acl_settings: bodyReq.acl_settings,
+                acl_settings_id: bodyReq.acl_settings,
                 // licence: bodyReq?.licence || 0,
                 sub_licence: bodyReq?.sub_licence || {},
                 flow_type: bodyReq?.flow_type,
@@ -274,11 +273,11 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
         //If company is to be associated with the user, then append company user details
         if(ifValidateCompany){
 
-            inputData.company = bodyReq.company
+            inputData.user.company_id = bodyReq?.company || ''
         }
 
-        if (bodyReq.role === constants.USERS_ROLE.CALLCENTRE_ADMIN) {
-            inputData.callcenterId = bodyReq.callcenterId
+        if (bodyReq.role === constants.USERS_ROLE.CALLCENTRE_ADMIN && req.user.role === constants.USERS_ROLE.COMPANY_ADMIN) {
+            inputData.user.callcenter_id = bodyReq?.callcenterId || ''
         }
     
         req.body = inputData;

@@ -17,20 +17,20 @@ class NumbersRepository extends CrudRepository {
         whereCondition = { ...whereCondition, ...options.where };
       }
   
+      
       let response = await this.model.findAll({
         where: whereCondition,
         include: [
           {
-            model: VoicePlan,  // your Sequelize model
-            as: 'voice_plan',       // your alias
-            attributes: ['id', 'plan_name', 'plans'], // fields you need
+            model: VoicePlan,  
+            as: 'voice_plan',     
+            attributes: ['id', 'plan_name', 'plans'], 
           },
         ],
         order: [['created_at', 'DESC']],
-        raw: true,  // <-- keeping raw true
+        raw: true,  
       });
   
-      // Post-process: reshape 'voice_plan.*' keys into nested voice_plan object
       response = response.map((item) => {
         const voicePlan = {};
         Object.keys(item).forEach((key) => {
@@ -183,10 +183,10 @@ class NumbersRepository extends CrudRepository {
     }
   }
 
-  async getAllocatedNumbers(company_id) {
+  async getAllocatedNumbers(id) {
     try {
       const response = await this.model.findAll({
-        where: { is_deleted: false, allocated_company_id: company_id },
+        where: { is_deleted: false, allocated_to: id },
         order: [["created_at", "DESC"]],
         include: [
           {
@@ -243,50 +243,13 @@ class NumbersRepository extends CrudRepository {
             attributes: ['id', 'plan_name', 'plans'],
           },
         ],
-        raw: false, // Must be false to retain nested data
+        raw: false, 
       });
       return response;
     } catch (error) {
       throw error;
     }
   }
-
-  async update(id, data) {
-  
-    try {
-      // Check company validity only if allocated_company_id is present
-      if (data.allocated_company_id) {
-        const companyExists = await Company.findOne({
-          where: { id: data.allocated_company_id }
-        });
-  
-        if (!companyExists) {
-          console.warn(`Company not found: ${data.allocated_company_id}. Skipping company update.`);
-          delete data.allocated_company_id; // Remove invalid company ID to avoid FK constraint error
-        }
-      }
-  
-      // Proceed to update with remaining valid data
-      const [updateCount] = await this.model.update(data, {
-        where: { id }
-      });
-  
-      if (updateCount === 0) {
-        console.warn(`No rows updated for ID: ${id}`);
-        return null;
-      }
-  
-      const updatedRecord = await this.model.findOne({ where: { id } });
-      return updatedRecord;
-  
-    } catch (error) {
-      console.error("ERROR in update():", error);
-      throw error;
-    }
-  }
-  
-  
-  
 
   async findOneWithVoicePlan(conditions) {
     try {
@@ -301,8 +264,8 @@ class NumbersRepository extends CrudRepository {
                     as: 'voice_plan'
                 }
             ],
-            raw: true, // optional: for plain JSON
-            nest: true // optional: nests included data under the alias
+            raw: true, 
+            nest: true
         });
 
         return response;

@@ -1,5 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
-const { VoicePlansRepository, UserJourneyRepository } = require("../c_repositories");
+const { VoicePlansRepository, UserJourneyRepository, NumbersRepository, DIDUserMappingRepository } = require("../c_repositories");
 const { SuccessRespnose, ErrorResponse } = require("../utils/common");
 const { MODULE_LABEL, ACTION_LABEL } = require("../utils/common/constants");
 const { Logger } = require("../config");
@@ -7,6 +7,9 @@ const sequelize = require('../config/sequelize');
 
 const voicePlansRepo = new VoicePlansRepository();
 const userJourneyRepo = new UserJourneyRepository();
+const numberRepo = new NumbersRepository();
+const didUserMappingRepo = new DIDUserMappingRepository();
+
 
 async function createVoicePlans(req, res) {
   const bodyReq = req.body;
@@ -66,8 +69,6 @@ async function createVoicePlans(req, res) {
     Logger.info(`Voice Plan -> created successfully: ${JSON.stringify(responseData)}`);
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
   } catch (error) {
-    console.log("error", error);
-
     Logger.error(
       `Voice Plan -> unable to create Voice Plan: ${JSON.stringify(
         bodyReq
@@ -146,7 +147,6 @@ async function updateVoicePlanStatus(req, res) {
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
-    console.log("error here ", error);
     Logger.error(
       `Voice Plans -> unable to update Voice Plan: ${uid}, error: ${JSON.stringify(error)}`
     );
@@ -158,8 +158,94 @@ async function updateVoicePlanStatus(req, res) {
   }
 }
 
+async function updateVoicePlans(req, res) {
+  const bodyReq = req.body;
+
+  try {
+    const responseData = {};
+
+    const parentVoicePlanDetailId = (await numberRepo.findOneWithVoicePlan({ id: Number(bodyReq.DID) }))?.voice_plan_id;
+
+    const ParentVoicePlanDetails = await voicePlansRepo.get(parentVoicePlanDetailId)
+
+    const currentPlanDetail = await voicePlansRepo.findOne({ id: bodyReq?.voice_plan_id });
+
+    if (ParentVoicePlanDetails) {
+      for (const plan1 of currentPlanDetail.plans) {
+        const match = ParentVoicePlanDetails.plans.find((plan2) => plan2.plan_type === plan1.plan_type);
+    
+        if (!match) {
+          ErrorResponse.message = `No matching parent plan found for "${plan1.plan_type}".`;
+          return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+          };
+    
+        if (plan1.pulse_price < match.pulse_price) {
+          ErrorResponse.message = `Can't allocate pulse price less than parent pulse price for "${plan1.plan_type}".`;
+          return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+        }
+    
+        if (plan1.pulse_duration < match.pulse_duration) {
+          ErrorResponse.message = `Can't allocate pulse duration less than parent duration for "${plan1.plan_type}".`;
+          return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+        }
+      }
+    }
+
+    numberRepo.update(bodyReq.DID, {voice_plan_id : bodyReq?.voice_plan_id})
+
+    const mappingDetail = await didUserMappingRepo.findOne({DID: bodyReq.DID})
+
+    const updatedMappingDetails = mappingDetail.mapping_detail.map(item => {
+      if (item.voice_plan_id === parentVoicePlanDetailId) {
+        return {
+          ...item,
+          voice_plan_id: bodyReq?.voice_plan_id
+        };
+      }
+      return item;
+    });
+
+    didUserMappingRepo.updateVoicePlan({DID: bodyReq.DID}, {mapping_detail : updatedMappingDetails})
+
+    SuccessRespnose.data = responseData;
+    SuccessRespnose.message = "Voice Plan Updated Successfully.";
+
+    await userJourneyRepo.create({
+      module_name: MODULE_LABEL.VOICE_PLAN,
+      action: ACTION_LABEL.ADD,
+      created_by: req?.user?.id
+    });
+
+    Logger.info(`Voice Plan -> created successfully: ${JSON.stringify(responseData)}`);
+    return res.status(StatusCodes.CREATED).json(SuccessRespnose);
+  } catch (error) {
+
+    Logger.error(
+      `Voice Plan -> unable to create Voice Plan: ${JSON.stringify(
+        bodyReq
+      )} error: ${JSON.stringify(error)}`
+    );
+
+    let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    if (error.name === "MongoServerError" || error.code === 11000) {
+      statusCode = StatusCodes.BAD_REQUEST;
+      if (error.codeName === "DuplicateKey") {
+        errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
+      }
+    }
+
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
 module.exports = {
   getAll,
   createVoicePlans,
   updateVoicePlanStatus,
+  updateVoicePlans
 };

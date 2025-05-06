@@ -41,40 +41,33 @@ class SubUserLicenceRepository extends CrudRepository {
 
   }
 
-  async update(userId, data) {
+  async update(id, data) {
 
     try {
       const [rowsUpdated, [updatedRecord]] = await this.model.update(data, {
-        where: { id: userId },
+        where: { id: id },
         returning: true,
       });
-  
-      if (rowsUpdated === 0) {
-        throw new Error('No record found to update');
-      }
   
       return updatedRecord;
     } catch (error) {
       throw error;
     }
   }
-  async updatelicence(userId, data) {
+
+  async updateByUserId(userId, data) {
+
     try {
       const [rowsUpdated, [updatedRecord]] = await this.model.update(data, {
         where: { user_id: userId },
         returning: true,
       });
   
-      if (rowsUpdated === 0) {
-        throw new Error('No record found to update');
-      }
-  
       return updatedRecord;
     } catch (error) {
       throw error;
     }
   }
-  
 
   async updateById(id, data) {
     try {
@@ -109,14 +102,9 @@ class SubUserLicenceRepository extends CrudRepository {
     } catch (error) {
       throw error;
     }
-
-  }
-
-  async updateByUserId(id, data) {
-    const response = await this.model.findOneAndUpdate({ user_id: id, is_deleted: false }, data, { runValidators: true, new: true });
-    return response;
   }
 
 }
+
 
 module.exports = SubUserLicenceRepository;

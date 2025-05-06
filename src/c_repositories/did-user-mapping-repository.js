@@ -1,5 +1,5 @@
 const CrudRepository = require("./crud-repository");
-const { DIDUserMapping } = require("../c_db"); 
+const { DIDUserMapping, Numbers, VoicePlan } = require("../c_db"); 
 const { Op, fn, col, literal } = require('sequelize');
 const { StatusCodes } = require("http-status-codes");
 const AppError = require("../utils/errors/app-error");
@@ -52,22 +52,56 @@ class DIDUserMappingRepository extends CrudRepository {
             [Op.ne]: null,
           },
         },
+        include: [
+          {
+            model: Numbers,
+            as: 'did',
+          },
+        ],
         order: [['created_at', 'DESC']],
       });
   
-
-      // console.log("ROWS", rows);
       let data = rows.map(row => row.toJSON());
   
-      const filtered = data.filter(item => {
-        return item.mapping_detail.some(md => {
-
-          if (md && (md.allocated_to == id)) {
-            return true;
+      const voicePlanIds = new Set();
+      data.forEach(item => {
+        item.mapping_detail.forEach(md => {
+          if (md.voice_plan_id) {
+            voicePlanIds.add(md.voice_plan_id);
           }
-          return false;
         });
       });
+  
+      const voicePlans = await VoicePlan.findAll({
+        where: {
+          id: [...voicePlanIds],
+        },
+        raw: true,
+      });
+
+      const voicePlanMap = {};
+      voicePlans.forEach(plan => {
+        voicePlanMap[plan.id] = plan;
+      });
+  
+      const filtered = data
+        .map(item => {
+          const matchedDetails = item.mapping_detail
+            .filter(md => md?.allocated_to == id)
+            .map(md => ({
+              ...md,
+              voice_plan_data: voicePlanMap[md.voice_plan_id] || null,
+            }));
+
+          if (matchedDetails.length > 0) {
+            return {
+              ...item,
+              mapping_detail: matchedDetails,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
   
       return filtered;
     } catch (error) {
@@ -75,6 +109,9 @@ class DIDUserMappingRepository extends CrudRepository {
       throw error;
     }
   }
+  
+  
+  
 
   async findAll(conditions) {
     try {
@@ -170,35 +207,13 @@ class DIDUserMappingRepository extends CrudRepository {
       });
   
 
-      console.log("MAPPING DETAILS", JSON.stringify(updatedRecord.mapping_detail, null, 2));
-      return updatedRecord;  // ✅ return the full updated data
+      return updatedRecord;  
     } catch (error) {
       console.error("Error adding mapping detail:", error);
       throw error;
     }
   }
 
-  // async addMappingDetail(documentId, newDetail) {
-
-  //   console.log("DOCUEMNT ID NEWDTAIL", documentId, newDetail);
-  //   try {
-  //     await this.model.update(
-  //       {
-  //         mapping_detail: Sequelize.jsonb.arrayAppend('mapping_detail', newDetail), // Appends newDetail to the mapping_detail array
-  //       },
-  //       {
-  //         where: {
-  //           DID: documentId,
-  //         },
-  //       }
-  //     );
-  //     console.log("Mapping detail added successfully.");
-  //   } catch (error) {
-  //     console.error("Error adding mapping detail:", error);
-  //     throw error;
-  //   }
-  // }
-  
   async checkMappingIfNotExists(did, newDetail) {
     try {
       const record = await this.model.findOne({
@@ -313,6 +328,7 @@ class DIDUserMappingRepository extends CrudRepository {
   
     return count;
   }
+
   async getAll(options) {
     try {
       let whereCondition = {};
@@ -331,6 +347,11 @@ class DIDUserMappingRepository extends CrudRepository {
     } catch (error) {
       throw error;
     }
+  }
+
+  async updateVoicePlan(condition, data) {
+    const response = await this.model.update(data, {where: condition});
+    return response;
   }
 }
 

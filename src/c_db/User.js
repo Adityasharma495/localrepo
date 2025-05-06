@@ -7,12 +7,13 @@ const {Authentication} = require('../utils/common');
 const AclSettings = require("./acl-settings")
 const SubUserLicence = require("./sub-user-licence")
 const Company = require("./companies")
+const CallCenter =  require('./call-centres')
 
 const User = sequelize.define(
   'users',
   {
     id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       autoIncrement: true,
       primaryKey: true,
     },
@@ -64,15 +65,21 @@ const User = sequelize.define(
       allowNull: true,
       defaultValue: null
     },
-    companies: {
-      type: DataTypes.JSONB,  
+    company_id: {
+      type: DataTypes.UUID,
       allowNull: true,
-      defaultValue: null
+      references: {
+        model: Company,
+        key: 'id'
+      }
     },
-    call_centres: {
-      type: DataTypes.JSONB,  
+    callcenter_id: {
+      type: DataTypes.UUID,
       allowNull: true,
-      defaultValue: null
+      references: {
+        model: CallCenter,
+        key: 'id'
+      }
     },
     acl_settings_id: {
       type: DataTypes.UUID,
@@ -173,6 +180,24 @@ User.prototype.generateUserData = async function (tokenGenerate = false) {
         {
           model: SubUserLicence,
           as: 'sub_user_licence',
+        },
+        {
+          model: Company,
+          as: 'company',
+        },
+        {
+          model: CallCenter,
+          as: 'callcenter',
+        },
+        {
+          model: User,
+          as: 'createdByUser',
+          include: [
+            {
+              model: User,
+              as: 'createdByUser',
+            }
+          ]
         }
       ]
     });

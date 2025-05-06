@@ -21,6 +21,11 @@ async getAll(userId) {
   }
 }
 
+// Company.findByPk('company-123', {
+//   include: [{ model: User, as: 'users' }]
+// });
+
+
 
   async findOne(conditions) {
     try {

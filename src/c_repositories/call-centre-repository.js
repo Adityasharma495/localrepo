@@ -30,6 +30,10 @@ class CallCentreRepository extends CrudRepository {
     }
   }
 
+  // Company.findByPk('company-123', {
+//   include: [{ model: User, as: 'users' }]
+// });
+
   async get(id) {
     try {
       const response = await this.model.findAll({

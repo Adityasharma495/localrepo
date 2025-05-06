@@ -21,14 +21,11 @@ const { UserController } = require("../../c_controllers");
   // GET ALL USERS
   router.get('/',AuthMiddleware.validateUser,UserController.getAll);
 
-
   // DELETE USER
   router.post("/delete", AuthMiddleware.validateUser, UserMiddleware.validateDeleteRequest, UserController.deleteUser);
 
-
   // USER UPDATE
   router.post('/:id', AuthMiddleware.validateUser, UserMiddleware.validateUpdateUser, (req, res, next) => UserMiddleware.modifyUserSignupBodyRequest(req, res, next, false), UserController.updateUser);
-
 
   //User Update: /api/v1/users/:id PATCH
   router.patch("/:id", AuthMiddleware.validateUser, UserMiddleware.validateUserStatusRequest, UserController.statusPasswordUpdateUser);

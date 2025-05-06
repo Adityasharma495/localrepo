@@ -5,8 +5,6 @@ const AppError = require('../utils/errors/app-error');
 function validateVoicePlanRequest(req, res, next) {
     const bodyReq = req.body;
 
-    console.log(bodyReq.plans.length)
-
     if (!req.is('application/json')) {
         ErrorResponse.message = 'Something went wrong while creating Voice Plan';
         ErrorResponse.error = new AppError(['Invalid content type, incoming request must be in application/json format'], StatusCodes.BAD_REQUEST);
@@ -24,6 +22,35 @@ function validateVoicePlanRequest(req, res, next) {
     else if (bodyReq.plans.length < 0) {
         ErrorResponse.message = 'Something went wrong while creating Voice Plan';
         ErrorResponse.error = new AppError(['Plans Data not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+    }
+
+    
+    next();
+}
+
+function validateVoicePlanUpdateRequest(req, res, next) {
+    const bodyReq = req.body;
+
+    if (!req.is('application/json')) {
+        ErrorResponse.message = 'Something went wrong while Updating Voice Plan';
+        ErrorResponse.error = new AppError(['Invalid content type, incoming request must be in application/json format'], StatusCodes.BAD_REQUEST);
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+    }
+    else if (bodyReq.DID == undefined) {
+        ErrorResponse.message = 'Something went wrong while Updating Voice Plan';
+        ErrorResponse.error = new AppError(['DID not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+    } 
+    else if (bodyReq.voice_plan_id == undefined) {
+        ErrorResponse.message = 'Something went wrong while Updating Voice Plan';
+        ErrorResponse.error = new AppError(['Voice Plan Id not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
@@ -80,4 +107,5 @@ module.exports = {
     validateVoicePlanRequest,
     modifyVoicePlansCreateBodyRequest,
     modifyVoicePlansRequest,
+    validateVoicePlanUpdateRequest
 }

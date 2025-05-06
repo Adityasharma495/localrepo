@@ -50,6 +50,17 @@ Credit.belongsTo(User, { foreignKey: "from_user", as: "fromUser" });
 Credit.belongsTo(User, { foreignKey: "to_user", as: "toUser" });
 Credit.belongsTo(User, { foreignKey: "action_user", as: "actionUser" });
 
+Numbers.hasMany(DIDUserMapping, {
+  foreignKey: 'DID',
+  as: 'DIDUserMapping',
+});
+
+DIDUserMapping.belongsTo(Numbers, {
+  foreignKey: 'DID',
+  targetKey: 'id',
+  as: 'did',
+});
+
 
 User.belongsToMany(Company, {
   through: 'user_companies',
@@ -57,20 +68,19 @@ User.belongsToMany(Company, {
   foreignKey: 'user_id'
 });
 
-Company.belongsToMany(User, {
-  through: 'user_companies',
-  as: 'userList',
-  foreignKey: 'company_id'
+Company.hasMany(User, {
+  foreignKey: 'company_id',
+  as: 'users'
+});
+
+CallCenter.hasMany(User, {
+  foreignKey: 'callcenter_id',
+  as: 'users'
 });
 
 Numbers.belongsTo(VoicePlan, {
   foreignKey: 'voice_plan_id',
   as: 'voice_plan',
-});
-
-Numbers.belongsTo(Company, {
-  foreignKey: 'allocated_company_id',
-  as: 'allocated_company'
 });
 
 VoicePlan.hasMany(Numbers, {
@@ -104,10 +114,23 @@ User.hasMany(AclSettings, { foreignKey: "created_by", as: "aclsettings" });
 User.belongsTo(SubUserLicence, {foreignKey: 'sub_user_licence_id',as: 'sub_user_licence',});
 
 User.belongsTo(User, {foreignKey: 'created_by',as: 'createdByUser'});
+User.hasMany(User, {
+  foreignKey: 'created_by',
+});
 User.hasMany(Credit, { foreignKey: "user_id" });
 User.hasMany(Credit, { foreignKey: "from_user", as: "fromUser" });
 User.hasMany(Credit, { foreignKey: "to_user", as: "toUser" });
 User.hasMany(Credit, { foreignKey: "action_user", as: "actionUser" });
+
+User.belongsTo(Company, {
+  foreignKey: 'company_id',
+  as: 'company'
+});
+
+User.belongsTo(CallCenter, {
+  foreignKey: 'callcenter_id',
+  as: 'callcenter'
+});
 
 User.belongsTo(AclSettings, {foreignKey: 'acl_settings_id',as: 'acl_settings'});
 AclSettings.hasMany(User, {foreignKey: 'acl_settings_id',as: 'users'});

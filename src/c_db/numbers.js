@@ -82,19 +82,7 @@ const Numbers = sequelize.define(
       allowNull: true,
     },
     allocated_to: {
-      type: DataTypes.UUID,
-      references: {
-        model: USER_MODEL_NAME,
-        key: "id",
-      },
-      allowNull: true,
-    },
-    allocated_company_id: {
-      type: DataTypes.UUID,
-      references: {
-        model: 'companies', // or constants.MODEL.COMPANIES if using constants
-        key: 'id',
-      },
+      type: DataTypes.BIGINT,
       allowNull: true,
     },
     voice_plan_id: {
@@ -117,6 +105,22 @@ const Numbers = sequelize.define(
     is_deleted: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+    },
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: () => {
+          const now = new Date();
+          const istOffset = 5.5 * 60 * 60 * 1000;
+          return new Date(now.getTime() + istOffset);
+      }
+    },
+    updated_at: {
+        type: DataTypes.DATE,
+        defaultValue: () => {
+            const now = new Date();
+            const istOffset = 5.5 * 60 * 60 * 1000;
+            return new Date(now.getTime() + istOffset);
+        }
     },
   },
   {

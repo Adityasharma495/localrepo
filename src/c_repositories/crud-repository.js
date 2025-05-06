@@ -9,28 +9,13 @@ class CrudRepository {
     }
 
     async create(data) {
-
-  
         try {
             const response = await this.model.create(data);
-
-
+            
             return response;            
         } catch (error) {
             console.log(error);
             throw error
-            
-            if (error.name === 'ValidationError' || (error.name === 'MongoServerError' && error.code === 11000)) {
-                let detailedErrorMessage = error.message;
-                if (error.code === 11000) {
-                    // Adding detail to the error message about which key was duplicated
-                    const duplicatedField = Object.keys(error.keyPattern)[0];
-                    const duplicatedValue = error.keyValue[duplicatedField];
-                    detailedErrorMessage = `Duplicate key error: ${duplicatedField} with value '${duplicatedValue}' already exists.`;
-                }
-                throw new AppError(detailedErrorMessage, StatusCodes.BAD_REQUEST);
-            }
-            throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
         }
     }
     
@@ -62,27 +47,22 @@ class CrudRepository {
     }
 
     async update(id, data) {
-
-      
-        // Handle nested company → companies (JSONB)
-        if (data.company && typeof data.company === 'object') {
-          data.companies = {
-            _id: data.company._id,
-            name: data.company.name,
-          };
-          delete data.company;
-        }
-      
+      try {
         const options = {
           where: {
             id: id,
           },
         };
-      
-        const response = await this.model.update(data, options);
 
+        const response = await this.model.update(data, options);
         return response;
+      } catch (error) {
+
+          console.log(error)
+          throw error;
       }
+        
+    }
       
       
 

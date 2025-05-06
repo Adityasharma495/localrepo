@@ -2,6 +2,7 @@ const CrudRepository = require('./crud-repository');
 const User = require('../c_db/User');
 const SubUserLicence = require("../c_db/sub-user-licence")
 const Company = require("../c_db/companies")
+const CallCenter = require("../c_db/call-centres")
 const { constants, Authentication } = require('../utils/common');
 const {USERS_ROLE} = require('../utils/common/constants');
 
@@ -54,7 +55,12 @@ class UserRepository extends CrudRepository{
                 model: User,
                 as: 'createdByUser',
               },
+              {
+                model: Company,
+                as: 'company',
+              },
             ],
+
           });
       
           const plainData = data.map(user => {
@@ -80,12 +86,29 @@ class UserRepository extends CrudRepository{
 
     async get(id) {
         try {
-            const response = await this.model.findByPk(id);
+            const response = await this.model.findByPk(id, {
+              include: [
+                {
+                  model: User,
+                  as: 'createdByUser',
+                },
+                {
+                  model: Company,
+                  as: 'company',
+                },
+                {
+                  model: CallCenter,
+                  as: 'callcenter',
+                }
+              ]
+            });
             if (!response) {
                 throw new AppError('Not able to find the resource', StatusCodes.NOT_FOUND);
             }
             return response;         
         } catch (error) {
+      console.log('error', error)
+
             throw error;
         }
 
@@ -121,20 +144,22 @@ class UserRepository extends CrudRepository{
         
     }
 
-    async getByUserRole(userRole){
-        
-        try {
-            
-            const user = await this.model.findOne({ role:  userRole});
-            return user;    
-
-        } catch (error) {
-         
-            throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
-
+    async getByUserRole(userRole) {
+      try {
+        const user = await this.model.findOne({
+          where: { role: userRole },
+        });
+    
+        if (!user) {
+          throw new AppError("User not found", StatusCodes.NOT_FOUND);
         }
-        
+    
+        return user;
+      } catch (error) {
+        throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
+      }
     }
+    
 
     async deleteMany(idArray, loggedUser) {
         try {

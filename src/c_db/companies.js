@@ -6,8 +6,7 @@ const COMPANY_MODEL_NAME = constants.MODEL.COMPANIES;
 
 const Company = sequelize.define(COMPANY_MODEL_NAME, {
   id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
+    type: DataTypes.BIGINT,
     primaryKey: true
   },
   name: {
