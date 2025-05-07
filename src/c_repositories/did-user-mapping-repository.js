@@ -40,7 +40,7 @@ class DIDUserMappingRepository extends CrudRepository {
     }
   }
 
-  async getForOthers(id) {
+  async getForOthers(id, level = null) {
     try {
       if (!id) {
         throw new AppError("ID is required", StatusCodes.BAD_REQUEST);
@@ -78,7 +78,7 @@ class DIDUserMappingRepository extends CrudRepository {
         },
         raw: true,
       });
-
+  
       const voicePlanMap = {};
       voicePlans.forEach(plan => {
         voicePlanMap[plan.id] = plan;
@@ -87,12 +87,16 @@ class DIDUserMappingRepository extends CrudRepository {
       const filtered = data
         .map(item => {
           const matchedDetails = item.mapping_detail
-            .filter(md => md?.allocated_to == id)
+            .filter(md => {
+              const isAllocatedToMatch = md?.allocated_to == id;
+              const isLevelMatch = level ? md?.level == level : true;
+              return isAllocatedToMatch && isLevelMatch;
+            })
             .map(md => ({
               ...md,
               voice_plan_data: voicePlanMap[md.voice_plan_id] || null,
             }));
-
+  
           if (matchedDetails.length > 0) {
             return {
               ...item,
@@ -109,9 +113,6 @@ class DIDUserMappingRepository extends CrudRepository {
       throw error;
     }
   }
-  
-  
-  
 
   async findAll(conditions) {
     try {
@@ -188,9 +189,6 @@ class DIDUserMappingRepository extends CrudRepository {
       throw error;
     }
   }
-
-
-
 
   async addMappingDetail(documentId, newDetail) {
     try {

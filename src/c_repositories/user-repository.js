@@ -91,6 +91,12 @@ class UserRepository extends CrudRepository{
                 {
                   model: User,
                   as: 'createdByUser',
+                  include: [
+                    {
+                      model: User,
+                      as: 'createdByUser',
+                    }
+                  ]
                 },
                 {
                   model: Company,
@@ -160,7 +166,6 @@ class UserRepository extends CrudRepository{
       }
     }
     
-
     async deleteMany(idArray, loggedUser) {
         try {
             if (loggedUser.role === USERS_ROLE.SUPER_ADMIN || loggedUser.role === USERS_ROLE.SUB_SUPERADMIN) {
@@ -186,6 +191,7 @@ class UserRepository extends CrudRepository{
             throw error;
         }
     }
+
 
     async getForLicence(id) {
         try {

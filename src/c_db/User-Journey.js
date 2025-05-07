@@ -7,8 +7,8 @@ const UserJourney = sequelize.define(
   "user_journey",
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.BIGINT,
+      autoIncrement: true,
       allowNull: false,
       primaryKey: true,
     },

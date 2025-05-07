@@ -373,28 +373,37 @@ async function uploadNumbers(req, res) {
 
 async function getAll(req, res) {
   try {
-    let data;
     let idToCheck;
-
-    const getLoggedDetail = await userRepo.get(req.user.id);
+    const loggedUser = await userRepo.get(req.user.id);
 
     if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
-      idToCheck = getLoggedDetail?.company?.id;
+      idToCheck = loggedUser?.company?.id;
     } else if (req.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
-      idToCheck = getLoggedDetail?.callcenter?.id;
+      idToCheck = loggedUser?.callcenter?.id;
     } else {
       idToCheck = req.user.id;
     }
 
-    if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
-      data = await didUserMappingRepository.getForSuperadmin(idToCheck);
+      let data
+      let level
 
-    } else {
-      data = await didUserMappingRepository.getForOthers(idToCheck);
-    }
+      if (loggedUser?.role === USERS_ROLE.COMPANY_ADMIN) {
+        data = await didUserMappingRepository.getForOthers(idToCheck, 4);
+      } else if (loggedUser?.role === USERS_ROLE.RESELLER && loggedUser?.createdByUser?.role === USERS_ROLE.SUPER_ADMIN) {
+        data = await didUserMappingRepository.getForOthers(idToCheck, 1);
+      } else if (loggedUser?.role === USERS_ROLE.RESELLER && loggedUser?.createdByUser?.role === USERS_ROLE.RESELLER &&
+        loggedUser?.createdByUser?.createdByUser?.role === USERS_ROLE.SUPER_ADMIN) {
+          data = await didUserMappingRepository.getForOthers(idToCheck, 2);
+      } else if (loggedUser?.role === USERS_ROLE.RESELLER && loggedUser?.createdByUser?.role === USERS_ROLE.RESELLER &&
+        loggedUser?.createdByUser?.createdByUser?.role === USERS_ROLE.RESELLER) {
+          data = await didUserMappingRepository.getForOthers(idToCheck, 3);
+      } else if (loggedUser?.role === USERS_ROLE.CALLCENTRE_ADMIN) {
+        data = await didUserMappingRepository.getForOthers(idToCheck, 5);
+      } else {
+        data = await didUserMappingRepository.getForSuperadmin(idToCheck);
+      }
 
-    const uniqueDIDs = [...new Set(data.map(item => Number(item.DID?.id) || Number(item.DID)))];
-
+    const uniqueDIDs = [...new Set(data.map(item => Number(item.did?.id) || Number(item)))];
     data = await numberRepo.findMany(uniqueDIDs);
 
     const reverseNumberStatus = Object.entries(NUMBER_STATUS).reduce((acc, [key, value]) => {
@@ -409,23 +418,22 @@ async function getAll(req, res) {
         let allocatedData = null;
         let finalData = {};
 
-        allocatedData = await companyRepo.findOne({ id: val.allocated_to });
-        if (allocatedData) {
-          finalData = { name: allocatedData.name, id: allocatedData.id };
-        }
+        const didMapping = await didUserMappingRepository.findOne({DID: val.id})
+        level = didMapping.mapping_detail.length
 
-        if (!allocatedData) {
-          allocatedData = await userRepo.findOne({ id: val.allocated_to });
+        if (level === 1 || level === 2 || level === 3 || level === 4) {
+          allocatedData = await userRepo.get(val?.allocated_to)
           if (allocatedData) {
             finalData = { name: allocatedData.username, id: allocatedData.id };
           }
-        }
-
-        if (!allocatedData) {
-          allocatedData = await callCentreRepo.findOne({ id: val.allocated_to });
-          if (allocatedData) {
-            finalData = { name: allocatedData.name, id: allocatedData.id };
-          }
+        } else if (level === 5) {
+          allocatedData = await companyRepo.findOne({id : val?.allocated_to})
+          finalData = { name: allocatedData?.name, id: allocatedData?.id };
+          
+        } else if (level === 6) {
+          allocatedData = await callCentreRepo.findOne({id : val?.allocated_to})
+          finalData = { name: allocatedData?.name, id: allocatedData?.id };
+          
         }
 
         if (allocatedData) {
@@ -443,8 +451,6 @@ async function getAll(req, res) {
     );
 
     data = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-
 
     SuccessRespnose.data = data;
     SuccessRespnose.message = 'Success';
@@ -791,18 +797,11 @@ async function getToAllocateNumbers(req, res) {
   try {
 
     let data;
-
-    if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
-      data = await numberRepo.getAll({ where: { allocated_to: allocatedToId } });
-    }
-    else {
-      const roleToCheck = await userRepo.findOne({ id: allocatedToId });
-      if (roleToCheck.role === USERS_ROLE.SUPER_ADMIN ) {
+      if (req.user.role === USERS_ROLE.SUPER_ADMIN ) {
         data = await numberRepo.getAll({ where: { allocated_to: null } });
       } else {
         data = await numberRepo.getAll({ where: { allocated_to: allocatedToId } });
       }
-    }
 
     SuccessRespnose.data = formatResponse.formatResponseIds(data, version);
 
@@ -827,26 +826,49 @@ async function getToAllocateNumbers(req, res) {
 async function getAllocatedNumbers(req, res) {
   try {
       const allocatedToId = req.params.id;
-      let allocatedNumbers = await didUserMappingRepository.getForOthers(allocatedToId);
+      const loggedUser = await userRepo.get(req.user.id)
+      let allocatedNumbers
+      let level
+
+      if (loggedUser?.role === USERS_ROLE.COMPANY_ADMIN) {
+        allocatedNumbers = await didUserMappingRepository.getForOthers(allocatedToId, 5);
+        level = 5
+      } else if (loggedUser?.role === USERS_ROLE.RESELLER && loggedUser?.createdByUser?.role === USERS_ROLE.SUPER_ADMIN) {
+        allocatedNumbers = await didUserMappingRepository.getForOthers(allocatedToId, 2);
+        level = 2
+
+        if (!allocatedNumbers) {
+          allocatedNumbers = await didUserMappingRepository.getForOthers(allocatedToId, 4);
+          level = 4
+        }
+      } else if (loggedUser?.role === USERS_ROLE.RESELLER && loggedUser?.createdByUser?.role === USERS_ROLE.RESELLER &&
+        loggedUser?.createdByUser?.createdByUser?.role === USERS_ROLE.SUPER_ADMIN) {
+          allocatedNumbers = await didUserMappingRepository.getForOthers(allocatedToId, 3);
+          level = 3
+
+          if (!allocatedNumbers) {
+            allocatedNumbers = await didUserMappingRepository.getForOthers(allocatedToId, 4);
+            level = 4
+          }
+      } else if (loggedUser?.role === USERS_ROLE.RESELLER && loggedUser?.createdByUser?.role === USERS_ROLE.RESELLER &&
+        loggedUser?.createdByUser?.createdByUser?.role === USERS_ROLE.RESELLER) {
+          allocatedNumbers = await didUserMappingRepository.getForOthers(allocatedToId, 4);
+          level = 4
+      } else {
+        allocatedNumbers = await didUserMappingRepository.getForOthers(allocatedToId, 1);
+        level = 1
+      }
 
       const allocatedId = allocatedNumbers.length > 0 ? allocatedNumbers[0]?.mapping_detail[0].allocated_to: null 
+
       let allocatedTo;
-      if (req.user.role === USERS_ROLE.SUPER_ADMIN && allocatedId) {
+      if (level === 1 || level === 2 || level === 3) {
           allocatedTo = (await userRepo.get(allocatedId))?.username
-      } else if (req.user.role === USERS_ROLE.RESELLER && allocatedId) {
+      } else if (level === 4) {
           const company = await companyRepo.findOne({id : allocatedId})
-          if (company) {
-              allocatedTo = company?.name
-          } else {
-              allocatedTo = (await userRepo.findOne({id : allocatedId}))?.username
-          }
-      } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN && allocatedId) {
-          const company = await companyRepo.findOne({id : allocatedId})
-          if (company) {
-              allocatedTo = company?.name
-          } else {
-              allocatedTo = (await callCentreRepo.findOne({id : allocatedId}))?.name
-          }
+          allocatedTo = company?.name
+      } else if (level === 5) {
+          allocatedTo = (await callCentreRepo.findOne({id : allocatedId}))?.name
       }
       const allocatedBy = req.user.username
 

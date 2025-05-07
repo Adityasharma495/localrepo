@@ -31,6 +31,7 @@ async function signinUser(req, res) {
   try {
     //Fetch user via username
     const user = await userRepo.getByUsername(username);
+    console.log('user', user)
 
     if (user) {
       // if (user.isValidLogin() == false)
@@ -38,10 +39,7 @@ async function signinUser(req, res) {
       const isPasswordMatch = await user.comparePassword(bodyReq.password);
 
       if (isPasswordMatch) {
-
         const userData = await user.generateUserData(true);
-
-
         SuccessRespnose.message = "Successfully signed in";
         SuccessRespnose.data = ResponseFormatter.formatResponseIds(userData, version);
 
@@ -63,6 +61,7 @@ async function signinUser(req, res) {
 
     throw new AppError("User not found", StatusCodes.BAD_REQUEST);
   } catch (error) {
+    console.log(error)
     ErrorResponse.error = error;
     ErrorResponse.message = error.message;
 

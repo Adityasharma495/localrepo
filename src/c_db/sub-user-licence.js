@@ -7,12 +7,12 @@ const SubUserLicence = sequelize.define(
   MODEL.SUB_USER_LICENCE,
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.BIGINT,
+      autoIncrement: true,
       primaryKey: true,
     },
     user_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: false,
       references: {
         model: User,
@@ -34,7 +34,7 @@ const SubUserLicence = sequelize.define(
       defaultValue: false,
     },
     created_by: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
       references: {
         model: User,

@@ -47,7 +47,7 @@ const User = sequelize.define(
       allowNull: false,
     },
     created_by: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
     },
     status: {
@@ -66,7 +66,7 @@ const User = sequelize.define(
       defaultValue: null
     },
     company_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
       references: {
         model: Company,
@@ -74,7 +74,7 @@ const User = sequelize.define(
       }
     },
     callcenter_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
       references: {
         model: CallCenter,
@@ -82,11 +82,11 @@ const User = sequelize.define(
       }
     },
     acl_settings_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
     },
     sub_user_licence_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
     },
     credits_available: {
@@ -207,7 +207,6 @@ User.prototype.generateUserData = async function (tokenGenerate = false) {
     }
 
     const userData = user.toJSON();
-
     if (userData.companies && userData.companies._id) {
       const companyDetails = await Company.findByPk(userData.companies._id);
 

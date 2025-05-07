@@ -7,6 +7,7 @@ const COMPANY_MODEL_NAME = constants.MODEL.COMPANIES;
 const Company = sequelize.define(COMPANY_MODEL_NAME, {
   id: {
     type: DataTypes.BIGINT,
+    autoIncrement: true,
     primaryKey: true
   },
   name: {
@@ -37,7 +38,7 @@ const Company = sequelize.define(COMPANY_MODEL_NAME, {
     }
   },    
   created_by: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: true,
     references: {
       model: USER_MODEL_NAME,
