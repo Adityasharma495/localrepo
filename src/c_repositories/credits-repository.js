@@ -55,38 +55,68 @@ class CreditRepository extends CrudRepository {
         order: [['created_at', 'DESC']],
       });
   
-      const allIds = new Set();
-      credits.forEach(item => {
-        if (item.from_user) allIds.add(item.from_user);
-        if (item.to_user) allIds.add(item.to_user);
-        if (item.action_user) allIds.add(item.action_user);
+      const userIdsSet = new Set();
+      const companyIdsSet = new Set();
+  
+      credits.forEach((item) => {
+        if (item.from_user) userIdsSet.add(item.from_user);
+        if (item.to_user) userIdsSet.add(item.to_user);
+      
+        if (item.type === "Company" && item.action === "deduction") {
+          if (item.company_action === "Addition") {
+            if (item.action_user) userIdsSet.add(item.action_user);
+          } else {
+            if (item.action_user) companyIdsSet.add(item.action_user);
+          }
+        } else if (item.type === "Company" && item.action === "addition") {
+          if (item.company_action === "Addition") {
+            if (item.action_user) companyIdsSet.add(item.action_user); 
+          } else {
+            if (item.action_user) userIdsSet.add(item.action_user);
+          }
+        } else {
+          if (item.action_user) userIdsSet.add(item.action_user);
+        }
       });
-  
-      const idsArray = Array.from(allIds);
-  
+   
       const [users, companies] = await Promise.all([
         User.findAll({
-          where: { id: idsArray },
-          attributes: ['id', 'username'],
+          where: { id: Array.from(userIdsSet) },
+          attributes: ["id", "username"],
           raw: true,
         }),
         Company.findAll({
-          where: { id: idsArray },
-          attributes: ['id', 'name'],
+          where: { id: Array.from(companyIdsSet) },
+          attributes: ["id", "name"],
           raw: true,
         }),
       ]);
   
-      const userMap = Object.fromEntries(users.map(u => [u.id, { type: 'user', username: u.username }]));
-      const companyMap = Object.fromEntries(companies.map(c => [c.id, { type: 'company', username: c.name }]));
+      const userMap = Object.fromEntries(
+        users.map((u) => [u.id, { type: "user", username: u.username }])
+      );
+  
+      const companyMap = Object.fromEntries(
+        companies.map((c) => [c.id, { type: "company", username: c.name }])
+      );
+  
       const idMap = { ...userMap, ...companyMap };
   
-      const enrichedCredits = credits.map(credit => ({
+      const enrichedCredits = credits.map((credit) => ({
         ...credit,
         fromUser: idMap[credit.from_user] || null,
         toUser: idMap[credit.to_user] || null,
-        actionUser: idMap[credit.action_user] || null,
-      }));
+        actionUser:
+          credit.type === "Company" && credit.action === "deduction"
+            ? credit.company_action === "Addition"
+              ? userMap[credit.action_user] || null
+              : companyMap[credit.action_user] || null
+            : credit.type === "Company" && credit.action === "addition"
+            ? credit.company_action === "Addition"
+              ? companyMap[credit.action_user] || null
+              : userMap[credit.action_user] || null
+            : userMap[credit.action_user] || null,
+      }));      
   
       return enrichedCredits;
     } catch (error) {

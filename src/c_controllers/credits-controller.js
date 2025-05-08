@@ -47,6 +47,7 @@ async function updateCredit(req, res) {
             action: USER_CREDITS_ACTION.ADD,
             balance: updatedValue,
             action_user: bodyReq.id,
+            type: "User"
           });
 
           await creditRepo.create({
@@ -58,6 +59,7 @@ async function updateCredit(req, res) {
             action: USER_CREDITS_ACTION.DEDUCT,
             balance: updatedValue,
             action_user: bodyReq.fromUser,
+            type: "User"
           });
 
           await userJourneyRepo.create({
@@ -89,6 +91,7 @@ async function updateCredit(req, res) {
             action: USER_CREDITS_ACTION.DEDUCT,
             balance: updatedValue,
             action_user: bodyReq.id,
+            type: "User"
           });
 
           await creditRepo.create({
@@ -100,6 +103,7 @@ async function updateCredit(req, res) {
             action: USER_CREDITS_ACTION.ADD,
             balance: updatedValue,
             action_user: bodyReq.fromUser,
+            type: "User"
           });
 
           await userJourneyRepo.create({
@@ -141,6 +145,7 @@ async function updateCredit(req, res) {
             action: USER_CREDITS_ACTION.ADD,
             balance: updatedValue,
             action_user: bodyReq.id,
+            type: "User"
           });
 
           await creditRepo.create({
@@ -152,6 +157,7 @@ async function updateCredit(req, res) {
             action: USER_CREDITS_ACTION.DEDUCT,
             balance: updatedValueForFromUser,
             action_user: bodyReq.fromUser,
+            type: "User"
           });
 
           await userJourneyRepo.create({
@@ -188,7 +194,8 @@ async function updateCredit(req, res) {
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.DEDUCT,
             balance: updatedValue,
-            action_user: bodyReq.fromUser,
+            action_user: bodyReq.id,
+            type: "User"
           });
 
           await creditRepo.create({
@@ -199,7 +206,8 @@ async function updateCredit(req, res) {
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.ADD,
             balance: updatedValueForFromUser,
-            action_user: bodyReq.id,
+            action_user: bodyReq.fromUser,
+            type: "User"
           });
 
           await userJourneyRepo.create({
@@ -283,6 +291,7 @@ async function updateCompanyCredit(req, res) {
             action: USER_CREDITS_ACTION.ADD,
             balance: updatedValue,
             action_user: bodyReq.id,
+            type: "Company",
           });
 
           await creditRepo.create({
@@ -294,6 +303,7 @@ async function updateCompanyCredit(req, res) {
             action: USER_CREDITS_ACTION.DEDUCT,
             balance: updatedValue,
             action_user: bodyReq.fromUser,
+            type: "Company",
           });
 
           await userJourneyRepo.create({
@@ -325,6 +335,7 @@ async function updateCompanyCredit(req, res) {
             action: USER_CREDITS_ACTION.DEDUCT,
             balance: updatedValue,
             action_user: bodyReq.id,
+            type: "Company"
           });
 
           await creditRepo.create({
@@ -336,6 +347,7 @@ async function updateCompanyCredit(req, res) {
             action: USER_CREDITS_ACTION.ADD,
             balance: updatedValue,
             action_user: bodyReq.fromUser,
+            type: "Company"
           });
 
           await userJourneyRepo.create({
@@ -377,6 +389,8 @@ async function updateCompanyCredit(req, res) {
             action: USER_CREDITS_ACTION.ADD,
             balance: updatedValue,
             action_user: bodyReq.id,
+            type: "Company",
+            company_action: "Addition"
           });
 
           await creditRepo.create({
@@ -388,6 +402,8 @@ async function updateCompanyCredit(req, res) {
             action: USER_CREDITS_ACTION.DEDUCT,
             balance: updatedValueForFromUser,
             action_user: bodyReq.fromUser,
+            type: "Company",
+            company_action: "Addition"
           });
 
           await userJourneyRepo.create({
@@ -424,7 +440,8 @@ async function updateCompanyCredit(req, res) {
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.DEDUCT,
             balance: updatedValue,
-            action_user: bodyReq.fromUser,
+            action_user: bodyReq.id,
+            type: "Company"
           });
 
           await creditRepo.create({
@@ -435,7 +452,8 @@ async function updateCompanyCredit(req, res) {
             credits_rupees: Number(bodyReq.updatedCredit),
             action: USER_CREDITS_ACTION.ADD,
             balance: updatedValueForFromUser,
-            action_user: bodyReq.id,
+            action_user: bodyReq.fromUser,
+            type: "Company"
           });
 
           await userJourneyRepo.create({
