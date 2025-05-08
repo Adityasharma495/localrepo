@@ -90,7 +90,8 @@ const updateCredits = async(finalUpdateCredits)=>{
                           action_user : finalUpdateCredits[i].userId,
                           credits_rupees : credits,
                           balance : updatedCredtis,
-                          action : "inbound_deduction"
+                          action : "inbound_deduction",
+                          type: "User",
                     }
                     const creditHistory = await creditHistoryRepo.create(data);
                     if(creditHistory){

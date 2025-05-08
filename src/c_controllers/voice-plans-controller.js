@@ -39,7 +39,9 @@ async function createVoicePlans(req, res) {
 
     const updatedPlans = rawPlans.map((plan) => {
       const pulseRupees = Number(plan.pulse_price) / 100;
-      const pricePerSec = pulseRupees / Number(plan.pulse_duration);
+      const duration = Number(plan?.pulse_duration);
+      
+      const pricePerSec = duration > 0 ? pulseRupees / duration : 0;
 
       return {
         pulse_price: Number(plan.pulse_price),

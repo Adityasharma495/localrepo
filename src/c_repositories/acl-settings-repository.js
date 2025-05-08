@@ -29,20 +29,6 @@ class AclSettingRepository extends CrudRepository {
           raw: true,
           nest: true,
         });
-      } else {
-        response = await AclSettings.findAll({
-          where: { is_deleted: false },
-          include: [
-            {
-              model: User,
-              as: "creator",
-              attributes: ["id", "username"],
-            },
-          ],
-          order: [["created_at", "DESC"]],
-          raw: true,
-          nest: true,
-        });
       }
 
       // Map status label

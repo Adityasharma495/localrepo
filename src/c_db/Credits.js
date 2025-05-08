@@ -68,7 +68,18 @@ const Credit = sequelize.define(
       validate: {
         isIn: [['addition', 'deduction', 'inbound_deduction']] 
       }
-    },    
+    },   
+    type: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: {
+        isIn: [['User', 'Company']] 
+      }
+    }, 
+    company_action: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     created_at: {
       type: DataTypes.DATE,
       allowNull: false,

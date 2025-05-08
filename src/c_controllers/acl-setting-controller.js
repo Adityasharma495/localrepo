@@ -19,11 +19,7 @@ const userJourneyRepo = new UserJourneyRepository();
 async function getAll(req, res) {
     try {
     let data;
-    if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
-      data = await aclSettingRepo.getAll();
-    } else {
-      data = await aclSettingRepo.getAll(req.user.id);
-    }
+    data = await aclSettingRepo.getAll(req.user.id);
     SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
     SuccessRespnose.message = "Success";
 
