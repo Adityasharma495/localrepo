@@ -1,5 +1,5 @@
 const CrudRepository = require("./crud-repository");
-const { Credit, User } = require("../c_db");
+const { Credit, User, Company } = require("../c_db");
 const { Op } = require("sequelize");
 const { constants } = require('../utils/common');
 
@@ -10,42 +10,85 @@ class CreditRepository extends CrudRepository {
 
   async getAll(id) {
     try {
+      let query = {};
       let userIds = [];
+  
       if (id) {
-        const users = await User.findAll({
-          where: { created_by: id },
-          attributes: ['id'],
-        });
-        userIds = users.map(user => user.id);
-      }
-
-      const query = id
-        ? {
-            [Op.or]: [
-              { user_id: id },
-              { from_user: id },
-              { to_user: id },
-              { action_user: id },
-              { user_id: { [Op.in]: userIds } },
-              { from_user: { [Op.in]: userIds } },
-              { to_user: { [Op.in]: userIds } },
-              { action_user: { [Op.in]: userIds } },
-            ],
+        const isUser = await User.findByPk(id);
+  
+        if (isUser) {
+          const users = await User.findAll({
+            where: { created_by: id },
+            attributes: ['id'],
+          });
+          userIds = users.map(user => user.id);
+        } else {
+          const isCompany = await Company.findByPk(id);
+          if (isCompany) {
+            const users = await User.findAll({
+              where: { company_id: id },
+              attributes: ['id'],
+            });
+            userIds = users.map(user => user.id);
+          } else {
+            return [];
           }
-        : {};
-
-      const response = await Credit.findAll({
+        }
+  
+        query = {
+          [Op.or]: [
+            { user_id: id },
+            { from_user: id },
+            { to_user: id },
+            { action_user: id },
+            { user_id: { [Op.in]: userIds } },
+            { from_user: { [Op.in]: userIds } },
+            { to_user: { [Op.in]: userIds } },
+            { action_user: { [Op.in]: userIds } },
+          ],
+        };
+      }
+  
+      const credits = await Credit.findAll({
         where: query,
-        include: [
-          { model: User, as: 'fromUser', attributes: ['id', 'username'] },
-          { model: User, as: 'actionUser', attributes: ['id', 'username'] },
-          { model: User, as: 'toUser', attributes: ['id', 'username'] },
-        ],
-        order: [['created_at', 'DESC']],
         raw: true,
+        order: [['created_at', 'DESC']],
       });
-
-      return response;
+  
+      const allIds = new Set();
+      credits.forEach(item => {
+        if (item.from_user) allIds.add(item.from_user);
+        if (item.to_user) allIds.add(item.to_user);
+        if (item.action_user) allIds.add(item.action_user);
+      });
+  
+      const idsArray = Array.from(allIds);
+  
+      const [users, companies] = await Promise.all([
+        User.findAll({
+          where: { id: idsArray },
+          attributes: ['id', 'username'],
+          raw: true,
+        }),
+        Company.findAll({
+          where: { id: idsArray },
+          attributes: ['id', 'name'],
+          raw: true,
+        }),
+      ]);
+  
+      const userMap = Object.fromEntries(users.map(u => [u.id, { type: 'user', username: u.username }]));
+      const companyMap = Object.fromEntries(companies.map(c => [c.id, { type: 'company', username: c.name }]));
+      const idMap = { ...userMap, ...companyMap };
+  
+      const enrichedCredits = credits.map(credit => ({
+        ...credit,
+        fromUser: idMap[credit.from_user] || null,
+        toUser: idMap[credit.to_user] || null,
+        actionUser: idMap[credit.action_user] || null,
+      }));
+  
+      return enrichedCredits;
     } catch (error) {
       throw error;
     }

@@ -14,19 +14,36 @@ class AclSettingRepository extends CrudRepository {
 
   async getAll(current_uid) {
     try {
-      let response = await AclSettings.findAll({
-        where: { is_deleted: false },
-        include: [
-          {
-            model: User,
-            as: "creator",
-            attributes: ["id", "username"],
-          },
-        ],
-        order: [["created_at", "DESC"]],
-        raw: true,
-        nest: true,
-      });
+      let response;
+      if (current_uid) {
+        response = await AclSettings.findAll({
+          where: { is_deleted: false, created_by: current_uid },
+          include: [
+            {
+              model: User,
+              as: "creator",
+              attributes: ["id", "username"],
+            },
+          ],
+          order: [["created_at", "DESC"]],
+          raw: true,
+          nest: true,
+        });
+      } else {
+        response = await AclSettings.findAll({
+          where: { is_deleted: false },
+          include: [
+            {
+              model: User,
+              as: "creator",
+              attributes: ["id", "username"],
+            },
+          ],
+          order: [["created_at", "DESC"]],
+          raw: true,
+          nest: true,
+        });
+      }
 
       // Map status label
       response = response.map((val) => ({

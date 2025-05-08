@@ -30,7 +30,7 @@ const CallCentre = sequelize.define(
       allowNull: false,
     },
     company_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
       references: {
         model: "companies",
@@ -52,7 +52,7 @@ const CallCentre = sequelize.define(
       },
     },
     created_by: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
       references: {
         model: "users",

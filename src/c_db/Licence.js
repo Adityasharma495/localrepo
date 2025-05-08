@@ -9,7 +9,7 @@ const Licence = sequelize.define('licences', {
         allowNull: false
     },
     user_id: {
-        type: DataTypes.UUID,
+        type: DataTypes.BIGINT,
         allowNull: true,
         references: {
             model: User, 
@@ -31,7 +31,7 @@ const Licence = sequelize.define('licences', {
         defaultValue: false
     },
     created_by: {
-        type: DataTypes.UUID,
+        type: DataTypes.BIGINT,
         references: {
             model: User, 
             key: 'id'

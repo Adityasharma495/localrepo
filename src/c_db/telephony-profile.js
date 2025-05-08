@@ -5,16 +5,16 @@ const USER_MODEL_NAME = require("../utils/common/constants").MODEL.USERS;
 
 const TelephonyProfile = sequelize.define(MODEL.TELEPHONY_PROFILE, {
   id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
+    type: DataTypes.BIGINT,
     primaryKey: true,
+    autoIncrement: true,
   },
   profile: {
     type: DataTypes.JSONB,
     allowNull: true,
   },
   created_by: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: true,
     references: {
       model: USER_MODEL_NAME,

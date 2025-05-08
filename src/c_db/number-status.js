@@ -22,7 +22,7 @@ const NumberStatus = sequelize.define(NUMBER_STATUS_MODEL_NAME, {
     trim: true,
   },
   created_by: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: false,
     references: {
       model: USER_MODEL_NAME,

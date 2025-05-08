@@ -36,7 +36,7 @@ const Prompt = sequelize.define('prompt', {
     defaultValue: null,
   },
   created_by: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: true,
     references: {
       model: USER_MODEL_NAME,

@@ -10,7 +10,7 @@ const IncomingReport = sequelize.define(
       autoIncrement: true,
     },
     user_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
     },
     call_sid: {

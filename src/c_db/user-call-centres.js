@@ -5,8 +5,13 @@ const USER_MODEL_NAME        = require('../utils/common').constants.MODEL.USERS;
 const CALL_CENTRE_MODEL_NAME = require('../utils/common').constants.MODEL.CALL_CENTRES;  // adjust key if yours differs
 
 const UserCallCentres = sequelize.define('user_call_centres', {
+  id: {
+    type: DataTypes.BIGINT,
+    primaryKey: true,
+    autoIncrement: true,
+  },
   user_id: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: false,
     primaryKey: true,
     references: {

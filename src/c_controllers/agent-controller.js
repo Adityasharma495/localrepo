@@ -709,7 +709,10 @@ async function agentRealTimeData() {
 
     // Fetch users and agent groups
     const users = await userRepo.getByNameBulk(agentNames);
-    const agentGroups = await agentGroupRepo.getAll(agentData[0]?.created_by); // Full group list
+    let agentGroups
+    if (agentData[0]?.created_by) {
+      agentGroups = await agentGroupRepo.getAll(agentData[0]?.created_by); // Full group list
+    }
 
     // Map users by name
     const userMap = new Map();
@@ -717,7 +720,7 @@ async function agentRealTimeData() {
 
     // Map agent_id to all associated groups
     const agentToGroupsMap = new Map();
-    agentGroups.forEach(group => {
+    agentGroups?.forEach(group => {
       group?.agents?.forEach(agentEntry => {
         const agentId = agentEntry.agent_id.toString();
         if (!agentToGroupsMap.has(agentId)) {

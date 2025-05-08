@@ -7,37 +7,24 @@ const Credit = sequelize.define(
   "credit_history",
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      allowNull: false,
+      type: DataTypes.BIGINT,
+      autoIncrement: true,
       primaryKey: true,
     },
     user_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: false,
-      references: {
-        model: USER_MODEL_NAME,
-        key: "id",
-      },
     },
     from_user: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: false,
-      references: {
-        model: USER_MODEL_NAME,
-        key: "id",
-      },
     },
     to_user: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: false,
-      references: {
-        model: USER_MODEL_NAME,
-        key: "id",
-      },
     },
     action_user: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: false,
       references: {
         model: USER_MODEL_NAME,

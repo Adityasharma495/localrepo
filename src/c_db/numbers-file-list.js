@@ -13,7 +13,7 @@ const NumberFile = sequelize.define(NUMBER_FILES_LIST_MODEL_NAME, {
     autoIncrement: true
   },
   user_id: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: true,
     references: {
       model: USER_MODEL_NAME,

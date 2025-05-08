@@ -82,7 +82,7 @@ const Numbers = sequelize.define(
       allowNull: true,
     },
     allocated_to: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       references: {
         model: USER_MODEL_NAME,
         key: "id",
@@ -90,7 +90,7 @@ const Numbers = sequelize.define(
       allowNull: true,
     },
     allocated_company_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       references: {
         model: 'companies', // or constants.MODEL.COMPANIES if using constants
         key: 'id',
@@ -106,7 +106,7 @@ const Numbers = sequelize.define(
       allowNull: true,
     },
     created_by: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull:true,
       references: {
         model: USER_MODEL_NAME,

@@ -95,7 +95,7 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
 
             try {
               report_data = {
-                 user_id : isValidUUID(cdrJson.userId) ? cdrJson.userId : null,
+                 user_id : cdrJson.userId ? cdrJson.userId : null,
                  call_sid : cdrJson.id,
                  caller_number : cdrJson.callerFrom,
                  callee_number : cdrJson.calleeTo,
@@ -141,15 +141,15 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
               if(incoming){
                    summary_data = {
                         did : incoming.did,
-                        user_id: isValidUUID(cdrJson.userId) ? cdrJson.userId : null,
+                        user_id: cdrJson.userId ? cdrJson.userId : null,
                         schedule_date : startDate,
                         nos_processed : (Number(incoming.nos_processed) || 0)+1,
                         connected_calls : (connectedCalls > 0 ? (Number(incoming.connected_calls))+1 : connectedCalls),
                         dtmf_count : (Number(incoming.dtmf_count) || 0) + (Number(cdrJson.dtmfCount) || 0),
                         retry_count : (Number(incoming.retry_count)||0) + (Number(cdrJson.retryCount) || 0),
                         sms_count : (Number(incoming.sms_count) || 0) + (Number(cdrJson.smsCount) || 0), 
-                        parent_id : isValidUUID(cdrJson.userId) ? cdrJson.userId : null,
-                        s_parent_id :  isValidUUID(cdrJson.userId) ? cdrJson.userId : null,
+                        parent_id : cdrJson.userId ? cdrJson.userId : null,
+                        s_parent_id : cdrJson.userId ? cdrJson.userId : null,
                         billing_duration: incoming.billing_duration+cdrJson.duration.billing   
                    }
 
@@ -163,7 +163,7 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
               }else{
                    summary_data = {
                        did : cdrJson.calleeTo,
-                       user_id: isValidUUID(cdrJson.userId) ? cdrJson.userId : null,
+                       user_id: cdrJson.userId ? cdrJson.userId : null,
                        schedule_date : startDate,
                        nos_processed : 1,
                        connected_calls : connectedCalls,

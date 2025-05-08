@@ -11,9 +11,9 @@ const Agents = sequelize.define(
   'agents',
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.BIGINT,
       primaryKey: true,
+      autoIncrement: true,
     },
     agent_name: {
       type: DataTypes.STRING,
@@ -32,7 +32,7 @@ const Agents = sequelize.define(
       defaultValue: false,
     },
     telephony_profile: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
     },
     access: {
@@ -73,7 +73,7 @@ const Agents = sequelize.define(
       allowNull: true,
     },
     created_by: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     created_at: {
