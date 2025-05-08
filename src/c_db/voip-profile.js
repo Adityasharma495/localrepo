@@ -39,7 +39,7 @@ const VoipProfile = sequelize.define(MODEL.VOIP_PROFILE, {
     allowNull: true
   },
   created_by: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: true,
     references: {
       model: USER_MODEL_NAME,

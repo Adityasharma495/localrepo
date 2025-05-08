@@ -8,12 +8,12 @@ const Prompt = require("./prompt");
 
 const AgentsGroup = sequelize.define(MODEL.AGENTS_GROUP, {
   id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
+    type: DataTypes.BIGINT,
     primaryKey: true,
+    autoIncrement: true,
   },
   group_schedule_id: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: true,
     references: {
       model: MemberSchedule,
@@ -53,7 +53,7 @@ const AgentsGroup = sequelize.define(MODEL.AGENTS_GROUP, {
     defaultValue: false,
   },
   whisper_id: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: true,
     references: {
       model: Prompt,
@@ -61,7 +61,7 @@ const AgentsGroup = sequelize.define(MODEL.AGENTS_GROUP, {
     },
   },
   music_on_hold: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: true,
     references: {
       model: Prompt,
@@ -73,7 +73,7 @@ const AgentsGroup = sequelize.define(MODEL.AGENTS_GROUP, {
     defaultValue: false,
   },
   created_by: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: true,
     references: {
       model: User,
@@ -98,52 +98,5 @@ const AgentsGroup = sequelize.define(MODEL.AGENTS_GROUP, {
   createdAt: 'created_at',
   updatedAt: 'updated_at',
 });
-
-// const AgentGroupAgents = sequelize.define("agent_group_agents", {
-//   id: {
-//     type: DataTypes.UUID,
-//     defaultValue: DataTypes.UUIDV4,
-//     primaryKey: true,
-//   },
-//   agent_group_id: {
-//     type: DataTypes.UUID,
-//     allowNull: false,
-//     references: {
-//       model: AgentsGroup,
-//       key: "id",
-//     },
-//   },
-//   agent_data:{
-//     type:DataTypes.JSONB,
-//     allowNull:true,
-//   },
-//   // agent_id: {
-//   //   type: DataTypes.UUID,
-//   //   allowNull: true,
-//   //   references: {
-//   //     model: Agent,
-//   //     key: "id",
-//   //   },
-//   // },
-//   // member_schedule_id: {
-//   //   type: DataTypes.UUID,
-//   //   allowNull: true,
-//   //   references: {
-//   //     model: MemberSchedule,
-//   //     key: "id",
-//   //   },
-//   // },
-//   // priority: {
-//   //   type: DataTypes.INTEGER,
-//   //   defaultValue: 0,
-//   // },
-// }, {
-//   tableName: "agent_group_agents",
-//   timestamps: false,
-// });
-
-// Associations
-// AgentsGroup.hasMany(AgentGroupAgents, { foreignKey: "agent_group_id", as: "agents" });
-// AgentGroupAgents.belongsTo(AgentsGroup, { foreignKey: "agent_group_id" });
 
 module.exports = AgentsGroup;

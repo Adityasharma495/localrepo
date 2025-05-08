@@ -4,8 +4,13 @@ const USER_MODEL_NAME = require('../utils/common').constants.MODEL.USERS;
 const COMPANY_MODEL_NAME = require('../utils/common').constants.MODEL.COMPANIES;
 
 const UserCompany = sequelize.define('user_companies', {
+  id: {
+    type: DataTypes.BIGINT,
+    primaryKey: true,
+    autoIncrement: true,
+  },
   user_id: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: false,
     primaryKey: true,
     references: {
@@ -15,7 +20,7 @@ const UserCompany = sequelize.define('user_companies', {
     onDelete: 'CASCADE'
   },
   company_id: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: false,
     primaryKey: true,
     references: {

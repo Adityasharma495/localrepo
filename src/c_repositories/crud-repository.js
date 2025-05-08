@@ -57,7 +57,7 @@ class CrudRepository {
 
     async getAll(filter = {}) {
 
-        const response = await this.model.find(filter);
+        const response = await this.model.findAll(filter);
         return response;
     }
 

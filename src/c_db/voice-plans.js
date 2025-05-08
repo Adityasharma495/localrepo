@@ -53,7 +53,7 @@ const VoicePlan = sequelize.define(
       defaultValue: null,
     },
     user_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: false,
       references: {
         model: "users",

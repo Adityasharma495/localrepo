@@ -6,9 +6,9 @@ const COMPANY_MODEL_NAME = constants.MODEL.COMPANIES;
 
 const Company = sequelize.define(COMPANY_MODEL_NAME, {
   id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true
+    type: DataTypes.BIGINT,
+    primaryKey: true,
+    autoIncrement: true,
   },
   name: {
     type: DataTypes.STRING,
@@ -38,7 +38,7 @@ const Company = sequelize.define(COMPANY_MODEL_NAME, {
     }
   },    
   created_by: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: true,
     references: {
       model: USER_MODEL_NAME,
@@ -54,7 +54,15 @@ const Company = sequelize.define(COMPANY_MODEL_NAME, {
     type: DataTypes.DATE,
     allowNull: false,
     defaultValue: DataTypes.NOW
-  }
+  },
+  credits_available: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    allowNull: false,
+    validate: {
+      min: 0
+    }
+  },
 }, {
   timestamps: false,
   underscored: true,

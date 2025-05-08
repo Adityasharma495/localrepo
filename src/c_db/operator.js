@@ -33,7 +33,7 @@ const Operator = sequelize.define(OPERATOR_MODEL_NAME, {
         }
     },
     created_by: {
-        type: DataTypes.UUID,
+        type: DataTypes.BIGINT,
         allowNull: true,
         references: {
             model: USER_MODEL_NAME,

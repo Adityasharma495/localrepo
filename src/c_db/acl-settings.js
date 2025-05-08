@@ -5,8 +5,8 @@ const AclSettings = sequelize.define(
   'aclsettings',
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.BIGINT,
+      autoIncrement: true,
       primaryKey: true,
     },
     acl_name: {
@@ -25,8 +25,7 @@ const AclSettings = sequelize.define(
       defaultValue: false,
     },
     created_by: {
-      type: DataTypes.UUID,
-      allowNull: true,
+      type: DataTypes.BIGINT,
     },
     created_at: {
       type: DataTypes.DATE,

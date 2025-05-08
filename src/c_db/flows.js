@@ -4,9 +4,9 @@ const { constants } = require('../utils/common');
 
 const Flow = sequelize.define('flows', {
   id: {
-    type: DataTypes.UUID,
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
     primaryKey: true,
-    defaultValue: DataTypes.UUIDV4
   },
   call_center_id: {
     type: DataTypes.STRING,
@@ -23,9 +23,8 @@ const Flow = sequelize.define('flows', {
     }
   },
   flow_id: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: false,
-    defaultValue: DataTypes.UUIDV4
   },
   node_id: {
     type: DataTypes.INTEGER,
@@ -53,7 +52,7 @@ const Flow = sequelize.define('flows', {
     allowNull: false
   },
   created_by: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: true,
     references: {
       model: constants.MODEL.USERS,

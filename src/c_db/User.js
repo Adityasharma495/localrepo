@@ -7,6 +7,7 @@ const {Authentication} = require('../utils/common');
 const AclSettings = require("./acl-settings")
 const SubUserLicence = require("./sub-user-licence")
 const Company = require("./companies")
+const CallCenter = require("./call-centres");
 
 const User = sequelize.define(
   'users',
@@ -15,6 +16,7 @@ const User = sequelize.define(
       type: DataTypes.BIGINT,
       autoIncrement: true,
       primaryKey: true,
+      autoIncrement: true,
     },
     username: {
       type: DataTypes.STRING,
@@ -64,21 +66,27 @@ const User = sequelize.define(
       allowNull: true,
       defaultValue: null
     },
-    // company_id: {
-    //   type: DataTypes.JSONB,  
-    //   allowNull: true,
-    //   defaultValue: null
-    // },
-    // callcenter_id: {
-    //   type: DataTypes.JSONB,  
-    //   allowNull: true,
-    //   defaultValue: null
-    // },
+    company_id: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+      references: {
+        model: Company,
+        key: 'id'
+      }
+    },
+    callcenter_id: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+      references: {
+        model: CallCenter,
+        key: 'id'
+      }
+    },
     acl_settings_id: {
       type: DataTypes.BIGINT,
       allowNull: true,
-  },
-  sub_user_licence_id: {
+    },
+    sub_user_licence_id: {
       type: DataTypes.BIGINT,
       allowNull: true,
   },
@@ -197,21 +205,21 @@ User.prototype.generateUserData = async function (tokenGenerate = false) {
 
     const userData = user.toJSON();
 
-    if (userData.companies && userData.companies._id) {
-      const companyDetails = await Company.findByPk(userData.companies._id);
+    // if (userData.companies && userData.companies._id) {
+    //   const companyDetails = await Company.findByPk(userData.companies._id);
 
 
-      if (companyDetails) {
-        userData.companies = {
-          id: companyDetails.id,
-          name: companyDetails.name,
-          phone: companyDetails.phone,
-          address: companyDetails.address,
-          pincode: companyDetails.pincode,
-        };
-      }
+    //   if (companyDetails) {
+    //     userData.companies = {
+    //       id: companyDetails.id,
+    //       name: companyDetails.name,
+    //       phone: companyDetails.phone,
+    //       address: companyDetails.address,
+    //       pincode: companyDetails.pincode,
+    //     };
+    //   }
 
-    }
+    // }
 
     if (tokenGenerate) {
       userData.token = await this.createToken();

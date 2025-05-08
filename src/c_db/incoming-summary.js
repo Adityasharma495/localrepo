@@ -15,7 +15,7 @@ const IncomingSummary = sequelize.define(
       allowNull: false,
     },
     user_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
       references: {
         model: constants.MODEL.USERS,
@@ -63,7 +63,7 @@ const IncomingSummary = sequelize.define(
       defaultValue: 0,
     },
     parent_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
       references: {
         model: constants.MODEL.USERS,
@@ -75,7 +75,7 @@ const IncomingSummary = sequelize.define(
       defaultValue: 0,
     },
     s_parent_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
       references: {
         model: constants.MODEL.USERS,

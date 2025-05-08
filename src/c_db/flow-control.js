@@ -3,9 +3,9 @@ const sequelize = require('../config/sequelize');
 
 const FlowControl = sequelize.define('flow_controls', {
   id: {
-    type: DataTypes.UUID,
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
     primaryKey: true,
-    defaultValue: DataTypes.UUIDV4
   },
   call_center_id: {
     type: DataTypes.STRING,
@@ -22,9 +22,8 @@ const FlowControl = sequelize.define('flow_controls', {
     }
   },
   flow_id: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: false,
-    defaultValue: DataTypes.UUIDV4
   },
   node_id: {
     type: DataTypes.INTEGER,

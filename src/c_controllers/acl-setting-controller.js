@@ -8,7 +8,7 @@ const {
   ErrorResponse,
   ResponseFormatter,
 } = require("../utils/common");
-const { MODULE_LABEL, ACTION_LABEL } = require("../utils/common/constants");
+const { MODULE_LABEL, ACTION_LABEL, USERS_ROLE } = require("../utils/common/constants");
 const { Logger } = require("../config");
 
 const version = process.env.API_V || "1";
@@ -17,8 +17,13 @@ const aclSettingRepo = new AclSettingsRepository();
 const userJourneyRepo = new UserJourneyRepository();
 
 async function getAll(req, res) {
-  try {
-    const data = await aclSettingRepo.getAll(req.user.id);
+    try {
+    let data;
+    if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
+      data = await aclSettingRepo.getAll();
+    } else {
+      data = await aclSettingRepo.getAll(req.user.id);
+    }
     SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
     SuccessRespnose.message = "Success";
 

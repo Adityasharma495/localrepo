@@ -662,10 +662,10 @@ async function signupUser(req, res) {
 
       const companyDetail = await companyRepo.findOne({ id: bodyReq.company })
       const companyId = companyDetail.id
-      await UserCompany.create({
-        user_id: user.id,
-        company_id: companyId
-      });
+      // await UserCompany.create({
+      //   user_id: user.id,
+      //   company_id: companyId
+      // });
 
       const companyToadd = {
         name: companyDetail.name,
@@ -687,10 +687,10 @@ async function signupUser(req, res) {
 
       const CallCentreId = CallCentreDetail.id
 
-      await UserCallCentres.create({
-        user_id: user.id,
-        call_centre_id: CallCentreId
-      });
+      // await UserCallCentres.create({
+      //   user_id: user.id,
+      //   call_centre_id: CallCentreId
+      // });
 
       const CallCentreToAdd = {
         name: CallCentreDetail.name,

@@ -15,7 +15,7 @@ const Trunks = sequelize.define(
   'trunks',
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       autoIncrement: true,
       primaryKey: true
     },
@@ -88,7 +88,7 @@ const Trunks = sequelize.define(
       defaultValue: null
     },
     created_by: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
       references: {
         model: 'users',
