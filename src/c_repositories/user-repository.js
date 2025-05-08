@@ -109,13 +109,9 @@ class UserRepository extends CrudRepository{
                 }
               ]
             });
-            if (!response) {
-                throw new AppError('Not able to find the resource', StatusCodes.NOT_FOUND);
-            }
+           
             return response;         
         } catch (error) {
-      console.log('error', error)
-
             throw error;
         }
 

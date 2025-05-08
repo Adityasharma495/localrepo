@@ -422,7 +422,6 @@ async function getAll(req, res) {
 
         const didMapping = await didUserMappingRepository.findOne({DID: val.id})
 
-        console.log('didMapping', didMapping)
         level = didMapping.mapping_detail.length
 
         if (level === 1) {
