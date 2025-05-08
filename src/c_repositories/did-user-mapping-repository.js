@@ -146,6 +146,12 @@ class DIDUserMappingRepository extends CrudRepository {
               AND (elem->>'active')::boolean = true
           )
         `),
+        include: [
+            {
+              model: Numbers,
+              as: 'did',
+            },
+        ],
         order: [['created_at', 'DESC']],
       });
   

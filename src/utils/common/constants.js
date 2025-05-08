@@ -121,7 +121,8 @@ const MODEL = {
     DOWNLOAD_REPORTS: 'download_report',
     VOIP_PROFILE: 'voip_profile',
     TELEPHONY_PROFILE: 'telephony_profile',
-    VOICE_PLAN: 'voice_plans'
+    VOICE_PLAN: 'voice_plans',
+    DID_ALLOCATE_HISTORY: 'did_allocate_history'
 }
 
 const AUTH_TYPES = {

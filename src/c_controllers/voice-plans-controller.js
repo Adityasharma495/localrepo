@@ -1,5 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
-const { VoicePlansRepository, UserJourneyRepository, NumbersRepository, DIDUserMappingRepository } = require("../c_repositories");
+const { VoicePlansRepository, UserJourneyRepository, NumbersRepository, DIDUserMappingRepository, DidAllocateHistoryRepository } = require("../c_repositories");
 const { SuccessRespnose, ErrorResponse } = require("../utils/common");
 const { MODULE_LABEL, ACTION_LABEL } = require("../utils/common/constants");
 const { Logger } = require("../config");
@@ -9,6 +9,7 @@ const voicePlansRepo = new VoicePlansRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const numberRepo = new NumbersRepository();
 const didUserMappingRepo = new DIDUserMappingRepository();
+const didAllocateHistoryRepo = new DidAllocateHistoryRepository();
 
 
 async function createVoicePlans(req, res) {
@@ -164,7 +165,8 @@ async function updateVoicePlans(req, res) {
   try {
     const responseData = {};
 
-    const parentVoicePlanDetailId = (await numberRepo.findOneWithVoicePlan({ id: Number(bodyReq.DID) }))?.voice_plan_id;
+    const parentData = await numberRepo.findOneWithVoicePlan({ id: Number(bodyReq.DID) });
+    const parentVoicePlanDetailId = parentData?.voice_plan_id
 
     const ParentVoicePlanDetails = await voicePlansRepo.get(parentVoicePlanDetailId)
 
@@ -192,6 +194,14 @@ async function updateVoicePlans(req, res) {
     }
 
     numberRepo.update(bodyReq.DID, {voice_plan_id : bodyReq?.voice_plan_id})
+
+    await didAllocateHistoryRepo.create({
+      DID: bodyReq.DID,
+      from_user: req.user.id,
+      to_user: parentData?.allocated_to,
+      plan_id: bodyReq?.voice_plan_id,
+      action: "UPDATE"
+    })
 
     const mappingDetail = await didUserMappingRepo.findOne({DID: bodyReq.DID})
 

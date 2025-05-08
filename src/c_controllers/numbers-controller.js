@@ -16,6 +16,7 @@ const {
   VoicePlansRepository,
   CompanyRepository,
   CallCentreRepository,
+  DidAllocateHistoryRepository
 } = require('../c_repositories');
 const fs = require("fs");
 const { MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, USERS_ROLE, NUMBER_STATUS_LABLE, DID_ALLOCATION_LEVEL } = require('../utils/common/constants');
@@ -30,6 +31,7 @@ const countryCodeRepository = new CountryCodeRepository();
 const companyRepo = new CompanyRepository();
 const callCentreRepo = new CallCentreRepository();
 const voicePlanRepo = new VoicePlansRepository();
+const didAllocateHistoryRepo = new DidAllocateHistoryRepository();
 
 const { constants } = require("../utils/common");
 const NUMBER_STATUS = constants.NUMBER_STATUS_LABLE;
@@ -376,6 +378,7 @@ async function getAll(req, res) {
     let idToCheck;
     const loggedUser = await userRepo.get(req.user.id);
 
+
     if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
       idToCheck = loggedUser?.company?.id;
     } else if (req.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
@@ -403,7 +406,7 @@ async function getAll(req, res) {
         data = await didUserMappingRepository.getForSuperadmin(idToCheck);
       }
 
-    const uniqueDIDs = [...new Set(data.map(item => Number(item.did?.id) || Number(item)))];
+    const uniqueDIDs = [...new Set(data.map(item => Number(item.did?.id) || Number(item?.did)))];
     data = await numberRepo.findMany(uniqueDIDs);
 
     const reverseNumberStatus = Object.entries(NUMBER_STATUS).reduce((acc, [key, value]) => {
@@ -419,9 +422,13 @@ async function getAll(req, res) {
         let finalData = {};
 
         const didMapping = await didUserMappingRepository.findOne({DID: val.id})
+
+        console.log('didMapping', didMapping)
         level = didMapping.mapping_detail.length
 
-        if (level === 1 || level === 2 || level === 3 || level === 4) {
+        if (level === 1) {
+          finalData = { name: '', id: null };
+        } else if (level === 2 || level === 3 || level === 4) {
           allocatedData = await userRepo.get(val?.allocated_to)
           if (allocatedData) {
             finalData = { name: allocatedData.username, id: allocatedData.id };
@@ -459,6 +466,7 @@ async function getAll(req, res) {
     return res.status(StatusCodes.OK).json(SuccessRespnose);
 
   } catch (error) {
+    console.log(error)
     ErrorResponse.message = error.message;
     ErrorResponse.error = error;
     Logger.error(`Number -> unable to get numbers list, error: ${JSON.stringify(error)}`);
@@ -677,6 +685,13 @@ async function DIDUserMapping(req, res) {
           });
 
           await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
+          await didAllocateHistoryRepo.create({
+            DID: did,
+            from_user: req.user.id,
+            to_user: bodyReq.allocated_to,
+            plan_id: bodyReq?.voice_plan_id,
+            action: "ADD"
+          })
           successDIDs.push(did);
 
           successActualNumbers.push(didDetail.map((data) => data.actual_number))
@@ -759,6 +774,16 @@ async function DIDUserMapping(req, res) {
               allocated_to: bodyReq.allocated_to,
               voice_plan_id: bodyReq?.voice_plan_id
           });
+
+          await didAllocateHistoryRepo.update({DID: did}, {active: false})
+
+          await didAllocateHistoryRepo.create({
+            DID: did,
+            from_user: req.user.id,
+            to_user: bodyReq.allocated_to,
+            plan_id: bodyReq?.voice_plan_id,
+            action: "ADD"
+          })
 
           await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
           successDIDs.push(did);

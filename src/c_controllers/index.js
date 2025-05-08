@@ -1,4 +1,3 @@
-
 module.exports = {
     UserController:require("./user-controller"),
     CreditController: require("./credits-controller"),
@@ -35,4 +34,5 @@ module.exports = {
     CallsController: require("./calls-controller"),
     QueueController: require("./queue-controller"),
     IncomingReportController: require("./incoming-report-controller"),
+    DidAllocateHistoryController: require("./did-allocate-history-controller")
 }
