@@ -12,7 +12,7 @@ const User = sequelize.define(
   'users',
   {
     id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       autoIncrement: true,
       primaryKey: true,
     },
@@ -46,7 +46,7 @@ const User = sequelize.define(
       allowNull: false,
     },
     created_by: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
     },
     status: {
@@ -64,24 +64,24 @@ const User = sequelize.define(
       allowNull: true,
       defaultValue: null
     },
-    companies: {
-      type: DataTypes.JSONB,  
-      allowNull: true,
-      defaultValue: null
-    },
-    call_centres: {
-      type: DataTypes.JSONB,  
-      allowNull: true,
-      defaultValue: null
-    },
+    // company_id: {
+    //   type: DataTypes.JSONB,  
+    //   allowNull: true,
+    //   defaultValue: null
+    // },
+    // callcenter_id: {
+    //   type: DataTypes.JSONB,  
+    //   allowNull: true,
+    //   defaultValue: null
+    // },
     acl_settings_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
-    },
-    sub_user_licence_id: {
-      type: DataTypes.UUID,
+  },
+  sub_user_licence_id: {
+      type: DataTypes.BIGINT,
       allowNull: true,
-    },
+  },
     credits_available: {
       type: DataTypes.INTEGER,
       defaultValue: 0,

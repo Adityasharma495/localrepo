@@ -5,7 +5,7 @@ const USER_MODEL_NAME = constants.MODEL.USERS;
 
 const Prompt = sequelize.define('prompt', {
   id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.BIGINT,
     autoIncrement: true,
     primaryKey: true,
   },
@@ -36,7 +36,7 @@ const Prompt = sequelize.define('prompt', {
     defaultValue: null,
   },
   created_by: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: true,
     references: {
       model: USER_MODEL_NAME,
@@ -60,6 +60,8 @@ const Prompt = sequelize.define('prompt', {
 }, {
   tableName: 'prompts',
   timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at', 
   hooks: {
     beforeCreate: (prompt) => {
       const now = new Date();

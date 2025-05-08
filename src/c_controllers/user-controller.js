@@ -30,9 +30,13 @@ async function signinUser(req, res) {
   const bodyReq = req.body;
   const username = bodyReq.username;
 
+
+  console.log("BODY REQ", bodyReq);
   try {
     //Fetch user via username
     const user = await userRepo.getByUsername(username);
+
+    console.log("USER NAME", user);
         if (user?.role === USERS_ROLE.CALLCENTRE_AGENT) {
           const subLicenceData = await subUserLicenceRepo.findOne({user_id : user?.created_by})
         
@@ -78,6 +82,8 @@ async function signinUser(req, res) {
         const userData = await user.generateUserData(true);
 
 
+        console.log("USER DATA",typeof userData);
+
         SuccessRespnose.message = "Successfully signed in";
         SuccessRespnose.data = ResponseFormatter.formatResponseIds(userData, version);
 
@@ -86,6 +92,7 @@ async function signinUser(req, res) {
           action: ACTION_LABEL.LOGIN,
           created_by: userData.id
         }
+
 
         await userJourneyRepo.create(userJourneyfields);
 
@@ -124,33 +131,36 @@ async function signinUser(req, res) {
 }
 
 async function getAll(req, res) {
-
-
   try {
-    const userRole = req.query.role;
+      const userRole = req.query.role;
+      let response;
 
 
-    const response = await userRepo.getAllByRoles(
-      req.user.id,
-      req.user.role,
-      userRole
-    );
+      if (userRole === "noRole") {
+          response = await userRepo.getAll();
+      } else {
+          response = await userRepo.getAllByRoles(
+              req.user.id,
+              req.user.role,
+              userRole
+          );
+      }
 
+      SuccessRespnose.data = ResponseFormatter.formatResponseIds(response, version);
 
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(response, version);
-
-    return res.status(StatusCodes.OK).json(SuccessRespnose);
+      return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
-    ErrorResponse.message = error.message;
-    ErrorResponse.error = error;
+      ErrorResponse.message = error.message;
+      ErrorResponse.error = error;
 
-    Logger.error(
-      `User -> unable to get users list, error: ${JSON.stringify(error)}`
-    );
+      Logger.error(
+          `User -> unable to get users list, error: ${JSON.stringify(error)}`
+      );
 
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
   }
 }
+
 
 
 async function logoutUser(req, res) {
@@ -538,6 +548,8 @@ async function licenceCreated(bodyReq, loggedUser, userCreated) {
 async function signupUser(req, res) {
   const bodyReq = req.body;
 
+
+  console.log("BODY REQ", bodyReq);
   if (bodyReq?.user?.acl_settings) {
     bodyReq.user.acl_settings_id = bodyReq?.user?.acl_settings;
   }
@@ -554,11 +566,9 @@ async function signupUser(req, res) {
       //fetch logged in user sub licence data
       const loggedInData = await userRepo.getForLicence(req.user.id)
 
+
       //fetch logged in user sub licence data(available_licence)
       const subLicenceData = loggedInData.sub_user_licence.available_licence
-
-
-
 
 
 
@@ -577,13 +587,9 @@ async function signupUser(req, res) {
       // };
       // bodyReq.user.sub_user_licence_id = loggedInData.sub_user_licence_id._id
 
-
-
-
-      const sub = await subUserLicenceRepo.updateById(loggedInData.sub_user_licence.id, { available_licence: bodyReq.user.parent_licence })
+     const sub = await subUserLicenceRepo.updateById(loggedInData.sub_user_licence.id, { available_licence: bodyReq.user.parent_licence })
   
     }
-
 
 
     if (req.user.role === USERS_ROLE.COMPANY_ADMIN && bodyReq.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
@@ -603,15 +609,12 @@ async function signupUser(req, res) {
 
     if (req.user.role === USERS_ROLE.RESELLER || SUB_LICENCE_ROLE.includes(req.user.role)) {
 
-
       const data = await subUserLicenceRepo.create({
         user_id: user.id,
         total_licence: bodyReq.user.sub_licence,
         available_licence: bodyReq.user.sub_licence,
         created_by: req.user.id
       })
-
-
       subUserLicenceId = data.id
 
 
@@ -624,26 +627,33 @@ async function signupUser(req, res) {
 
       const loggedInData = await userRepo.getForLicence(req.user.id);
       const availableLicences = loggedInData.sub_user_licence.available_licence;
+      const subLicence = bodyReq.user.sub_licence;
+  
 
-
-      if (Number(availableLicences[req.user.role]) === 0) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-          message: 'Licence is not available',
-          error: { statusCode: StatusCodes.BAD_REQUEST }
-        });
+      const updatedAvailableLicences = {};
+      for (const key in availableLicences) {
+        const currentAvailable = Number(availableLicences[key] || 0);
+        const toSubtract = Number(subLicence[key] || 0);
+        const updated = currentAvailable - toSubtract;
+    
+        // Avoid negative values (optional safety)
+        updatedAvailableLicences[key] = updated < 0 ? 0 : updated;
       }
-      const updatedLicenceCount = Number(availableLicences[req.user.role] || 0) - 1;
+    
+    
       await subUserLicenceRepo.update(loggedInData.sub_user_licence.id, {
-        available_licence: { ...availableLicences, [req.user.role]: updatedLicenceCount }
+        available_licence: updatedAvailableLicences,
       });
     }
+    
 
 
 
     // Create license if a SUPER_ADMIN or SUB_SUPERADMIN creates a reseller
     if ([USERS_ROLE.SUPER_ADMIN, USERS_ROLE.SUB_SUPERADMIN].includes(req.user.role)) {
 
-      await licenceCreated(bodyReq, req.user, user);
+      const licencse = await licenceCreated(bodyReq, req.user, user);
+      console.log("LICE");
     }
 
 

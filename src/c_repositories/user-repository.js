@@ -92,6 +92,19 @@ class UserRepository extends CrudRepository{
 
     }
 
+    async getAll() {
+      try {
+        const response = await this.model.findAll({ raw: true });
+          if (!response) {
+              throw new AppError('Not able to find the resource', StatusCodes.NOT_FOUND);
+          }
+          return response;         
+      } catch (error) {
+          throw error;
+      }
+
+  }
+
 
     async getCallCentreUsers(call_centre_id) {
 

@@ -1,15 +1,16 @@
 const { exec } = require("child_process");
 const { StatusCodes } = require("http-status-codes");
 const { ErrorResponse, SuccessRespnose, ResponseFormatter } = require("../utils/common");
-const { MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, STORAGE_PATH, SERVER } = require('../utils/common/constants');
+const { MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, STORAGE_PATH, SERVER, USERS_ROLE } = require('../utils/common/constants');
 const { Logger } = require("../config");
 const fs = require("fs");
-const {PromptRepository} = require('../c_repositories');
+const {PromptRepository, UserRepository} = require('../c_repositories');
 const {UserJourneyRepository} = require('../c_repositories');
 
 
 const promptRepo = new PromptRepository();
 const userJourneyRepo = new UserJourneyRepository();
+const userRepo = new UserRepository();
 const version = process.env.API_V || '1';
 
 async function getPromptDetails(req, res) {
@@ -17,6 +18,48 @@ async function getPromptDetails(req, res) {
         const { prompt_status, user_id } = req.query;
         const conditions = {};
 
+        // This block only applies for COMPANY_ADMIN or RESELLER (parent types)
+        if (req.user.role === USERS_ROLE.COMPANY_ADMIN || req.user.role === USERS_ROLE.RESELLER) {
+            const parentId = req.user.id;
+            const results = await promptRepo.get(conditions);
+
+            const Prompts = [];
+
+            for (const result of results) {
+                let currentUserId = result.created_by;  
+
+                
+                let found = false;
+
+                while (currentUserId) {
+                    const parentUser = await userRepo.findParent({ id: currentUserId });
+
+                    if (!parentUser) {
+                        break;
+                    }
+
+                    if (parentUser.id === parentId) {
+                        
+                        Prompts.push(result);
+                        found = true;
+                        break; 
+                    }
+                    currentUserId = parentUser.created_by;
+                }
+            }
+
+            if (Prompts.length > 0) {
+                SuccessRespnose.data = ResponseFormatter.formatResponseIds(Prompts, version);
+                SuccessRespnose.message = "Prompt fetched successfully";
+                return res.status(StatusCodes.OK).json(SuccessRespnose);
+            } else {
+                SuccessRespnose.data = [];
+                SuccessRespnose.message = "No prompts found";
+                return res.status(StatusCodes.OK).json(SuccessRespnose);
+            }
+        }
+
+        // 👇 fallback for superadmin or others
         if (prompt_status) conditions.prompt_status = parseInt(prompt_status);
         if (user_id) conditions.created_by = user_id;
 
@@ -38,6 +81,7 @@ async function getPromptDetails(req, res) {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
     }
 }
+
 
 async function savePrompts(req, res) {
     const dest = req.file.path;

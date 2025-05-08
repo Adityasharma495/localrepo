@@ -193,6 +193,15 @@ class CrudRepository {
             throw error;
         }
     }
+
+    async findParent(conditions) {
+      try {
+          const response = await this.model.findOne({ where: { is_deleted: false, ...conditions } });
+          return response;
+      } catch (error) {
+          throw error;
+        }
+    }
     async hardDeleteMany(idArray) {
         try {
             const response = await this.model.deleteMany({ flowId: { $in: idArray } });

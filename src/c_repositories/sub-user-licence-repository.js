@@ -48,6 +48,10 @@ class SubUserLicenceRepository extends CrudRepository {
         where: { id: userId },
         returning: true,
       });
+
+
+      console.log("Rows updated:", rowsUpdated);
+      console.log("Updated record:", updatedRecord?.dataValues || updatedRecord);
   
       if (rowsUpdated === 0) {
         throw new Error('No record found to update');

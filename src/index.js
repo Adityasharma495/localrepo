@@ -21,7 +21,7 @@ app.use('/temp', express.static(path.join(__dirname, '../temp')));
 app.use('/api', apiRoutes);
 app.use('/api-docs', swaggerRoutes);
 
-const { AgentGroup } = require("./c_db");
+const { AgentGroup, User } = require("./c_db");
 
 const startServer = async () => {
     try {
@@ -35,7 +35,7 @@ const startServer = async () => {
         //     console.log('✅ Database synchronized!');
         // }
 
-        // await AgentGroup.sync({ alter: true, logging: true });
+        // await User.sync({ alter: true, logging: true });
         
         // console.log('✅ Successfully synced CockroachDB!');
         // Logger.info('CockroachDB -> Successfully synced');
