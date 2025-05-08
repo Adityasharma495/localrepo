@@ -1,4 +1,4 @@
-const { UserRepository, CompanyRepository, SubUserLicenceRepository, CallCentreRepository } = require("../c_repositories")
+const { UserRepository, CompanyRepository, SubUserLicenceRepository, CallCentreRepository , AgentRepository} = require("../c_repositories")
 const { UserJourneyRepository } = require("../c_repositories")
 const { StatusCodes } = require("http-status-codes");
 const {
