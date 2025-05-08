@@ -5,6 +5,7 @@ const Company = require("../c_db/companies")
 const CallCenter = require("../c_db/call-centres")
 const { constants, Authentication } = require('../utils/common');
 const {USERS_ROLE} = require('../utils/common/constants');
+const { Op } = require("sequelize");
 
 const AppError = require('../utils/errors/app-error');
 const { StatusCodes } = require('http-status-codes');
@@ -120,6 +121,19 @@ class UserRepository extends CrudRepository{
 
     }
 
+    async getAll() {
+      try {
+        const response = await this.model.findAll({ raw: true });
+          if (!response) {
+              throw new AppError('Not able to find the resource', StatusCodes.NOT_FOUND);
+          }
+          return response;         
+      } catch (error) {
+          throw error;
+      }
+
+  }
+
 
     async getCallCentreUsers(call_centre_id) {
 
@@ -225,8 +239,22 @@ class UserRepository extends CrudRepository{
         throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
       }
     }
-    
-    
+
+    async getByNameBulk(names) {
+      try {
+        const users = await User.findAll({ 
+          where: {
+            name: {
+              [Op.in]: names
+            }
+          }
+        });
+        return users;    
+      } catch (error) {
+          console.log('error', error);
+          throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
+      }
+    } 
 
 }
 

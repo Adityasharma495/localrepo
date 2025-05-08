@@ -14,19 +14,19 @@ class ModuleRepository extends CrudRepository {
     try {
       let response;
 
-      if (current_user_role === constants.USERS_ROLE.SUPER_ADMIN) {
+      // if (current_user_role === constants.USERS_ROLE.SUPER_ADMIN) {
         response = await this.model.findAll({
           where: { is_deleted: false },
           order: [["created_at", "DESC"]],
           raw: true,
         });
-      } else {
-        response = await this.model.findAll({
-          where: { is_deleted: false, created_by: current_user_id },
-          order: [["created_at", "DESC"]],
-          raw: true,
-        });
-      }
+      // } else {
+        // response = await this.model.findAll({
+        //   where: { is_deleted: false, created_by: current_user_id },
+        //   order: [["created_at", "DESC"]],
+        //   raw: true,
+        // });
+      // }
 
       response = response.map((val) => {
         val["status"] = statusValues[val["status"]];

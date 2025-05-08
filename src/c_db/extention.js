@@ -21,8 +21,8 @@ const Extension = sequelize.define(
   MODEL.EXTENSION, // Table name from constants
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
     },
     username: {
@@ -53,7 +53,7 @@ const Extension = sequelize.define(
       defaultValue: false,
     },
     created_by: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
       references: {
         model: User,

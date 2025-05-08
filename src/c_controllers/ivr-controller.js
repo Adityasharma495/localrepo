@@ -135,14 +135,18 @@ async function createIVR(req, res) {
 
 async function getIVRSettings(req, res) {
   try {
+
+
     const ivrSettings = await IVRSettings.findOne({});
     
     if (!ivrSettings) {
+
       return res.status(StatusCodes.NOT_FOUND).json({ 
         success: false,
         message: 'IVR settings not found',
         data: null
       });
+      
     }
 
     return res.status(StatusCodes.OK).json({

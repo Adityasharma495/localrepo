@@ -9,7 +9,7 @@ const router = express.Router();
 router.post('/switch-user', UserMiddleware.authenticateSuperAdmin, UserController.switchUser)
 
 // Delete user api/v1/users/delete
-router.post("/logout", AuthMiddleware.validateUser, UserController.logoutUser);
+router.post("/logout/:id", AuthMiddleware.validateUser, UserController.logoutUser);
 
 //User signup: /api/v1/users/signup POST
 //modifyUserSignupBodyRequest(true): create 

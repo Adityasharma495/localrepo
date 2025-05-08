@@ -17,4 +17,12 @@ router.post(
   CreditController.updateCredit
 );
 
+// Update credit for company update api/v2/credits/company/:id
+router.post(
+  "/company/:id",
+  AuthMiddleware.validateUser,
+  CreditMiddleware.validateUpdateRequest,
+  CreditController.updateCompanyCredit
+);
+
 module.exports = router;

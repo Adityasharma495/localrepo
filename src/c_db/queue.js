@@ -51,7 +51,7 @@ const Queue = sequelize.define(
       defaultValue: false,
     },
     created_by: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
       references: {
         model: USER_MODEL_NAME,

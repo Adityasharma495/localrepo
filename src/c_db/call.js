@@ -94,7 +94,7 @@ const Call = sequelize.define(
       allowNull: true,
     },
     created_by: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: false,
       references: {
         model: USER_MODEL_NAME,

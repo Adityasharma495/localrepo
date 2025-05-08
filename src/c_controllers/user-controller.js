@@ -21,6 +21,7 @@ const userJourneyRepo = new UserJourneyRepository();
 const version = process.env.API_V || '1';
 const subUserLicenceRepo = new SubUserLicenceRepository();
 const callCentreRepo = new CallCentreRepository();
+const agentRepo = new AgentRepository();
 
 
 async function signinUser(req, res) {
@@ -28,10 +29,48 @@ async function signinUser(req, res) {
   const bodyReq = req.body;
   const username = bodyReq.username;
 
+
+  console.log("BODY REQ", bodyReq);
   try {
     //Fetch user via username
     const user = await userRepo.getByUsername(username);
     console.log('user', user)
+
+    console.log("USER NAME", user);
+        if (user?.role === USERS_ROLE.CALLCENTRE_AGENT) {
+          const subLicenceData = await subUserLicenceRepo.findOne({user_id : user?.created_by})
+        
+          if (subLicenceData.available_licence.live_agent !== 0) {
+            subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent - 1;
+          } else {
+            ErrorResponse.message = 'Agent Live Limit Exceeds';
+              return res
+                .status(StatusCodes.BAD_REQUEST)
+                .json(ErrorResponse);
+          }
+      
+          //update sub user licence
+          await subUserLicenceRepo.updateById(subLicenceData.id, {available_licence: subLicenceData.available_licence})
+          const agentData = await agentRepo.getByName(user?.name)
+          await agentRepo.update(agentData.id, {
+            login_status : "1"
+          })
+        }
+        
+        
+        const userLoginCount = await userRepo.find({
+          where: { 
+            id: user.id,
+            logout_at: null  
+          }
+        });
+    
+          if (userLoginCount && userLoginCount > 0) {
+            ErrorResponse.message = 'User already logged in';
+            return res
+              .status(StatusCodes.BAD_REQUEST)
+              .json(ErrorResponse);
+          }
 
     if (user) {
       // if (user.isValidLogin() == false)
@@ -49,7 +88,14 @@ async function signinUser(req, res) {
           created_by: userData.id
         }
 
+
         await userJourneyRepo.create(userJourneyfields);
+
+        userRepo.update(user.id, {
+          login_at: Date.now(),
+          logout_at: null,
+          duration: null
+        })
 
         Logger.info(`User -> ${userData.id} login successfully`);
 
@@ -81,49 +127,76 @@ async function signinUser(req, res) {
 }
 
 async function getAll(req, res) {
-
-
   try {
-    const userRole = req.query.role;
+      const userRole = req.query.role;
+      let response;
 
 
-    const response = await userRepo.getAllByRoles(
-      req.user.id,
-      req.user.role,
-      userRole
-    );
+      if (userRole === "noRole") {
+          response = await userRepo.getAll();
+      } else {
+          response = await userRepo.getAllByRoles(
+              req.user.id,
+              req.user.role,
+              userRole
+          );
+      }
 
+      SuccessRespnose.data = ResponseFormatter.formatResponseIds(response, version);
 
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(response, version);
-
-    return res.status(StatusCodes.OK).json(SuccessRespnose);
+      return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
-    ErrorResponse.message = error.message;
-    ErrorResponse.error = error;
+      ErrorResponse.message = error.message;
+      ErrorResponse.error = error;
 
-    Logger.error(
-      `User -> unable to get users list, error: ${JSON.stringify(error)}`
-    );
+      Logger.error(
+          `User -> unable to get users list, error: ${JSON.stringify(error)}`
+      );
 
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
   }
 }
 
 
+
 async function logoutUser(req, res) {
+  const id = req.params.id
 
   try {
+    const userData = await userRepo.get(id);
+    const duration = getTimeDifferenceInSeconds(userData.login_at, userData.logout_at)
+
+    if (userData?.role === USERS_ROLE.CALLCENTRE_AGENT) {
+      const subLicenceData = await subUserLicenceRepo.findOne({ user_id: userData?.created_by });
+      const agentData = await agentRepo.getByName(userData?.name)
+      subLicenceData.available_licence.live_agent += 1;
+
+      await subUserLicenceRepo.update(subLicenceData.id, { available_licence: subLicenceData.available_licence });
+      await agentRepo.update(agentData.id, {
+        login_status : "0"
+      })
+    }
+
+    await userRepo.update(id, {
+      duration
+    })
+
+    await userRepo.update(id, {
+      logout_at: Date.now(),
+    })
+
     const userJourneyfields = {
       module_name: MODULE_LABEL.USERS,
       action: ACTION_LABEL.LOGOUT,
-      created_by: req.user.id
+      created_by:  req.user.id
     }
 
-    // await userJourneyRepo.create(userJourneyfields);
+    await userJourneyRepo.create(userJourneyfields);
     Logger.info(`User -> ${req.user.id} Logout successfully`);
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
+    console.log("error logout",error);
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg = error.message;
 
@@ -344,18 +417,53 @@ async function statusPasswordUpdateUser(req, res) {
 
 
 async function switchUser(req, res) {
-  const { id } = req.body;
-  const targetUser = await userRepo.get(id);
+  try {
+    const { id } = req.body;
+    const targetUser = await userRepo.get(id);
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
+    const user = await userRepo.getByUsername(targetUser.username);
 
-  const user = await userRepo.getByUsername(targetUser.username);
-
-
-  if (!targetUser) {
-    return res.status(404).json({ error: 'User not found' });
-  }
+    if (user?.role === USERS_ROLE.CALLCENTRE_AGENT) {
+      const subLicenceData = await subUserLicenceRepo.findOne({ user_id: user?.created_by });
+    
+          if (subLicenceData.available_licence.live_agent !== 0) {
+            subLicenceData.available_licence.live_agent -= 1;
+          } else {
+            ErrorResponse.message = 'Agent Live Limit Exceeds';
+            return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+          }
+    
+          // Update sub user licence
+          await subUserLicenceRepo.updateById(subLicenceData.id, { available_licence: subLicenceData.available_licence });
+    
+          const agentData = await agentRepo.getByName(user?.name)
+          await agentRepo.update(agentData.id, {
+            login_status : "1"
+          })
+        }
+    
+        const userLoginCount = await userRepo.find({
+          where: {
+            id: user.id,
+            logout_at: null
+          }
+        });
+    
+        if (userLoginCount && userLoginCount.length > 0) {
+          ErrorResponse.message = 'User already logged in';
+          return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+        }
 
   const userData = await user.generateUserData(true);
+
+  await userRepo.update(user.id, {
+    login_at: Date.now(),
+    logout_at: null,
+    duration: null
+  });
 
   SuccessRespnose.message = "Successfully signed in";
   SuccessRespnose.data = ResponseFormatter.formatResponseIds(userData, version);
@@ -363,6 +471,11 @@ async function switchUser(req, res) {
   Logger.info(`User -> ${JSON.stringify(userData)} login successfully`);
 
   return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    console.error('Error in switchUser:', error);
+    ErrorResponse.message = error.message || 'Something went wrong';
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
 }
 
 async function signupUser(req, res) {
@@ -377,6 +490,7 @@ async function signupUser(req, res) {
     if (SUB_LICENCE_ROLE.includes(req.user.role)) {
       //fetch logged in user sub licence data
       const loggedInData = await userRepo.getForLicence(req.user.id)
+
 
       //fetch logged in user sub licence data(available_licence)
       const subLicenceData = loggedInData.sub_user_licence.available_licence
@@ -412,7 +526,6 @@ async function signupUser(req, res) {
         available_licence: bodyReq.user.sub_licence,
         created_by: req.user.id
       })
-
       subUserLicenceId = data.id
       await userRepo.update(user.id, {sub_user_licence_id: subUserLicenceId})
     }
@@ -596,6 +709,13 @@ async function updateUser(req, res) {
   }
 }
 
+function getTimeDifferenceInSeconds(start, end) {
+  const startTime = new Date(start);
+  const endTime = new Date(end);
+  if (isNaN(startTime) || isNaN(endTime)) return 0;
+
+  return Math.floor((endTime - startTime) / 1000);
+}
 
 module.exports = {
   get,

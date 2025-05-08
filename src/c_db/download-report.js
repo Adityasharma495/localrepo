@@ -16,12 +16,16 @@ const DownloadReport = sequelize.define(
       allowNull: false,
     },
     user_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
       references: {
         model: constants.MODEL.USERS,
         key: "id",
       },
+    },
+    schedule_date: {
+      type: DataTypes.DATE,
+      default: null
     },
     requested_date: {
       type: DataTypes.DATE,
@@ -56,7 +60,7 @@ const DownloadReport = sequelize.define(
       defaultValue: false,
     },
     created_by: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: true,
       references: {
         model: constants.MODEL.USERS,

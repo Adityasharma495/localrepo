@@ -26,7 +26,6 @@ const AclSettings = sequelize.define(
     },
     created_by: {
       type: DataTypes.BIGINT,
-      allowNull: true,
     },
     created_at: {
       type: DataTypes.DATE,

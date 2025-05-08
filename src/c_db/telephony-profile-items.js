@@ -4,12 +4,12 @@ const { MODEL } = require("../utils/common/constants");
 
 const TelephonyProfileItem = sequelize.define("telephony_profile_items", {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.BIGINT,
       primaryKey: true,
+      autoIncrement: true
     },
     telephony_profile_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       allowNull: false,
       references: {
         model: MODEL.TELEPHONY_PROFILE,

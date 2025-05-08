@@ -4,9 +4,9 @@ const { MODEL } = require('../utils/common/constants');
 
 const FlowEdges = sequelize.define(MODEL.FLOWS_EDGES, {
   id: {
-    type: DataTypes.UUID,
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
     primaryKey: true,
-    defaultValue: DataTypes.UUIDV4
   },
   flow_id: {
     type: DataTypes.STRING,

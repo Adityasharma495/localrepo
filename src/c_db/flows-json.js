@@ -4,9 +4,9 @@ const { MODEL } = require('../utils/common/constants');
 
 const FlowJson = sequelize.define(MODEL.FLOW_JSON, {
   id: {
-    type: DataTypes.UUID,
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
     primaryKey: true,
-    defaultValue: DataTypes.UUIDV4
   },
   call_center_id: {
     type: DataTypes.STRING,
@@ -65,7 +65,7 @@ const FlowJson = sequelize.define(MODEL.FLOW_JSON, {
     defaultValue: 0
   },
   created_by: {
-    type: DataTypes.UUID,
+    type: DataTypes.BIGINT,
     allowNull: true,
     references: {
       model: MODEL.USERS,

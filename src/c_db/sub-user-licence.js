@@ -1,7 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/sequelize');
 const { MODEL } = require('../utils/common/constants');
-const User = require('./User');
 
 const SubUserLicence = sequelize.define(
   MODEL.SUB_USER_LICENCE,
@@ -10,12 +9,13 @@ const SubUserLicence = sequelize.define(
       type: DataTypes.BIGINT,
       autoIncrement: true,
       primaryKey: true,
+      autoIncrement: true,
     },
     user_id: {
       type: DataTypes.BIGINT,
       allowNull: false,
       references: {
-        model: User,
+        model: MODEL.USERS,
         key: 'id',
       },
     },
@@ -37,7 +37,7 @@ const SubUserLicence = sequelize.define(
       type: DataTypes.BIGINT,
       allowNull: true,
       references: {
-        model: User,
+        model: MODEL.USERS,
         key: 'id',
       },
     },

@@ -4,9 +4,9 @@ const { MODEL } = require('../utils/common/constants');
 
 const IVRData = sequelize.define(MODEL.IVR_DATA, {
   id: {
-    type: DataTypes.UUID,
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
     primaryKey: true,
-    defaultValue: DataTypes.UUIDV4
   },
   data: {
     type: DataTypes.JSON,  

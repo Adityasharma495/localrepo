@@ -22,7 +22,7 @@ const UserJourney = sequelize.define(
       allowNull: false,
     },
     created_by: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       references: {
         model: USER_MODEL_NAME,
         key: "id",

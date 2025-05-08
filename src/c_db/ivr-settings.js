@@ -3,9 +3,9 @@ const sequelize = require("../config/sequelize");
 
 const IVRSettings = sequelize.define('ivr_settings', {
   id: {
-    type: DataTypes.UUID,
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
     primaryKey: true,
-    defaultValue: DataTypes.UUIDV4
   },
   actions: {
     type: DataTypes.JSON,

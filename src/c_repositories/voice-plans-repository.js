@@ -70,6 +70,15 @@ class VoicePlansRepository extends CrudRepository {
     }
   }
 
+  async find(conditions) {
+    try {
+        const response = await this.model.findAll({ ...conditions});
+        return response;
+    } catch (error) {
+        throw error;
+    }
+  }
+
   async findAllData(current_role, current_uid) {
     let response;
     if (current_role === constants.USERS_ROLE.SUPER_ADMIN) {

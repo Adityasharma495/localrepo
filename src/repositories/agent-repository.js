@@ -107,6 +107,24 @@ class AgentRepository extends CrudRepository {
         throw new AppError(`Failed to fetch active agents: ${error.message}`, StatusCodes.INTERNAL_SERVER_ERROR);
     }
 }
+
+async getByName(name){
+        try {
+            
+            const user = await this.model.findOne({ agent_name : name });
+            return user;    
+
+        } catch (error) {
+            throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
+
+        }
+        
+  }
+
+  async findAllData() {
+    const response = await this.model.find({ is_deleted: false }).populate('telephony_profile').lean();
+    return response;
+}
 }
 
 module.exports = AgentRepository;

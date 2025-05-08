@@ -1,5 +1,5 @@
 const CrudRepository = require("./crud-repository");
-const {Agents} = require("../c_db/");
+const {Agents, TelephonyProfile} = require("../c_db/");
 const Users = require("../c_db/User")
 const AppError = require("../utils/errors/app-error");
 const { StatusCodes } = require("http-status-codes");
@@ -48,6 +48,17 @@ class AgentRepository extends CrudRepository {
       throw error;
     }
   }
+
+  async getByName(name){
+    try {
+        const user = await Agents.findOne({
+          where: { agent_name : name }
+        });
+        return user;    
+    } catch (error) {
+        throw new AppError(error.message, StatusCodes.INTERNAL_SERVER_ERROR);
+    }
+}
 
   async update(id, data) {
 
@@ -105,6 +116,20 @@ class AgentRepository extends CrudRepository {
       throw error;
     }
   }
+
+async findAllData() {
+  const response = await this.model.findAll({
+    where: { is_deleted: false },
+    include: [
+      {
+        model: TelephonyProfile,
+        as: 'agentTelephony',
+        attributes: ['id', 'profile', 'created_by'],
+      },
+    ],
+  });
+  return response;
+}
 
   async getAllActiveAgents(userId) {
     try {

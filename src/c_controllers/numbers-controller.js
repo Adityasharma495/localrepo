@@ -378,7 +378,6 @@ async function getAll(req, res) {
     let idToCheck;
     const loggedUser = await userRepo.get(req.user.id);
 
-
     if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
       idToCheck = loggedUser?.company?.id;
     } else if (req.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {

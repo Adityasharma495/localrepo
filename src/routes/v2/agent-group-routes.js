@@ -24,6 +24,12 @@ router.post("/schedule/:id", AuthMiddleware.validateUser,AgentGroupMiddleware.va
 router.post("/delete", AuthMiddleware.validateUser, AgentGroupMiddleware.validateDeleteRequest, AgentGroupController.deleteAgentGroup);
 
 // UPDATE GROUPS
-router.post('/:id',AuthMiddleware.validateUser,AgentGroupMiddleware.modifyAgentGroupUpdateBodyRequest,AgentGroupController.updateAgentGroup)
+router.post('/:id',AuthMiddleware.validateUser,AgentGroupMiddleware.modifyAgentGroupUpdateBodyRequest,AgentGroupController.updateAgentGroup);
+
+//Remove Agent
+router.post("/remove-agent/:id", AuthMiddleware.validateUser,AgentGroupMiddleware.validateAgentRemove,AgentGroupController.removeAgent);
+
+
+router.post("/remove-agent/:id", AuthMiddleware.validateUser,AgentGroupMiddleware.validateAgentRemove,AgentGroupController.removeAgent);
 
 module.exports = router;

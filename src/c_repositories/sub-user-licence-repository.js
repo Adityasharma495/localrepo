@@ -48,6 +48,10 @@ class SubUserLicenceRepository extends CrudRepository {
         where: { id: id },
         returning: true,
       });
+
+
+      console.log("Rows updated:", rowsUpdated);
+      console.log("Updated record:", updatedRecord?.dataValues || updatedRecord);
   
       return updatedRecord;
     } catch (error) {
