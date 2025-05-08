@@ -45,5 +45,6 @@ module.exports = {
   CallsRepository: require("./calls-repository"),
   QueueRepository: require("./queue-repository"),
   IncomingReportRepository: require("./incoming-report-repository"),
-  DidAllocateHistoryRepository: require("./did-allocate-history-repository")
+  DidAllocateHistoryRepository: require("./did-allocate-history-repository"),
+  DidRemoveHistoryRepository: require("./did-remove-history-repository"),
 };

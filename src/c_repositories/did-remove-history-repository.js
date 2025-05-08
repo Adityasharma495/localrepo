@@ -2,16 +2,16 @@ const CrudRepository = require("./crud-repository");
 const { constants } = require("../utils/common");
 const AppError = require("../utils/errors/app-error");
 const { StatusCodes } = require("http-status-codes");
-const { DidAllocateHistory, Numbers, VoicePlan, User} = require("../c_db");
+const { DidRemoveHistory, Numbers, VoicePlan, User } = require("../c_db");
 
-class DidAllocateHistoryRepository extends CrudRepository {
+class DidRemoveHistoryRepository extends CrudRepository {
   constructor() {
-    super(DidAllocateHistory);
+    super(DidRemoveHistory);
   }
 
   async getAll() {
     try {
-      const response = await DidAllocateHistory.findAll({
+      const response = await DidRemoveHistory.findAll({
         order: [["created_at", "DESC"]],
         include: [
           {
@@ -24,7 +24,7 @@ class DidAllocateHistoryRepository extends CrudRepository {
           },
           {
             model: User,
-            as: "fromUser",
+            as: "removeBy",
           },
         ],
       });
@@ -54,4 +54,4 @@ class DidAllocateHistoryRepository extends CrudRepository {
 
 }
 
-module.exports = DidAllocateHistoryRepository;
+module.exports = DidRemoveHistoryRepository;

@@ -16,7 +16,8 @@ const {
   VoicePlansRepository,
   CompanyRepository,
   CallCentreRepository,
-  DidAllocateHistoryRepository
+  DidAllocateHistoryRepository,
+  DidRemoveHistoryRepository,
 } = require('../c_repositories');
 const fs = require("fs");
 const { MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, USERS_ROLE, NUMBER_STATUS_LABLE, DID_ALLOCATION_LEVEL } = require('../utils/common/constants');
@@ -32,6 +33,7 @@ const companyRepo = new CompanyRepository();
 const callCentreRepo = new CallCentreRepository();
 const voicePlanRepo = new VoicePlansRepository();
 const didAllocateHistoryRepo = new DidAllocateHistoryRepository();
+const didRemoveHistoryRepo = new DidRemoveHistoryRepository();
 
 const { constants } = require("../utils/common");
 const NUMBER_STATUS = constants.NUMBER_STATUS_LABLE;
@@ -894,8 +896,6 @@ async function getAllocatedNumbers(req, res) {
           allocatedTo = (await callCentreRepo.findOne({id : allocatedId}))?.name
       }
       const allocatedBy = req.user.username
-
-
       const uniqueDIDs = [...new Set(allocatedNumbers.map(item => item.DID))];
 
       // Create a map of DID to voiceplan_id
@@ -913,7 +913,7 @@ async function getAllocatedNumbers(req, res) {
             ...item,  
             voice_plan_id: didVoicePlanMap[item.id] ,
             allocated_name: allocatedTo, 
-            allocated_by: allocatedBy
+            allocated_by: allocatedBy,
           };
         });
 
@@ -985,6 +985,14 @@ async function removeAllocatedNumbers(req, res) {
         // update numbers
         await numberRepo.update(did, { allocated_to: null, voice_plan_id: null });
 
+        await didRemoveHistoryRepo.create({
+            DID: did,
+            remove_from: user_id,
+            remove_by: req.user.id,
+            plan_id: null,
+            action: "REMOVE"
+        })
+
         //update voice plan
         // await voicePlanRepo.update(allocatedNumbers?.mapping_detail[0].voice_plan_id, { is_allocated: 0 })
       } else {
@@ -1014,6 +1022,16 @@ async function removeAllocatedNumbers(req, res) {
 
         // update numbers
         await numberRepo.update(did, { allocated_to: parentDetail.mapping_detail[0].allocated_to, voice_plan_id: parentDetail.mapping_detail[0].voice_plan_id });
+
+        // await didAllocateHistoryRepo.update({DID: did}, {active: false})
+
+        await didRemoveHistoryRepo.create({
+            DID: did,
+            remove_from: user_id,
+            remove_by: req.user.id,
+            plan_id: parentDetail?.mapping_detail[0]?.voice_plan_id,
+            action: "REMOVE"
+        })
       }
     }
 

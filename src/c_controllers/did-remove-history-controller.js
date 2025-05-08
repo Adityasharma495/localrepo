@@ -1,43 +1,43 @@
 const { StatusCodes } = require("http-status-codes");
-const { DidAllocateHistoryRepository} = require("../c_repositories");
+const { DidRemoveHistoryRepository} = require("../c_repositories");
 const { SuccessRespnose, ErrorResponse} = require("../utils/common");
 const { Logger } = require("../config");
 
-const didAllocateHistoryRepo = new DidAllocateHistoryRepository();
+const didRemoveHistoryRepo = new DidRemoveHistoryRepository();
 
 async function create(req, res) {
   const bodyReq = req.body;
   try {
     const responseData = {};
 
-    const didAllocatePayload = {
-      ...bodyReq.did_allocate,
+    const didRemovePayload = {
+      ...bodyReq.did_remove,
     };
 
-    const didAllocate = await didAllocateHistoryRepo.create(didAllocatePayload);
+    const didRemove = await didRemoveHistoryRepo.create(didRemovePayload);
 
-    responseData.didAllocate = didAllocate;
+    responseData.didRemove = didRemove;
 
     const SuccessResponse = {
       data: responseData,
-      message: "Successfully Added a new entry in DID allocate history",
+      message: "Successfully Added a new entry in DID Remove history",
     };
 
     Logger.info(
-      `DID Allocate history -> created successfully: ${JSON.stringify(responseData)}`
+      `DID Remove history -> created successfully: ${JSON.stringify(responseData)}`
     );
     return res.status(StatusCodes.CREATED).json(SuccessResponse);
   } catch (error) {
     console.log("error", error);
     Logger.error(
-      `DID Allocate history -> unable to create: ${JSON.stringify(
+      `DID Remove history -> unable to create: ${JSON.stringify(
         error,
         Object.getOwnPropertyNames(error)
       )}`
     );
 
     const ErrorResponse = {
-      message: 'DID Allocate history -> unable to create',
+      message: 'DID Remove history -> unable to create',
       error: error,
     };
 
@@ -47,7 +47,7 @@ async function create(req, res) {
 
 async function getAll(req, res) {
   try {
-    const data = await didAllocateHistoryRepo.getAll();
+    const data = await didRemoveHistoryRepo.getAll();
     SuccessRespnose.data = data
     SuccessRespnose.message = "Success";
 
@@ -57,7 +57,7 @@ async function getAll(req, res) {
     ErrorResponse.error = error;
 
     Logger.error(
-      `DID Allocate history -> unable to get DID Allocate history list, error: ${JSON.stringify(
+      `DID Remove history -> unable to get DID Remove history list, error: ${JSON.stringify(
         error
       )}`
     );

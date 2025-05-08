@@ -122,7 +122,8 @@ const MODEL = {
     VOIP_PROFILE: 'voip_profile',
     TELEPHONY_PROFILE: 'telephony_profile',
     VOICE_PLAN: 'voice_plans',
-    DID_ALLOCATE_HISTORY: 'did_allocate_history'
+    DID_ALLOCATE_HISTORY: 'did_allocate_history',
+    DID_REMOVE_HISTORY: 'did_remove_history',
 }
 
 const AUTH_TYPES = {

@@ -95,7 +95,6 @@ function modifyNumberCreateBodyRequest (req, res, next) {
         const inputData = modifyNumberRequest(req);
         req.body = inputData;
 
-        console.log("NUMBER CREATE INPUT", inputData);
         next();
 
     } catch (error) {
