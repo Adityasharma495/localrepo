@@ -152,6 +152,8 @@ class CreditRepository extends CrudRepository {
       item.dataValues.created_at = formattedCreatedAt;
       item.dataValues.updated_at = formattedUpdatedAt;
 
+      delete item.dataValues.company_action;
+
       return item;
     });
     return response;
