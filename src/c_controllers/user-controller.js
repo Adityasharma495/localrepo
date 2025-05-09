@@ -735,12 +735,10 @@ async function updateUser(req, res) {
   const bodyReq = req.body;
 
 
-  console.log("BODY REQ", bodyReq);
 
   if (bodyReq?.user?.acl_settings) {
     bodyReq.user.acl_settings_id = bodyReq?.user?.acl_settings;
   }
-  // process.exit(0)
 
   try {
 
