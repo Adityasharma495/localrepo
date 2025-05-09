@@ -1,9 +1,19 @@
 const { StatusCodes } = require("http-status-codes");
-const { IncomingReportRepository } = require("../c_repositories");
+const { IncomingReportRepository,
+  IncomingReportMayW1Repository,
+  IncomingReportMayW2Repository,
+  IncomingReportMayW3Repository,
+  IncomingReportMayW4Repository,
+  IncomingReportJuneW1Repository,
+  IncomingReportJuneW2Repository,
+  IncomingReportJuneW3Repository,
+  IncomingReportJuneW4Repository,
+ } = require("../c_repositories");
 const {SuccessRespnose , ErrorResponse} = require("../utils/common");
 const AppError = require("../utils/errors/app-error");
 const { Logger } = require("../config");
 const incomingReportRepo = new IncomingReportRepository();
+const moment = require('moment');
 
 async function createIncomingReport(req, res) {
     const bodyReq = req.body;
@@ -181,6 +191,54 @@ async function deleteIncomingReport(req, res) {
   async function getDidSpecificReport(req, res) {
     try {
       const {did, startDate, endDate} = req.params;
+
+      console.log(req.params)
+      const repositories = {
+          Mayw1: new IncomingReportMayW1Repository(),
+          Mayw2: new IncomingReportMayW2Repository(),
+          Mayw3: new IncomingReportMayW3Repository(),
+          Mayw4: new IncomingReportMayW4Repository(),
+          Junew1: new IncomingReportJuneW1Repository(),
+          Junew2: new IncomingReportJuneW2Repository(),
+          Junew3: new IncomingReportJuneW3Repository(),
+          Junew4: new IncomingReportJuneW4Repository(),
+      };
+
+      const dateStart = moment(startDate);
+      const startDateMonthName = dateStart.format('MMMM');
+      let startDateWeekNumber;
+      const startDateDay = dateStart.date();
+
+      if (startDateDay <= 7) {
+        startDateWeekNumber = 1;
+      } else if (startDateDay <= 14) {
+        startDateWeekNumber = 2;
+      } else if (startDateDay <= 21) {
+        startDateWeekNumber = 3;
+      } else {
+        startDateWeekNumber = 4;
+      }
+
+      const dateEnd = moment(endDate);
+      const endDateMonthName = dateEnd.format('MMMM');
+      let endDateWeekNumber;
+      const endDateDay = dateEnd.date();
+
+      if (endDateDay <= 7) {
+        endDateWeekNumber = 1;
+      } else if (endDateDay <= 14) {
+        endDateWeekNumber = 2;
+      } else if (endDateDay <= 21) {
+        endDateWeekNumber = 3;
+      } else {
+        endDateWeekNumber = 4;
+      }
+
+      if (startDateMonthName !== endDateMonthName) {
+        ErrorResponse.message = 'You can check only 1 month data';
+        return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+      }
+
       const data = await incomingReportRepo.getByDidByDate({callee_number : did}, startDate, endDate);
       SuccessRespnose.data = data;
       SuccessRespnose.message = "Success";
@@ -191,6 +249,7 @@ async function deleteIncomingReport(req, res) {
   
       return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {
+      console.log('error', error)
       ErrorResponse.message = error.message;
       ErrorResponse.error = error;
   

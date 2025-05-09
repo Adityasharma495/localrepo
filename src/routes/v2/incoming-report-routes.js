@@ -24,6 +24,4 @@ router.get('/:id', AuthMiddleware.validateUser, IncomingReportController.getById
 router.post('/:id', AuthMiddleware.validateUser, IncomingReportMiddleware.validateIncomingReportRequest,
 IncomingReportMiddleware.modifyIncomingReportUpdateBodyRequest, IncomingReportController.updateIncomingReport);
 
-
-
 module.exports = router;

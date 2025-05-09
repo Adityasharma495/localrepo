@@ -47,4 +47,12 @@ module.exports = {
   IncomingReportRepository: require("./incoming-report-repository"),
   DidAllocateHistoryRepository: require("./did-allocate-history-repository"),
   DidRemoveHistoryRepository: require("./did-remove-history-repository"),
+  IncomingReportMayW1Repository: require("./incoming-report-may-w1-repository"),
+  IncomingReportMayW2Repository: require("./incoming-report-may-w2-repository"),
+  IncomingReportMayW3Repository: require("./incoming-report-may-w3-repository"),
+  IncomingReportMayW4Repository: require("./incoming-report-may-w4-repository"),
+  IncomingReportJuneW1Repository: require("./incoming-report-june-w1-repository"),
+  IncomingReportJuneW2Repository: require("./incoming-report-june-w2-repository"),
+  IncomingReportJuneW3Repository: require("./incoming-report-june-w3-repository"),
+  IncomingReportJuneW4Repository: require("./incoming-report-june-w4-repository"),
 };

@@ -46,6 +46,14 @@ const UserCallCentres = require("./user-call-centres");
 const AgentGroup = require("./agent-group");
 const DidAllocateHistory = require("./did-allocate-history")
 const DidRemoveHistory = require("./did-remove-history")
+const IncomingReportMayW1 = require("./incoming-report-may-w1")
+const IncomingReportMayW2 = require("./incoming-report-may-w2")
+const IncomingReportMayW3 = require("./incoming-report-may-w3")
+const IncomingReportMayW4 = require("./incoming-report-may-w4")
+const IncomingReportJuneW1 = require("./incoming-report-june-w1")
+const IncomingReportJuneW2 = require("./incoming-report-june-w2")
+const IncomingReportJuneW3 = require("./incoming-report-june-w3")
+const IncomingReportJuneW4 = require("./incoming-report-june-w4")
 
 DidAllocateHistory.belongsTo(Numbers, {
   foreignKey: 'DID',
@@ -266,5 +274,13 @@ module.exports = {
     AgentGroup,
     DidAllocateHistory,
     SubUserLicence,
-    DidRemoveHistory
+    DidRemoveHistory,
+    IncomingReportMayW1,
+    IncomingReportMayW2,
+    IncomingReportMayW3,
+    IncomingReportMayW4,
+    IncomingReportJuneW1,
+    IncomingReportJuneW2,
+    IncomingReportJuneW3,
+    IncomingReportJuneW4
 };
