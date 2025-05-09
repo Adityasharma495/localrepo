@@ -47,18 +47,21 @@ class CrudRepository {
     }
 
     async update(id, data) {
+
       try {
         const options = {
           where: {
             id: id,
           },
         };
+        console.log("OPTIONS", options);
+        
 
         const response = await this.model.update(data, options);
         return response;
       } catch (error) {
 
-          console.log(error)
+        console.log(" ERORR", error);
           throw error;
       }
         
