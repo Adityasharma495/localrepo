@@ -273,7 +273,7 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
         //If company is to be associated with the user, then append company user details
         if(ifValidateCompany){
 
-            inputData.user.company_id = bodyReq?.company || ''
+            inputData.user.company_id = bodyReq?.company || null
         }
 
         if (bodyReq.role === constants.USERS_ROLE.CALLCENTRE_ADMIN && req.user.role === constants.USERS_ROLE.COMPANY_ADMIN) {
