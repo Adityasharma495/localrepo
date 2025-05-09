@@ -343,11 +343,11 @@ const BACKEND_BASE_URL =
 
 const DID_LEVELS = {
        "SUPERADMIN" : "0",
-       "PARENT_RESELLER" : "1",
-       "RESELLER" : "2",
-       "COMPANY_PARENT" : "3",
-       "CALL_CENTER" : "4",
-       "COMPANY" : "5"
+       "SUPER_PARENT_RESELLER" : "1",
+       "PARENT_RESELLER" : "2",
+       "RESELLER" : "3",
+       "COMPANY" : "4",
+       "CALL_CENTER" : "5"
 }
 
 
