@@ -1,46 +1,46 @@
 const { StatusCodes } = require("http-status-codes");
-const { DidAllocateHistoryRepository, CompanyRepository,CallCentreRepository, UserRepository } = require("../c_repositories");
+const { DidRemoveHistoryRepository, UserRepository, CompanyRepository, CallCentreRepository} = require("../c_repositories");
 const { SuccessRespnose, ErrorResponse} = require("../utils/common");
 const { Logger } = require("../config");
 
-const didAllocateHistoryRepo = new DidAllocateHistoryRepository();
+const userRepo = new UserRepository();
 const companyRepo = new CompanyRepository();
 const callCentreRepo = new CallCentreRepository();
-const userRepo = new UserRepository();
+const didRemoveHistoryRepo = new DidRemoveHistoryRepository();
 
 async function create(req, res) {
   const bodyReq = req.body;
   try {
     const responseData = {};
 
-    const didAllocatePayload = {
-      ...bodyReq.did_allocate,
+    const didRemovePayload = {
+      ...bodyReq.did_remove,
     };
 
-    const didAllocate = await didAllocateHistoryRepo.create(didAllocatePayload);
+    const didRemove = await didRemoveHistoryRepo.create(didRemovePayload);
 
-    responseData.didAllocate = didAllocate;
+    responseData.didRemove = didRemove;
 
     const SuccessResponse = {
       data: responseData,
-      message: "Successfully Added a new entry in DID allocate history",
+      message: "Successfully Added a new entry in DID Remove history",
     };
 
     Logger.info(
-      `DID Allocate history -> created successfully: ${JSON.stringify(responseData)}`
+      `DID Remove history -> created successfully: ${JSON.stringify(responseData)}`
     );
     return res.status(StatusCodes.CREATED).json(SuccessResponse);
   } catch (error) {
     console.log("error", error);
     Logger.error(
-      `DID Allocate history -> unable to create: ${JSON.stringify(
+      `DID Remove history -> unable to create: ${JSON.stringify(
         error,
         Object.getOwnPropertyNames(error)
       )}`
     );
 
     const ErrorResponse = {
-      message: 'DID Allocate history -> unable to create',
+      message: 'DID Remove history -> unable to create',
       error: error,
     };
 
@@ -50,36 +50,36 @@ async function create(req, res) {
 
 async function getAll(req, res) {
   try {
-    let data = await didAllocateHistoryRepo.getAll();
+    let data = await didRemoveHistoryRepo.getAll();
     data = data.map((val) => val.toJSON());
 
     data = await Promise.all(
       data.map(async (val) => {
         let finalData = { name: '', id: null };
     
-        if (val.to_user) {
+        if (val.remove_from) {
           let allocatedData = null;
     
           if ([1, 2, 3].includes(Number(val.level))) {
-            allocatedData = await userRepo.get(Number(val.to_user));
+            allocatedData = await userRepo.get(Number(val.remove_from));
 
             if (allocatedData) {
               finalData = { name: allocatedData.username, id: allocatedData.id };
             }
           } else if (val.level == 4) {
-            allocatedData = await companyRepo.findOne({ id: Number(val.to_user) });
+            allocatedData = await companyRepo.findOne({ id: Number(val.remove_from) });
             if (allocatedData) {
               finalData = { name: allocatedData.name, id: allocatedData.id };
             }
           } else if (val.level == 5) {
-            allocatedData = await callCentreRepo.findOne({ id: Number(val.to_user) });
+            allocatedData = await callCentreRepo.findOne({ id: Number(val.remove_from) });
             if (allocatedData) {
               finalData = { name: allocatedData.name, id: allocatedData.id };
             }
           }
         }
 
-        val.toUser = finalData;
+        val.removeFrom = finalData;
         return val;
       })
     );
@@ -93,7 +93,7 @@ async function getAll(req, res) {
     ErrorResponse.error = error;
 
     Logger.error(
-      `DID Allocate history -> unable to get DID Allocate history list, error: ${JSON.stringify(
+      `DID Remove history -> unable to get DID Remove history list, error: ${JSON.stringify(
         error
       )}`
     );

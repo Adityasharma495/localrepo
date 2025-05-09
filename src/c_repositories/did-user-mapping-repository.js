@@ -1,5 +1,5 @@
 const CrudRepository = require("./crud-repository");
-const { DIDUserMapping, Numbers, VoicePlan } = require("../c_db"); 
+const { DIDUserMapping, Numbers, VoicePlan, sequelize } = require("../c_db"); 
 const { Op, fn, col, literal } = require('sequelize');
 const { StatusCodes } = require("http-status-codes");
 const AppError = require("../utils/errors/app-error");
@@ -258,8 +258,7 @@ class DIDUserMappingRepository extends CrudRepository {
         where: { DID: did },
         raw: false,
       });
-  
-  
+
       if (!record) return;
   
       // ✅ Correct way to access mapping_detail
@@ -280,13 +279,22 @@ class DIDUserMappingRepository extends CrudRepository {
         return !Object.entries(newDetail).every(([key, value]) =>
           detail[key]?.toString() === value?.toString()
         );
-    });
-  
-  
-      const updatedstate = await this.model.update(
+      });
+
+      const removedDetails = originalDetails.filter(orig => 
+        !updatedDetails.some(updated =>
+          Object.entries(orig).every(([key, value]) =>
+            updated[key]?.toString() === value?.toString()
+          )
+        )
+      );
+
+      await this.model.update(
         { mapping_detail: updatedDetails },
         { where: { DID: did } }
       );
+
+      return removedDetails
 
   
     } catch (error) {
@@ -415,6 +423,38 @@ class DIDUserMappingRepository extends CrudRepository {
     const response = await this.model.update(data, {where: condition});
     return response;
   }
+
+  async checkPlanIdExists(level, planId) {
+    try {
+  
+      const [result] = await Sequelize.query(
+        `
+        SELECT EXISTS (
+          SELECT 1
+          FROM did_user_mapping
+          WHERE EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(mapping_detail) AS elem
+            WHERE (elem->>'level')::int = :level
+              AND elem->>'voice_plan_id' = :planId
+          )
+        ) AS result;
+        `,
+        {
+          replacements: { level, planId },
+          type: Sequelize.QueryTypes.SELECT,
+        }
+      );
+      
+      const hasMatch = result.result;
+      return hasMatch
+  
+    } catch (error) {
+      console.error("Error in checkPlanIdExists:", error);
+      throw error;
+    }
+  }
+
 }
 
 module.exports = DIDUserMappingRepository;

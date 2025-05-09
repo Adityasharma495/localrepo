@@ -93,6 +93,11 @@ const Numbers = sequelize.define(
       },
       allowNull: true,
     },
+    level: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0
+    },
     created_by: {
       type: DataTypes.BIGINT,
       allowNull:true,

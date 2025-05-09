@@ -36,6 +36,8 @@ const callsRoutes = require("./calls-routes");
 const queueRoute = require('./queue-route');
 const companyRoutes = require('./company-routes.js')
 const incomingReportRoute = require('./incoming-report-routes.js')
+const didAllocateHistoryRoute = require('./did-allocate-history-routes.js')
+const didRemoveHistoryRoute = require('./did-remove-history-routes.js')
 
 
 router.use('/users', userRoutes);
@@ -73,5 +75,7 @@ router.use('/calls', callsRoutes);
 router.use("/queue", queueRoute);
 router.use("/companies", companyRoutes)
 router.use('/incoming-report', incomingReportRoute);
+router.use('/did-allocate-history', didAllocateHistoryRoute);
+router.use('/did-remove-history', didRemoveHistoryRoute);
 
 module.exports = router;

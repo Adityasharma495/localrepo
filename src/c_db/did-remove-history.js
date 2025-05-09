@@ -2,12 +2,12 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/sequelize');
 const { constants } = require('../utils/common');
 
-const DID_ALLOCATE_HISTORY_MODEL_NAME = constants.MODEL.DID_ALLOCATE_HISTORY;
+const DID_REMOVE_HISTORY_MODEL_NAME = constants.MODEL.DID_REMOVE_HISTORY;
 const NUMBER_MODEL_NAME = constants.MODEL.NUMBERS;
 const VOICE_PLAN_MODEL_NAME = constants.MODEL.VOICE_PLAN;
 const USERS_MODEL_NAME = constants.MODEL.USERS;
 
-const DidAllocateHistory = sequelize.define(DID_ALLOCATE_HISTORY_MODEL_NAME, {
+const DidRemoveHistory = sequelize.define(DID_REMOVE_HISTORY_MODEL_NAME, {
   id: {
     type: DataTypes.BIGINT,
     allowNull: false,
@@ -22,17 +22,17 @@ const DidAllocateHistory = sequelize.define(DID_ALLOCATE_HISTORY_MODEL_NAME, {
       key: 'id',
     },
   },
-  from_user: {
-    type: DataTypes.BIGINT,
-      allowNull: true,
-      references: {
-        model: USERS_MODEL_NAME,
-        key: 'id',
-    },
-  },
-  to_user: {
+  remove_from: {
     type: DataTypes.STRING,
     allowNull: true,
+  },
+  remove_by: {
+    type: DataTypes.BIGINT,
+    allowNull: true,
+    references: {
+      model: USERS_MODEL_NAME,
+      key: 'id',
+    },
   },
   active: {
     type: DataTypes.BOOLEAN,
@@ -77,4 +77,4 @@ const DidAllocateHistory = sequelize.define(DID_ALLOCATE_HISTORY_MODEL_NAME, {
   freezeTableName: true,
 });
 
-module.exports = DidAllocateHistory;
+module.exports = DidRemoveHistory;

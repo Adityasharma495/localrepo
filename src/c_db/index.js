@@ -45,6 +45,7 @@ const IncomingReport = require("./incoming-report");
 const UserCallCentres = require("./user-call-centres");
 const AgentGroup = require("./agent-group");
 const DidAllocateHistory = require("./did-allocate-history")
+const DidRemoveHistory = require("./did-remove-history")
 
 DidAllocateHistory.belongsTo(Numbers, {
   foreignKey: 'DID',
@@ -54,6 +55,26 @@ DidAllocateHistory.belongsTo(Numbers, {
 DidAllocateHistory.belongsTo(VoicePlan, {
   foreignKey: 'plan_id',
   as: 'voicePlan'
+});
+
+DidAllocateHistory.belongsTo(User, {
+  foreignKey: 'from_user',
+  as: 'fromUser'
+});
+
+DidRemoveHistory.belongsTo(Numbers, {
+  foreignKey: 'DID',
+  as: 'did'
+});
+
+DidRemoveHistory.belongsTo(VoicePlan, {
+  foreignKey: 'plan_id',
+  as: 'voicePlan'
+});
+
+DidRemoveHistory.belongsTo(User, {
+  foreignKey: 'remove_by',
+  as: 'removeBy'
 });
 
 Credit.belongsTo(User, { foreignKey: "user_id",onDelete: 'CASCADE',onUpdate: 'CASCADE', });
@@ -245,4 +266,5 @@ module.exports = {
     AgentGroup,
     DidAllocateHistory,
     SubUserLicence,
+    DidRemoveHistory
 };

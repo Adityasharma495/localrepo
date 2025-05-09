@@ -56,12 +56,11 @@ const Company = sequelize.define(COMPANY_MODEL_NAME, {
     defaultValue: DataTypes.NOW
   },
   credits_available: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-    allowNull: false,
+    type: DataTypes.DECIMAL(10, 2),
     validate: {
-      min: 0
-    }
+      min: 0.0,
+    },
+    defaultValue: 0.0,
   },
 }, {
   timestamps: false,

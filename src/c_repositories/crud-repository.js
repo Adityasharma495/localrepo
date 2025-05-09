@@ -61,7 +61,7 @@ class CrudRepository {
         return response;
       } catch (error) {
 
-        console.log(" ERORR", error);
+        console.log(" ERORR ", error);
           throw error;
       }
         

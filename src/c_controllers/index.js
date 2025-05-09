@@ -34,5 +34,6 @@ module.exports = {
     CallsController: require("./calls-controller"),
     QueueController: require("./queue-controller"),
     IncomingReportController: require("./incoming-report-controller"),
-    DidAllocateHistoryController: require("./did-allocate-history-controller")
+    DidAllocateHistoryController: require("./did-allocate-history-controller"),
+    DidRemoveHistoryController: require("./did-remove-history-controller"),
 }

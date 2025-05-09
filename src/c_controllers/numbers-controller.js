@@ -16,7 +16,8 @@ const {
   VoicePlansRepository,
   CompanyRepository,
   CallCentreRepository,
-  DidAllocateHistoryRepository
+  DidAllocateHistoryRepository,
+  DidRemoveHistoryRepository,
 } = require('../c_repositories');
 const fs = require("fs");
 const { MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, USERS_ROLE, NUMBER_STATUS_LABLE, DID_ALLOCATION_LEVEL } = require('../utils/common/constants');
@@ -32,11 +33,13 @@ const companyRepo = new CompanyRepository();
 const callCentreRepo = new CallCentreRepository();
 const voicePlanRepo = new VoicePlansRepository();
 const didAllocateHistoryRepo = new DidAllocateHistoryRepository();
+const didRemoveHistoryRepo = new DidRemoveHistoryRepository();
 
 const { constants } = require("../utils/common");
 const NUMBER_STATUS = constants.NUMBER_STATUS_LABLE;
 const stream = require('stream');
 const csv = require('csv-parser');
+const { level } = require('winston');
 const version = process.env.API_V || '1';
 
 async function create(req, res) {
@@ -422,7 +425,6 @@ async function getAll(req, res) {
 
         const didMapping = await didUserMappingRepository.findOne({DID: val.id})
 
-        console.log('didMapping', didMapping)
         level = didMapping.mapping_detail.length
 
         if (level === 1) {
@@ -680,7 +682,8 @@ async function DIDUserMapping(req, res) {
 
           await numberRepo.update(did, {
             allocated_to: bodyReq.allocated_to,
-            voice_plan_id: bodyReq?.voice_plan_id
+            voice_plan_id: bodyReq?.voice_plan_id,
+            level: 1
           });
 
           await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
@@ -689,7 +692,8 @@ async function DIDUserMapping(req, res) {
             from_user: req.user.id,
             to_user: bodyReq.allocated_to,
             plan_id: bodyReq?.voice_plan_id,
-            action: "ADD"
+            action: "ADD",
+            level: 1
           })
           successDIDs.push(did);
 
@@ -700,8 +704,6 @@ async function DIDUserMapping(req, res) {
         }
       }
     } else {
-
-
       for (const did of bodyReq.DID) {
         try {
 
@@ -745,20 +747,22 @@ async function DIDUserMapping(req, res) {
           }
 
           let level;
-          if (req.user.role === USERS_ROLE.RESELLER) {
+
+          if (bodyReq.allocated_to_role === USERS_ROLE.RESELLER) {
+              const data = await userRepo.get(req.user.id)
+                if (data?.createdByUser?.role === USERS_ROLE.SUPER_ADMIN) {
+                  level = DID_ALLOCATION_LEVEL.SUB_RESELLER
+                } else {
+                  level = DID_ALLOCATION_LEVEL.SUB_SUB_RESELLER
+              }
+          }
+          else if (bodyReq.allocated_to_role === USERS_ROLE.COMPANY_ADMIN) {
               const isCompanyUser = await companyRepo.findOne({id: bodyReq.allocated_to})
               if (isCompanyUser) {
                   level = DID_ALLOCATION_LEVEL.COMPANY_ADMIN
-              } else {
-                const data = await userRepo.get(req.user.id)
-                  if (data?.createdByUser?.role === USERS_ROLE.SUPER_ADMIN) {
-                      level = DID_ALLOCATION_LEVEL.SUB_RESELLER
-                  } else {
-                      level = DID_ALLOCATION_LEVEL.SUB_SUB_RESELLER
-                  }
-              }
+              } 
               
-          } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
+          } else if (bodyReq.allocated_to_role === USERS_ROLE.CALLCENTRE_ADMIN) {
                   level = DID_ALLOCATION_LEVEL.CALLCENTER
           }
 
@@ -770,8 +774,9 @@ async function DIDUserMapping(req, res) {
           });
 
           await numberRepo.update(did, {
+              level,
               allocated_to: bodyReq.allocated_to,
-              voice_plan_id: bodyReq?.voice_plan_id
+              voice_plan_id: bodyReq?.voice_plan_id,
           });
 
           await didAllocateHistoryRepo.update({DID: did}, {active: false})
@@ -781,7 +786,8 @@ async function DIDUserMapping(req, res) {
             from_user: req.user.id,
             to_user: bodyReq.allocated_to,
             plan_id: bodyReq?.voice_plan_id,
-            action: "ADD"
+            action: "ADD",
+            level: level
           })
 
           await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
@@ -823,6 +829,8 @@ async function getToAllocateNumbers(req, res) {
     let data;
       if (req.user.role === USERS_ROLE.SUPER_ADMIN ) {
         data = await numberRepo.getAll({ where: { allocated_to: null } });
+      } else if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
+        data = await numberRepo.getAll({ where: { allocated_to: allocatedToId , level: 4} });
       } else {
         data = await numberRepo.getAll({ where: { allocated_to: allocatedToId } });
       }
@@ -895,8 +903,6 @@ async function getAllocatedNumbers(req, res) {
           allocatedTo = (await callCentreRepo.findOne({id : allocatedId}))?.name
       }
       const allocatedBy = req.user.username
-
-
       const uniqueDIDs = [...new Set(allocatedNumbers.map(item => item.DID))];
 
       // Create a map of DID to voiceplan_id
@@ -914,7 +920,7 @@ async function getAllocatedNumbers(req, res) {
             ...item,  
             voice_plan_id: didVoicePlanMap[item.id] ,
             allocated_name: allocatedTo, 
-            allocated_by: allocatedBy
+            allocated_by: allocatedBy,
           };
         });
 
@@ -978,16 +984,27 @@ async function removeAllocatedNumbers(req, res) {
       const isSame = allocatedNumbers?.mapping_detail[0].parent_id.toString() === superadminCheck.id.toString();
 
       if (isSame) {
-        // update did user mapping
-        // await didUserMappingRepository.updateMappingDetail(allocatedNumbers.DID, { active: false, voice_plan_id : null, allocated_to:allocatedNumbers?.mapping_detail[0].allocated_to });
 
-        await didUserMappingRepository.deleteMappingDetail(did, { allocated_to: user_id })
+        const removedDetails = await didUserMappingRepository.deleteMappingDetail(did, { allocated_to: user_id })
 
         // update numbers
-        await numberRepo.update(did, { allocated_to: null, voice_plan_id: null });
+        await numberRepo.update(did, { allocated_to: null, voice_plan_id: null, level: 0 });
 
-        //update voice plan
-        // await voicePlanRepo.update(allocatedNumbers?.mapping_detail[0].voice_plan_id, { is_allocated: 0 })
+        await didRemoveHistoryRepo.create({
+            DID: did,
+            remove_from: removedDetails[0]?.allocated_to,
+            remove_by: req.user.id,
+            plan_id: removedDetails[0]?.voice_plan_id,
+            action: 'Remove',
+            level: removedDetails[0]?.level
+        })
+
+        const planId = await didUserMappingRepository.checkPlanIdExists(removedDetails[0]?.level, removedDetails[0]?.voice_plan_id)
+
+        if (!planId) {
+          await voicePlanRepo.update(removedDetails[0]?.voice_plan_id, { is_allocated: 0 })
+        }
+
       } else {
         let allocatedToId
 
@@ -1002,19 +1019,29 @@ async function removeAllocatedNumbers(req, res) {
           allocatedToId = req.user.id
         }
 
-
         const parentDetail = await didUserMappingRepository.checkMappingIfNotExists(did, { allocated_to: allocatedToId });
 
-
-
         // update did user mapping
-        await didUserMappingRepository.deleteMappingDetail(did, { allocated_to: user_id })
-
-
-        // await didUserMappingRepository.updateMappingDetail(allocatedNumbers.DID, { active: false, voice_plan_id : null , allocated_to :  allocatedNumbers?.mapping_detail[0].allocated_to});
+        const removedDetails = await didUserMappingRepository.deleteMappingDetail(did, { allocated_to: user_id })
 
         // update numbers
-        await numberRepo.update(did, { allocated_to: parentDetail.mapping_detail[0].allocated_to, voice_plan_id: parentDetail.mapping_detail[0].voice_plan_id });
+        await numberRepo.update(did, { allocated_to: parentDetail.mapping_detail[0].allocated_to, voice_plan_id: parentDetail.mapping_detail[0].voice_plan_id, level: parentDetail.mapping_detail[0].level });
+
+        await didRemoveHistoryRepo.create({
+            DID: did,
+            remove_from: removedDetails[0]?.allocated_to,
+            remove_by: req.user.id,
+            plan_id: removedDetails[0]?.voice_plan_id,
+            action: "REMOVE",
+            level: removedDetails[0]?.level
+        })
+
+        const planId = await didUserMappingRepository.checkPlanIdExists(removedDetails[0]?.level, removedDetails[0]?.voice_plan_id)
+
+        if (!planId) {
+          await voicePlanRepo.update(removedDetails[0]?.voice_plan_id, { is_allocated: 0 })
+        }
+
       }
     }
 
