@@ -17,7 +17,7 @@ const userJourneyRepo = new UserJourneyRepository();
 
 async function updateCredit(req, res) {
   const bodyReq = req.body;
-
+ 
   try {
     let userRole = req.user.role;
     const responseData = {};
