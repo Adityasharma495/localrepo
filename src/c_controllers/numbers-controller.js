@@ -612,7 +612,7 @@ async function assignIndividualDID(req, res) {
 
     try {
 
-      await numberRepo.update(bodyReq._id, {
+      await numberRepo.update(bodyReq.id, {
         status: bodyReq.status,
         routing_destination: bodyReq.DID,
         routing_type: bodyReq.numberType,
