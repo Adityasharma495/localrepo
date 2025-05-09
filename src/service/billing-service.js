@@ -79,8 +79,7 @@ const updateCredits = async(finalUpdateCredits)=>{
             if(finalUpdateCredits[i].level === DID_LEVELS.COMPANY){
                 const companyDetail = await companyRepo.get(finalUpdateCredits[i].companyId);
                 if(companyDetail){
-
-                    const availableCredits = companyDetail.credits_available;
+                    const availableCredits = companyDetail[0].credits_available;
                     const updatedCredtis = availableCredits - credits;
                     Logger.info(`Company ID : ${finalUpdateCredits[i].companyId} , Updated Credits : ${updatedCredtis} `);
                     const company = await companyRepo.update(finalUpdateCredits[i].companyId, {credits_available : updatedCredtis});
