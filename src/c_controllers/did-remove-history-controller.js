@@ -1,8 +1,11 @@
 const { StatusCodes } = require("http-status-codes");
-const { DidRemoveHistoryRepository} = require("../c_repositories");
+const { DidRemoveHistoryRepository, UserRepository, CompanyRepository, CallCentreRepository} = require("../c_repositories");
 const { SuccessRespnose, ErrorResponse} = require("../utils/common");
 const { Logger } = require("../config");
 
+const userRepo = new UserRepository();
+const companyRepo = new CompanyRepository();
+const callCentreRepo = new CallCentreRepository();
 const didRemoveHistoryRepo = new DidRemoveHistoryRepository();
 
 async function create(req, res) {
@@ -47,7 +50,40 @@ async function create(req, res) {
 
 async function getAll(req, res) {
   try {
-    const data = await didRemoveHistoryRepo.getAll();
+    let data = await didRemoveHistoryRepo.getAll();
+    data = data.map((val) => val.toJSON());
+
+    data = await Promise.all(
+      data.map(async (val) => {
+        let finalData = { name: '', id: null };
+    
+        if (val.remove_from) {
+          let allocatedData = null;
+    
+          if ([1, 2, 3].includes(Number(val.level))) {
+            allocatedData = await userRepo.get(Number(val.remove_from));
+
+            if (allocatedData) {
+              finalData = { name: allocatedData.username, id: allocatedData.id };
+            }
+          } else if (val.level == 4) {
+            allocatedData = await companyRepo.findOne({ id: Number(val.remove_from) });
+            if (allocatedData) {
+              finalData = { name: allocatedData.name, id: allocatedData.id };
+            }
+          } else if (val.level == 5) {
+            allocatedData = await callCentreRepo.findOne({ id: Number(val.remove_from) });
+            if (allocatedData) {
+              finalData = { name: allocatedData.name, id: allocatedData.id };
+            }
+          }
+        }
+
+        val.removeFrom = finalData;
+        return val;
+      })
+    );
+
     SuccessRespnose.data = data
     SuccessRespnose.message = "Success";
 

@@ -1,9 +1,12 @@
 const { StatusCodes } = require("http-status-codes");
-const { DidAllocateHistoryRepository} = require("../c_repositories");
+const { DidAllocateHistoryRepository, CompanyRepository,CallCentreRepository, UserRepository } = require("../c_repositories");
 const { SuccessRespnose, ErrorResponse} = require("../utils/common");
 const { Logger } = require("../config");
 
 const didAllocateHistoryRepo = new DidAllocateHistoryRepository();
+const companyRepo = new CompanyRepository();
+const callCentreRepo = new CallCentreRepository();
+const userRepo = new UserRepository();
 
 async function create(req, res) {
   const bodyReq = req.body;
@@ -47,7 +50,40 @@ async function create(req, res) {
 
 async function getAll(req, res) {
   try {
-    const data = await didAllocateHistoryRepo.getAll();
+    let data = await didAllocateHistoryRepo.getAll();
+    data = data.map((val) => val.toJSON());
+
+    data = await Promise.all(
+      data.map(async (val) => {
+        let finalData = { name: '', id: null };
+    
+        if (val.to_user) {
+          let allocatedData = null;
+    
+          if ([1, 2, 3].includes(Number(val.level))) {
+            allocatedData = await userRepo.get(Number(val.to_user));
+
+            if (allocatedData) {
+              finalData = { name: allocatedData.username, id: allocatedData.id };
+            }
+          } else if (val.level == 4) {
+            allocatedData = await companyRepo.findOne({ id: Number(val.to_user) });
+            if (allocatedData) {
+              finalData = { name: allocatedData.name, id: allocatedData.id };
+            }
+          } else if (val.level == 5) {
+            allocatedData = await callCentreRepo.findOne({ id: Number(val.to_user) });
+            if (allocatedData) {
+              finalData = { name: allocatedData.name, id: allocatedData.id };
+            }
+          }
+        }
+
+        val.toUser = finalData;
+        return val;
+      })
+    );
+
     SuccessRespnose.data = data
     SuccessRespnose.message = "Success";
 

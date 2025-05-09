@@ -46,6 +46,10 @@ const DidAllocateHistory = sequelize.define(DID_ALLOCATE_HISTORY_MODEL_NAME, {
       key: 'id',
     },
   },
+  level: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
   action: {
     type: DataTypes.STRING,
     allowNull: true,

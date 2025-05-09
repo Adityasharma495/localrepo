@@ -46,6 +46,10 @@ const DidRemoveHistory = sequelize.define(DID_REMOVE_HISTORY_MODEL_NAME, {
       key: 'id',
     },
   },
+  level: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
   action: {
     type: DataTypes.STRING,
     allowNull: true,
