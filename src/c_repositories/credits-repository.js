@@ -129,7 +129,18 @@ class CreditRepository extends CrudRepository {
     if (current_role === constants.USERS_ROLE.SUPER_ADMIN) {
       response = await Credit.findAll();
     } else {
-      response = await Credit.findAll({ where: { action_user: current_uid } });
+      let query = {};
+      query = {
+        [Op.or]: [
+          { user_id: current_uid },
+          { from_user: current_uid },
+          { to_user: current_uid },
+          { action_user: current_uid },
+        ],
+      };
+      response = await Credit.findAll({
+        where: query,
+      });
     }
     response = response.map(item => {
       const createdAt = new Date(item.dataValues.created_at);
