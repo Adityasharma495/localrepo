@@ -62,7 +62,11 @@ class CreditRepository extends CrudRepository {
         if (item.from_user) userIdsSet.add(item.from_user);
         if (item.to_user) userIdsSet.add(item.to_user);
       
-        if (item.type === "Company" && item.action === "deduction") {
+        if (item.type === "Company" && item.action === "inbound_deduction") {
+          if (item.action_user) companyIdsSet.add(item.action_user);
+        } else if (item.type === "User" && item.action === "inbound_deduction") {
+          if (item.action_user) userIdsSet.add(item.action_user);
+        } else if (item.type === "Company" && item.action === "deduction") {
           if (item.company_action === "Addition") {
             if (item.action_user) userIdsSet.add(item.action_user);
           } else {
@@ -107,7 +111,11 @@ class CreditRepository extends CrudRepository {
         fromUser: idMap[credit.from_user] || null,
         toUser: idMap[credit.to_user] || null,
         actionUser:
-          credit.type === "Company" && credit.action === "deduction"
+          credit.type === "Company" && credit.action === "inbound_deduction"
+            ? companyMap[credit.action_user] || null
+            : credit.type === "User" && credit.action === "inbound_deduction"
+            ? userMap[credit.action_user] || null
+            : credit.type === "Company" && credit.action === "deduction"
             ? credit.company_action === "Addition"
               ? userMap[credit.action_user] || null
               : companyMap[credit.action_user] || null
@@ -129,7 +137,18 @@ class CreditRepository extends CrudRepository {
     if (current_role === constants.USERS_ROLE.SUPER_ADMIN) {
       response = await Credit.findAll();
     } else {
-      response = await Credit.findAll({ where: { action_user: current_uid } });
+      let query = {};
+      query = {
+        [Op.or]: [
+          { user_id: current_uid },
+          { from_user: current_uid },
+          { to_user: current_uid },
+          { action_user: current_uid },
+        ],
+      };
+      response = await Credit.findAll({
+        where: query,
+      });
     }
     response = response.map(item => {
       const createdAt = new Date(item.dataValues.created_at);
@@ -140,6 +159,8 @@ class CreditRepository extends CrudRepository {
 
       item.dataValues.created_at = formattedCreatedAt;
       item.dataValues.updated_at = formattedUpdatedAt;
+
+      delete item.dataValues.company_action;
 
       return item;
     });
