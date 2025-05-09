@@ -121,9 +121,7 @@ async function updateCredit(req, res) {
           let updatedValueForFromUser =
             Number(fromUpdatedUser?.dataValues?.credits_available) -
             Number(bodyReq.updatedCredit);
-          user = await userRepo.update(bodyReq.id, {
-            credits_available: updatedValue,
-          });
+          
           if (updatedValueForFromUser < 0) {
             let errorMessage =
               "Your account has not enough credits to contribute.";
@@ -133,6 +131,10 @@ async function updateCredit(req, res) {
           } else {
             fromUser = await userRepo.update(bodyReq.fromUser, {
               credits_available: updatedValueForFromUser,
+            });
+
+            user = await userRepo.update(bodyReq.id, {
+              credits_available: updatedValue,
             });
           }
 
@@ -365,9 +367,7 @@ async function updateCompanyCredit(req, res) {
           let updatedValueForFromUser =
             Number(fromUpdatedUser?.dataValues?.credits_available) -
             Number(bodyReq.updatedCredit);
-          user = await companyRepo.update(bodyReq.id, {
-            credits_available: updatedValue,
-          });
+          
           if (updatedValueForFromUser < 0) {
             let errorMessage =
               "Your account has not enough credits to contribute.";
@@ -377,6 +377,10 @@ async function updateCompanyCredit(req, res) {
           } else {
             fromUser = await userRepo.update(bodyReq.fromUser, {
               credits_available: updatedValueForFromUser,
+            });
+
+            user = await companyRepo.update(bodyReq.id, {
+              credits_available: updatedValue,
             });
           }
 
