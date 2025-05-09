@@ -935,7 +935,7 @@ async function updateUser(req, res) {
 
       // console.log("NEW AVAIL LIC", newAvailLicence);
 
-return
+
 
       await subUserLicenceRepo.updateById(
         parentData.sub_user_licence.id,

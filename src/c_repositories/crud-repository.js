@@ -48,6 +48,8 @@ class CrudRepository {
 
     async update(id, data) {
 
+      console.log("UPDATED", id, data);
+
       try {
         const options = {
           where: {
@@ -61,7 +63,7 @@ class CrudRepository {
         return response;
       } catch (error) {
 
-        console.log(" ERORR ", error);
+        console.log("ISSUES ERORR ", error);
           throw error;
       }
         

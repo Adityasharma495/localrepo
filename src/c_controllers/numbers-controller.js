@@ -392,6 +392,8 @@ async function getAll(req, res) {
       let data
       let level
 
+
+      
       if (loggedUser?.role === USERS_ROLE.COMPANY_ADMIN) {
         data = await didUserMappingRepository.getForOthers(idToCheck, 4);
       } else if (loggedUser?.role === USERS_ROLE.RESELLER && loggedUser?.createdByUser?.role === USERS_ROLE.SUPER_ADMIN) {
@@ -422,6 +424,7 @@ async function getAll(req, res) {
 
         let allocatedData = null;
         let finalData = {};
+
 
         const didMapping = await didUserMappingRepository.findOne({DID: val.id})
 
@@ -1058,11 +1061,12 @@ async function setInboundRouting(req, res) {
   const bodyReq = req.body;
   try {
     if (bodyReq.numberType === 'DID') {
-      await numberRepo.update(bodyReq.number, {
+      const updated  = await numberRepo.update(bodyReq.number, {
         routing_id: bodyReq.id,
         routing_type: bodyReq.action.toUpperCase(),
         routing_destination: bodyReq.name,
       });
+
     } else {
       const getDetail = await numberRepo.findOne({ id: bodyReq.number });
       const getDID = await numberRepo.findOne({ id: getDetail.routing_id });
