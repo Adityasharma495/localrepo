@@ -3,11 +3,24 @@ const config = require('../config/rabitmq-config.json');
 const { IncomingReportRepository , IncomingSummaryRepository } = require("../c_repositories");
 const incomingReportRepo = new IncomingReportRepository();
 const incomingSummaryRepo = new IncomingSummaryRepository();
+const { IncomingReportMayW1Repository , IncomingReportMayW2Repository,IncomingReportMayW3Repository , IncomingReportMayW4Repository, IncomingReportJuneW1Repository, IncomingReportJuneW2Repository, IncomingReportJuneW3Repository, IncomingReportJuneW4Repository } = require("../c_repositories"); 
+
+const incomingReport5W1Repo = new IncomingReportMayW1Repository();
+const incomingReport5W2Repo = new IncomingReportMayW2Repository();
+const incomingReport5W3Repo = new IncomingReportMayW3Repository();
+const incomingReport5W4Repo = new IncomingReportMayW4Repository();
+
+const incomingReport4W1Repo = new IncomingReportJuneW1Repository();
+const incomingReport4W2Repo = new IncomingReportJuneW2Repository();
+const incomingReport4W3Repo = new IncomingReportJuneW3Repository();
+const incomingReport4W4Repo = new IncomingReportJuneW4Repository();
+
 const { Logger } = require("../config");
 const mongoose = require('mongoose');
 const moment = require("moment-timezone");
 const logger = require('../config/logger-config');
 const sequelize = require('../config/sequelize');
+const { TOTAL_WEEK_DAYS } = require('../utils/common/constants');
 
 
 const connectMongo = async() => {
@@ -21,6 +34,7 @@ const connectMongo = async() => {
 const connectCockroach = async () => {
   try {
     await sequelize.authenticate();
+    Logger.info(`DB -> Successfully connected`);
   } catch(error) {
     throw error;
   }
@@ -47,6 +61,19 @@ const getDateTimeFormat = (date) =>{
             return istDate;
 
 }
+
+const repositoryMap = {
+  incomingReport4W1Repo: incomingReport4W1Repo,
+  incomingReport4W2Repo: incomingReport4W2Repo,
+  incomingReport4W3Repo: incomingReport4W3Repo,
+  incomingReport4W4Repo: incomingReport4W4Repo,
+
+  incomingReport5W1Repo: incomingReport5W1Repo,
+  incomingReport5W2Repo: incomingReport5W2Repo,
+  incomingReport5W3Repo: incomingReport5W3Repo,
+  incomingReport5W4Repo: incomingReport5W4Repo,
+};
+
 
 const insertDataInBillingQueue =   async (con,pub,message) =>{
     try {
@@ -103,11 +130,23 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
                  end_time : getDateTimeFormat(cdrJson.timings.END),
                  dtmf : cdrJson.dtmf,
                  billing_duration : cdrJson.duration.billing
-            }
+              }
 
             Logger.info("Report Date : "+JSON.stringify(report_data));
-  
-            const report = await incomingReportRepo.create(report_data);
+
+            const now = new Date();
+            const date = now.getUTCDate();
+            const month = now.getUTCMonth() + 1;
+            let week = 0;
+            if(date>28){
+                week = Math.floor(date/TOTAL_WEEK_DAYS);
+            }else{
+                week = Math.ceil(date/TOTAL_WEEK_DAYS);
+            }
+
+            const key = `incomingReport${month}W${week}Repo`;
+            const repoInstance = repositoryMap[key];
+            const report = await repoInstance.create(report_data);
             if(report){
               reportFlag = true;
             }

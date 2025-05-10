@@ -361,6 +361,8 @@ const DID_LEVELS = {
         'Registration': "REGISTRATION"
       };
 
+      const TOTAL_WEEK_DAYS = 7;
+
 module.exports = {
     USERS_STATUS,
     USERS_STATUS_VALUES_LABEL,
@@ -409,5 +411,6 @@ module.exports = {
     USER_CREDITS_ACTION_SEND,
     BACKEND_BASE_URL,
     USER_ROLE_VALUE_LICENCE,
-    DID_LEVELS
+    DID_LEVELS,
+    TOTAL_WEEK_DAYS
 }
