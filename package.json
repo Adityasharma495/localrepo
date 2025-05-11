@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "shared-db-repo": "git+https://git.nspl.cloud/nspl/cloudtelephony_common.git",
+    "shared-db-repo": "git+ssh://git@ssh.nspl.cloud:nspl/cloudtelephony_common.git",
     "@babel/runtime-corejs3": "^7.27.0",
     "amqplib": "^0.10.5",
     "archiver": "^7.0.1",
