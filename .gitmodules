@@ -1,0 +1,3 @@
+[submodule "shared"]
+	path = shared
+	url = https://git.nspl.cloud/nspl/cloudtelephony_common.git

@@ -5,7 +5,7 @@ const { State} = require('country-state-city');
 const { NumbersRepository, DIDUserMappingRepository,
     UserJourneyRepository, NumberFileListRepository,
     NumberStatusRepository, UserRepository ,
-    MemberScheduleRepository, CountryCodeRepository, VoicePlansRepository, CompanyRepository, CallCentreRepository} = require('../repositories');
+    MemberScheduleRepository, CountryCodeRepository, VoicePlansRepository, CompanyRepository, CallCentreRepository} = require('shared-db-repo/c_repositories');
 const fs = require("fs");
 const {MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, USERS_ROLE, NUMBER_STATUS_LABLE, DID_ALLOCATION_LEVEL} = require('../utils/common/constants');
 const userJourneyRepo = new UserJourneyRepository();
