@@ -18,7 +18,7 @@ const {
   CallCentreRepository,
   DidAllocateHistoryRepository,
   DidRemoveHistoryRepository,
-} = require('shared-db-repo/c_repositories');
+} = require('../shared/c_repositories');
 const fs = require("fs");
 const { MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, USERS_ROLE, NUMBER_STATUS_LABLE, DID_ALLOCATION_LEVEL } = require('../utils/common/constants');
 const didUserMappingRepository = new DIDUserMappingRepository();
