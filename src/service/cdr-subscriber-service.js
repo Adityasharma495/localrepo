@@ -1,7 +1,6 @@
 const Broker = require('rascal').BrokerAsPromised;
-const config = require('../config/rabitmq-config.json');
-const { IncomingReportRepository , IncomingSummaryRepository } = require("../../shared/c_repositories");
-const incomingReportRepo = new IncomingReportRepository();
+const config = require('../../shared/config/rabitmq-config.json');
+const {  IncomingSummaryRepository } = require("../../shared/c_repositories");
 const incomingSummaryRepo = new IncomingSummaryRepository();
 const { IncomingReportMayW1Repository , IncomingReportMayW2Repository,IncomingReportMayW3Repository , IncomingReportMayW4Repository, IncomingReportJuneW1Repository, IncomingReportJuneW2Repository, IncomingReportJuneW3Repository, IncomingReportJuneW4Repository } = require("../../shared/c_repositories"); 
 
@@ -15,21 +14,12 @@ const incomingReport4W2Repo = new IncomingReportJuneW2Repository();
 const incomingReport4W3Repo = new IncomingReportJuneW3Repository();
 const incomingReport4W4Repo = new IncomingReportJuneW4Repository();
 
-const { Logger } = require("../config");
-const mongoose = require('mongoose');
+const { Logger } = require("../../shared/config");
 const moment = require("moment-timezone");
-const logger = require('../config/logger-config');
-const sequelize = require('../config/sequelize');
-const { TOTAL_WEEK_DAYS } = require('../utils/common/constants');
+const logger = require('../../shared/config/logger-config');
+const sequelize = require('../../shared/config/sequelize');
+const { TOTAL_WEEK_DAYS } = require('../../shared/utils/common/constants');
 
-
-const connectMongo = async() => {
-    try {
-        await mongoose.connect(config.MONGO_DB_URI);
-    } catch (error) {
-        throw error;
-    }   
-}
 
 const connectCockroach = async () => {
   try {
@@ -40,14 +30,6 @@ const connectCockroach = async () => {
   }
 }
 
-const mongoConnection = async() =>{
-    try {
-         await connectMongo();
-         Logger.info(`Mongodb -> Successfully connected`);
-    } catch (error) {
-                 Logger.error(`Mongodb -> Error while connecting: ${ JSON.stringify(error) }`)
-    }
-}
 
 const getDateTimeFormat = (date) =>{
 
@@ -88,9 +70,7 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
       Logger.error(`Exception while publishing to Rabbit MQ: ${e}`);
     }
   }
-  function isValidUUID(uuid) {
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid);
-  }
+
 (async () => {
      
     try {
@@ -117,6 +97,7 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
          .on('message', async (message, content, ackOrNack) => {
             Logger.info("subscribed content : " + JSON.stringify(content));
             const cdrJson = JSON.parse(content);//JSON.parse(content);
+      
             let report_data = {};
             let summary_data = {};
 
@@ -163,7 +144,7 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
            try{
               
               const did = cdrJson.calleeTo;
-              logger.info(".........."+new Date(cdrJson.timings.START).toISOString());
+              Logger.info(".........."+new Date(cdrJson.timings.START).toISOString());
               let start =  new Date(cdrJson.timings.START).toISOString();
               let startOfDay = new Date(start);
               Logger.info(`Start Of  Date : ${startOfDay} `);
@@ -171,9 +152,9 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
               const startDateCheck = getDateTimeFormat(startOfDay);
               const startDate = getDateTimeFormat(cdrJson.timings.START);
               const userId = cdrJson.userId;
-              console.log("USer ID :  "+userId);
+              Logger.info("USer ID :  "+userId);
               const connectedCalls = (cdrJson.duration.billing > 0 ? 1 : 0);
-              console.log("connect : "+connectedCalls);
+              Logger.info("connect : "+connectedCalls);
 
               const incoming = await incomingSummaryRepo.isSummaryExist(userId , did , startDateCheck);
 
@@ -232,7 +213,9 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
                   did : cdrJson.calleeTo,
                   billingDuration : cdrJson.duration.billing 
             }
-            insertDataInBillingQueue(broker, "billing_queue" , {data});
+            insertDataInBillingQueue(broker, "billing_publisher" , {data});
+
+            Logger.info("Data Published in Billing Queue");
            }
 
             ackOrNack();

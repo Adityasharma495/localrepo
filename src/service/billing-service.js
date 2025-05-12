@@ -1,34 +1,15 @@
 const Broker = require('rascal').BrokerAsPromised;
-const config = require('../config/rabitmq-config.json');
-const {  DIDUserMappingRepository , UserRepository , AgentRepository, CreditsRepository, CompanyRepository} = require("../../shared/c_repositories");
+const config = require('../../shared/config/rabitmq-config.json');
+const {  DIDUserMappingRepository , UserRepository , AgentRepository, CreditsRepository, CompanyRepository, NumbersRepository} = require("../../shared/c_repositories");
 const didUserMappingRepo = new DIDUserMappingRepository();
-const agentRepo = new AgentRepository();
 const userRepo = new UserRepository();
 const creditHistoryRepo = new CreditsRepository();
 const companyRepo = new CompanyRepository();
-const { Logger } = require("../config");
-const mongoose = require('mongoose');
-const moment = require("moment-timezone");
-const {DID_LEVELS } = require('../utils/common/constants');
-const sequelize = require('../config/sequelize');
+const numbersRepo = new NumbersRepository();
+const { Logger } = require("../../shared/config");
+const {DID_LEVELS } = require('../../shared/utils/common/constants');
+const sequelize = require('../../shared/config/sequelize');
 
-
-const connectMongo = async() => {
-    try {
-        await mongoose.connect(config.MONGO_DB_URI);
-    } catch (error) {
-        throw error;
-    }   
-}
-
-const mongoConnection = async() =>{
-    try {
-         await connectMongo();
-         Logger.info(`Mongodb -> Successfully connected`);
-    } catch (error) {
-                 Logger.error(`Mongodb -> Error while connecting: ${ JSON.stringify(error) }`)
-    }
-}
 
 const connectCockroach = async () => {
     try {
@@ -52,7 +33,7 @@ const inbound = (detail,level) =>{
     }
 
 
-    console.log(`Inbound Price : ${inboundPrice} LEVEL : ${level} `);
+    Logger.info(`Inbound Price : ${inboundPrice} LEVEL : ${level} `);
     return inboundPrice;
    
 }
@@ -99,7 +80,7 @@ const updateCredits = async(finalUpdateCredits)=>{
                     }
                     const creditHistory = await creditHistoryRepo.create(data);
                     if(creditHistory){
-                        console.log('Credit History Added : ',JSON.stringify(creditHistory));
+                        Logger.info('Credit History Added : ',JSON.stringify(creditHistory));
                     }
                   }
 
@@ -129,7 +110,7 @@ const updateCredits = async(finalUpdateCredits)=>{
                     }
                     const creditHistory = await creditHistoryRepo.create(data);
                     if(creditHistory){
-                        console.log('Credit History Added : ',JSON.stringify(creditHistory));
+                        Logger.info('Credit History Added : ',JSON.stringify(creditHistory));
                     }
                 }
                 
@@ -293,19 +274,18 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
 
          const subscription = await broker.subscribe('billing_subscriber');
          Logger.info("subscribed");
-
-        //  await mongoConnection();
+         
          await connectCockroach();
 
-         const didMappingDetails = await didUserMappingRepo.findDidMappingDetails({did : 5});
+        //  const didMappingDetails = await didUserMappingRepo.findDidMappingDetails({did : 5});
 
-         console.log("User DID Mapping Detials : "+JSON.stringify(didMappingDetails));
+        //  console.log("User DID Mapping Detials : "+JSON.stringify(didMappingDetails));
 
-         const finalDeduction = await billingCalculation(didMappingDetails,billingDuration=15);
+        //  const finalDeduction = await billingCalculation(didMappingDetails,billingDuration=15);
 
-         console.log("Billing Structure Deduction : "+JSON.stringify(finalDeduction));
+        //  console.log("Billing Structure Deduction : "+JSON.stringify(finalDeduction));
 
-         const credits = await updateCredits(finalDeduction);
+        //  const credits = await updateCredits(finalDeduction);
 
 
          subscription
@@ -315,25 +295,28 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
 
             try {
 
-                // const did = billingJson.did;
-                // const billingDuration = billingJson.billingDuration;
+                const did = billingJson.data.did;
+                const billingDuration = billingJson.data.billingDuration;
 
-                // console.log(`DID : ${did} , Billing Duration : ${billingDuration} `);
-
-                // const didMappingDetails = await didUserMappingRepo.findDidMappingDetails({did : did});
-
-                // console.log("User DID Mapping Detials : "+JSON.stringify(didMappingDetails));
-
-                // const finalDeduction = await billingCalculation(didMappingDetails,billingDuration);
-
-                // console.log("Billing Structure Deduction : "+JSON.stringify(finalDeduction));
-
-                // const credits = await updateCredits(finalDeduction);
+                Logger.info(`DID : ${did} , Billing Duration : ${billingDuration} `);
+                
+                const numberDetails = await numbersRepo.isActualNumberExist(did,false);
+                
+                if(numberDetails){
+                    Logger.info("Number Details  "+JSON.stringify(numberDetails));
+                    const didMappingDetails = await didUserMappingRepo.findDidMappingDetails({did : numberDetails.id});
+                    Logger.info("User DID Mapping Detials : "+JSON.stringify(didMappingDetails));
+                    const finalDeduction = await billingCalculation(didMappingDetails,billingDuration);
+                    Logger.info("Billing Structure Deduction : "+JSON.stringify(finalDeduction));
+                    const credits = await updateCredits(finalDeduction);
+                }else{
+                    Logger.info("No Number Details Exist With this DID");
+                }
             
             }
             catch (error) {
                  Logger.error(
-                   `Incoming Report -> unable to create Incoming Report: ${JSON.stringify(
+                   `Billing Service Error: ${JSON.stringify(
                      error
                    )} error: ${JSON.stringify(error)}`
             );
