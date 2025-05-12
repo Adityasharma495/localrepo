@@ -6,21 +6,17 @@ const {
 const {
   SuccessRespnose,
   ErrorResponse,
-  ResponseFormatter,
 } = require("../../shared/utils/common");
 const { MODULE_LABEL, ACTION_LABEL, USERS_ROLE } = require("../../shared/utils/common/constants");
 const { Logger } = require("../../shared/config");
-
-const version = process.env.API_V || "1";
 
 const aclSettingRepo = new AclSettingsRepository();
 const userJourneyRepo = new UserJourneyRepository();
 
 async function getAll(req, res) {
     try {
-    let data;
-    data = await aclSettingRepo.getAll(req.user.id);
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
+    const data = await aclSettingRepo.getAll(req.user.id);
+    SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
     Logger.info(`Acl Settings -> recieved all successfully`);
@@ -49,10 +45,7 @@ async function createAclSettings(req, res) {
     const acl_settings = await aclSettingRepo.create(bodyReq.acl_settings);
     responseData.acl_settings = acl_settings;
 
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(
-      responseData,
-      version
-    );
+    SuccessRespnose.data = responseData
     SuccessRespnose.message = "Successfully created a new Acl Settings";
 
     await userJourneyRepo.create({
@@ -101,10 +94,7 @@ async function get(req, res) {
     }
 
     SuccessRespnose.message = "Success";
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(
-      aclData,
-      version
-    );
+    SuccessRespnose.data = aclData
 
     Logger.info(`Acl Settings -> received successfully`);
     return res.status(StatusCodes.OK).json(SuccessRespnose);

@@ -1,14 +1,12 @@
 const { StatusCodes } = require("http-status-codes");
 const { OperatorsRepository, UserJourneyRepository } = require("../../shared/c_repositories");
-const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../../shared/utils/common");
+const { SuccessRespnose, ErrorResponse } = require("../../shared/utils/common");
 const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/constants");
 const { Logger } = require("../../shared/config");
 const AppError = require("../../shared/utils/errors/app-error");
-
 const operatorsRepo = new OperatorsRepository();
 const userJourneyRepo = new UserJourneyRepository();
 
-const version = process.env.API_V || "1";
 
 async function createOperator(req, res) {
     try {
@@ -20,7 +18,7 @@ async function createOperator(req, res) {
             created_by: req?.user?.id
         });
 
-        SuccessRespnose.data = ResponseFormatter.formatResponseIds(operator, version);
+        SuccessRespnose.data = operator;
         SuccessRespnose.message = "Successfully created a new Operator";
         Logger.info(`Operator created successfully: ${JSON.stringify(operator)}`);
 
@@ -35,7 +33,7 @@ async function createOperator(req, res) {
 async function getAll(req, res) {
     try {
         const data = await operatorsRepo.getAll();
-        SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
+        SuccessRespnose.data = data;
         SuccessRespnose.message = "Success";
         Logger.info("Retrieved all operators successfully");
         return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -51,7 +49,7 @@ async function get(req, res) {
         const operatorData = await operatorsRepo.get(req.params.id);
         if (!operatorData) throw new AppError("Operator not found", StatusCodes.NOT_FOUND);
         
-        SuccessRespnose.data = ResponseFormatter.formatResponseIds(operatorData, version);
+        SuccessRespnose.data = operatorData;
         SuccessRespnose.message = "Success";
         Logger.info(`Retrieved operator ${req.params.id} successfully`);
         return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -94,7 +92,7 @@ async function updateOperator(req, res) {
         });
         
         SuccessRespnose.message = "Updated successfully!";
-        SuccessRespnose.data = ResponseFormatter.formatResponseIds(operator, version);
+        SuccessRespnose.data = operator;
         Logger.info(`Operator ${req.params.id} updated successfully`);
         return res.status(StatusCodes.OK).json(SuccessRespnose);
     } catch (error) {

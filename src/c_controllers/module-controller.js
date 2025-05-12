@@ -3,18 +3,12 @@ const { ModuleRepository, UserJourneyRepository } = require("../../shared/c_repo
 const {
   SuccessRespnose,
   ErrorResponse,
-  ResponseFormatter,
 } = require("../../shared/utils/common");
 const AppError = require("../../shared/utils/errors/app-error");
-
 const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/constants");
-
 const { Logger } = require("../../shared/config");
-
 const moduleRepo = new ModuleRepository();
 const userJourneyRepo = new UserJourneyRepository();
-
-const version = process.env.API_V || "1";
 
 async function createModule(req, res) {
   const bodyReq = req.body;
@@ -31,10 +25,7 @@ async function createModule(req, res) {
 
     await userJourneyRepo.create(userJourneyfields);
 
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(
-      responseData,
-      version
-    );
+    SuccessRespnose.data = responseData
     SuccessRespnose.message = "Successfully created a new module";
 
     Logger.info(
@@ -67,7 +58,7 @@ async function createModule(req, res) {
 async function getAll(req, res) {
   try {
     const data = await moduleRepo.getAll(req.user.role, req.user.id);
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
+    SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
     Logger.info(`Module -> recieved all successfully`);
@@ -99,10 +90,7 @@ async function getById(req, res) {
       throw error;
     }
     SuccessRespnose.message = "Success";
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(
-      moduleData,
-      version
-    );
+    SuccessRespnose.data = moduleData
 
     Logger.info(`Module -> recieved ${id} successfully`);
 
@@ -147,10 +135,7 @@ async function updateModule(req, res) {
     await userJourneyRepo.create(userJourneyfields);
 
     SuccessRespnose.message = "Updated successfully!";
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(
-      responseData,
-      version
-    );
+    SuccessRespnose.data = responseData
 
     Logger.info(`Module -> ${uid} updated successfully`);
     return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -188,10 +173,7 @@ async function deleteModule(req, res) {
 
     await userJourneyRepo.create(userJourneyfields);
     SuccessRespnose.message = "Deleted successfully!";
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(
-      response,
-      version
-    );
+    SuccessRespnose.data = response
 
     Logger.info(`Module -> ${id} deleted successfully`);
 

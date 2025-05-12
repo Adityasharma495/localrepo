@@ -3,7 +3,7 @@ const {
   DataCenterRepository,
   UserJourneyRepository,
 } = require("../../shared/c_repositories");
-const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../../shared/utils/common");
+const { SuccessRespnose, ErrorResponse} = require("../../shared/utils/common");
 const AppError = require("../../shared/utils/errors/app-error");
 const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/constants");
 
@@ -11,7 +11,6 @@ const { Logger } = require("../../shared/config");
 
 const dataCenterRepo = new DataCenterRepository();
 const userJourneyRepo = new UserJourneyRepository();
-const version = process.env.API_V || '1';
 
 async function createDataCenter(req, res) {
   const bodyReq = req.body;
@@ -96,7 +95,7 @@ async function createDataCenter(req, res) {
 async function getAll(req, res) {
   try {
     const data = await dataCenterRepo.getAll(req.user.role, req.user.id);
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
+    SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -128,7 +127,7 @@ async function getById(req, res) {
       throw error;
     }
     SuccessRespnose.message = "Success";
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(dataCentreData, version);
+    SuccessRespnose.data = dataCentreData;
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -197,7 +196,7 @@ async function updateDataCenter(req, res) {
     await userJourneyRepo.create(userJourneyfields);
 
     SuccessRespnose.message = "Updated successfully!";
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(responseData, version);
+    SuccessRespnose.data = responseData;
 
     Logger.info(`Data Center -> ${uid} updated successfully`);
     return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -240,7 +239,7 @@ async function deleteDataCenter(req, res) {
     await userJourneyRepo.create(userJourneyfields);
 
     SuccessRespnose.message = "Deleted successfully!";
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(response, version);
+    SuccessRespnose.data = response;
 
     Logger.info(`Data Center -> ${idArray} deleted successfully`);
 

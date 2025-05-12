@@ -6,7 +6,7 @@ const {
 } = require("../../shared/c_repositories");
 
 const {SubscriberRepository} = require("../../shared/c_repositories")
-const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../../shared/utils/common");
+const { SuccessRespnose, ErrorResponse } = require("../../shared/utils/common");
 const AppError = require("../../shared/utils/errors/app-error");
 const {
   BACKEND_BASE_URL,
@@ -14,8 +14,6 @@ const {
   ACTION_LABEL,
 } = require("../../shared/utils/common/constants");
 const { Logger } = require("../../shared/config");
-
-const version = process.env.API_V || "1";
 
 const extensionRepo = new ExtensionRepository();
 const userJourneyRepo = new UserJourneyRepository();
@@ -96,7 +94,7 @@ async function getAll(req, res) {
       req.query?.data
     );
 
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(extensionData, version);
+    SuccessRespnose.data = extensionData;
     SuccessRespnose.message = "Success";
 
     Logger.info(`Extension -> received all successfully`);
@@ -125,7 +123,7 @@ async function getById(req, res) {
     }
 
     SuccessRespnose.message = "Success";
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(extensionData, version);
+    SuccessRespnose.data = extensionData;
 
     Logger.info(`Extension -> received ${id} successfully`);
     return res.status(StatusCodes.OK).json(SuccessRespnose);

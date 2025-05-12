@@ -1,14 +1,12 @@
 const { StatusCodes } = require('http-status-codes');
 const { CompanyRepository, UserJourneyRepository } = require('../../shared/c_repositories');
-const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require('../../shared/utils/common');
+const { SuccessRespnose, ErrorResponse } = require('../../shared/utils/common');
 const { Logger } = require('../../shared/config');
 const AppError = require('../../shared/utils/errors/app-error');
 const { MODULE_LABEL, ACTION_LABEL } = require('../../shared/utils/common/constants');
 
 const companyRepository = new CompanyRepository();
 const userJourneyRepo = new UserJourneyRepository();
-
-const version = process.env.API_V || "1";
 
 async function create(req, res){
 
@@ -77,7 +75,7 @@ async function getAll(req, res) {
   try {
     const data = await companyRepository.getAll(userId);
 
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data,version)
+    SuccessRespnose.data = data
     SuccessRespnose.message = 'Success';
 
     Logger.info(`Company -> received all successfully`);

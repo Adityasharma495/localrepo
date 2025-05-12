@@ -3,13 +3,12 @@ const {
   ServerManagementRepository,
   UserJourneyRepository,
 } = require("../../shared/c_repositories");
-const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../../shared/utils/common");
+const { SuccessRespnose, ErrorResponse } = require("../../shared/utils/common");
 const AppError = require("../../shared/utils/errors/app-error");
 const { Logger } = require("../../shared/config");
 const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/constants");
 const serverManagementRepo = new ServerManagementRepository();
 const userJourneyRepo = new UserJourneyRepository();
-const version = process.env.API_V || '1';
 
 async function createServerManagement(req, res) {
   const bodyReq = req.body;
@@ -29,7 +28,7 @@ async function createServerManagement(req, res) {
     const userJourney = await userJourneyRepo.create(userJourneyfields);
     responseData.userJourney = userJourney
 
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(responseData, version);
+    SuccessRespnose.data = responseData;
     SuccessRespnose.message = "Successfully created a new Server";
 
     Logger.info(
@@ -64,7 +63,7 @@ async function createServerManagement(req, res) {
 async function getAll(req, res) {
   try {
     const data = await serverManagementRepo.getAll(req.user.role, req.user.id);
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
+    SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -96,7 +95,7 @@ async function getById(req, res) {
       throw error;
     }
     SuccessRespnose.message = "Success";
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(dataCentreData, version);
+    SuccessRespnose.data = dataCentreData;
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -143,7 +142,7 @@ async function updateServerManagement(req, res) {
     responseData.userJourney = userJourney;
 
     SuccessRespnose.message = "Updated successfully!";
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(responseData, version);
+    SuccessRespnose.data = responseData;
 
     Logger.info(`Server Management -> ${uid} updated successfully`);
     return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -183,7 +182,7 @@ async function deleteServerManagement(req, res) {
 
     await userJourneyRepo.create(userJourneyfields);
     SuccessRespnose.message = "Deleted successfully!";
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(response, version);
+    SuccessRespnose.data = response;
 
     Logger.info(`Server Management -> ${idArray} deleted successfully`);
 

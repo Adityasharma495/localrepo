@@ -2,13 +2,10 @@
 const { StatusCodes } = require("http-status-codes");
 const { AgentGroupRepository, UserJourneyRepository, MemberScheduleRepo, AgentRepository,
   AgentGroupAgentRepository} = require("../../shared/c_repositories");
-const {SuccessRespnose , ErrorResponse, ResponseFormatter} = require("../../shared/utils/common");
+const {SuccessRespnose , ErrorResponse} = require("../../shared/utils/common");
 const AppError = require("../../shared/utils/errors/app-error");
 const {MODULE_LABEL, ACTION_LABEL} = require('../../shared/utils/common/constants');
 const { Logger } = require("../../shared/config");
-
-const version = process.env.API_V || "1";
-
 
 const agentGroupRepo = new AgentGroupRepository();
 const userJourneyRepo = new UserJourneyRepository();
@@ -85,7 +82,7 @@ async function getAll(req, res) {
 
   try {
     const data = await agentGroupRepo.getAll(req.user.id);
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data,version);
+    SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
     Logger.info(

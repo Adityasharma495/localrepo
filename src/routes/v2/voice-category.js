@@ -7,7 +7,6 @@ const {
   ResponseFormatter,
 } = require("../../../shared/utils/common");
 const { StatusCodes } = require("http-status-codes");
-const version = process.env.API_V || "1";
 
 router.get("/", async (req, res) => {
   try {
@@ -18,10 +17,7 @@ router.get("/", async (req, res) => {
       SuccessRespnose.message = "No Voice Categories found";
     } else {
       const plainData = data.toJSON();
-      SuccessRespnose.data = ResponseFormatter.formatResponseIds(
-        plainData,
-        version
-      );
+      SuccessRespnose.data = plainData
       SuccessRespnose.message = "Fetched Voice Categories";
     }
 

@@ -3,13 +3,9 @@ const { DownloadReportRepository } = require("../../shared/c_repositories");
 const {
   SuccessRespnose,
   ErrorResponse,
-  ResponseFormatter,
 } = require("../../shared/utils/common");
 const { Logger } = require("../../shared/config");
 const downloadReportRepo = new DownloadReportRepository();
-
-const version = process.env.API_V || "1";
-
 const { constants } = require("../../shared/utils/common");
 
 async function createDownloadReport(req, res) {
@@ -32,10 +28,7 @@ async function createDownloadReport(req, res) {
     bodyReq.created_by = req.user.id;
     const report = await downloadReportRepo.create(bodyReq);
 
-    responseData.downloadReport = ResponseFormatter.formatResponseIds(
-      report,
-      version
-    );
+    responseData.downloadReport = report;
 
     SuccessRespnose.data = responseData;
     SuccessRespnose.message = "Successfully created a Download Report";
@@ -71,7 +64,7 @@ async function getAll(req, res) {
   try {
     const data = await downloadReportRepo.getAll(constants.USERS_ROLE.SUPER_ADMIN, req.user.id);
     // const data = await downloadReportRepo.getAll(req.user.role, req.user.id);
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
+    SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
     Logger.info(`Download Report -> recieved all successfully`);

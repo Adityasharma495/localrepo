@@ -4,8 +4,6 @@ const { StatusCodes } = require("http-status-codes");
 const {
   SuccessRespnose,
   ErrorResponse,
-  formatResponse,
-  ResponseFormatter,
 } = require("../../shared/utils/common");
 
 const { Logger } = require("../../shared/config");
@@ -18,7 +16,6 @@ const userRepo = new UserRepository();
 const licenceRepo = new LicenceRepository();
 const companyRepo = new CompanyRepository();
 const userJourneyRepo = new UserJourneyRepository();
-const version = process.env.API_V || '1';
 const subUserLicenceRepo = new SubUserLicenceRepository();
 const callCentreRepo = new CallCentreRepository();
 const agentRepo = new AgentRepository();
@@ -84,7 +81,7 @@ async function signinUser(req, res) {
         console.log("USER DATA",typeof userData);
 
         SuccessRespnose.message = "Successfully signed in";
-        SuccessRespnose.data = ResponseFormatter.formatResponseIds(userData, version);
+        SuccessRespnose.data = userData;
 
         const userJourneyfields = {
           module_name: MODULE_LABEL.USERS,
@@ -145,7 +142,7 @@ async function getAll(req, res) {
           );
       }
 
-      SuccessRespnose.data = ResponseFormatter.formatResponseIds(response, version);
+      SuccessRespnose.data =response;
 
       return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -246,7 +243,7 @@ async function get(req, res) {
       delete userData.acl_settings.id;
     }
     SuccessRespnose.message = "Success";
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(userData, version);
+    SuccessRespnose.data = userData;
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -337,7 +334,7 @@ async function deleteUser(req, res) {
     await userJourneyRepo.create(userJourneyfields);
 
     SuccessRespnose.message = "Deleted successfully!";
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(response, version);
+    SuccessRespnose.data = response;
 
     Logger.info(`User -> ${userIds} deleted successfully`);
 
@@ -397,7 +394,7 @@ async function statusPasswordUpdateUser(req, res) {
 
 
       SuccessRespnose.message = "User Status Updated Successfully!";
-      SuccessRespnose.data = ResponseFormatter.formatResponseIds(responseData, version);
+      SuccessRespnose.data = responseData;
 
       Logger.info(`User Status-> ${uid} updated successfully`);
       return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -494,7 +491,7 @@ async function switchUser(req, res) {
   });
 
   SuccessRespnose.message = "Successfully signed in";
-  SuccessRespnose.data = ResponseFormatter.formatResponseIds(userData, version);
+  SuccessRespnose.data = userData;
 
   Logger.info(`User -> ${JSON.stringify(userData)} login successfully`);
 
@@ -713,7 +710,7 @@ async function signupUser(req, res) {
 
     return res.status(StatusCodes.CREATED).json({
       message: "User Created successfully!",
-      data: ResponseFormatter.formatResponseIds(responseData, version)
+      data: responseData
     });
   } catch (error) {
     console.error(`Error during user signup: ${error}`);

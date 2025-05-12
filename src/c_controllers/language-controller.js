@@ -3,10 +3,8 @@ const { LanguageRepository } = require("../../shared/c_repositories");
 const {
   SuccessRespnose,
   ErrorResponse,
-  ResponseFormatter,
 } = require("../../shared/utils/common");
 const { Logger } = require("../../shared/config");
-const version = process.env.API_V || "1";
 
 const languageRepo = new LanguageRepository();
 
@@ -15,10 +13,7 @@ async function getAll(req, res) {
     const response = await languageRepo.getAll();
 
     SuccessRespnose.message = "Success";
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(
-      response,
-      version
-    );
+    SuccessRespnose.data = response
 
     Logger.info(`Language -> recieved all languages list`);
 

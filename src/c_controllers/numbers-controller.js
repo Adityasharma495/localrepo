@@ -1,6 +1,5 @@
 const { StatusCodes } = require('http-status-codes');
 const { SuccessRespnose, ErrorResponse } = require('../../shared/utils/common');
-const { formatResponse, ResponseFormatter } = require("../../shared/utils/common")
 const { Logger } = require('../../shared/config');
 const { Op } = require("sequelize");
 const { State } = require('country-state-city');
@@ -40,7 +39,6 @@ const NUMBER_STATUS = constants.NUMBER_STATUS_LABLE;
 const stream = require('stream');
 const csv = require('csv-parser');
 const { level } = require('winston');
-const version = process.env.API_V || '1';
 
 async function create(req, res) {
   const bodyReq = req.body;
@@ -527,9 +525,7 @@ async function getDIDNumbers(req, res) {
       return res.status(StatusCodes.NOT_FOUND).json(ErrorResponse);
     }
 
-
-
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
+    SuccessRespnose.data = data;
     SuccessRespnose.message = 'Successfully retrieved DID numbers.';
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -547,7 +543,7 @@ async function getAllStatus(req, res) {
 
 
 
-    SuccessRespnose.data = formatResponse.formatResponseIds(filteredData, version);
+    SuccessRespnose.data = filteredData;
     SuccessRespnose.message = 'Success';
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -838,7 +834,7 @@ async function getToAllocateNumbers(req, res) {
         data = await numberRepo.getAll({ where: { allocated_to: allocatedToId } });
       }
 
-    SuccessRespnose.data = formatResponse.formatResponseIds(data, version);
+    SuccessRespnose.data = data;
 
     SuccessRespnose.data = data.map(item => {
       const obj = { ...item };

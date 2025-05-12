@@ -3,18 +3,15 @@ const { TimezoneRepository } = require("../../shared/c_repositories");
 const {
   SuccessRespnose,
   ErrorResponse,
-  ResponseFormatter,
 } = require("../../shared/utils/common");
 
 const { Logger } = require("../../shared/config");
-const version = process.env.API_V || "1";
-
 const timezoneRepo = new TimezoneRepository();
 
 async function getAllTimezones(req, res) {
   try {
     const data = await timezoneRepo.getAll();
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
+    SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
     Logger.info(`Timezones -> recieved all successfully`);

@@ -3,11 +3,9 @@ const { CodecsRepository } = require("../../shared/c_repositories");
 const {
   SuccessRespnose,
   ErrorResponse,
-  ResponseFormatter,
 } = require("../../shared/utils/common");
 const { Logger } = require("../../shared/config");
 
-const version = process.env.API_V || "1";
 const codecRepo = new CodecsRepository();
 
 async function getAll(req, res) {
@@ -15,10 +13,7 @@ async function getAll(req, res) {
     const response = await codecRepo.getAll();
 
     SuccessRespnose.message = "Success";
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(
-      response,
-      version
-    );
+    SuccessRespnose.data = response
 
     Logger.info(`User -> recieved all codecs list`);
 

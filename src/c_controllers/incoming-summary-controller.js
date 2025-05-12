@@ -2,12 +2,10 @@ const { StatusCodes } = require("http-status-codes");
 const {
   SuccessRespnose,
   ErrorResponse,
-  ResponseFormatter,
 } = require("../../shared/utils/common");
 const { Logger } = require("../../shared/config");
 const { IncomingSummaryRepository } = require("../../shared/c_repositories");
 const incomingSummaryRepo = new IncomingSummaryRepository();
-const version = process.env.API_V || "1";
 
 const { constants } = require("../../shared/utils/common");
 
@@ -15,7 +13,7 @@ async function getAll(req, res) {
   try {
     const data = await incomingSummaryRepo.getAll(constants.USERS_ROLE.SUPER_ADMIN, req.user.id);
     // const data = await incomingSummaryRepo.getAll(req.user.role, req.user.id);
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
+    SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
     Logger.info(`Incoming Summary -> recieved all successfully`);

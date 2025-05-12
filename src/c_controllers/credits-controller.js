@@ -1,6 +1,6 @@
 const { StatusCodes } = require("http-status-codes");
 const { CreditsRepository, UserRepository, UserJourneyRepository, CompanyRepository } = require("../../shared/c_repositories");
-const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../../shared/utils/common");
+const { SuccessRespnose, ErrorResponse} = require("../../shared/utils/common");
 const {
   USER_CREDITS_ACTION,
   USER_CREDITS_ACTION_SEND,
@@ -11,7 +11,6 @@ const { Logger } = require("../../shared/config");
 const creditRepo = new CreditsRepository();
 const userRepo = new UserRepository();
 const companyRepo = new CompanyRepository();
-const version = process.env.API_V || '1';
 
 const userJourneyRepo = new UserJourneyRepository();
 
@@ -220,7 +219,7 @@ async function updateCredit(req, res) {
         }
       }
 
-      SuccessRespnose.data = ResponseFormatter.formatResponseIds(responseData, version);
+      SuccessRespnose.data = responseData
       SuccessRespnose.message = "Successfully Updated User's Credit";
 
       Logger.info(
@@ -468,7 +467,7 @@ async function updateCompanyCredit(req, res) {
         }
       }
 
-      SuccessRespnose.data = ResponseFormatter.formatResponseIds(responseData, version);
+      SuccessRespnose.data = responseData;
       SuccessRespnose.message = "Successfully Updated Company's Credit";
 
       Logger.info(
@@ -520,7 +519,7 @@ async function getAll(req, res) {
     } else {
       data = await creditRepo.getAll();
     }
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
+    SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -552,7 +551,7 @@ async function get(req, res) {
       throw error;
     }
     SuccessRespnose.message = "Success";
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(aclData, version);
+    SuccessRespnose.data = aclData;
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) { 

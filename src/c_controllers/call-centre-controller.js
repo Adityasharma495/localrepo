@@ -7,15 +7,12 @@ const {
 const {
   SuccessRespnose,
   ErrorResponse,
-  ResponseFormatter,
 } = require("../../shared/utils/common");
 const { Logger } = require("../../shared/config");
 const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/constants");
 const callCentreRepository = new CallCentreRepository();
 const userRepository = new UserRepository();
 const userJourneyRepo = new UserJourneyRepository();
-
-const version = process.env.API_V || "1";
 
 async function create(req, res) {
   const bodyReq = req.body;
@@ -34,10 +31,7 @@ async function create(req, res) {
     };
 
     const response = await callCentreRepository.create(data);
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(
-      response,
-      version
-    );
+    SuccessRespnose.data = response
     SuccessRespnose.message = "Successfully created call centre";
 
     const userJourneyfields = {
@@ -76,7 +70,7 @@ async function create(req, res) {
 async function getAll(req, res) {
   try {
     const data = await callCentreRepository.getAll(req.user.role, req.user.id);
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
+    SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
     Logger.info(`Call Centre -> recieved all successfully`);
@@ -101,7 +95,7 @@ async function get(req, res) {
 
   try {
     const data = await callCentreRepository.get(callCentreId);
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
+    SuccessRespnose.data = data;
 
     Logger.info(`Call Centre -> recieved ${callCentreId} successfully`);
 
@@ -142,10 +136,7 @@ async function updateCallCentre(req, res) {
   try {
     const response = await callCentreRepository.update(callCentreId, data);
 
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(
-      response,
-      version
-    );
+    SuccessRespnose.data = response
     SuccessRespnose.message = "Updated successfully";
 
     const userJourneyfields = {
@@ -189,7 +180,7 @@ async function getUsers(req, res) {
 
   try {
     const data = await userRepository.getCallCentreUsers(callCentreId);
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
+    SuccessRespnose.data = data;
 
     Logger.info(
       `Call Centre -> recieved users based on ${callCentreId} successfully`

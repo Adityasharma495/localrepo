@@ -1,5 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
-const {SuccessRespnose , ErrorResponse, ResponseFormatter} = require("../../shared/utils/common");
+const {SuccessRespnose , ErrorResponse} = require("../../shared/utils/common");
 const AppError = require("../../shared/utils/errors/app-error");
 const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE} = require('../../shared/utils/common/constants');
 const { Logger } = require("../../shared/config");
@@ -7,11 +7,6 @@ const {AgentRepository, ExtensionRepository, UserRepository, SubUserLicenceRepos
 const { Op } = require("sequelize");
 
 const agentGroupRepo = new AgentGroupRepository();
-
-
-
-const version = process.env.API_V || "1";
-
 const agentRepo = new AgentRepository();
 const extensionRepo = new ExtensionRepository();
 const userRepo = new UserRepository();
@@ -204,7 +199,7 @@ async function getAll(req, res) {
   try {
     // const agentData = await agentRepo.getAll(req.user.id, data);
     const agentData = await agentRepo.getAllActiveAgents(req.user.id);
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(agentData, version);
+    SuccessRespnose.data = agentData;
     SuccessRespnose.message = "Success";
 
 

@@ -1,17 +1,14 @@
 const { exec } = require("child_process");
 const { StatusCodes } = require("http-status-codes");
-const { ErrorResponse, SuccessRespnose, ResponseFormatter } = require("../../shared/utils/common");
+const { ErrorResponse, SuccessRespnose } = require("../../shared/utils/common");
 const { MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, STORAGE_PATH, SERVER, USERS_ROLE } = require('../../shared/utils/common/constants');
 const { Logger } = require("../../shared/config");
 const fs = require("fs");
 const {PromptRepository, UserRepository} = require('../../shared/c_repositories');
 const {UserJourneyRepository} = require('../../shared/c_repositories');
-
-
 const promptRepo = new PromptRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const userRepo = new UserRepository();
-const version = process.env.API_V || '1';
 
 async function getPromptDetails(req, res) {
     try {
@@ -49,7 +46,7 @@ async function getPromptDetails(req, res) {
             }
 
             if (Prompts.length > 0) {
-                SuccessRespnose.data = ResponseFormatter.formatResponseIds(Prompts, version);
+                SuccessRespnose.data = Prompts;
                 SuccessRespnose.message = "Prompt fetched successfully";
                 return res.status(StatusCodes.OK).json(SuccessRespnose);
             } else {
@@ -66,7 +63,7 @@ async function getPromptDetails(req, res) {
         const results = await promptRepo.get(conditions);
 
         if (results.length > 0) {
-            SuccessRespnose.data = ResponseFormatter.formatResponseIds(results, version);
+            SuccessRespnose.data = results;
             SuccessRespnose.message = "Prompt fetched successfully";
             return res.status(StatusCodes.OK).json(SuccessRespnose);
         } else {

@@ -1,15 +1,14 @@
 const { StatusCodes } = require("http-status-codes");
 const { UserJourneyRepository } = require("../../shared/c_repositories");
-const {SuccessRespnose , ErrorResponse, ResponseFormatter} = require("../../shared/utils/common");
+const {SuccessRespnose , ErrorResponse} = require("../../shared/utils/common");
 const { Logger } = require("../../shared/config");
 const userJourneyRepo = new UserJourneyRepository();
 
-const version = process.env.API_V || '1';
 
 async function getAll(req, res) {
   try {
     const data = await userJourneyRepo.getAll(req.user.id, req.user.role);
-    SuccessRespnose.data = ResponseFormatter.formatResponseIds(data, version);
+    SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
     Logger.error(
