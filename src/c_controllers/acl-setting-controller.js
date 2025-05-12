@@ -2,14 +2,14 @@ const { StatusCodes } = require("http-status-codes");
 const {
   AclSettingsRepository,
   UserJourneyRepository,
-} = require("../c_repositories");
+} = require("../../shared/c_repositories");
 const {
   SuccessRespnose,
   ErrorResponse,
   ResponseFormatter,
-} = require("../utils/common");
-const { MODULE_LABEL, ACTION_LABEL, USERS_ROLE } = require("../utils/common/constants");
-const { Logger } = require("../config");
+} = require("../../shared/utils/common");
+const { MODULE_LABEL, ACTION_LABEL, USERS_ROLE } = require("../../shared/utils/common/constants");
+const { Logger } = require("../../shared/config");
 
 const version = process.env.API_V || "1";
 

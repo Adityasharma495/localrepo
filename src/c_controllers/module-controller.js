@@ -1,15 +1,15 @@
 const { StatusCodes } = require("http-status-codes");
-const { ModuleRepository, UserJourneyRepository } = require("../c_repositories");
+const { ModuleRepository, UserJourneyRepository } = require("../../shared/c_repositories");
 const {
   SuccessRespnose,
   ErrorResponse,
   ResponseFormatter,
-} = require("../utils/common");
-const AppError = require("../utils/errors/app-error");
+} = require("../../shared/utils/common");
+const AppError = require("../../shared/utils/errors/app-error");
 
-const { MODULE_LABEL, ACTION_LABEL } = require("../utils/common/constants");
+const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/constants");
 
-const { Logger } = require("../config");
+const { Logger } = require("../../shared/config");
 
 const moduleRepo = new ModuleRepository();
 const userJourneyRepo = new UserJourneyRepository();

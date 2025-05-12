@@ -1,7 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
-const {OPEN_WRAPUP, DEFAULT_WRAPUP_TAG} = require('../utils/common/constants')
-const { ErrorResponse} = require('../utils/common');
-const AppError = require('../utils/errors/app-error');
+const {OPEN_WRAPUP, DEFAULT_WRAPUP_TAG} = require('../../shared/utils/common/constants')
+const { ErrorResponse} = require('../../shared/utils/common');
+const AppError = require('../../shared/utils/errors/app-error');
 
 function validateQueueCreate(req, res, next) {
 

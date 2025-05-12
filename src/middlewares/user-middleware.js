@@ -1,18 +1,14 @@
 const { StatusCodes } = require('http-status-codes');
-const { ErrorResponse, constants, Helpers, Authentication } = require('../utils/common');
-const AppError = require('../utils/errors/app-error');
+const { ErrorResponse, constants, Helpers, Authentication } = require('../../shared/utils/common');
+const AppError = require('../../shared/utils/errors/app-error');
 
-function    validateSignup(req, res, next){
+function  validateSignup(req, res, next){
 
     const bodyReq = req.body;
     const createrRole = req['user'].role
     const userRole = bodyReq.role;
-
-
    
     const permission = Authentication.checkPermission(createrRole,userRole);
-
-
 
     if(!req.is('application/json')){
         ErrorResponse.message = 'Something went wrong while user signup';

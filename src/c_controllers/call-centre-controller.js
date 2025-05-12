@@ -3,14 +3,14 @@ const {
   CallCentreRepository,
   UserRepository,
   UserJourneyRepository,
-} = require("../c_repositories");
+} = require("../../shared/c_repositories");
 const {
   SuccessRespnose,
   ErrorResponse,
   ResponseFormatter,
-} = require("../utils/common");
-const { Logger } = require("../config");
-const { MODULE_LABEL, ACTION_LABEL } = require("../utils/common/constants");
+} = require("../../shared/utils/common");
+const { Logger } = require("../../shared/config");
+const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/constants");
 const callCentreRepository = new CallCentreRepository();
 const userRepository = new UserRepository();
 const userJourneyRepo = new UserJourneyRepository();

@@ -1,13 +1,13 @@
 const { StatusCodes } = require("http-status-codes");
-const { CreditsRepository, UserRepository, UserJourneyRepository, CompanyRepository } = require("../c_repositories");
-const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../utils/common");
+const { CreditsRepository, UserRepository, UserJourneyRepository, CompanyRepository } = require("../../shared/c_repositories");
+const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../../shared/utils/common");
 const {
   USER_CREDITS_ACTION,
   USER_CREDITS_ACTION_SEND,
   MODULE_LABEL,
   USERS_ROLE,
-} = require("../utils/common/constants");
-const { Logger } = require("../config");
+} = require("../../shared/utils/common/constants");
+const { Logger } = require("../../shared/config");
 const creditRepo = new CreditsRepository();
 const userRepo = new UserRepository();
 const companyRepo = new CompanyRepository();

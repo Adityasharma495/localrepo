@@ -1,8 +1,8 @@
 const { StatusCodes } = require('http-status-codes');
-const { SuccessRespnose, ErrorResponse } = require('../utils/common');
-const { Logger } = require('../config');
-const { CountryCodeRepository, UserJourneyRepository } = require('../c_repositories');
-const { MODULE_LABEL, ACTION_LABEL } = require('../utils/common/constants');
+const { SuccessRespnose, ErrorResponse } = require('../../shared/utils/common');
+const { Logger } = require('../../shared/config');
+const { CountryCodeRepository, UserJourneyRepository } = require('../../shared/c_repositories');
+const { MODULE_LABEL, ACTION_LABEL } = require('../../shared/utils/common/constants');
 
 const countryCodeRepository = new CountryCodeRepository();
 const userJourneyRepo = new UserJourneyRepository();

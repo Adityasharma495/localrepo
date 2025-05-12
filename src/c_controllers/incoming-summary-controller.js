@@ -3,13 +3,13 @@ const {
   SuccessRespnose,
   ErrorResponse,
   ResponseFormatter,
-} = require("../utils/common");
-const { Logger } = require("../config");
-const { IncomingSummaryRepository } = require("../c_repositories");
+} = require("../../shared/utils/common");
+const { Logger } = require("../../shared/config");
+const { IncomingSummaryRepository } = require("../../shared/c_repositories");
 const incomingSummaryRepo = new IncomingSummaryRepository();
 const version = process.env.API_V || "1";
 
-const { constants } = require("../utils/common");
+const { constants } = require("../../shared/utils/common");
 
 async function getAll(req, res) {
   try {

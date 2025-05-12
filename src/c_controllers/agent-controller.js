@@ -1,9 +1,9 @@
 const { StatusCodes } = require("http-status-codes");
-const {SuccessRespnose , ErrorResponse, ResponseFormatter} = require("../utils/common");
-const AppError = require("../utils/errors/app-error");
-const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE} = require('../utils/common/constants');
-const { Logger } = require("../config");
-const {AgentRepository, ExtensionRepository, UserRepository, SubUserLicenceRepository, TelephonyProfileRepository, UserJourneyRepository, TelephonyProfileItemsRepository, AgentGroupRepository} = require('../c_repositories');
+const {SuccessRespnose , ErrorResponse, ResponseFormatter} = require("../../shared/utils/common");
+const AppError = require("../../shared/utils/errors/app-error");
+const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE} = require('../../shared/utils/common/constants');
+const { Logger } = require("../../shared/config");
+const {AgentRepository, ExtensionRepository, UserRepository, SubUserLicenceRepository, TelephonyProfileRepository, UserJourneyRepository, TelephonyProfileItemsRepository, AgentGroupRepository} = require('../../shared/c_repositories');
 const { Op } = require("sequelize");
 
 const agentGroupRepo = new AgentGroupRepository();

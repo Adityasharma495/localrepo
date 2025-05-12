@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router();
-const {CallStrategy} = require('../../c_db')
-const {SuccessRespnose , ErrorResponse , Authentication } = require("../../utils/common");
+const {CallStrategy} = require('../../../shared/c_db')
+const {SuccessRespnose , ErrorResponse , Authentication } = require("../../../shared/utils/common");
 const { StatusCodes } = require("http-status-codes");
 
 router.get('/',async(req,res)=>{

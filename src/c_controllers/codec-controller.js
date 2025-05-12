@@ -1,11 +1,11 @@
 const { StatusCodes } = require("http-status-codes");
-const { CodecsRepository } = require("../c_repositories");
+const { CodecsRepository } = require("../../shared/c_repositories");
 const {
   SuccessRespnose,
   ErrorResponse,
   ResponseFormatter,
-} = require("../utils/common");
-const { Logger } = require("../config");
+} = require("../../shared/utils/common");
+const { Logger } = require("../../shared/config");
 
 const version = process.env.API_V || "1";
 const codecRepo = new CodecsRepository();

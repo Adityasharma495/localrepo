@@ -1,8 +1,8 @@
-const { HandleFileSaveRepository } = require("../c_repositories");
-const { SuccessRespnose, ErrorResponse } = require("../utils/common");
+const { HandleFileSaveRepository } = require("../../shared/c_repositories");
+const { SuccessRespnose, ErrorResponse } = require("../../shared/utils/common");
 const HandleFileSaveRepo = new HandleFileSaveRepository();
 const { StatusCodes } = require("http-status-codes");
-const { Logger } = require("../config");
+const { Logger } = require("../../shared/config");
 async function SaveAudioFile(req, res) {
   if (!req.file) {
     return res.status(400).json({ message: "No file uploaded" });

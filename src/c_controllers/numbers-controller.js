@@ -1,7 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
-const { SuccessRespnose, ErrorResponse } = require('../utils/common');
-const { formatResponse, ResponseFormatter } = require("../utils/common")
-const { Logger } = require('../config');
+const { SuccessRespnose, ErrorResponse } = require('../../shared/utils/common');
+const { formatResponse, ResponseFormatter } = require("../../shared/utils/common")
+const { Logger } = require('../../shared/config');
 const { Op } = require("sequelize");
 const { State } = require('country-state-city');
 const {
@@ -18,9 +18,9 @@ const {
   CallCentreRepository,
   DidAllocateHistoryRepository,
   DidRemoveHistoryRepository,
-} = require('../shared/c_repositories');
+} = require('../../shared/c_repositories');
 const fs = require("fs");
-const { MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, USERS_ROLE, NUMBER_STATUS_LABLE, DID_ALLOCATION_LEVEL } = require('../utils/common/constants');
+const { MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, USERS_ROLE, NUMBER_STATUS_LABLE, DID_ALLOCATION_LEVEL } = require('../../shared/utils/common/constants');
 const didUserMappingRepository = new DIDUserMappingRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const numberRepo = new NumbersRepository();
@@ -35,7 +35,7 @@ const voicePlanRepo = new VoicePlansRepository();
 const didAllocateHistoryRepo = new DidAllocateHistoryRepository();
 const didRemoveHistoryRepo = new DidRemoveHistoryRepository();
 
-const { constants } = require("../utils/common");
+const { constants } = require("../../shared/utils/common");
 const NUMBER_STATUS = constants.NUMBER_STATUS_LABLE;
 const stream = require('stream');
 const csv = require('csv-parser');

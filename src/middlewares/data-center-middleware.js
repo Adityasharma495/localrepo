@@ -1,6 +1,6 @@
 const { StatusCodes } = require('http-status-codes');
-const { ErrorResponse, constants } = require('../utils/common');
-const AppError = require('../utils/errors/app-error');
+const { ErrorResponse, constants } = require('../../shared/utils/common');
+const AppError = require('../../shared/utils/errors/app-error');
 const DATA_CENTER_TYPE = constants.DATA_CENTER_TYPE;
 
 function validateDataCenterRequest(req, res, next) {

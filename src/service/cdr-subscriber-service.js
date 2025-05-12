@@ -1,9 +1,9 @@
 const Broker = require('rascal').BrokerAsPromised;
 const config = require('../config/rabitmq-config.json');
-const { IncomingReportRepository , IncomingSummaryRepository } = require("../c_repositories");
+const { IncomingReportRepository , IncomingSummaryRepository } = require("../../shared/c_repositories");
 const incomingReportRepo = new IncomingReportRepository();
 const incomingSummaryRepo = new IncomingSummaryRepository();
-const { IncomingReportMayW1Repository , IncomingReportMayW2Repository,IncomingReportMayW3Repository , IncomingReportMayW4Repository, IncomingReportJuneW1Repository, IncomingReportJuneW2Repository, IncomingReportJuneW3Repository, IncomingReportJuneW4Repository } = require("../c_repositories"); 
+const { IncomingReportMayW1Repository , IncomingReportMayW2Repository,IncomingReportMayW3Repository , IncomingReportMayW4Repository, IncomingReportJuneW1Repository, IncomingReportJuneW2Repository, IncomingReportJuneW3Repository, IncomingReportJuneW4Repository } = require("../../shared/c_repositories"); 
 
 const incomingReport5W1Repo = new IncomingReportMayW1Repository();
 const incomingReport5W2Repo = new IncomingReportMayW2Repository();

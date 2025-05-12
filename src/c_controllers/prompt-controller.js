@@ -1,11 +1,11 @@
 const { exec } = require("child_process");
 const { StatusCodes } = require("http-status-codes");
-const { ErrorResponse, SuccessRespnose, ResponseFormatter } = require("../utils/common");
-const { MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, STORAGE_PATH, SERVER, USERS_ROLE } = require('../utils/common/constants');
-const { Logger } = require("../config");
+const { ErrorResponse, SuccessRespnose, ResponseFormatter } = require("../../shared/utils/common");
+const { MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, STORAGE_PATH, SERVER, USERS_ROLE } = require('../../shared/utils/common/constants');
+const { Logger } = require("../../shared/config");
 const fs = require("fs");
-const {PromptRepository, UserRepository} = require('../c_repositories');
-const {UserJourneyRepository} = require('../c_repositories');
+const {PromptRepository, UserRepository} = require('../../shared/c_repositories');
+const {UserJourneyRepository} = require('../../shared/c_repositories');
 
 
 const promptRepo = new PromptRepository();

@@ -1,19 +1,18 @@
-const { UserRepository, CompanyRepository, SubUserLicenceRepository, CallCentreRepository , AgentRepository} = require("../c_repositories")
-const { UserJourneyRepository , LicenceRepository} = require("../c_repositories")
+const { UserRepository, CompanyRepository, SubUserLicenceRepository, CallCentreRepository , AgentRepository} = require("../../shared/c_repositories")
+const { UserJourneyRepository , LicenceRepository} = require("../../shared/c_repositories")
 const { StatusCodes } = require("http-status-codes");
 const {
   SuccessRespnose,
   ErrorResponse,
   formatResponse,
   ResponseFormatter,
-} = require("../utils/common");
+} = require("../../shared/utils/common");
 
-const { Logger } = require("../config");
-const AppError = require("../utils/errors/app-error");
-const { MODULE_LABEL, ACTION_LABEL, USERS_ROLE, PREFIX_VALUE, SUB_LICENCE_ROLE, USER_ROLE_VALUE } = require('../utils/common/constants');
-const UserCompany = require("../c_db/user-companies");
-const { where } = require("../db/users");
-const { UserCallCentres } = require("../c_db");
+const { Logger } = require("../../shared/config");
+const AppError = require("../../shared/utils/errors/app-error");
+const { MODULE_LABEL, ACTION_LABEL, USERS_ROLE, PREFIX_VALUE, SUB_LICENCE_ROLE, USER_ROLE_VALUE } = require('../../shared/utils/common/constants');
+const UserCompany = require("../../shared/c_db/user-companies");
+const { UserCallCentres } = require("../../shared/c_db");
 
 const userRepo = new UserRepository();
 const licenceRepo = new LicenceRepository();

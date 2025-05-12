@@ -1,7 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
-const {PREFIX_LENGTH} = require('../utils/common/constants')
-const { ErrorResponse} = require('../utils/common');
-const AppError = require('../utils/errors/app-error');
+const {PREFIX_LENGTH} = require('../../shared/utils/common/constants')
+const { ErrorResponse} = require('../../shared/utils/common');
+const AppError = require('../../shared/utils/errors/app-error');
 
 function validateExtensionCreate(req, res, next) {
 

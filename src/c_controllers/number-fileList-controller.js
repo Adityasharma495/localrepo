@@ -1,10 +1,10 @@
 
 
 const { StatusCodes } = require("http-status-codes");
-const {SuccessRespnose , ErrorResponse} = require("../utils/common");
-const {MODULE_LABEL, ACTION_LABEL} = require('../utils/common/constants');
-const {NumberFileListRepository, NumbersRepository} = require("../c_repositories")
-const { Logger } = require("../config");
+const {SuccessRespnose , ErrorResponse} = require("../../shared/utils/common");
+const {MODULE_LABEL, ACTION_LABEL} = require('../../shared/utils/common/constants');
+const {NumberFileListRepository, NumbersRepository} = require("../../shared/c_repositories")
+const { Logger } = require("../../shared/config");
 
 
 const numberFileListRepo = new NumberFileListRepository();

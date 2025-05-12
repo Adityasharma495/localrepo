@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { VoiceCategory } = require("../../c_db");
+const { VoiceCategory } = require("../../../shared/c_db");
 const {
   SuccessRespnose,
   ErrorResponse,
   ResponseFormatter,
-} = require("../../utils/common");
+} = require("../../../shared/utils/common");
 const { StatusCodes } = require("http-status-codes");
 const version = process.env.API_V || "1";
 

@@ -2,11 +2,11 @@ const { StatusCodes } = require("http-status-codes");
 const {
   ServerManagementRepository,
   UserJourneyRepository,
-} = require("../c_repositories");
-const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../utils/common");
-const AppError = require("../utils/errors/app-error");
-const { Logger } = require("../config");
-const { MODULE_LABEL, ACTION_LABEL } = require("../utils/common/constants");
+} = require("../../shared/c_repositories");
+const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../../shared/utils/common");
+const AppError = require("../../shared/utils/errors/app-error");
+const { Logger } = require("../../shared/config");
+const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/constants");
 const serverManagementRepo = new ServerManagementRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const version = process.env.API_V || '1';

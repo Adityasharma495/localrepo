@@ -7,15 +7,15 @@ const {
   FlowJsonRepository,
   MemberScheduleRepo, 
   UserRepository
-} = require("../c_repositories");
-const { IVRSettings } = require("../c_db"); 
-const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../utils/common");
-const { MODULE_LABEL, ACTION_LABEL } = require('../utils/common/constants');
+} = require("../../shared/c_repositories");
+const { IVRSettings } = require("../../shared/c_db"); 
+const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../../shared/utils/common");
+const { MODULE_LABEL, ACTION_LABEL } = require('../../shared/utils/common/constants');
 const { v4: uuidv4 } = require('uuid');
-const { Logger } = require("../config");
-const AppError = require("../utils/errors/app-error");
+const { Logger } = require("../../shared/config");
+const AppError = require("../../shared/utils/errors/app-error");
 const amqp = require("amqplib");
-const sequelize = require('../config/sequelize');
+const sequelize = require('../../shared/config/sequelize');
 const version = process.env.API_V || '1'; 
 
 const userJourneyRepo = new UserJourneyRepository();

@@ -1,7 +1,6 @@
 const express = require('express'); 
-const sequelize = require('./config/sequelize');
-const { ServerConfig, Logger } = require('./config');
-const connectMongo = require('./config/mongo-config');
+const sequelize = require('../shared/config/sequelize');
+const { ServerConfig, Logger } = require('../shared/config');
 const apiRoutes = require('./routes');
 const swaggerRoutes = require('./routes/swagger');
 const cors = require('cors');
@@ -39,11 +38,6 @@ const startServer = async () => {
         
         // console.log('✅ Successfully synced CockroachDB!');
         // Logger.info('CockroachDB -> Successfully synced');
-
-        // Connect to MongoDB
-        await connectMongo();
-        console.log('✅ Successfully connected to MongoDB!');
-        Logger.info('MongoDB -> Successfully connected');
 
         // Start Express server
         app.listen(ServerConfig.PORT, () => {

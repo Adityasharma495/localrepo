@@ -1,9 +1,9 @@
 const { StatusCodes } = require("http-status-codes");
-const { VoicePlansRepository, UserJourneyRepository, NumbersRepository, DIDUserMappingRepository, DidAllocateHistoryRepository } = require("../c_repositories");
-const { SuccessRespnose, ErrorResponse } = require("../utils/common");
-const { MODULE_LABEL, ACTION_LABEL } = require("../utils/common/constants");
-const { Logger } = require("../config");
-const sequelize = require('../config/sequelize');
+const { VoicePlansRepository, UserJourneyRepository, NumbersRepository, DIDUserMappingRepository, DidAllocateHistoryRepository } = require("../../shared/c_repositories");
+const { SuccessRespnose, ErrorResponse } = require("../../shared/utils/common");
+const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/constants");
+const { Logger } = require("../../shared/config");
+const sequelize = require('../../shared/config/sequelize');
 
 const voicePlansRepo = new VoicePlansRepository();
 const userJourneyRepo = new UserJourneyRepository();

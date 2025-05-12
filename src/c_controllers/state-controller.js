@@ -3,9 +3,9 @@ const { State } = require("country-state-city");
 const {
   SuccessRespnose,
   ErrorResponse,
-} = require("../utils/common");
-const { Logger } = require("../config");
-const AppError = require("../utils/errors/app-error");
+} = require("../../shared/utils/common");
+const { Logger } = require("../../shared/config");
+const AppError = require("../../shared/utils/errors/app-error");
 
 function getStatesOfCountry(req, res) {
   try {

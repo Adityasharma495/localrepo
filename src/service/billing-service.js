@@ -1,6 +1,6 @@
 const Broker = require('rascal').BrokerAsPromised;
 const config = require('../config/rabitmq-config.json');
-const {  DIDUserMappingRepository , UserRepository , AgentRepository, CreditsRepository, CompanyRepository} = require("../c_repositories");
+const {  DIDUserMappingRepository , UserRepository , AgentRepository, CreditsRepository, CompanyRepository} = require("../../shared/c_repositories");
 const didUserMappingRepo = new DIDUserMappingRepository();
 const agentRepo = new AgentRepository();
 const userRepo = new UserRepository();

@@ -1,6 +1,6 @@
 const {StatusCodes} = require('http-status-codes');
-const { ErrorResponse, Helpers, Authentication } = require('../utils/common');
-const AppError = require('../utils/errors/app-error');
+const { ErrorResponse, Helpers, Authentication } = require('../../shared/utils/common');
+const AppError = require('../../shared/utils/errors/app-error');
 
 function validateCompanyRequest(req, res, next) {
     const bodyReq = req.body;

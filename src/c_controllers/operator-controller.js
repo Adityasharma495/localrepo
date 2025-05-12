@@ -1,9 +1,9 @@
 const { StatusCodes } = require("http-status-codes");
-const { OperatorsRepository, UserJourneyRepository } = require("../c_repositories");
-const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../utils/common");
-const { MODULE_LABEL, ACTION_LABEL } = require("../utils/common/constants");
-const { Logger } = require("../config");
-const AppError = require("../utils/errors/app-error");
+const { OperatorsRepository, UserJourneyRepository } = require("../../shared/c_repositories");
+const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../../shared/utils/common");
+const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/constants");
+const { Logger } = require("../../shared/config");
+const AppError = require("../../shared/utils/errors/app-error");
 
 const operatorsRepo = new OperatorsRepository();
 const userJourneyRepo = new UserJourneyRepository();

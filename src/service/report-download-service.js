@@ -1,5 +1,5 @@
 const config = require('../config/rabitmq-config.json');
-const { DownloadReportRepository , IncomingReportRepository } = require("../c_repositories");
+const { DownloadReportRepository , IncomingReportRepository } = require("../../shared/c_repositories");
 const incomingReportRepo = new IncomingReportRepository();
 const downloadReportRepo = new DownloadReportRepository();
 const { Logger } = require("../config");

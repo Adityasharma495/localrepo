@@ -1,12 +1,12 @@
 const { StatusCodes } = require("http-status-codes");
-const { TimezoneRepository } = require("../c_repositories");
+const { TimezoneRepository } = require("../../shared/c_repositories");
 const {
   SuccessRespnose,
   ErrorResponse,
   ResponseFormatter,
-} = require("../utils/common");
+} = require("../../shared/utils/common");
 
-const { Logger } = require("../config");
+const { Logger } = require("../../shared/config");
 const version = process.env.API_V || "1";
 
 const timezoneRepo = new TimezoneRepository();

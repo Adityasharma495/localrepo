@@ -1,13 +1,10 @@
 const { StatusCodes } = require("http-status-codes");
-const { TrunkRepository, UserJourneyRepository } = require("../c_repositories");
-const {SuccessRespnose , ErrorResponse , Authentication } = require("../utils/common");
-const {MODULE_LABEL, ACTION_LABEL} = require('../utils/common/constants');
-const Operator = require("../c_db/operator")
-const Codec = require("../c_db/codecs")
-const { Logger } = require("../config");
-const AppError = require("../utils/errors/app-error");
-
-
+const { TrunkRepository, UserJourneyRepository } = require("../../shared/c_repositories");
+const {SuccessRespnose , ErrorResponse , Authentication } = require("../../shared/utils/common");
+const {MODULE_LABEL, ACTION_LABEL} = require('../../shared/utils/common/constants');
+const Operator = require("../../shared/c_db/operator")
+const Codec = require("../../shared/c_db/codecs")
+const { Logger } = require("../../shared/config");
 
 const trunkRepo = new TrunkRepository();
 const userJourneyRepo = new UserJourneyRepository();

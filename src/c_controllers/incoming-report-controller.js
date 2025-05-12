@@ -8,10 +8,10 @@ const { IncomingReportRepository,
   IncomingReportJuneW2Repository,
   IncomingReportJuneW3Repository,
   IncomingReportJuneW4Repository,
- } = require("../c_repositories");
-const {SuccessRespnose , ErrorResponse} = require("../utils/common");
-const AppError = require("../utils/errors/app-error");
-const { Logger } = require("../config");
+ } = require("../../shared/c_repositories");
+const {SuccessRespnose , ErrorResponse} = require("../../shared/utils/common");
+const AppError = require("../../shared/utils/errors/app-error");
+const { Logger } = require("../../shared/config");
 const incomingReportRepo = new IncomingReportRepository();
 const moment = require('moment');
 

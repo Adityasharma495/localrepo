@@ -1,10 +1,11 @@
 
 const { StatusCodes } = require("http-status-codes");
-const { AgentGroupRepository, UserJourneyRepository, MemberScheduleRepo, AgentRepository, AgentGroupAgentRepository} = require("../c_repositories");
-const {SuccessRespnose , ErrorResponse, ResponseFormatter} = require("../utils/common");
-const AppError = require("../utils/errors/app-error");
-const {MODULE_LABEL, ACTION_LABEL} = require('../utils/common/constants');
-const { Logger } = require("../config");
+const { AgentGroupRepository, UserJourneyRepository, MemberScheduleRepo, AgentRepository,
+  AgentGroupAgentRepository} = require("../../shared/c_repositories");
+const {SuccessRespnose , ErrorResponse, ResponseFormatter} = require("../../shared/utils/common");
+const AppError = require("../../shared/utils/errors/app-error");
+const {MODULE_LABEL, ACTION_LABEL} = require('../../shared/utils/common/constants');
+const { Logger } = require("../../shared/config");
 
 const version = process.env.API_V || "1";
 

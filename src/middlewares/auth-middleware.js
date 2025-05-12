@@ -1,8 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
-
-const { ErrorResponse } = require('../utils/common');
-const AppError = require('../utils/errors/app-error');
-const { Authentication } = require('../utils/common');
+const { ErrorResponse } = require('../../shared/utils/common');
+const AppError = require('../../shared/utils/errors/app-error');
+const { Authentication } = require('../../shared/utils/common');
 
 async function validateUser(req, res, next){
     try {

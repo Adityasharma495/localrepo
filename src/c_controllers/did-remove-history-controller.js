@@ -1,7 +1,7 @@
 const { StatusCodes } = require("http-status-codes");
-const { DidRemoveHistoryRepository, UserRepository, CompanyRepository, CallCentreRepository} = require("../c_repositories");
-const { SuccessRespnose, ErrorResponse} = require("../utils/common");
-const { Logger } = require("../config");
+const { DidRemoveHistoryRepository, UserRepository, CompanyRepository, CallCentreRepository} = require("../../shared/c_repositories");
+const { SuccessRespnose, ErrorResponse} = require("../../shared/utils/common");
+const { Logger } = require("../../shared/config");
 
 const userRepo = new UserRepository();
 const companyRepo = new CompanyRepository();

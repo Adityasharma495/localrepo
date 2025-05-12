@@ -16,10 +16,10 @@ const {
   CreditsRepository,
   VoicePlansRepository,
   FlowJsonRepository,
-} = require("../c_repositories");
+} = require("../../shared/c_repositories");
 
 const { Parser } = require("json2csv");
-const { Logger } = require("../config");
+const { Logger } = require("../../shared/config");
 
 async function exportData(req, res) {
   const { model } = req.params;

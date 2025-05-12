@@ -1,7 +1,7 @@
 const { StatusCodes } = require("http-status-codes");
-const { UserJourneyRepository } = require("../c_repositories");
-const {SuccessRespnose , ErrorResponse, ResponseFormatter} = require("../utils/common");
-const { Logger } = require("../config");
+const { UserJourneyRepository } = require("../../shared/c_repositories");
+const {SuccessRespnose , ErrorResponse, ResponseFormatter} = require("../../shared/utils/common");
+const { Logger } = require("../../shared/config");
 const userJourneyRepo = new UserJourneyRepository();
 
 const version = process.env.API_V || '1';

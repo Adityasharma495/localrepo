@@ -2,12 +2,12 @@ const { StatusCodes } = require("http-status-codes");
 const {
   DataCenterRepository,
   UserJourneyRepository,
-} = require("../c_repositories");
-const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../utils/common");
-const AppError = require("../utils/errors/app-error");
-const { MODULE_LABEL, ACTION_LABEL } = require("../utils/common/constants");
+} = require("../../shared/c_repositories");
+const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../../shared/utils/common");
+const AppError = require("../../shared/utils/errors/app-error");
+const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/constants");
 
-const { Logger } = require("../config");
+const { Logger } = require("../../shared/config");
 
 const dataCenterRepo = new DataCenterRepository();
 const userJourneyRepo = new UserJourneyRepository();

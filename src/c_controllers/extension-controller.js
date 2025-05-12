@@ -3,17 +3,17 @@ const { Op } = require("sequelize");
 const {
   ExtensionRepository,
   UserJourneyRepository,
-} = require("../c_repositories");
+} = require("../../shared/c_repositories");
 
-const {SubscriberRepository} = require("../repositories")
-const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../utils/common");
-const AppError = require("../utils/errors/app-error");
+const {SubscriberRepository} = require("../../shared/c_repositories")
+const { SuccessRespnose, ErrorResponse, ResponseFormatter } = require("../../shared/utils/common");
+const AppError = require("../../shared/utils/errors/app-error");
 const {
   BACKEND_BASE_URL,
   MODULE_LABEL,
   ACTION_LABEL,
-} = require("../utils/common/constants");
-const { Logger } = require("../config");
+} = require("../../shared/utils/common/constants");
+const { Logger } = require("../../shared/config");
 
 const version = process.env.API_V || "1";
 

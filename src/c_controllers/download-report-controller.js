@@ -1,16 +1,16 @@
 const { StatusCodes } = require("http-status-codes");
-const { DownloadReportRepository } = require("../c_repositories");
+const { DownloadReportRepository } = require("../../shared/c_repositories");
 const {
   SuccessRespnose,
   ErrorResponse,
   ResponseFormatter,
-} = require("../utils/common");
-const { Logger } = require("../config");
+} = require("../../shared/utils/common");
+const { Logger } = require("../../shared/config");
 const downloadReportRepo = new DownloadReportRepository();
 
 const version = process.env.API_V || "1";
 
-const { constants } = require("../utils/common");
+const { constants } = require("../../shared/utils/common");
 
 async function createDownloadReport(req, res) {
   const bodyReq = req.body;

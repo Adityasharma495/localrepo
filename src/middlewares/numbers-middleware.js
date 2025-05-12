@@ -1,12 +1,11 @@
 const { StatusCodes } = require('http-status-codes');
-const { ErrorResponse } = require('../utils/common');
-const AppError = require('../utils/errors/app-error');
-const { constants } = require('../utils/common');
+const { ErrorResponse } = require('../../shared/utils/common');
+const AppError = require('../../shared/utils/errors/app-error');
+const { constants } = require('../../shared/utils/common');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
-const numbersDB = require('../db/numbers');
-const { NumbersRepository } = require('../repositories');
+const { NumbersRepository } = require('../../shared/c_repositories');
 const numberRepository = new NumbersRepository();
 const { Readable } = require('stream');
 const csvParser = require('csv-parser');
