@@ -192,7 +192,6 @@ async function deleteIncomingReport(req, res) {
     try {
       const {did, startDate, endDate} = req.params;
 
-      console.log(req.params)
       const repositories = {
           Mayw1: new IncomingReportMayW1Repository(),
           Mayw2: new IncomingReportMayW2Repository(),
@@ -239,8 +238,52 @@ async function deleteIncomingReport(req, res) {
         return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
       }
 
-      const data = await incomingReportRepo.getByDidByDate({callee_number : did}, startDate, endDate);
-      SuccessRespnose.data = data;
+      const weekDeff = endDateWeekNumber - startDateWeekNumber
+      let finalData
+
+      if (weekDeff == 0) {
+        const model = `${startDateMonthName}w${startDateWeekNumber}`
+        const repo = repositories[model];
+        finalData = await repo.getByDidByDate({callee_number : did}, startDate, endDate);
+
+      } else if (weekDeff == 1) {
+        //data from startDate week
+        const model1 = `${startDateMonthName}w${startDateWeekNumber}`
+        const repo1 = repositories[model1];
+        const data1 = await repo1.getByDidByStartDate({callee_number : did}, startDate);
+
+        //data from endDate week
+        const model2 = `${endDateMonthName}w${endDateWeekNumber}`
+        const repo2 = repositories[model2];
+        const data2 = await repo2.getByDidByEndDate({callee_number : did}, endDate);
+
+        finalData = [...data1, ...data2]
+      } else {
+        const allData = [];
+
+        for (let week = startDateWeekNumber; week <= endDateWeekNumber; week++) {
+          const modelKey = `${startDateMonthName}w${week}`;
+          const repo = repositories[modelKey];
+
+          if (!repo) continue;
+
+          if (week === startDateWeekNumber) {
+            const data = await repo.getByDidByStartDate({ callee_number: did }, startDate);
+            allData.push(...data);
+          } else if (week === endDateWeekNumber) {
+            const data = await repo.getByDidByEndDate({ callee_number: did }, endDate);
+            allData.push(...data);
+          } else {
+            const data = await repo.getByDidByDate({ callee_number: did });
+            allData.push(...data);
+          }
+        }
+
+        finalData = allData;
+      }
+
+
+      SuccessRespnose.data = finalData;
       SuccessRespnose.message = "Success";
   
       Logger.info(

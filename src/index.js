@@ -20,7 +20,7 @@ app.use('/temp', express.static(path.join(__dirname, '../temp')));
 app.use('/api', apiRoutes);
 app.use('/api-docs', swaggerRoutes);
 
-// const { Numbers } = require("./c_db");
+// const { IncomingReportMayW2} = require("../shared/c_db/index");
 
 const startServer = async () => {
     try {
@@ -30,11 +30,11 @@ const startServer = async () => {
         Logger.info('CockroachDB -> Successfully connected');
 
         // if (process.env.NODE_ENV === 'development') {
-        //     await sequelize.sync({ alter: true });
+        //     await sequelize.sync({ alter: true, logging: true  });
         //     console.log('✅ Database synchronized!');
         // }
 
-        // await Numbers.sync({ alter: true, logging: true });
+        // await IncomingReportMayW2.sync({ alter: true, logging: true });
         
         // console.log('✅ Successfully synced CockroachDB!');
         // Logger.info('CockroachDB -> Successfully synced');
