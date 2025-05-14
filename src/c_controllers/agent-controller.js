@@ -278,6 +278,62 @@ async function getById(req, res) {
   }
 }
 
+async function getByParentId(req, res) {
+  const id = req.params.id;
+  try {
+    if (!id) {
+      throw new AppError("Missing Agent Id", StatusCodes.BAD_REQUEST);
+     }
+    const agentData = await agentRepo.getByParentId(id);
+
+    const userDetail = await userRepo.getByName(agentData.agent_name);
+
+    agentData.username = userDetail?.username
+
+
+    const telephony_profile_id = agentData.telephony_profile;
+    const telephone_profile_data = await telephonyProfileRepo.get(telephony_profile_id)
+    const extensionDetail = await extensionRepo.get(telephone_profile_data.profile[1]?.id);
+    agentData.extensionName = extensionDetail?.username
+
+    
+
+    if (agentData.length == 0) {
+      const error = new Error();
+      error.name = 'CastError';
+      throw error;
+    }
+    SuccessRespnose.message = "Success";
+    SuccessRespnose.data = {
+      ...agentData.get({ plain: true }),
+      extensionName: extensionDetail?.username,
+      username: userDetail?.username,
+    };
+
+    Logger.info(
+      `Agent -> recieved ${id} successfully`
+    );
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    ErrorResponse.error = error;
+    if (error.name == "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Agent not found";
+    }
+    ErrorResponse.message = errorMsg;
+
+    Logger.error(
+      `Agent -> unable to get Agent ${id}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
 async function deleteAgent(req, res) {
   const id = req.body.agentIds;
 
@@ -772,4 +828,5 @@ module.exports={
     agentRealTimeData,
     sendRealTimeAgentData,
     getAgentRealTimeData,
+    getByParentId,
 }

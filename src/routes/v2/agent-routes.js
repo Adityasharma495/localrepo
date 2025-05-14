@@ -14,6 +14,7 @@ router.get("/", AuthMiddleware.validateUser, AgentController.getAll);
 
 router.get("/:id", AuthMiddleware.validateUser, AgentController.getById);
 
+router.get("/parent/:id", AuthMiddleware.validateUser, AgentController.getByParentId);
 
 router.post("/delete", AuthMiddleware.validateUser, AgentMiddleware.validateDeleteRequest,AgentController.deleteAgent);
 
