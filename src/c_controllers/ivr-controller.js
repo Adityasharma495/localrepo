@@ -67,7 +67,6 @@ async function createIVR(req, res) {
       type: userDetail.flow_type,
       created_by: req.user.id,
       schedule_id: scheduleData?.id || null,
-      re_prompt: bodyReq.nodesData.rePrompt,
       is_gather_node: bodyReq.nodesData.isGatherNode == true ? 1 : 0
     };
 
@@ -249,7 +248,6 @@ async function updateIVR(req, res) {
       type: userDetail.flow_type,
       created_by: req.user.id,
       schedule_id: scheduleData?.id || null,
-      re_prompt: bodyReq.nodesData.rePrompt,
       is_gather_node: bodyReq.nodesData.isGatherNode == true ? 1 : 0
     };
 
@@ -361,7 +359,6 @@ async function getIVRByFlowId(req, res) {
       nodesData: nodesData,
       edgeData: edgeData,
       scheduleData: scheduleData,
-      rePrompt: data.re_prompt,
       isGatherNode: data.is_gather_node
     };
     

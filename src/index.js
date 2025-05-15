@@ -20,7 +20,7 @@ app.use('/temp', express.static(path.join(__dirname, '../temp')));
 app.use('/api', apiRoutes);
 app.use('/api-docs', swaggerRoutes);
 
-// const { OutboundReportDecemberW1} = require("../shared/c_db");
+const { FlowJson} = require("../shared/c_db");
 
 const startServer = async () => {
     try {
@@ -34,7 +34,7 @@ const startServer = async () => {
         //     console.log('✅ Database synchronized!');
         // }
 
-        // await OutboundReportDecemberW1.sync({ alter: true, logging: true });
+        await FlowJson.sync({ alter: true, logging: true });
         
         // console.log('✅ Successfully synced CockroachDB!');
         // Logger.info('CockroachDB -> Successfully synced');
