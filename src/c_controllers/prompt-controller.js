@@ -179,8 +179,31 @@ async function updatePromptStatus(req, res) {
     }
 }
 
+async function getAllPrompt(req, res) {
+    try {
+        const results = await promptRepo.get({created_by: req.user.id});
+
+        if (results.length > 0) {
+            SuccessRespnose.data = results;
+            SuccessRespnose.message = "Prompt fetched successfully";
+            return res.status(StatusCodes.OK).json(SuccessRespnose);
+        } else {
+            SuccessRespnose.data = [];
+            SuccessRespnose.message = "No prompts found";
+            return res.status(StatusCodes.OK).json(SuccessRespnose);
+        }
+    } catch (error) {
+        console.log("error ", error);
+        ErrorResponse.error = error;
+        ErrorResponse.message = error.message;
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+    }
+}
+
+
 module.exports = {
     getPromptDetails,
     savePrompts,
-    updatePromptStatus
+    updatePromptStatus,
+    getAllPrompt
 };
