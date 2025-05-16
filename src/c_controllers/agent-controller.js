@@ -280,23 +280,12 @@ async function getById(req, res) {
 
 async function getByParentId(req, res) {
   const id = req.params.id;
+  const username = req.params.user;
   try {
     if (!id) {
       throw new AppError("Missing Agent Id", StatusCodes.BAD_REQUEST);
      }
-    const agentData = await agentRepo.getByParentId(id);
-
-    const userDetail = await userRepo.getByName(agentData.agent_name);
-
-    agentData.username = userDetail?.username
-
-
-    const telephony_profile_id = agentData.telephony_profile;
-    const telephone_profile_data = await telephonyProfileRepo.get(telephony_profile_id)
-    const extensionDetail = await extensionRepo.get(telephone_profile_data.profile[1]?.id);
-    agentData.extensionName = extensionDetail?.username
-
-    
+    const agentData = await agentRepo.getByParentId({id: id, username: username});
 
     if (agentData.length == 0) {
       const error = new Error();
@@ -306,8 +295,6 @@ async function getByParentId(req, res) {
     SuccessRespnose.message = "Success";
     SuccessRespnose.data = {
       ...agentData.get({ plain: true }),
-      extensionName: extensionDetail?.username,
-      username: userDetail?.username,
     };
 
     Logger.info(
