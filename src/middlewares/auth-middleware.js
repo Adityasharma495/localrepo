@@ -9,7 +9,7 @@ async function validateUser(req, res, next){
 
         const decodeJwt = await Authentication.verifyJWToken(token);
         if(decodeJwt){
-
+            
             req['user'] = decodeJwt;
             next();
         }

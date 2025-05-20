@@ -27,7 +27,6 @@ async function signinUser(req, res) {
   const username = bodyReq.username;
 
 
-  console.log("BODY REQ", bodyReq);
   try {
     //Fetch user via username
     const user = await userRepo.getByUsername(username);
@@ -544,8 +543,6 @@ async function licenceCreated(bodyReq, loggedUser, userCreated) {
 async function signupUser(req, res) {
   const bodyReq = req.body;
 
-
-  console.log("BODY REQ", bodyReq);
   if (bodyReq?.user?.acl_settings) {
     bodyReq.user.acl_settings_id = bodyReq?.user?.acl_settings;
   }
@@ -554,8 +551,6 @@ async function signupUser(req, res) {
     const responseData = {};
     let user;
     let subUserLicenceId;
-
-
 
     if (SUB_LICENCE_ROLE.includes(req.user.role)) {
 
@@ -640,8 +635,8 @@ async function signupUser(req, res) {
         available_licence: updatedAvailableLicences,
       });
     }
-    
 
+    
 
 
     // Create license if a SUPER_ADMIN or SUB_SUPERADMIN creates a reseller

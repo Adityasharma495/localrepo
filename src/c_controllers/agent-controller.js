@@ -194,9 +194,12 @@ await agentRepo.update(agent.id, {telephony_profile : telephonyProfile[0].id})
 
 
 async function getAll(req, res) {
+
   const { data } = req.query || null;
 
   try {
+
+
     // const agentData = await agentRepo.getAll(req.user.id, data);
     const agentData = await agentRepo.getAllActiveAgents(req.user.id);
     SuccessRespnose.data = agentData;

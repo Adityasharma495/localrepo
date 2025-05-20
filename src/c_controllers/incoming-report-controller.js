@@ -8,11 +8,26 @@ const { IncomingReportRepository,
   IncomingReportJuneW2Repository,
   IncomingReportJuneW3Repository,
   IncomingReportJuneW4Repository,
+  IncomingReportJulyW1Repository,
+  IncomingReportJulyW2Repository,
+  IncomingReportJulyW3Repository,
+  IncomingReportJulyW4Repository,
+  IncomingReportAugustW1Repository,
+  IncomingReportAugustW2Repository,
+  IncomingReportAugustW3Repository,
+  IncomingReportAugustW4Repository,
+  IncomingReportSeptemberW1Repository,
+  IncomingReportSeptemberW2Repository,
+  IncomingReportSeptemberW3Repository,
+  IncomingReportSeptemberW4Repository,
+
+
  } = require("../../shared/c_repositories");
 const {SuccessRespnose , ErrorResponse} = require("../../shared/utils/common");
 const AppError = require("../../shared/utils/errors/app-error");
 const { Logger } = require("../../shared/config");
 const incomingReportRepo = new IncomingReportRepository();
+
 const moment = require('moment');
 
 async function createIncomingReport(req, res) {
@@ -191,8 +206,9 @@ async function deleteIncomingReport(req, res) {
   async function getDidSpecificReport(req, res) {
     try {
       const {did, startDate, endDate} = req.params;
+      
+      console.log(req.params, "PARAMS")
 
-      console.log(req.params)
       const repositories = {
           Mayw1: new IncomingReportMayW1Repository(),
           Mayw2: new IncomingReportMayW2Repository(),
@@ -205,9 +221,15 @@ async function deleteIncomingReport(req, res) {
       };
 
       const dateStart = moment(startDate);
+      console.log("DATAE START", dateStart);
+
       const startDateMonthName = dateStart.format('MMMM');
+      console.log("MONTH NAME ",startDateMonthName );
+
       let startDateWeekNumber;
       const startDateDay = dateStart.date();
+      console.log("START DATE ",startDateDay );
+
 
       if (startDateDay <= 7) {
         startDateWeekNumber = 1;
@@ -218,6 +240,9 @@ async function deleteIncomingReport(req, res) {
       } else {
         startDateWeekNumber = 4;
       }
+
+
+      console.log("START DATE WEEK NUMBER", startDateWeekNumber);
 
       const dateEnd = moment(endDate);
       const endDateMonthName = dateEnd.format('MMMM');
@@ -233,6 +258,8 @@ async function deleteIncomingReport(req, res) {
       } else {
         endDateWeekNumber = 4;
       }
+
+      console.log("END DATE WEEK NUMBER",endDateWeekNumber);
 
       if (startDateMonthName !== endDateMonthName) {
         ErrorResponse.message = 'You can check only 1 month data';
