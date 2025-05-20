@@ -301,16 +301,10 @@ async function deleteIVR(req, res) {
   const transaction = await sequelize.transaction();
   try {
     const id = req.body.ivrIds;
-
-     
     await flowJsonRepository.deleteIVRByFlowId(id, { transaction });
-
- 
     await flowsRepo.deleteIVRByFlowId(id, { transaction });
     await flowsControlRepo.deleteIVRByFlowId(id, { transaction });
     await flowEdgesRepo.deleteIVRByFlowId(id, { transaction });
-
-    
     await memberScheduleRepo.deleteByModuleId(id, { transaction });
 
      
