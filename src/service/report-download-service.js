@@ -146,7 +146,7 @@ const moment = require('moment-timezone');
 const {BACKEND_API_BASE_URL, TOTAL_WEEK_DAYS} = require('../../shared/utils/common/constants');
 const batchLimit = 900000;
 const sequelize = require('../../shared/config/sequelize');
-const { Op } = require('sequelize');
+const { Op, fn, col, where } = require('sequelize');
 
 const connectCockroach = async () => {
     try {
