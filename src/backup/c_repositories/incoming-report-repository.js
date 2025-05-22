@@ -4,7 +4,7 @@ const { StatusCodes } = require('http-status-codes');
 const AppError = require('../utils/errors/app-error');
 const { constants } = require("../utils/common");
 const moment = require("moment-timezone");
-const { Op } = require('sequelize');
+const { Op, fn, col, where } = require('sequelize');
 
 class IncomingReportRepository extends CrudRepository {
   constructor() {

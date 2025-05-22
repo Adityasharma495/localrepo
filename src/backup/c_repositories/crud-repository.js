@@ -1,7 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
 const AppError = require('../utils/errors/app-error');
 const { constants } = require('../utils/common');
-const { Op } = require('sequelize');
+const { Op, fn, col, where } = require('sequelize');
 class CrudRepository {
 
     constructor(model) {
