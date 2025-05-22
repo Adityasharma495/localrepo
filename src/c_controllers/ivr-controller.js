@@ -103,10 +103,10 @@ async function createIVR(req, res) {
     await transaction.commit();
     transactionCommitted = true;
 
-    // if (Number(userDetail?.flow_type) !== 1) {
-    //   Logger.info('Publishing message to queue');
-    //   await publishIVRUpdate();
-    // }
+    if (Number(userDetail?.flow_type) !== 1) {
+      Logger.info('Publishing message to queue');
+      await publishIVRUpdate();
+    }
 
     SuccessRespnose.message = "Successfully created a new IVR";
     SuccessRespnose.data = {
@@ -387,7 +387,7 @@ function transformData(input) {
 
 async function publishIVRUpdate() {
   try {
-    const connection = await amqp.connect("amqp://dialplan:ns@4044888@localhost:5672");
+    const connection = await amqp.connect("amqp://dialplan:ns@4044888@64.227.131.75:5672/");
     const channel = await connection.createChannel();
     const exchange = "dialplan_exchange";
     const routingKey = "dialplan.update";
