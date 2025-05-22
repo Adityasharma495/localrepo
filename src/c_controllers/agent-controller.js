@@ -5,6 +5,7 @@ const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE} = require('../../shared/utils/com
 const { Logger } = require("../../shared/config");
 const {AgentRepository, ExtensionRepository, UserRepository, SubUserLicenceRepository, TelephonyProfileRepository, UserJourneyRepository, TelephonyProfileItemsRepository, AgentGroupRepository} = require('../../shared/c_repositories');
 const { Op } = require("sequelize");
+const { constants } = require("../backup/utils/common");
 
 const agentGroupRepo = new AgentGroupRepository();
 const agentRepo = new AgentRepository();
@@ -198,10 +199,13 @@ async function getAll(req, res) {
   const { data } = req.query || null;
 
   try {
-
-
+    let agentData;
+    if (req.user.role === constants.USERS_ROLE.SUPER_ADMIN) {
+      agentData = await agentRepo.getAllActiveAgents();
+    } else {
+      agentData = await agentRepo.getAllActiveAgents(req.user.id);
+    }
     // const agentData = await agentRepo.getAll(req.user.id, data);
-    const agentData = await agentRepo.getAllActiveAgents(req.user.id);
     SuccessRespnose.data = agentData;
     SuccessRespnose.message = "Success";
 
