@@ -27,7 +27,6 @@ async function signinUser(req, res) {
   const username = bodyReq.username;
 
 
-  console.log("BODY REQ", bodyReq);
   try {
     //Fetch user via username
     const user = await userRepo.getByUsername(username);
@@ -550,8 +549,6 @@ async function signupUser(req, res) {
     const responseData = {};
     let user;
     let subUserLicenceId;
-
-
 
     if (SUB_LICENCE_ROLE.includes(req.user.role)) {
 

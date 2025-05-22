@@ -12,7 +12,10 @@ router.post('/create', AuthMiddleware.validateUser, IncomingReportMiddleware.val
 IncomingReportMiddleware.modifyIncomingReportCreateBodyRequest, IncomingReportController.createIncomingReport);
 
 // get did-specific download-report api/v2/download-report/:did
-router.get('/get-report/:did/:startDate/:endDate', AuthMiddleware.validateUser, IncomingReportController.getDidSpecificReport);
+router.get('/get-report/:did/:startDate/:endDate', IncomingReportController.getDidSpecificReport);
+
+// get did-specific with trace_id
+router.get('/get-report/:did/:startDate/:endDate/:trace_id', IncomingReportController.getDidSpecificReportwithTraceId);
 
 // get all incoming-report api/v2/incoming-report/
 router.get('/', AuthMiddleware.validateUser, IncomingReportController.getAll);
