@@ -3,7 +3,6 @@ const { DownloadReportRepository , IncomingReportRepository } = require("../../s
 const incomingReportRepo = new IncomingReportRepository();
 const downloadReportRepo = new DownloadReportRepository();
 const { Logger } = require("../config");
-const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
 const archiver = require('archiver');
@@ -13,27 +12,6 @@ const {BACKEND_API_BASE_URL} = require('../utils/common/constants');
 const batchLimit = 900000;
 const sequelize = require('../config/sequelize');
 const { Op } = require('sequelize');
-
-
-const connectMongo = async() => {
-    try {
-        await mongoose.connect(config.MONGO_DB_URI);
-    } catch (error) {
-        throw error;
-    }   
-}
-
-const mongoConnection = async() =>{
-    try {
-        if (mongoose.connection.readyState === 1) {
-            return;
-        }
-        await connectMongo();
-        Logger.info(`Mongodb -> Successfully connected`);
-    } catch (error) {
-        Logger.error(`Mongodb -> Error while connecting: ${ JSON.stringify(error) }`)
-    }
-}
 
 const connectCockroach = async () => {
     try {
@@ -59,7 +37,6 @@ const getDateTimeFormat = (date) =>{
 const reports = async () => {
      
     try {
-        //  await mongoConnection();
          await connectCockroach();
          const downloadReportData = await downloadReportRepo.getAllData({status : 0},{ limit: batchLimit })
          if (downloadReportData.length > 0) {

@@ -47,11 +47,6 @@ const FlowJson = sequelize.define(MODEL.FLOW_JSON, {
     type: DataTypes.STRING,
     allowNull: true
   },
-  file_data: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    defaultValue: []
-  },
   schedule_id: {
     type: DataTypes.BIGINT,
     allowNull: true,

@@ -67,8 +67,6 @@ async function createIVR(req, res) {
       type: userDetail.flow_type,
       created_by: req.user.id,
       schedule_id: scheduleData?.id || null,
-      file_data: bodyReq.nodesData.fileData,
-      re_prompt: bodyReq.nodesData.rePrompt,
       is_gather_node: bodyReq.nodesData.isGatherNode == true ? 1 : 0
     };
 
@@ -250,8 +248,6 @@ async function updateIVR(req, res) {
       type: userDetail.flow_type,
       created_by: req.user.id,
       schedule_id: scheduleData?.id || null,
-      file_data: bodyReq.nodesData.fileData,
-      re_prompt: bodyReq.nodesData.rePrompt,
       is_gather_node: bodyReq.nodesData.isGatherNode == true ? 1 : 0
     };
 
@@ -305,16 +301,10 @@ async function deleteIVR(req, res) {
   const transaction = await sequelize.transaction();
   try {
     const id = req.body.ivrIds;
-
-     
     await flowJsonRepository.deleteIVRByFlowId(id, { transaction });
-
- 
     await flowsRepo.deleteIVRByFlowId(id, { transaction });
     await flowsControlRepo.deleteIVRByFlowId(id, { transaction });
     await flowEdgesRepo.deleteIVRByFlowId(id, { transaction });
-
-    
     await memberScheduleRepo.deleteByModuleId(id, { transaction });
 
      
@@ -363,8 +353,6 @@ async function getIVRByFlowId(req, res) {
       nodesData: nodesData,
       edgeData: edgeData,
       scheduleData: scheduleData,
-      fileData: data.file_data,
-      rePrompt: data.re_prompt,
       isGatherNode: data.is_gather_node
     };
     

@@ -195,7 +195,6 @@ async function logoutUser(req, res) {
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
-    console.log("error logout",error);
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg = error.message;
 
@@ -542,7 +541,6 @@ async function licenceCreated(bodyReq, loggedUser, userCreated) {
 
 async function signupUser(req, res) {
   const bodyReq = req.body;
-
   if (bodyReq?.user?.acl_settings) {
     bodyReq.user.acl_settings_id = bodyReq?.user?.acl_settings;
   }
@@ -560,8 +558,6 @@ async function signupUser(req, res) {
 
       //fetch logged in user sub licence data(available_licence)
       const subLicenceData = loggedInData.sub_user_licence.available_licence
-
-
 
       // if available_licence are 0 then return
       if (Number(subLicenceData[bodyReq.user.role]) === 0) {
@@ -599,8 +595,6 @@ async function signupUser(req, res) {
 
 
     if (req.user.role === USERS_ROLE.RESELLER || SUB_LICENCE_ROLE.includes(req.user.role)) {
-
-
       const data = await subUserLicenceRepo.create({
         user_id: user.id,
         total_licence: bodyReq.user.sub_licence,
@@ -636,17 +630,12 @@ async function signupUser(req, res) {
       });
     }
 
-    
-
-
     // Create license if a SUPER_ADMIN or SUB_SUPERADMIN creates a reseller
     if ([USERS_ROLE.SUPER_ADMIN, USERS_ROLE.SUB_SUPERADMIN].includes(req.user.role)) {
 
       const licencse = await licenceCreated(bodyReq, req.user, user);
       console.log("LICE");
     }
-
-
 
     if (bodyReq.company && req.user.role !== USERS_ROLE.CALLCENTRE_ADMIN) {
 

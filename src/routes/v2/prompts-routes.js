@@ -13,4 +13,7 @@ Router.post('/:id',AuthMiddleware.validateUser,PromptController.updatePromptStat
 Router.post('/',AuthMiddleware.validateUser, PromptsMiddleware.upload,PromptsMiddleware.validateCreatePrompts,
     PromptsMiddleware.saveFile,PromptController.savePrompts);
 
+//get prompts
+Router.get('/all',AuthMiddleware.validateUser,PromptController.getAllPrompt)
+
 module.exports =Router;
