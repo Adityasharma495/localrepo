@@ -17,6 +17,7 @@ const { Logger } = require("../../shared/config");
 
 const extensionRepo = new ExtensionRepository();
 const userJourneyRepo = new UserJourneyRepository();
+const subscriberRepo = new SubscriberRepository();
 
 
 async function createExtension(req, res) {
@@ -36,7 +37,7 @@ async function createExtension(req, res) {
 
     if (checkDuplicate) {
       const duplicateField =
-        checkDuplicate.extension === bodyReq.extension.extension
+        checkDuplicate.extension == bodyReq.extension.extension
           ? "Extension"
           : "Username";
 
@@ -50,7 +51,7 @@ async function createExtension(req, res) {
     });
     responseData.extension = extension;
 
-    await SubscriberRepository.addSubscriber({
+    await subscriberRepo.addSubscriber({
       username: bodyReq.extension.extension,
       domain: BACKEND_BASE_URL,
       password: bodyReq.extension.password,
@@ -70,7 +71,6 @@ async function createExtension(req, res) {
     );
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
   } catch (error) {
-    console.log("error creating extension", error);
     Logger.error(`Extension -> create failed: ${JSON.stringify(error)}`);
 
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
@@ -100,7 +100,6 @@ async function getAll(req, res) {
     Logger.info(`Extension -> received all successfully`);
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
-    console.log("error getting data", error);
     Logger.error(`Extension -> getAll error: ${JSON.stringify(error)}`);
 
     ErrorResponse.message = error.message;
@@ -250,7 +249,6 @@ async function deleteExtension(req, res) {
     Logger.info(`Extension -> ${ids} deleted successfully`);
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
-    console.log("error deleting extension", error);
     Logger.error(`Extension -> delete failed: ${JSON.stringify(error)}`);
 
     ErrorResponse.error = error;
