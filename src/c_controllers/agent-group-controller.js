@@ -1,7 +1,7 @@
 
 const { StatusCodes } = require("http-status-codes");
 const { AgentGroupRepository, UserJourneyRepository, MemberScheduleRepo, AgentRepository,
-  AgentGroupAgentRepository} = require("../../shared/c_repositories");
+  AgentGroupAgentRepository, AgentScheduleMappingRepository} = require("../../shared/c_repositories");
 const {SuccessRespnose , ErrorResponse} = require("../../shared/utils/common");
 const AppError = require("../../shared/utils/errors/app-error");
 const {MODULE_LABEL, ACTION_LABEL} = require('../../shared/utils/common/constants');
@@ -11,7 +11,7 @@ const agentGroupRepo = new AgentGroupRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const memberScheduleRepo = new MemberScheduleRepo();
 const agentRepo = new AgentRepository();
-const agentGroupAgentsRepo = new AgentGroupAgentRepository();
+const agentScheduleMappingRepo = new AgentScheduleMappingRepository();
 
 
 
@@ -31,7 +31,6 @@ async function createAgentGroup(req, res) {
         .status(StatusCodes.BAD_REQUEST)
         .json(ErrorResponse);
     }
-
 
     // Create the agent group with the shared _id
     const agent = await agentGroupRepo.create({
@@ -56,7 +55,6 @@ async function createAgentGroup(req, res) {
     );
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
   } catch (error) {
-    console.log("error", error);
     Logger.error(
       `Agent Group -> unable to create Agent Group: ${JSON.stringify(
         bodyReq
@@ -151,28 +149,10 @@ async function getAssignedAgents(req, res) {
       throw new AppError("Missing Agent Group Id", StatusCodes.BAD_REQUEST);
     }
 
-    // Fetch agent group
-    const agentGroup = await agentGroupRepo.get(groupId);
-
-    if (!agentGroup || agentGroup.agents==null) {
+    if (!groupId || groupId == null) {
       transformedAgents = []
     } else {
-      transformedAgents = await Promise.all(
-        (agentGroup.agents).map(async (agent) => {
-          const agentData = await agentRepo.get(agent.agent_id);
-          let scheduleData = {}
-          if (agent.member_schedule_id) {
-            scheduleData = await memberScheduleRepo.get(agent.member_schedule_id);
-          }
-          return {
-            id: agentGroup.id,
-            group_name: agentGroup.group_name,
-            agent: agentData,
-            schedule: scheduleData,
-            priority: agent?.priority || 0
-          };
-        })
-      );
+      transformedAgents = await agentScheduleMappingRepo.getAgentsWithGroupId(groupId)
     }
 
     SuccessRespnose.message = "Successfully fetched assigned agents";
@@ -206,6 +186,7 @@ async function updateAgentGroup(req, res) {
   const uid = req.params.id;
   const bodyReq =  req.body;
 
+
   try {
     const responseData = {};
     let agent;
@@ -226,36 +207,23 @@ async function updateAgentGroup(req, res) {
       }
 
     } 
-    else if (bodyReq?.agent?.type === 'add_member'){
+    else if (bodyReq?.agent?.type === 'add_member') {
       const agentIds = bodyReq?.agent?.agent_id;
       const preData = await agentGroupRepo.get(uid)
-      
-
-
 
       const schedule = await memberScheduleRepo.create({
          week_days : bodyReq.agent.memberSchedulePayload.week_days,
          start_time: bodyReq.agent.memberSchedulePayload.start_time,
          end_time: bodyReq.agent.memberSchedulePayload.end_time,
       })
-
-
-
   
       const structuredData = agentIds.map(agentId => ({
+        agent_group_id: uid,
         agent_id: agentId,
         member_schedule_id: schedule.id
       }));
-      // Merge existing agents with new ones (avoiding duplicates)
-      // const updatedAgents = [...preData.agents, ...structuredData].reduce((acc, curr) => {
-      //   if (!acc.some(agent => agent.agent_id === curr.agent_id)) {
-      //     acc.push(curr);
-      //   }
-      //   return acc;
-      // }, []);
-      
-  
-      agent = await agentGroupRepo.update(uid, {agents : structuredData});
+
+      agent = await agentScheduleMappingRepo.create(structuredData)
   
       await agentRepo.bulkUpdate(
         { id: agentIds },
@@ -314,34 +282,22 @@ async function updateAgentGroup(req, res) {
 async function updateMemberScheduleAgent(req, res) {
   const { id } = req.params; 
   const bodyReq = req.body; 
-
   try {
-    const agentGroup = await agentGroupRepo.get(id);
+    const agentGroup = await agentScheduleMappingRepo.get({agent_group_id: id});
 
     let scheduleData;
-    const occurrenceCount = agentGroup.agents.filter(agent => 
+    const occurrenceCount = agentGroup.filter(agent => 
       agent.member_schedule_id.toString() === bodyReq.id
     ).length;
 
-
-
     if (occurrenceCount > 1) {
-
       scheduleData = await memberScheduleRepo.create({
         start_time: bodyReq.start_time,
         end_time: bodyReq.end_time,
         week_days: bodyReq.week_days
       })
 
-      const updatedAgents = agentGroup.agents.map(agent => {
-        if (agent.agent_id.toString() === bodyReq.agent_id) {
-          return { ...agent, member_schedule_id: scheduleData.id, priority : bodyReq?.priority };
-        }
-        return agent;
-      });
-
-      await agentGroupRepo.update(id, {agents : updatedAgents})
-      
+      agentScheduleMappingRepo.update({agent_id : bodyReq.agent_id, agent_group_id: id}, {priority: bodyReq.priority, member_schedule_id: scheduleData.id});
     } else {
       scheduleData = await memberScheduleRepo.update(bodyReq.id , {
         start_time: bodyReq.start_time,
@@ -349,14 +305,7 @@ async function updateMemberScheduleAgent(req, res) {
         week_days: bodyReq.week_days
       })
 
-      const updatedAgents = agentGroup.agents.map(agent => {
-        if (agent.agent_id.toString() === bodyReq.agent_id) {
-          return { ...agent, priority : bodyReq?.priority };
-        }
-        return agent;
-      });
-
-      await agentGroupRepo.update(id, {agents : updatedAgents})
+      agentScheduleMappingRepo.update({agent_id : bodyReq.agent_id, agent_group_id: id}, {priority: bodyReq.priority});
     }
 
 
@@ -406,8 +355,6 @@ async function deleteAgentGroup(req, res) {
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
 
-    console.log("error", error);
-
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg = error.message;
 
@@ -425,96 +372,24 @@ async function deleteAgentGroup(req, res) {
     return res.status(statusCode).json(ErrorResponse);
   }
 }
-async function removeAgent(req, res) {
-  const { id } = req.params;
-  const { agent_id: targetAgentId } = req.body;
-
-  try {
-    const agentGroup = await agentGroupRepo.get(id);
-    if (!agentGroup) {
-      ErrorResponse.message = "Agent group not found";
-      return res.status(StatusCodes.NOT_FOUND).json(ErrorResponse);
-    }
-
-    const agents = agentGroup.agents || [];
-    const removedAgent = agents.find(agent => agent.agent_id.toString() === targetAgentId);
-    const removedMemberScheduleId = removedAgent?.member_schedule_id;
-
-    // 2. Filter out the agent
-    const updatedAgents = agents.filter(agent => agent.agent_id.toString() !== targetAgentId);
- 
-
-    // 4. Update agent group and agent allocation
-    await agentGroupRepo.update(id, { agents: updatedAgents });
-    await agentRepo.update(targetAgentId, { is_allocated: 0 });
-
-    SuccessRespnose.message = "Agent removed from group successfully.";
-    SuccessRespnose.data = updatedAgents;
-
-    Logger.info(`Agent Group -> Agent ${targetAgentId} removed from group ${id}`);
-
-    return res.status(StatusCodes.OK).json(SuccessRespnose);
-
-  } catch (error) {
-    console.error("Remove Agent Error:", error);
-
-    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
-    let errorMsg = error.message;
-
-    if (error.name === "CastError") {
-      statusCode = StatusCodes.BAD_REQUEST;
-      errorMsg = "Invalid agent ID.";
-    }
-
-    ErrorResponse.message = errorMsg;
-    ErrorResponse.error = error;
-
-    Logger.error(
-      `Agent Group -> Failed to remove agent ${targetAgentId} from group ${id}, error: ${JSON.stringify(error)}`
-    );
-
-    return res.status(statusCode).json(ErrorResponse);
-  }
-}
-
-
 
 async function removeAgent(req, res) {
   const { id } = req.params; 
   const bodyReq = req.body; 
 
   try {
-    const agentGroup = await agentGroupRepo.get(id);
-    const targetAgentId = bodyReq.agent_id
+    // delete entry from agent schedule mapping
+    await agentScheduleMappingRepo.delete({agent_group_id: id, agent_id: bodyReq.agent_id})
 
+    const checkAgentStatus = await agentScheduleMappingRepo.get({agent_id: bodyReq.agent_id})
 
-    console.log("AGENT GROUP", agentGroup);
-    console.log("TARGET AGENT ID", targetAgentId);
-
-    
-    const removedAgent = agentGroup.agents.find(agent => agent.agent_id.toString() === targetAgentId);
-    const removedMemberScheduleId = removedAgent ? removedAgent.member_schedule_id : null;
-
-    // Filter out the agent from the array
-    const updatedAgents = agentGroup.agents.filter(agent => agent.agent_id.toString() !== targetAgentId);
-
-
-    const occurrenceCount = updatedAgents.filter(agent => 
-      agent.member_schedule_id.toString() === removedMemberScheduleId
-    ).length;
-
-    if (occurrenceCount !== 0) {
-      await agentGroupRepo.update(id, {agents : updatedAgents})
-      await agentRepo.update(targetAgentId, {is_allocated: 0})
-      
-    } else {
-      await agentGroupRepo.update(id, {agents : updatedAgents})
-      await agentRepo.update(targetAgentId, {is_allocated: 0})
+    if (checkAgentStatus.length === 0) {
+      await agentRepo.update(bodyReq.agent_id, {is_allocated: 0})
     }
 
     // Success response
     SuccessRespnose.message = "Agent time schedule updated successfully.";
-    SuccessRespnose.data = updatedAgents;
+    SuccessRespnose.data = checkAgentStatus;
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
