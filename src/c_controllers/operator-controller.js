@@ -6,10 +6,22 @@ const { Logger } = require("../../shared/config");
 const AppError = require("../../shared/utils/errors/app-error");
 const operatorsRepo = new OperatorsRepository();
 const userJourneyRepo = new UserJourneyRepository();
+const { Op } = require("sequelize");
 
 
 async function createOperator(req, res) {
     try {
+        const existingOperator = await operatorsRepo.findOne({
+            created_by: req.user.id,
+            name: req.body?.operator?.name
+        });
+            
+        if (existingOperator) {
+            ErrorResponse.message = 'Operator With Same Name Already Exists.';
+            return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+        }
         const operator = await operatorsRepo.create(req.body.operator);
         
         await userJourneyRepo.create({
@@ -82,6 +94,18 @@ async function deleteOperator(req, res) {
 
 async function updateOperator(req, res) {
     try {
+        const existingOperator = await operatorsRepo.findOne({
+            created_by: req.user.id,
+            id: { [Op.ne]: req.params.id },
+            name: req.body?.operator?.name
+        });
+            
+        if (existingOperator) {
+            ErrorResponse.message = 'Operator With Same Name Already Exists.';
+            return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+        }
         const operator = await operatorsRepo.update(req.params.id, req.body.operator);
         if (!operator) throw new AppError("Operator not found", StatusCodes.NOT_FOUND);
         
