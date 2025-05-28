@@ -8,6 +8,7 @@ const {
   SuccessRespnose,
   ErrorResponse,
 } = require("../../shared/utils/common");
+const { Op } = require("sequelize");
 const { Logger } = require("../../shared/config");
 const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/constants");
 const callCentreRepository = new CallCentreRepository();
@@ -20,6 +21,25 @@ async function create(req, res) {
   let data = null;
 
   try {
+    const existingCallCenter = await callCentreRepository.findOne({
+      [Op.and]: [
+        { created_by: userId },
+        {
+          [Op.or]: [
+            { name: bodyReq?.name?.trim() },
+            { domain: bodyReq?.domain?.trim() }
+          ]
+        }
+      ]
+    });
+
+    if (existingCallCenter) {
+      ErrorResponse.message = 'Call Center With Same Name or Domain Already exists.';
+        return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(ErrorResponse);
+    }
+
     data = {
       name: bodyReq.name.trim(),
       domain: bodyReq.domain.trim(),

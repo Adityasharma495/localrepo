@@ -698,11 +698,19 @@ async function signupUser(req, res) {
     });
   } catch (error) {
     console.error(`Error during user signup: ${error}`);
-    const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
-    return res.status(statusCode).json({
-      message: error.message || 'An unexpected error occurred during user signup.',
-      error
-    });
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    if (error.name === "SequelizeUniqueConstraintError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = `Duplicate key, record already exists for ${Object.keys(
+        error.fields
+      ).join(", ")}`;
+    }
+
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
+    return res.status(statusCode).json(ErrorResponse);
   }
 }
 
@@ -994,26 +1002,22 @@ async function updateUser(req, res) {
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
-    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
-    let errorMsg = error.message;
-
-    ErrorResponse.error = error;
-    if (error.name == "CastError") {
-      statusCode = StatusCodes.BAD_REQUEST;
-      errorMsg = "User not found";
-    } else if (error.name == "MongoServerError") {
-      statusCode = StatusCodes.BAD_REQUEST;
-      if (error.codeName == "DuplicateKey")
-        errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
-    }
-    ErrorResponse.message = errorMsg;
-
     Logger.error(
       `User -> unable to update user: ${uid}, data: ${JSON.stringify(
         bodyReq
       )}, error: ${JSON.stringify(error)}`
     );
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
 
+    if (error.name === "SequelizeUniqueConstraintError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = `Duplicate key, record already exists for ${Object.keys(
+        error.fields
+      ).join(", ")}`;
+    }
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
     return res.status(statusCode).json(ErrorResponse);
   }
 }
