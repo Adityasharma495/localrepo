@@ -154,6 +154,21 @@ async function updateCallCentre(req, res) {
   };
 
   try {
+    const existingCallCenter = await callCentreRepository.findOne({
+      created_by: req.user.id,
+      id: { [Op.ne]: callCentreId },
+      [Op.or]: [
+        { name: bodyReq.name.trim() },
+        { domain: bodyReq.domain.trim() }
+      ]
+    });
+
+    if (existingCallCenter) {
+      ErrorResponse.message = 'Call Center With Same Name or Domain Already exists.';
+        return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(ErrorResponse);
+    }
     const response = await callCentreRepository.update(callCentreId, data);
 
     SuccessRespnose.data = response

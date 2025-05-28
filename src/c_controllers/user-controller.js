@@ -11,6 +11,7 @@ const AppError = require("../../shared/utils/errors/app-error");
 const { MODULE_LABEL, ACTION_LABEL, USERS_ROLE, PREFIX_VALUE, SUB_LICENCE_ROLE, USER_ROLE_VALUE } = require('../../shared/utils/common/constants');
 const UserCompany = require("../../shared/c_db/user-companies");
 const { UserCallCentres } = require("../../shared/c_db");
+const { Op } = require("sequelize");
 
 const userRepo = new UserRepository();
 const licenceRepo = new LicenceRepository();
@@ -546,6 +547,24 @@ async function signupUser(req, res) {
   }
 
   try {
+    const existingUserData = await userRepo.findOne({
+      [Op.and]: [
+        { created_by: req.user.id },
+        {
+          [Op.or]: [
+            { username: bodyReq?.user?.username?.trim() },
+            { email: bodyReq?.user?.email?.trim() }
+          ]
+        }
+      ]
+    });
+    
+    if (existingUserData) {
+      ErrorResponse.message = 'User With Same Username or Email Already exists.';
+        return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(ErrorResponse);
+    }
     const responseData = {};
     let user;
     let subUserLicenceId;
@@ -729,6 +748,22 @@ async function updateUser(req, res) {
   }
 
   try {
+
+    const existingUserData = await userRepo.findOne({
+      created_by: req.user.id,
+      id: { [Op.ne]: uid },
+      [Op.or]: [
+        { username: bodyReq?.user?.username?.trim() },
+        { email: bodyReq?.user?.email?.trim() }
+      ]
+    });
+    
+    if (existingUserData) {
+      ErrorResponse.message = 'User With Same Username or Email Already exists.';
+        return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(ErrorResponse);
+    }
 
     const responseData = {};
 
