@@ -487,10 +487,6 @@ async function removeAgent(req, res) {
     const agentGroup = await agentGroupRepo.get(id);
     const targetAgentId = bodyReq.agent_id
 
-
-    console.log("AGENT GROUP", agentGroup);
-    console.log("TARGET AGENT ID", targetAgentId);
-
     
     const removedAgent = agentGroup.agents.find(agent => agent.agent_id.toString() === targetAgentId);
     const removedMemberScheduleId = removedAgent ? removedAgent.member_schedule_id : null;
