@@ -548,17 +548,11 @@ async function signupUser(req, res) {
 
   try {
     const existingUserData = await userRepo.findOne({
-      [Op.and]: [
-        { created_by: req.user.id },
-        {
-          [Op.or]: [
-            { username: bodyReq?.user?.username?.trim() },
-            { email: bodyReq?.user?.email?.trim() }
-          ]
-        }
+      [Op.or]: [
+        { username: bodyReq?.user?.username?.trim() },
+        { email: bodyReq?.user?.email?.trim() }
       ]
     });
-    
     if (existingUserData) {
       ErrorResponse.message = 'User With Same Username or Email Already exists.';
         return res
@@ -750,7 +744,6 @@ async function updateUser(req, res) {
   try {
 
     const existingUserData = await userRepo.findOne({
-      created_by: req.user.id,
       id: { [Op.ne]: uid },
       [Op.or]: [
         { username: bodyReq?.user?.username?.trim() },
