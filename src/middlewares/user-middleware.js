@@ -7,8 +7,11 @@ function  validateSignup(req, res, next){
     const bodyReq = req.body;
     const createrRole = req['user'].role
     const userRole = bodyReq.role;
+
+
    
     const permission = Authentication.checkPermission(createrRole,userRole);
+
 
     if(!req.is('application/json')){
         ErrorResponse.message = 'Something went wrong while user signup';

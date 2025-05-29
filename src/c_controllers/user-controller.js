@@ -30,8 +30,6 @@ async function signinUser(req, res) {
   try {
     //Fetch user via username
     const user = await userRepo.getByUsername(username);
-
-    console.log("USER NAME", user);
         if (user?.role === USERS_ROLE.CALLCENTRE_AGENT) {
           const subLicenceData = await subUserLicenceRepo.findOne({user_id : user?.created_by})
         
@@ -541,6 +539,11 @@ async function licenceCreated(bodyReq, loggedUser, userCreated) {
 
 async function signupUser(req, res) {
   const bodyReq = req.body;
+
+  console.log("DBOT RE", bodyReq);
+
+  return;
+  
   if (bodyReq?.user?.acl_settings) {
     bodyReq.user.acl_settings_id = bodyReq?.user?.acl_settings;
   }
