@@ -11,7 +11,6 @@ const userJourneyRepo = new UserJourneyRepository();
 
 async function createTrunk(req, res) {
   const bodyReq = req.body;
-
   try {
     const responseData = {};
     const trunkPayload = { ...bodyReq.trunk };
@@ -21,7 +20,9 @@ async function createTrunk(req, res) {
     const codecName = trunkPayload.codec_id
 
 
+
     const operatorRecord = await Operator.findOne({where: { id: operatorName }});
+
     const codecRecord = await Codec.findOne({ where: { id: codecName }});
 
     if (!operatorRecord) {
@@ -42,6 +43,8 @@ async function createTrunk(req, res) {
     trunkPayload.codec_id = codecRecord.id;
 
     delete trunkPayload.operator;
+
+
 
     // Create trunk with corrected payload
     const trunk = await trunkRepo.create(trunkPayload);

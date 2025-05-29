@@ -13,7 +13,6 @@ router.get("/", AuthMiddleware.validateUser, AgentGroupController.getAll);
 // GET BY ID
 router.get("/:id", AuthMiddleware.validateUser, AgentGroupController.getById);
 
-
 // ASSIGNED AGENTS
 router.get("/:id/assigned-agents",AuthMiddleware.validateUser, AgentGroupController.getAssignedAgents)
 
@@ -27,9 +26,6 @@ router.post("/delete", AuthMiddleware.validateUser, AgentGroupMiddleware.validat
 router.post('/:id',AuthMiddleware.validateUser,AgentGroupMiddleware.modifyAgentGroupUpdateBodyRequest,AgentGroupController.updateAgentGroup);
 
 //Remove Agent
-router.post("/remove-agent/:id", AuthMiddleware.validateUser,AgentGroupMiddleware.validateAgentRemove,AgentGroupController.removeAgent);
-
-
 router.post("/remove-agent/:id", AuthMiddleware.validateUser,AgentGroupMiddleware.validateAgentRemove,AgentGroupController.removeAgent);
 
 module.exports = router;

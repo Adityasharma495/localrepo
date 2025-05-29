@@ -11,5 +11,4 @@ router.get('/', function(req, res){
     return res.send('Server apis working');
 })
 
-
 module.exports = router;

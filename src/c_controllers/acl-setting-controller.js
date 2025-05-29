@@ -7,6 +7,7 @@ const {
   SuccessRespnose,
   ErrorResponse,
 } = require("../../shared/utils/common");
+const { Op } = require("sequelize");
 const { MODULE_LABEL, ACTION_LABEL, USERS_ROLE } = require("../../shared/utils/common/constants");
 const { Logger } = require("../../shared/config");
 
@@ -41,6 +42,14 @@ async function createAclSettings(req, res) {
 
   try {
     const responseData = {};
+
+    const existingAcl = await aclSettingRepo.findOne({ acl_name: bodyReq?.acl_settings?.acl_name, created_by: req.user.id });
+    if (existingAcl) {
+      ErrorResponse.message = 'Acl Settings With Same Name Already Exists.';
+        return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(ErrorResponse);
+    }
 
     const acl_settings = await aclSettingRepo.create(bodyReq.acl_settings);
     responseData.acl_settings = acl_settings;
@@ -161,6 +170,18 @@ async function updateAclSettings(req, res) {
   const { acl_name, module_operations } = req.body.acl_settings;
 
   try {
+    const existingAcl = await aclSettingRepo.findOne({
+      created_by: req.user.id,
+      id: { [Op.ne]: id },
+      acl_name: acl_name
+    });
+    
+    if (existingAcl) {
+      ErrorResponse.message = 'Acl Settings With Same Name Already Exists.';
+        return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(ErrorResponse);
+    }
     const updateData = {
       acl_name,
       module_operations: typeof module_operations === 'string' 

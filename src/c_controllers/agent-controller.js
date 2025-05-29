@@ -588,6 +588,9 @@ async function toggleStatus(req, res) {
 
     const agentUser = await userRepo.getByName(agent.agent_name)
 
+
+
+
     if (!agent) {
       return res
         .status(StatusCodes.NOT_FOUND)
@@ -597,15 +600,18 @@ async function toggleStatus(req, res) {
     // Toggle the status
     const newStatus = agent.login_status === "1" ? "0" : "1";
 
+
     const subLicenceData = await subUserLicenceRepo.findOne({user_id : req.user.id})
 
     if (Number(newStatus)) {
       if (subLicenceData.available_licence.live_agent !== 0) {
          subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent - 1;
 
+
          const userLoginCount = await userRepo.getAll({
             where: {
               id: agentUser.id,
+              login_at: { [Op.ne]: null },
               logout_at: null
             }
          });
@@ -627,6 +633,20 @@ async function toggleStatus(req, res) {
           .json(ErrorResponse);
       }
     } else {
+
+      const userLoginCount = await userRepo.getAll({
+            where: {
+              id: agentUser.id,
+              login_at: { [Op.ne]: null },
+              logout_at: null
+            }
+         });
+
+      if (userLoginCount && userLoginCount.length > 0) {
+            ErrorResponse.message = 'User already logged in';
+            return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+         }
+
       subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent + 1;
 
       await userRepo.update(agentUser.id, {
@@ -644,7 +664,6 @@ async function toggleStatus(req, res) {
     // Update the agent's status
     const updatedAgent = await agentRepo.update(id, { login_status: newStatus });
 
-    
 
     //update sub user licence
     await subUserLicenceRepo.updateById(subLicenceData.id, {available_licence: subLicenceData.available_licence})

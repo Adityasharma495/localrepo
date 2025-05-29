@@ -82,7 +82,6 @@ class SubUserLicenceRepository extends CrudRepository {
 
   async updateById(id, data) {
 
-    console.log("ID AND SARA", id, data);
 
     try {
       const [rowsUpdated, [updatedRecord]] = await this.model.update(data, {

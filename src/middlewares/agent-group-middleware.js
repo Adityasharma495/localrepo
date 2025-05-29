@@ -118,6 +118,7 @@ async function modifyAgentGroupBodyRequest(req, is_create = true) {
                     group_name: bodyReq.group_name.trim(),
                     group_owner: bodyReq.group_owner.trim(),
                     manager: bodyReq.manager.trim(),
+                    call_center_id: bodyReq.call_center_id ? Number(bodyReq.call_center_id) : ''
                 },
             };
             inputData.agent.created_by = req.user.id;
@@ -246,8 +247,6 @@ async function validateSchedule(req,res,next)
 async function validateAgentRemove(req,res,next)
 {
     const bodyReq = req.body
-
-    console.log("BODY REQUEST", );
 
     if (!req.is('application/json')) {
         ErrorResponse.message = 'Something went wrong while scheduling time';
