@@ -103,7 +103,7 @@ async function savePrompts(req, res) {
         console.log("file url : "+file_url);
         const fileAlias = req.fileAlias
         if (process.env.NODE_ENV === SERVER.PROD) {
-            const cmd = `bash -c "${STORAGE_PATH}scripts/checkFormat.sh ${req.user.id} ${file_name} ${fileAlias} ${bodyReq.language}"`;
+            const cmd = `bash -c "${STORAGE_PATH}script/checkFormat.sh ${req.user.id} ${file_name} ${fileAlias} ${bodyReq.language}"`;
             Logger.info(`Executing script: ${cmd}`);
     
             const duration = await new Promise((resolve, reject) => {
