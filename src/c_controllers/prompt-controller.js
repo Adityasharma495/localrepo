@@ -99,7 +99,7 @@ async function savePrompts(req, res) {
         }
 
         const file_name = req.file.name;
-        const file_url = `${BACKEND_API_BASE_URL}/temp/voice/${req.user.id}/prompts/${bodyReq.language}/${file_name}`;
+        const file_url = `${BACKEND_API_BASE_URL}/temp/voice/${req.user.id}/prompts/${bodyReq.language}/${bodyReq.prompt_name}`;
 
         const fileAlias = req.fileAlias
         if (process.env.NODE_ENV === SERVER.PROD) {
