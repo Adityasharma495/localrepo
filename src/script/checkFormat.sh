@@ -1,7 +1,7 @@
 #!/bin/bash
 
-path="/home/dev/cloud-telephony/backend/src/script/assets/voice/"
-temppath="/home/dev/cloud-telephony/backend/src/script/temp/voice/"
+path="/home/dev/cloud-telephony/backend/assets/voice/"
+temppath="/home/dev/cloud-telephony/backend/temp/voice/"
 
 # Create prompts directory if it doesn't exist
 if [ ! -d "${path}${1}/prompts/" ]; then

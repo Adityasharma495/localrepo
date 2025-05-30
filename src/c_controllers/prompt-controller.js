@@ -100,7 +100,7 @@ async function savePrompts(req, res) {
 
         const file_name = bodyReq.prompt_name;
         const file_url = `${BACKEND_API_BASE_URL}/temp/voice/${req.user.id}/prompts/${bodyReq.language}/${req.fileAlias}`;
-
+        console.log("file url : "+file_url);
         const fileAlias = req.fileAlias
         if (process.env.NODE_ENV === SERVER.PROD) {
             const cmd = `bash -c "${STORAGE_PATH}scripts/checkFormat.sh ${req.user.id} ${file_name} ${fileAlias} ${bodyReq.language}"`;
@@ -120,7 +120,7 @@ async function savePrompts(req, res) {
                 });
             });
 
-    
+           console.log("script return : "+duration);
             if (!duration || duration === '0'|| duration === 0) {
                 const errorResponse = {
                     message: 'Invalid or zero duration of Uploaded File',
