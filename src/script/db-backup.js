@@ -152,7 +152,7 @@ async function cleanOldBackups() {
     const fullPath = path.join(BACKUP_DIR, folder);
     if ((await fs.stat(fullPath)).isDirectory()) {
       const folderDate = moment(folder, 'YYYY-MM-DD');
-      if (moment().diff(folderDate, 'days') > 7) {
+      if (moment().diff(folderDate, 'days') > 4) {
         await fs.remove(fullPath);
         console.log(`Deleted old backup: ${fullPath}`);
       }
