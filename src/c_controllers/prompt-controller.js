@@ -72,7 +72,6 @@ async function getPromptDetails(req, res) {
             return res.status(StatusCodes.OK).json(SuccessRespnose);
         }
     } catch (error) {
-        console.log("error ", error);
         ErrorResponse.error = error;
         ErrorResponse.message = error.message;
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
@@ -83,6 +82,7 @@ async function getPromptDetails(req, res) {
 async function savePrompts(req, res) {
     const dest = req.file.path;
     const bodyReq = { ...req.body };
+
     try {
         if (!fs.existsSync(dest)) {
             return res.status(StatusCodes.NOT_FOUND).json({ message: 'File not found' });
@@ -98,8 +98,8 @@ async function savePrompts(req, res) {
             return res.status(StatusCodes.BAD_REQUEST).json({ message: 'File Name Already Exists' });
         }
 
-        const file_name = req.file.name;
-        const file_url = `${BACKEND_API_BASE_URL}/temp/voice/${req.user.id}/prompts/${bodyReq.language}/${bodyReq.prompt_name}`;
+        const file_name = bodyReq.prompt_name;
+        const file_url = `${BACKEND_API_BASE_URL}/temp/voice/${req.user.id}/prompts/${bodyReq.language}/${req.fileAlias}`;
 
         const fileAlias = req.fileAlias
         if (process.env.NODE_ENV === SERVER.PROD) {
@@ -150,7 +150,6 @@ async function savePrompts(req, res) {
         SuccessRespnose.message = "Successfully created a new Prompt";
         return res.status(StatusCodes.CREATED).json(SuccessRespnose);
     } catch (error) {
-        console.log("error", error);
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Error while processing the Prompts file.', error });
     }
 }
@@ -193,7 +192,6 @@ async function getAllPrompt(req, res) {
             return res.status(StatusCodes.OK).json(SuccessRespnose);
         }
     } catch (error) {
-        console.log("error ", error);
         ErrorResponse.error = error;
         ErrorResponse.message = error.message;
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);

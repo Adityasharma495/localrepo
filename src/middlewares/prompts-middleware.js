@@ -63,6 +63,7 @@ if (!allowedFileTypes.includes(fileExtension)) {
 }
 
 function saveFile(req, res, next) {
+    const bodyReq = Object.assign({}, req.body);
     const file = req.file;
     const folder = req.folder;
     const destFolder = path.join(__dirname, folder);
@@ -70,16 +71,19 @@ function saveFile(req, res, next) {
 
     let fileAlias;
     if (file.mimetype === 'audio/mpeg') {
-        fileAlias = file.originalname.replace(/\.mp3$/, '.wav');
+        fileAlias = originalFileName.replace(/\.mp3$/, '.wav');
     } else {
-        fileAlias = file.originalname;
+        fileAlias = originalFileName;
     }
+
+    const extension = path.extname(fileAlias);
+    fileAlias = `${bodyReq.prompt_name}${extension}`;
 
     req.fileAlias = fileAlias;
         
-    const filePath = path.join(destFolder, originalFileName);
+    const filePath = path.join(destFolder, fileAlias);
     req.file.path = filePath; 
-    req.file.name = originalFileName
+    req.file.name = fileAlias
 
     if (!fs.existsSync(destFolder)) {
         fs.mkdirSync(destFolder, { recursive: true });
