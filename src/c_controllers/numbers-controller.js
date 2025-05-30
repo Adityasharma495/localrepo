@@ -45,6 +45,14 @@ async function create(req, res) {
   try {
     const responseData = {};
 
+    const existingNumber = await numberRepo.isActualNumberExist(bodyReq.number.actual_number, false);
+    if (existingNumber) {
+      ErrorResponse.message = 'Number Already Exists.';
+        return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(ErrorResponse);
+    }
+
     const number = await numberRepo.create({
       actual_number: bodyReq.number.actual_number,
       status: bodyReq.number.status,
@@ -136,6 +144,13 @@ async function update(req, res) {
   const bodyReq = req.body;
 
   try {
+    const existingNumber = await numberRepo.findOne({ actual_number: bodyReq.number.actual_number, is_deleted: false, id: { [Op.ne]: numberId } });
+    if (existingNumber) {
+      ErrorResponse.message = 'Number Already Exists.';
+        return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(ErrorResponse);
+    }
     const numberData = await numberRepo.findOne({ id: numberId });
 
     if (numberData.status !== bodyReq.number.status && req.user.role !== USERS_ROLE.SUPER_ADMIN) {
@@ -411,14 +426,19 @@ async function getAll(req, res) {
     const uniqueDIDs = [...new Set(data.map(item => Number(item.did?.id) || Number(item?.did)))];
     data = await numberRepo.findMany(uniqueDIDs);
 
-    const reverseNumberStatus = Object.entries(NUMBER_STATUS).reduce((acc, [key, value]) => {
+    // const reverseNumberStatus = Object.entries(NUMBER_STATUS).reduce((acc, [key, value]) => {
+    //   acc[value] = key;
+    //   return acc;
+    // }, {});
+
+    const statusCodeToLabel = Object.entries(constants.NUMBER_STATUS_LABLE).reduce((acc, [key, value]) => {
       acc[value] = key;
       return acc;
     }, {});
 
     data = await Promise.all(
       data.map(async (val) => {
-        val.status = reverseNumberStatus[val.status] || val.status;
+        val.status = statusCodeToLabel[val.status] || val.status;
 
         let allocatedData = null;
         let finalData = {};
