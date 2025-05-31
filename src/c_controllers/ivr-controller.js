@@ -266,7 +266,10 @@ async function updateIVR(req, res) {
     }
 
     await flowJsonRepository.create(flowData, { transaction });
-
+    if (Number(userDetail?.flow_type) !== 1) {
+      Logger.info('Publishing message to queue');
+      await publishIVRUpdate();
+    }
     // ✅ Log user action
     await userJourneyRepo.create({
       module_name: MODULE_LABEL.IVR,
