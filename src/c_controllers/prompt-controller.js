@@ -133,10 +133,12 @@ async function savePrompts(req, res) {
             }
         }
 
+        const new_file_url = `${BACKEND_API_BASE_URL}/assets/voice/${req.user.id}/prompts/${bodyReq.language}/${req.fileAlias}`;
+
         await promptRepo.create({
             prompt_category: bodyReq.prompt_category,
             prompt_name: bodyReq.prompt_name,
-            prompt_url: file_url,
+            prompt_url: new_file_url,
             created_by: req.user.id,
             prompt_duration: bodyReq.duration || 0
         });
