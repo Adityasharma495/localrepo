@@ -3,6 +3,9 @@ const { AuthMiddleware, PromptsMiddleware } = require("../../middlewares");
 const { PromptController } = require("../../c_controllers");
 const Router = express.Router();
 
+// Delete data center api/v2/prompts/delete
+Router.post("/delete", AuthMiddleware.validateUser, PromptsMiddleware.validateDeleteRequest, PromptController.deletePrompt);
+
 //get prompts
 Router.get('/',AuthMiddleware.validateUser,PromptController.getPromptDetails)
 

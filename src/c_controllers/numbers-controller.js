@@ -402,10 +402,8 @@ async function getAll(req, res) {
       idToCheck = req.user.id;
     }
 
-      let data
-      let level
-
-
+    let data
+    let level
       
       if (loggedUser?.role === USERS_ROLE.COMPANY_ADMIN) {
         data = await didUserMappingRepository.getForOthers(idToCheck, 4);
@@ -436,48 +434,45 @@ async function getAll(req, res) {
       return acc;
     }, {});
 
-    data = await Promise.all(
-      data.map(async (val) => {
-        val.status = statusCodeToLabel[val.status] || val.status;
+for (const val of data) {
+  val.status = statusCodeToLabel[val.status] || val.status;
 
-        let allocatedData = null;
-        let finalData = {};
+  let allocatedData = null;
+  let finalData = {};
+
+  const didMapping = await didUserMappingRepository.findOne({ DID: val.id });
+
+  const level = Array.isArray(didMapping.mapping_detail) && didMapping.mapping_detail.length > 0
+  ? didMapping.mapping_detail[didMapping.mapping_detail.length - 1].level
+  : 1;
 
 
-        const didMapping = await didUserMappingRepository.findOne({DID: val.id})
+  if (level === 0) {
+    finalData = { name: '', id: null, type: 'Superadmin' };
+  } else if (level == 1 || level == 2 || level == 3) {
+    allocatedData = await userRepo.get(val?.allocated_to);
+    if (allocatedData) {
+      finalData = { name: allocatedData.username, id: allocatedData.id, type: 'Reseller' };
+    }
+  } else if (level === 4) {
+    allocatedData = await companyRepo.findOne({ id: val?.allocated_to });
+    finalData = { name: allocatedData?.name, id: allocatedData?.id , type: 'Company' };
+  } else if (level === 5) {
+    allocatedData = await callCentreRepo.findOne({ id: val?.allocated_to });
+    finalData = { name: allocatedData?.name, id: allocatedData?.id , type: 'Call Center' };
+  }
 
-        level = didMapping.mapping_detail.length
+  if (allocatedData) {
+    val.allocated_to = finalData;
+  }
 
-        if (level === 1) {
-          finalData = { name: '', id: null };
-        } else if (level === 2 || level === 3 || level === 4) {
-          allocatedData = await userRepo.get(val?.allocated_to)
-          if (allocatedData) {
-            finalData = { name: allocatedData.username, id: allocatedData.id };
-          }
-        } else if (level === 5) {
-          allocatedData = await companyRepo.findOne({id : val?.allocated_to})
-          finalData = { name: allocatedData?.name, id: allocatedData?.id };
-          
-        } else if (level === 6) {
-          allocatedData = await callCentreRepo.findOne({id : val?.allocated_to})
-          finalData = { name: allocatedData?.name, id: allocatedData?.id };
-          
-        }
+  if (val.voice_plan) {
+    val.voice_plan_id = val.voice_plan;
+  }
+  delete val.voice_plan_id;
+  delete val.voice_plan;
+}
 
-        if (allocatedData) {
-          val.allocated_to = finalData;
-        }
-
-        if (val.voice_plan) {
-          val.voice_plan_id = val.voice_plan;
-        }
-        delete val.voice_plan_id;
-        delete val.voice_plan;
-
-        return val;
-      })
-    );
 
     data = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 

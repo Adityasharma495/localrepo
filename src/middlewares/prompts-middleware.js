@@ -99,9 +99,30 @@ function saveFile(req, res, next) {
     });
 }
 
+function validateDeleteRequest (req, res, next) {
+    const bodyReq = req.body;
+
+    if (!req.is('application/json')) {
+        ErrorResponse.message = 'Something went wrong while Deleting Prompts';
+        ErrorResponse.error = new AppError(['Invalid content type, incoming request must be in application/json format'], StatusCodes.BAD_REQUEST);
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+    }
+    else if (bodyReq.promptIds == undefined || typeof bodyReq.promptIds !== 'object' || !bodyReq.promptIds.length > 0) {
+        ErrorResponse.message = 'Something went wrong while Deleting Prompts';
+        ErrorResponse.error = new AppError(['promptIds not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+    }
+    next();
+}
+
 
 module.exports = {
     validateCreatePrompts,
     upload: upload.single('file'),
     saveFile,
+    validateDeleteRequest
 }

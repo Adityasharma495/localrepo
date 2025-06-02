@@ -4,11 +4,12 @@ const { ErrorResponse, SuccessRespnose } = require("../../shared/utils/common");
 const { MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, STORAGE_PATH, SERVER, USERS_ROLE } = require('../../shared/utils/common/constants');
 const { Logger } = require("../../shared/config");
 const fs = require("fs");
-const {PromptRepository, UserRepository} = require('../../shared/c_repositories');
+const {PromptRepository, UserRepository, FlowJsonRepository} = require('../../shared/c_repositories');
 const {UserJourneyRepository} = require('../../shared/c_repositories');
 const promptRepo = new PromptRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const userRepo = new UserRepository();
+const flowJsonRepo = new FlowJsonRepository();
 
 async function getPromptDetails(req, res) {
     try {
@@ -100,7 +101,6 @@ async function savePrompts(req, res) {
 
         const file_name = bodyReq.prompt_name;
         const file_url = `${BACKEND_API_BASE_URL}/temp/voice/${req.user.id}/prompts/${bodyReq.language}/${req.fileAlias}`;
-        console.log("file url : "+file_url);
         const fileAlias = req.fileAlias
         if (process.env.NODE_ENV === SERVER.PROD) {
             const cmd = `bash -c "${STORAGE_PATH}script/checkFormat.sh ${req.user.id} ${file_name} ${fileAlias} ${bodyReq.language}"`;
@@ -182,7 +182,7 @@ async function updatePromptStatus(req, res) {
 
 async function getAllPrompt(req, res) {
     try {
-        const results = await promptRepo.get({created_by: req.user.id});
+        const results = await promptRepo.get({created_by: req.user.id, is_deleted: false});
 
         if (results.length > 0) {
             SuccessRespnose.data = results;
@@ -200,10 +200,99 @@ async function getAllPrompt(req, res) {
     }
 }
 
+async function deletePrompt(req, res) {
+  const idArray = req.body.promptIds;
+
+  try {
+    let ivrCreated = await flowJsonRepo.getAll({created_by: req.user.id});
+    ivrCreated = ivrCreated.map(item => item.nodes_data);
+
+    const matchedIds = [];
+    const unmatchedIds = [];
+
+    idArray.forEach(audioId => {
+    let isMatched = false;
+
+    for (const flowData of ivrCreated) {
+        if (isAudioIdUsed(flowData, audioId)) {
+        isMatched = true;
+        break;
+        }
+    }
+
+    if (isMatched) {
+        matchedIds.push(audioId);
+    } else {
+        unmatchedIds.push(audioId);
+    }
+    });
+
+
+    const response = await promptRepo.deleteMany(unmatchedIds, req.user.id);
+
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.DATA_CENTER,
+      action: ACTION_LABEL.DELETE,
+      created_by: req?.user?.id,
+    };
+
+    await userJourneyRepo.create(userJourneyfields);
+
+    let message
+    if (matchedIds.length === 0) {
+        message = "All selected audios have been deleted successfully.";
+    } else {
+        message = `${matchedIds.length} audio file(s) could not be deleted because they are used in existing IVR flows.` +
+        (unmatchedIds.length > 0 ? ` ${unmatchedIds.length} audio file(s) were deleted successfully.` : '');
+    }
+
+    SuccessRespnose.data = message;
+
+    Logger.info(`Prompt -> ${idArray} deleted successfully`);
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    console.log(error)
+    var statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    var errorMsg = error.message;
+
+    ErrorResponse.error = error;
+    if (error.name == "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Prompt not found";
+    }
+    ErrorResponse.message = errorMsg;
+
+    Logger.error(
+      `Prompt -> unable to delete Prompt: ${idArray}, error: ${JSON.stringify(
+        error
+      )}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+function isAudioIdUsed(flowData, targetAudioId) {
+  const nodes = flowData.nodes;
+
+  for (const nodeId in nodes) {
+    const node = nodes[nodeId];
+    const { verb, action } = node.flowJson || {};
+
+    if ((verb === 'play' || verb === 'dtmf') && Array.isArray(action)) {
+      const match = action.find(act => act.id === targetAudioId);
+      if (match) return true;
+    }
+  }
+
+  return false;
+}
 
 module.exports = {
     getPromptDetails,
     savePrompts,
     updatePromptStatus,
-    getAllPrompt
+    getAllPrompt,
+    deletePrompt
 };
