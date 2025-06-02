@@ -227,8 +227,11 @@ async function deletePrompt(req, res) {
     }
     });
 
-
-    const response = await promptRepo.deleteMany(unmatchedIds, req.user.id);
+    if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
+        await promptRepo.hardDeleteMany(unmatchedIds, req.user.id);
+    } else {
+        await promptRepo.deleteMany(unmatchedIds, req.user.id);
+    }
 
     const userJourneyfields = {
       module_name: MODULE_LABEL.DATA_CENTER,
@@ -248,7 +251,7 @@ async function deletePrompt(req, res) {
 
     SuccessRespnose.data = message;
 
-    Logger.info(`Prompt -> ${idArray} deleted successfully`);
+    Logger.info(`Prompt -> ${unmatchedIds} deleted successfully and ${matchedIds.length} audio file(s) could not be deleted because they are used in existing IVR flows.`);
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
