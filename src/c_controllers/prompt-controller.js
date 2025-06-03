@@ -120,7 +120,6 @@ async function savePrompts(req, res) {
                 });
             });
 
-           console.log("script return : "+duration);
             if (!duration || duration === '0'|| duration === 0) {
                 const errorResponse = {
                     message: 'Invalid or zero duration of Uploaded File',
@@ -204,34 +203,20 @@ async function deletePrompt(req, res) {
   const idArray = req.body.promptIds;
 
   try {
-    let ivrCreated = await flowJsonRepo.getAll({created_by: req.user.id});
-    ivrCreated = ivrCreated.map(item => item.nodes_data);
-
-    const matchedIds = [];
-    const unmatchedIds = [];
-
-    idArray.forEach(audioId => {
-    let isMatched = false;
-
-    for (const flowData of ivrCreated) {
-        if (isAudioIdUsed(flowData, audioId)) {
-        isMatched = true;
-        break;
+    let deletedPrompt = await promptRepo.getAll({id : idArray});
+    const { allocatedIds, unallocatedIds } = deletedPrompt.reduce(
+    (acc, item) => {
+        if (item.is_allocated === '1') {
+        acc.allocatedIds.push(item.id);
+        } else if (item.is_allocated === '0') {
+        acc.unallocatedIds.push(item.id);
         }
-    }
+        return acc;
+    },
+    { allocatedIds: [], unallocatedIds: [] }
+    );
 
-    if (isMatched) {
-        matchedIds.push(audioId);
-    } else {
-        unmatchedIds.push(audioId);
-    }
-    });
-
-    if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
-        await promptRepo.hardDeleteMany(unmatchedIds, req.user.id);
-    } else {
-        await promptRepo.deleteMany(unmatchedIds, req.user.id);
-    }
+    await promptRepo.deleteMany(unallocatedIds, req.user.id);
 
     const userJourneyfields = {
       module_name: MODULE_LABEL.DATA_CENTER,
@@ -242,20 +227,19 @@ async function deletePrompt(req, res) {
     await userJourneyRepo.create(userJourneyfields);
 
     let message
-    if (matchedIds.length === 0) {
+    if (allocatedIds.length === 0) {
         message = "All selected audios have been deleted successfully.";
     } else {
-        message = `${matchedIds.length} audio file(s) could not be deleted because they are used in existing IVR flows.` +
-        (unmatchedIds.length > 0 ? ` ${unmatchedIds.length} audio file(s) were deleted successfully.` : '');
+        message = `${allocatedIds.length} audio file(s) could not be deleted because they are used in existing IVR flows.` +
+        (unallocatedIds.length > 0 ? ` ${unallocatedIds.length} audio file(s) were deleted successfully.` : '');
     }
 
     SuccessRespnose.data = message;
 
-    Logger.info(`Prompt -> ${unmatchedIds} deleted successfully and ${matchedIds.length} audio file(s) could not be deleted because they are used in existing IVR flows.`);
+    Logger.info(`Prompt -> ${unallocatedIds} deleted successfully and ${allocatedIds.length} audio file(s) could not be deleted because they are used in existing IVR flows.`);
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
-    console.log(error)
     var statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
     var errorMsg = error.message;
 
@@ -274,22 +258,6 @@ async function deletePrompt(req, res) {
 
     return res.status(statusCode).json(ErrorResponse);
   }
-}
-
-function isAudioIdUsed(flowData, targetAudioId) {
-  const nodes = flowData.nodes;
-
-  for (const nodeId in nodes) {
-    const node = nodes[nodeId];
-    const { verb, action } = node.flowJson || {};
-
-    if ((verb === 'play' || verb === 'dtmf') && Array.isArray(action)) {
-      const match = action.find(act => act.id === targetAudioId);
-      if (match) return true;
-    }
-  }
-
-  return false;
 }
 
 module.exports = {

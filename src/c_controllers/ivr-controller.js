@@ -6,7 +6,8 @@ const {
   FlowEdgesRepository, 
   FlowJsonRepository,
   MemberScheduleRepo, 
-  UserRepository
+  UserRepository,
+  PromptRepository
 } = require("../../shared/c_repositories");
 const { IVRSettings } = require("../../shared/c_db"); 
 const { SuccessRespnose, ErrorResponse } = require("../../shared/utils/common");
@@ -24,6 +25,7 @@ const flowEdgesRepo = new FlowEdgesRepository();
 const memberScheduleRepo = new MemberScheduleRepo();
 const flowJsonRepository = new FlowJsonRepository();
 const userRepository = new UserRepository();
+const promptRepo = new PromptRepository();
 
 
 async function createIVR(req, res) {
@@ -69,6 +71,10 @@ async function createIVR(req, res) {
       schedule_id: scheduleData?.id || null,
       is_gather_node: bodyReq.nodesData.isGatherNode == true ? 1 : 0
     };
+
+    const audioIds = extractUniqueAudioIds([bodyReq.nodesData]);
+    promptRepo.update(audioIds, {is_allocated: 1})
+
 
     let flowRepoData;
     let flowEdgesData;
@@ -119,7 +125,6 @@ async function createIVR(req, res) {
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
 
   } catch (error) {
-    console.log("error while creating ivr", error);
     if (!transactionCommitted) {
       await transaction.rollback();
     }
@@ -129,6 +134,33 @@ async function createIVR(req, res) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
   }
 }
+
+function extractUniqueAudioIds(dataArray) {
+  const uniqueIds = new Set();
+
+  for (const data of dataArray) {
+    const nodes = data.nodes;
+
+    for (const key in nodes) {
+      const node = nodes[key];
+      const { flowJson } = node;
+
+      if (!flowJson) continue;
+
+      if ((flowJson.verb === "play" || flowJson.verb === "dtmf") && Array.isArray(flowJson.action)) {
+        for (const action of flowJson.action) {
+          if (action.id) {
+            uniqueIds.add(action.id);
+          }
+        }
+      }
+    }
+  }
+
+  return Array.from(uniqueIds);
+}
+
+
 
 async function getIVRSettings(req, res) {
   try {
@@ -201,7 +233,6 @@ async function updateIVR(req, res) {
 
     const currentFlowData = Array.isArray(currentData) ? currentData[0] : currentData;
 
-    // ✅ Skip duplicate check if flow name hasn't changed
     if (currentFlowData?.flow_name !== bodyReq.nodesData.flowName) {
       const duplicateCheck = await (Number(userDetail?.flow_type == 1) ? flowsRepo : flowJsonRepository)
         .findOne({
@@ -218,7 +249,37 @@ async function updateIVR(req, res) {
       }
     }
 
+    let nodesData = await flowJsonRepository.getAll({flow_id : id})
+    nodesData = nodesData.map(item => item.nodes_data);
+
+    const audioIds = extractUniqueAudioIds(nodesData);
+
     await flowJsonRepository.deleteIVRByFlowId(id, { transaction });
+
+    let ivrCreated = await flowJsonRepository.getAll({created_by: req.user.id});
+    ivrCreated = ivrCreated.map(item => item.nodes_data);
+
+    const matchedIds = [];
+    const unmatchedIds = [];
+
+    audioIds.forEach(audioId => {
+    let isMatched = false;
+
+    for (const flowData of ivrCreated) {
+        if (isAudioIdUsed(flowData, audioId)) {
+        isMatched = true;
+        break;
+        }
+    }
+
+    if (isMatched) {
+        matchedIds.push(audioId);
+    } else {
+        unmatchedIds.push(audioId);
+    }
+    });
+
+    promptRepo.update(unmatchedIds, {is_allocated: 0})
 
     if (Number(userDetail?.flow_type == 1)) {
       await flowsRepo.deleteIVRByFlowId(id, { transaction });
@@ -226,10 +287,8 @@ async function updateIVR(req, res) {
       await flowEdgesRepo.deleteIVRByFlowId(id, { transaction });
     }
 
-    // ✅ Now safely delete `member_schedules`
     await memberScheduleRepo.deleteByModuleId(id, { transaction });
 
-    // ✅ Recreate `member_schedules` if `scheduleData` exists
     let scheduleData = null;
     if (bodyReq.nodesData.scheduleData && Object.keys(bodyReq.nodesData.scheduleData).length > 0) {
       scheduleData = await memberScheduleRepo.create({
@@ -238,7 +297,6 @@ async function updateIVR(req, res) {
       }, { transaction });
     }
 
-    // ✅ Construct IVR data for insertion
     const flowData = {
       call_center_id: bodyReq.nodesData.callCenterId,
       flow_name: bodyReq.nodesData.flowName,
@@ -251,7 +309,9 @@ async function updateIVR(req, res) {
       is_gather_node: bodyReq.nodesData.isGatherNode == true ? 1 : 0
     };
 
-    // ✅ Insert new IVR data
+    const audioId = extractUniqueAudioIds([bodyReq.nodesData]);
+    promptRepo.update(audioId, {is_allocated: 1})
+
     if (Number(userDetail?.flow_type == 1)) {
       await flowsRepo.create(bodyReq.nodesData, req.user.id, id, { transaction });
 
@@ -270,7 +330,6 @@ async function updateIVR(req, res) {
       Logger.info('Publishing message to queue');
       await publishIVRUpdate();
     }
-    // ✅ Log user action
     await userJourneyRepo.create({
       module_name: MODULE_LABEL.IVR,
       action: ACTION_LABEL.EDIT,
@@ -304,18 +363,47 @@ async function deleteIVR(req, res) {
   const transaction = await sequelize.transaction();
   try {
     const id = req.body.ivrIds;
+    let nodesData = await flowJsonRepository.getAll({flow_id : id})
+    nodesData = nodesData.map(item => item.nodes_data);
+
+    const audioIds = extractUniqueAudioIds(nodesData);
+
     await flowJsonRepository.deleteIVRByFlowId(id, { transaction });
     await flowsRepo.deleteIVRByFlowId(id, { transaction });
     await flowsControlRepo.deleteIVRByFlowId(id, { transaction });
     await flowEdgesRepo.deleteIVRByFlowId(id, { transaction });
     await memberScheduleRepo.deleteByModuleId(id, { transaction });
 
-     
     await userJourneyRepo.create({
       module_name: MODULE_LABEL.IVR,
       action: ACTION_LABEL.DELETE,
       created_by: req.user.id
     }, { transaction });
+
+    let ivrCreated = await flowJsonRepository.getAll({created_by: req.user.id});
+    ivrCreated = ivrCreated.map(item => item.nodes_data);
+
+    const matchedIds = [];
+    const unmatchedIds = [];
+
+    audioIds.forEach(audioId => {
+    let isMatched = false;
+
+    for (const flowData of ivrCreated) {
+        if (isAudioIdUsed(flowData, audioId)) {
+        isMatched = true;
+        break;
+        }
+    }
+
+    if (isMatched) {
+        matchedIds.push(audioId);
+    } else {
+        unmatchedIds.push(audioId);
+    }
+    });
+
+    promptRepo.update(unmatchedIds, {is_allocated: 0})
 
     await transaction.commit();
 
@@ -323,7 +411,6 @@ async function deleteIVR(req, res) {
     return res.status(StatusCodes.OK).json(SuccessRespnose);
 
   } catch (error) {
-    console.log("error", error);
     await transaction.rollback();
     Logger.error(`Error deleting IVR: ${error}`);
     
@@ -363,7 +450,6 @@ async function getIVRByFlowId(req, res) {
     return res.status(StatusCodes.OK).json(SuccessRespnose);
 
   } catch (error) {
-    console.log("error", error);
     Logger.error(`Error getting IVR by flow ID: ${error}`);
     ErrorResponse.message = error.message;
     ErrorResponse.error = error;
@@ -405,6 +491,22 @@ async function publishIVRUpdate() {
     Logger.error("Error publishing message:", error);
     throw error;
   }
+}
+
+function isAudioIdUsed(flowData, targetAudioId) {
+  const nodes = flowData.nodes;
+
+  for (const nodeId in nodes) {
+    const node = nodes[nodeId];
+    const { verb, action } = node.flowJson || {};
+
+    if ((verb === 'play' || verb === 'dtmf') && Array.isArray(action)) {
+      const match = action.find(act => act.id === targetAudioId);
+      if (match) return true;
+    }
+  }
+
+  return false;
 }
 
 module.exports = {
