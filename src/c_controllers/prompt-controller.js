@@ -56,6 +56,10 @@ async function getPromptDetails(req, res) {
                 return res.status(StatusCodes.OK).json(SuccessRespnose);
             }
         }
+        if(req.user.role === USERS_ROLE.CALLCENTRE_ADMIN)
+        {
+            conditions.is_deleted=false
+        }
 
         // 👇 fallback for superadmin or others
         if (prompt_status) conditions.prompt_status = parseInt(prompt_status);
@@ -183,7 +187,6 @@ async function updatePromptStatus(req, res) {
 async function getAllPrompt(req, res) {
     try {
         const results = await promptRepo.get({created_by: req.user.id, is_deleted: false});
-
         if (results.length > 0) {
             SuccessRespnose.data = results;
             SuccessRespnose.message = "Prompt fetched successfully";
