@@ -206,7 +206,12 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
          subscription
          .on('message', async (message, content, ackOrNack) => {
             Logger.info("subscribed content : " + JSON.stringify(content));
-            const cdrJson = JSON.parse(content);//JSON.parse(content);
+            let cdrJson;
+            if (typeof content === "string") {
+              cdrJson = JSON.parse(content);//JSON.parse(content);
+            } else {
+              cdrJson = content;
+            }
       
             let report_data = {};
             let summary_data = {};
