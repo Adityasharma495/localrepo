@@ -61,7 +61,7 @@ async function createIVR(req, res) {
     }
 
     const flowData = {
-      call_center_id: bodyReq.nodesData.callCenterId,
+      call_center_id: userDetail?.callcenter_id,
       flow_name: bodyReq.nodesData.flowName,
       flow_id: flowId,
       nodes_data: bodyReq.nodesData,
@@ -82,7 +82,7 @@ async function createIVR(req, res) {
     let flowJsonData;
 
     if (Number(userDetail?.flow_type == 1)) {
-      flowRepoData = await flowsRepo.create(bodyReq.nodesData, req.user.id, flowId, { transaction });
+      flowRepoData = await flowsRepo.create(bodyReq.nodesData, req.user.id, flowId, userDetail?.callcenter_id, { transaction });
       
       if (bodyReq.edges.length > 0) {
         flowEdgesData = await flowEdgesRepo.create({
@@ -90,7 +90,7 @@ async function createIVR(req, res) {
           edge_json: bodyReq.edges
         }, { transaction });
 
-        flowControlData = await flowsControlRepo.create(bodyReq.nodesData, flowId, { transaction });
+        flowControlData = await flowsControlRepo.create(bodyReq.nodesData, flowId, userDetail?.callcenter_id, { transaction });
       }
 
       if (scheduleData) {
@@ -298,7 +298,7 @@ async function updateIVR(req, res) {
     }
 
     const flowData = {
-      call_center_id: bodyReq.nodesData.callCenterId,
+      call_center_id: userDetail?.callcenter_id,
       flow_name: bodyReq.nodesData.flowName,
       flow_id: id,
       nodes_data: bodyReq.nodesData,
@@ -313,7 +313,7 @@ async function updateIVR(req, res) {
     promptRepo.update(audioId, {is_allocated: 1})
 
     if (Number(userDetail?.flow_type == 1)) {
-      await flowsRepo.create(bodyReq.nodesData, req.user.id, id, { transaction });
+      await flowsRepo.create(bodyReq.nodesData, req.user.id, id, userDetail?.callcenter_id,{ transaction });
 
       if (bodyReq.edges.length > 0) {
         await flowEdgesRepo.create({
@@ -321,7 +321,7 @@ async function updateIVR(req, res) {
           edge_json: bodyReq.edges
         }, { transaction });
 
-        await flowsControlRepo.create(bodyReq.nodesData, id, { transaction });
+        await flowsControlRepo.create(bodyReq.nodesData, id, userDetail?.callcenter_id,{ transaction });
       }
     }
 
