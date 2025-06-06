@@ -501,13 +501,16 @@ async function getDidSpecificReport(req, res) {
 
       if (week === startWeek && inboundRepo) {
 
-        const inbound = await inboundRepo.getByDidByStartDate({ callee_number: `0${did}` }, startDate,userId);
+
+        
+
+        const inbound = await inboundRepo.getByDidByStartDate({ callee_number: did }, startDate,userId);
         finalInboundData.push(...inbound);
       } else if (week === endWeek && inboundRepo) {
-        const inbound = await inboundRepo.getByDidByEndDate({ callee_number: `0${did}` }, endDate, userId);
+        const inbound = await inboundRepo.getByDidByEndDate({ callee_number: did }, endDate, userId);
         finalInboundData.push(...inbound);
       } else if (inboundRepo) {
-        const inbound = await inboundRepo.getByDidByDate({ callee_number: `0${did}` },userId);
+        const inbound = await inboundRepo.getByDidByDate({ callee_number: did },userId);
         finalInboundData.push(...inbound);
       }
 
