@@ -156,18 +156,6 @@ const connectCockroach = async () => {
     }
   }
 
-const getDateTimeFormat = (date) =>{
-
-            const startdateIST = moment.tz(date, "Asia/Kolkata"); // Parse as IST
-            const startdateUTC = startdateIST.utc().toDate(); // Convert to UTC Date Object
-
-            const now = new Date(startdateUTC);
-            const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
-            const istDate = new Date(now.getTime() + istOffset);
-
-            return istDate;
-
-}
 
 const reports = async () => {
      
@@ -202,8 +190,8 @@ const reports = async () => {
                     let endOfDay = new Date(report.schedule_date.toISOString());
                     endOfDay.setHours(23, 59, 59, 999);
 
-                    startOfDay = getDateTimeFormat(startOfDay);
-                    endOfDay = getDateTimeFormat(endOfDay)
+                    startOfDay = startOfDay;
+                    endOfDay = endOfDay
 
                     Logger.info(`Start Date : ${typeof startOfDay.toISOString()} , End Date : ${endOfDay.toISOString()}`)
 
