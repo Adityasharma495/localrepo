@@ -403,7 +403,9 @@ async function deleteIncomingReport(req, res) {
 
 async function getDidSpecificReport(req, res) {
   try {
+
     const { did, startDate, endDate } = req.params;
+
     const userId = req.user.id
 
     const InboundRepositories = {
@@ -465,6 +467,8 @@ async function getDidSpecificReport(req, res) {
     const startDateMonthName = dateStart.format('MMMM');
     const endDateMonthName = dateEnd.format('MMMM');
 
+
+
     if (startDateMonthName !== endDateMonthName) {
       ErrorResponse.message = 'You can check only 1 month data';
       return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
@@ -477,14 +481,17 @@ async function getDidSpecificReport(req, res) {
       return 4;
     };
 
+
     const startWeek = getWeekNumber(dateStart.date());
     const endWeek = getWeekNumber(dateEnd.date());
 
 
+     
 
 
     const finalInboundData = [];
     const finalOutboundData = [];
+
 
     for (let week = startWeek; week <= endWeek; week++) {
       const repoKey = `${startDateMonthName}w${week}`;
@@ -493,13 +500,14 @@ async function getDidSpecificReport(req, res) {
 
 
       if (week === startWeek && inboundRepo) {
-        const inbound = await inboundRepo.getByDidByStartDate({ callee_number: did }, startDate,userId);
+
+        const inbound = await inboundRepo.getByDidByStartDate({ callee_number: `0${did}` }, startDate,userId);
         finalInboundData.push(...inbound);
       } else if (week === endWeek && inboundRepo) {
-        const inbound = await inboundRepo.getByDidByEndDate({ callee_number: did }, endDate, userId);
+        const inbound = await inboundRepo.getByDidByEndDate({ callee_number: `0${did}` }, endDate, userId);
         finalInboundData.push(...inbound);
       } else if (inboundRepo) {
-        const inbound = await inboundRepo.getByDidByDate({ callee_number: did },userId);
+        const inbound = await inboundRepo.getByDidByDate({ callee_number: `0${did}` },userId);
         finalInboundData.push(...inbound);
       }
 
