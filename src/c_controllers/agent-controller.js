@@ -798,13 +798,13 @@ async function agentRealTimeData() {
     });
 
     // Combine data
-    const combinedData = agentData.map(agent => {
-      const agentIdStr = agent.id.toString();
+    const combinedData = agentData?.map(agent => {
+      const agentIdStr = agent?.id?.toString();
       const assignedGroups = agentToGroupsMap.get(agentIdStr) || [];
 
       // Get groups where this agent is NOT assigned
-      const noAssignedGroup = agentGroups.filter(group =>
-        group.agents.every(entry => entry.agent_id.toString() !== agentIdStr)
+      const noAssignedGroup = agentGroups?.filter(group =>
+        group?.agents?.every(entry => entry?.agent_id?.toString() !== agentIdStr)
       );
 
       return {
