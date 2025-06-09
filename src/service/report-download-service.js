@@ -143,7 +143,7 @@ const path = require('path');
 const archiver = require('archiver');
 const { parse } = require('json2csv');
 const moment = require('moment-timezone');
-const {BACKEND_API_BASE_URL, TOTAL_WEEK_DAYS} = require('../../shared/utils/common/constants');
+const {BACKEND_API_BASE_URL, TOTAL_WEEK_DAYS, DOWNLOAD_REPORT_FILE_RECORD_SIZE} = require('../../shared/utils/common/constants');
 const batchLimit = 900000;
 const sequelize = require('../../shared/config/sequelize');
 const { Op, fn, col, where } = require('sequelize');
@@ -228,6 +228,7 @@ const reports = async () => {
                       };
                     const incomingReportData = await repoInstance.getByDid(query);
                     Logger.info(`Incomming Report Data Count : ${incomingReportData.length} `);
+                    const RECORDS_PER_FILE = DOWNLOAD_REPORT_FILE_RECORD_SIZE;
                     if (incomingReportData.length > 0) {
                         const extractedData = incomingReportData.map(record => ({
                             ...record.dataValues,
@@ -235,7 +236,6 @@ const reports = async () => {
                             callee_number: `'${record.dataValues.callee_number}'`
                         }));
 
-                        const csvData = parse(extractedData);
                         const timestamp = moment().format('YYYYMMDD_HHmmss');
                         Logger.info(`Time : ${timestamp} `);
                         fileName = `report_${report.did}_${timestamp}.zip`;
@@ -244,15 +244,39 @@ const reports = async () => {
                         Logger.info(`CSV File Path  : ${csvFilePath} `);
                         const zipFilePath = path.join(BASE_FOLDER, `report_${report.did}_${timestamp}.zip`);
                         Logger.info(`ZIP File Path : ${zipFilePath} `);
-                        fs.writeFileSync(csvFilePath, csvData, 'utf8');
                         const output = fs.createWriteStream(zipFilePath);
                         const archive = archiver('zip', { zlib: { level: 9 } });
 
                         archive.pipe(output);
-                        archive.append(fs.createReadStream(csvFilePath), { name: `report_${report.did}_${timestamp}.csv` });
+                        const totalChunks = Math.ceil(
+                          extractedData.length / RECORDS_PER_FILE
+                        );
+                        for (let i = 0; i < totalChunks; i++) {
+                          const chunk = extractedData.slice(
+                            i * RECORDS_PER_FILE,
+                            (i + 1) * RECORDS_PER_FILE
+                          );
+                          const csvData = parse(chunk);
+                          const partNumber = i + 1;
+                          const csvFileName = `report_${report.did}_${partNumber}.csv`;
+                          const tempCsvFilePath = path.join(
+                            BASE_FOLDER,
+                            csvFileName
+                          );
+                          fs.writeFileSync(tempCsvFilePath, csvData, "utf8");
+                          const stream = fs.createReadStream(tempCsvFilePath);
+                          archive.append(stream, { name: csvFileName });
+                          stream.on("close", () => {
+                            fs.unlink(tempCsvFilePath, (err) => {
+                              if (err)
+                                console.error(
+                                  "Failed to delete temp CSV:",
+                                  err
+                                );
+                            });
+                          });
+                        }
                         await archive.finalize();
-
-                        fs.unlinkSync(csvFilePath);
 
                         const file_url = `${BACKEND_API_BASE_URL}/assets/reports/${report.did}/${fileName}`;
                         Logger.info(`File URL : ${file_url} `);
