@@ -11,9 +11,9 @@ const { constants } = require("../../shared/utils/common");
 
 async function getAll(req, res) {
   try {
-    const data = await incomingSummaryRepo.getAll(constants.USERS_ROLE.SUPER_ADMIN, req.user.id);
 
-    // const data = await incomingSummaryRepo.getAll(req.user.role, req.user.id);
+    const data = await incomingSummaryRepo.getAll(req.user.role, req.user.id);
+
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
