@@ -24,5 +24,6 @@ module.exports = {
     DownloadReportMiddleware: require('./download-report-middleware'),
     VoicePlansMiddleware: require('./voice-plans-middleware'),
     CompanyMiddleware: require('./company-middleware'),
-    DidAllocateHistoryMiddleware: require("./did-allocate-history-middleware")
+    DidAllocateHistoryMiddleware: require("./did-allocate-history-middleware"),
+    RemarkStatusMiddleware: require("./remark-status-middleware")
 }

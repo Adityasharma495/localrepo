@@ -37,4 +37,6 @@ module.exports = {
     DidAllocateHistoryController: require("./did-allocate-history-controller"),
     DidRemoveHistoryController: require("./did-remove-history-controller"),
     OutgoingCallsController: require('./outgoing-calls-controller'),
+    RemarkStatusController: require('./remark-status-controller'),
+    RemarksController: require('./remarks-controller'),
 }

@@ -39,6 +39,8 @@ const incomingReportRoute = require('./incoming-report-routes.js')
 const didAllocateHistoryRoute = require('./did-allocate-history-routes.js')
 const didRemoveHistoryRoute = require('./did-remove-history-routes.js')
 const outgoingCallsRoutes = require('./outgoing-calls-routes.js');
+const remarkStatusRoutes = require("./remark-status-routes.js")
+const remarksRoutes = require("./remarks-routes.js")
 
 
 router.use('/users', userRoutes);
@@ -79,5 +81,8 @@ router.use('/incoming-report', incomingReportRoute);
 router.use('/did-allocate-history', didAllocateHistoryRoute);
 router.use('/did-remove-history', didRemoveHistoryRoute);
 router.use('/outgoing-calls', outgoingCallsRoutes);
+router.use('/remark-status', remarkStatusRoutes);
+router.use('/remarks', remarksRoutes);
+
 
 module.exports = router;
