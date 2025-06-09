@@ -92,19 +92,6 @@ const connectCockroach = async () => {
 }
 
 
-const getDateTimeFormat = (date) =>{
-
-            const startdateIST = moment.tz(date, "Asia/Kolkata"); // Parse as IST
-            const startdateUTC = startdateIST.utc().toDate(); // Convert to UTC Date Object
-
-            const now = new Date(startdateUTC);
-            const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC + 5:30
-            const istDate = new Date(now.getTime() + istOffset);
-
-            return istDate;
-
-}
-
 const repositoryMap = {
   incomingReport1W1Repo: incomingReport1W1Repo,
   incomingReport1W2Repo: incomingReport1W2Repo,
@@ -216,14 +203,18 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
             let report_data = {};
             let summary_data = {};
 
+            if (cdrJson.calleeTo.length === 11) {
+              cdrJson.calleeTo = cdrJson.calleeTo.substring(1, cdrJson.calleeTo.length);
+            }
+
             try {
               report_data = {
                  user_id : cdrJson.userId ? cdrJson.userId : null,
                  call_sid : cdrJson.id,
                  caller_number : cdrJson.callerFrom,
                  callee_number : cdrJson.calleeTo,
-                 start_time : getDateTimeFormat(cdrJson.timings.START),
-                 end_time : getDateTimeFormat(cdrJson.timings.END),
+                 start_time : cdrJson.timings.START,
+                 end_time : cdrJson.timings.END,
                  dtmf : cdrJson.dtmf,
                  billing_duration : cdrJson.duration.billing
               }
@@ -263,9 +254,9 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
               let start =  new Date(cdrJson.timings.START).toISOString();
               let startOfDay = new Date(start);
               Logger.info(`Start Of  Date : ${startOfDay} `);
-              startOfDay.setHours(0, 0, 0, 0);
-              const startDateCheck = getDateTimeFormat(startOfDay);
-              const startDate = getDateTimeFormat(cdrJson.timings.START);
+              startOfDay.setUTCHours(0, 0, 0, 0);
+              const startDateCheck = startOfDay;
+              const startDate = cdrJson.timings.START;
               const userId = cdrJson.userId;
               Logger.info("USer ID :  "+userId);
               const connectedCalls = (cdrJson.duration.billing > 0 ? 1 : 0);
@@ -285,7 +276,7 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
                         sms_count : (Number(incoming.sms_count) || 0) + (Number(cdrJson.smsCount) || 0), 
                         parent_id : cdrJson.userId ? cdrJson.userId : null,
                         s_parent_id : cdrJson.userId ? cdrJson.userId : null,
-                        billing_duration: incoming.billing_duration+cdrJson.duration.billing   
+                        billing_duration: Number(incoming.billing_duration)+Number(cdrJson.duration.billing)   
                    }
 
                    const summary = await incomingSummaryRepo.updateSummary(summary_data, startDate);
@@ -305,7 +296,7 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
                        dtmf_count : cdrJson.dtmfCount ?? 0,
                        retry_count : cdrJson.retryCount ?? 0,
                        sms_count : cdrJson.smsCount ?? 0,
-                       billing_duration : cdrJson.duration.billing 
+                       billing_duration : Number(cdrJson.duration.billing) 
                    }
 
                    const summary = await incomingSummaryRepo.create(summary_data);
