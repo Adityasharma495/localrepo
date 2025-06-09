@@ -82,7 +82,6 @@ class IncomingSummaryRepository extends CrudRepository {
         },
     };
 
-    console.log("conditions", conditions);
     return await this.findOne(conditions);
   }
 
