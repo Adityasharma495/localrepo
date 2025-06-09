@@ -6,6 +6,7 @@ const { Logger } = require("../../shared/config");
 const {AgentRepository, ExtensionRepository, UserRepository, SubUserLicenceRepository, TelephonyProfileRepository, UserJourneyRepository, TelephonyProfileItemsRepository, AgentGroupRepository} = require('../../shared/c_repositories');
 const { Op } = require("sequelize");
 const { constants } = require("../backup/utils/common");
+const User = require("../../shared/c_db/User")
 
 const agentGroupRepo = new AgentGroupRepository();
 const agentRepo = new AgentRepository();
@@ -194,17 +195,34 @@ await agentRepo.update(agent.id, {telephony_profile : telephonyProfile[0].id})
 }
 
 
+async function getDescendantUserIds(userId) {
+  const directChildren = await User.findAll({
+    where: { created_by: userId },
+    attributes: ['id'],
+    raw: true,
+  });
+  const ids = directChildren.map(u => u.id);
+  for (const childId of ids) {
+    const childDescendants = await getDescendantUserIds(childId);
+    ids.push(...childDescendants);
+  }
+  return ids;
+}
+
+
+
 async function getAll(req, res) {
 
   const { data } = req.query || null;
-
   try {
     let agentData;
     if (req.user.role === constants.USERS_ROLE.SUPER_ADMIN) {
       agentData = await agentRepo.getAllActiveAgents();
     } else {
-      agentData = await agentRepo.getAllActiveAgents(req.user.id);
+      const userIds = [req.user.id, ...(await getDescendantUserIds(req.user.id))];
+      agentData = await agentRepo.getAllActiveAgents(userIds);
     }
+
     // const agentData = await agentRepo.getAll(req.user.id, data);
     SuccessRespnose.data = agentData;
     SuccessRespnose.message = "Success";
