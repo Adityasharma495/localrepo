@@ -672,7 +672,7 @@ async function toggleStatus(req, res) {
       })
 
       const userData = await userRepo.findOne({id: agentUser.id})
-      const duration = getTimeDifferenceInSeconds(userData.login_at, userData.logout_at)
+      const duration = getTimeDifferenceInSeconds(userData.login_at, (userData.logout_at || Date.now()))
 
       await userRepo.update(agentUser.id, {
         duration
@@ -727,7 +727,7 @@ function getTimeDifferenceInSeconds(login, logout) {
   const logoutTimestamp = Date.parse(logout);
 
   const diffMs = logoutTimestamp - loginTimestamp;
-  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffSeconds = Math.floor(Math.abs(diffMs / 1000));
   return diffSeconds;
 }
 

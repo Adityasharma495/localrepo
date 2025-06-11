@@ -162,7 +162,7 @@ async function logoutUser(req, res) {
 
   try {
     const userData = await userRepo.get(id);
-    const duration = getTimeDifferenceInSeconds(userData.login_at, userData.logout_at)
+    const duration = getTimeDifferenceInSeconds(userData.login_at, (userData.logout_at || Date.now()))
 
     if (userData?.role === USERS_ROLE.CALLCENTRE_AGENT) {
       const subLicenceData = await subUserLicenceRepo.findOne({ user_id: userData?.created_by });
@@ -1056,7 +1056,7 @@ function getTimeDifferenceInSeconds(start, end) {
   const endTime = new Date(end);
   if (isNaN(startTime) || isNaN(endTime)) return 0;
 
-  return Math.floor((endTime - startTime) / 1000);
+  return Math.floor(Math.abs(endTime - startTime) / 1000);
 }
 
 module.exports = {
