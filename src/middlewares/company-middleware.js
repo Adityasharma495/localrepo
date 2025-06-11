@@ -39,6 +39,12 @@ function validateCompanyRequest(req, res, next) {
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
+    } else if (bodyReq.licence == undefined) {
+        ErrorResponse.message = 'Something went wrong while creating Company';
+        ErrorResponse.error = new AppError(['Company Licence not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
     }
     next();
 }
@@ -72,6 +78,7 @@ function modifyCompanyRequest(req, is_create = true) {
                 phone: bodyReq.phone,
                 address: bodyReq.address,
                 pincode: bodyReq.pincode,
+                licence: bodyReq.licence
             }
         }
 
