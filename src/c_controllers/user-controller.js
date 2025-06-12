@@ -270,17 +270,66 @@ async function deleteUser(req, res) {
         }
       }
     } else {
-
-      await userRepo.deleteMany(userIds, req.user);
       for (const userId of userIds) {
-        const loggedInData = await userRepo.getForLicence(userId);
-        const availableLicence = loggedInData.sub_user_licence.available_licence;
-        const data = await userRepo.findOneDeleted({ id: userId });
+        const deleteUser = await userRepo.getForLicence(userId);
+        const loggedInUser = await userRepo.getForLicence(req.user.id);
+
+        // if company admin is deleted
+        if (deleteUser?.role === USERS_ROLE.COMPANY_ADMIN) {
+          const mergedLicence = {};
+
+          for (const key in deleteUser?.sub_user_licence?.available_licence) {
+            mergedLicence[key] =
+              (Number(deleteUser?.sub_user_licence?.available_licence[key]) || 0) +
+              (Number(loggedInUser?.sub_user_licence?.available_licence[key]) || 0);
+          }
+          const companyLicence = await companyRepo.findOne({id: deleteUser?.company_id})
+          const availableLicence = Number(companyLicence?.subUserLicenceId?.available_licence?.company);
+          const updatedLicence = availableLicence + 1;
+          await subUserLicenceRepo.updateById(companyLicence?.subUserLicenceId?.id, {available_licence: {company: updatedLicence}})
+
+          if (req.user.role !== USERS_ROLE.RESELLER) {
+            await subUserLicenceRepo.update(req.user.id, {available_licence: mergedLicence})
+          }
+          await subUserLicenceRepo.update(userId, {is_deleted: true})
+        }
+         // if Callcenter admin is deleted
+        if (deleteUser?.role === USERS_ROLE.CALLCENTRE_ADMIN) {
+          const mergedLicence = {};
+
+          for (const key in deleteUser?.sub_user_licence?.available_licence) {
+            mergedLicence[key] =
+              (Number(deleteUser?.sub_user_licence?.available_licence[key]) || 0) +
+              (Number(loggedInUser?.sub_user_licence?.available_licence[key]) || 0);
+          }
+
+          const callcenterLicence = await callCentreRepo.get(deleteUser?.callcenter_id)
+          const availableLicence = Number(callcenterLicence?.subUserLicenceId?.available_licence?.callcenter);
+          const updatedLicence = availableLicence + 1;
+          await subUserLicenceRepo.updateById(callcenterLicence?.subUserLicenceId?.id, {available_licence: {callcenter: updatedLicence}})
+
+          await subUserLicenceRepo.update(req.user.id, {available_licence: mergedLicence})
+          await subUserLicenceRepo.update(userId, {is_deleted: true})
+        }
+
+        const availableLicence = loggedInUser?.sub_user_licence?.available_licence;
 
         let updatedData = { ...availableLicence };
-        updatedData[data.role] = (updatedData[data.role] || 0) + 1;
-        await subUserLicenceRepo.updateById(loggedInData.sub_user_licence.id, { available_licence: updatedData })
+        updatedData[deleteUser.role] = (updatedData[deleteUser.role] || 0) + 1;
+
+        const mergedLicence = {};
+        for (const key in deleteUser?.sub_user_licence?.available_licence) {
+          mergedLicence[key] =
+            (Number(deleteUser?.sub_user_licence?.available_licence[key]) || 0) +
+            (Number(updatedData[key]) || 0);
+        }
+
+        if (loggedInUser?.sub_user_licence?.id) {
+          await subUserLicenceRepo.updateById(loggedInUser?.sub_user_licence?.id, { available_licence: mergedLicence })
+        }
+        await subUserLicenceRepo.update(userId, {is_deleted: true})
       }
+      await userRepo.deleteMany(userIds, req.user);
     }
 
     const userJourneyfields = {
@@ -298,6 +347,7 @@ async function deleteUser(req, res) {
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
+    console.log(error)
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg = error.message;
 
@@ -482,6 +532,7 @@ async function signupUser(req, res) {
     let user;
     let subUserLicenceId;
     const loggedInData = await userRepo.getForLicence(req.user.id)
+    console.log('loggedINdata', loggedInData)
 
     if (SUB_LICENCE_ROLE.includes(req.user.role)) {
 
@@ -498,6 +549,7 @@ async function signupUser(req, res) {
   
     }
 
+    // when company user is created
     if (bodyReq.user.role === USERS_ROLE.COMPANY_ADMIN) {
       const companyLicence = await companyRepo.findOne({ id: bodyReq.user.company_id });
 
@@ -512,6 +564,25 @@ async function signupUser(req, res) {
         await subUserLicenceRepo.updateById(
           companyLicence?.subUserLicenceId?.id,
           { available_licence: { company: updatedLicence } }
+        );
+      }
+    }
+
+    // when callcenter user is created
+    if (bodyReq.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
+      const callCentreLicence = await callCentreRepo.get(bodyReq.user.callcenter_id);
+
+      const availableLicence = Number(callCentreLicence?.subUserLicenceId?.available_licence?.callcenter);
+
+      if (availableLicence === 0) {
+        ErrorResponse.message = "Callcenter's User Limit Exceeded. New User not added to Callcenter";
+        return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+      } else {
+        const updatedLicence = availableLicence - 1;
+
+        await subUserLicenceRepo.updateById(
+          callCentreLicence?.subUserLicenceId?.id,
+          { available_licence: { callcenter: updatedLicence } }
         );
       }
     }
@@ -539,8 +610,9 @@ async function signupUser(req, res) {
       subUserLicenceId = data.id
       await userRepo.update(user.id, { sub_user_licence_id: subUserLicenceId })
 
-      await subUserLicenceRepo.updateById(loggedInData.sub_user_licence.id, { available_licence: bodyReq.user.parent_licence })
-
+      if (loggedInData?.sub_user_licence?.id) {
+        await subUserLicenceRepo.updateById(loggedInData.sub_user_licence.id, { available_licence: bodyReq.user.parent_licence })
+      }
     }
 
     responseData.user = await user.generateUserData();
@@ -597,10 +669,11 @@ async function updateUser(req, res) {
     }
 
     const loggedInData = await userRepo.getForLicence(uid)
-    
+
     // only update licence in case if reseller (reseller only update by superadmin or subsuperadmin)
     if (req.user.role === USERS_ROLE.SUPER_ADMIN || req.user.role === USERS_ROLE.SUB_SUPERADMIN || req.user.role === USERS_ROLE.RESELLER) {
-      if (req.user.role === USERS_ROLE.RESELLER) {
+      const isSame = areLicencesEqual(loggedInData?.sub_user_licence?.available_licence, bodyReq?.user?.sub_licence)
+      if (req.user.role === USERS_ROLE.RESELLER && !isSame) {
         const total_licence = loggedInData.sub_user_licence.total_licence
 
         const available_licence = loggedInData.sub_user_licence.available_licence
@@ -632,79 +705,142 @@ async function updateUser(req, res) {
             available_licence: newAvailLicence,
             total_licence: bodyReq.user.sub_licence
         })
-
-        const user = await userRepo.update(uid, bodyReq.user);
-        // userData = await user.generateUserData();
-        responseData.user = user
       }
 
     } else {
-      const total_licence = loggedInData.sub_user_licence.total_licence
-      const available_licence = loggedInData.sub_user_licence.available_licence
+      const isSame = areLicencesEqual(loggedInData?.sub_user_licence?.available_licence, bodyReq?.user?.sub_licence)
+      if (!isSame) {
+        const total_licence = loggedInData.sub_user_licence.total_licence
+        const available_licence = loggedInData.sub_user_licence.available_licence
 
-      const used_licence = Object.keys(total_licence).reduce((acc, key) => {
-        acc[key] = total_licence[key] - (available_licence[key] || 0);
-        return acc;
-      }, {});
+        const used_licence = Object.keys(total_licence).reduce((acc, key) => {
+          acc[key] = total_licence[key] - (available_licence[key] || 0);
+          return acc;
+        }, {});
 
 
-      const updated_licence = bodyReq.user.sub_licence
+        const updated_licence = bodyReq.user.sub_licence
 
-      // Compare each role and return immediately if an error is found
-      for (const key of Object.keys(used_licence)) {
-        if (used_licence[key] > (updated_licence[key] || 0)) {
-          ErrorResponse.message = `Can't Set ${USER_ROLE_VALUE[key]} Licence Because used licence Are greater.`;
-          return res
-                .status(StatusCodes.BAD_REQUEST)
-                .json(ErrorResponse);
+        // Compare each role and return immediately if an error is found
+        for (const key of Object.keys(used_licence)) {
+          if (used_licence[key] > (updated_licence[key] || 0)) {
+            ErrorResponse.message = `Can't Set ${USER_ROLE_VALUE[key]} Licence Because used licence Are greater.`;
+            return res
+                  .status(StatusCodes.BAD_REQUEST)
+                  .json(ErrorResponse);
+          }
         }
+
+        const newAvailLicence = Object.keys(bodyReq.user.sub_licence).reduce((acc, key) => {
+          acc[key] = bodyReq.user.sub_licence[key] - (used_licence[key] || 0);
+          return acc;
+        }, {});
+
+        await subUserLicenceRepo.update(uid,
+          {
+            available_licence: newAvailLicence,
+            total_licence: bodyReq.user.sub_licence
+        })
+        await subUserLicenceRepo.update(req.user.id, {available_licence: bodyReq.user.parent_licence})
       }
-
-      const newAvailLicence = Object.keys(bodyReq.user.sub_licence).reduce((acc, key) => {
-        acc[key] = bodyReq.user.sub_licence[key] - (used_licence[key] || 0);
-        return acc;
-      }, {});
-
-      await subUserLicenceRepo.update(uid,
-        {
-          available_licence: newAvailLicence,
-          total_licence: bodyReq.user.sub_licence
-      })
-
-      const user = await userRepo.update(uid, bodyReq.user);
-      // userData = await user.generateUserData();
-      responseData.user = user
-      await subUserLicenceRepo.update(req.user.id, {available_licence: bodyReq.user.parent_licence})
     }
+    
+    //when user company is changes
+    if ((Number(bodyReq?.user?.company_id) !== Number(loggedInData?.company_id)) && loggedInData.role === USERS_ROLE.COMPANY_ADMIN) {
+      //get child for used licence of company user
+      const child = await userRepo.getAll({
+        where: {
+          created_by: uid,
+          role: USERS_ROLE.COMPANY_ADMIN
+        }
+      })
+      const childIds = child.map(user => user.id);
+      const usedLicence = child.length + 1;
 
-    if ((Number(bodyReq?.user?.company_id) !== Number(loggedInData?.company_id)) && bodyReq.user.role === USERS_ROLE.COMPANY_ADMIN) {
-      // Add licence to old company as this user is remove from this
-      const oldCompanyLicence = await companyRepo.findOne({ id: loggedInData?.company_id });
-
-      const oldAvailableLicence = Number(oldCompanyLicence?.subUserLicenceId?.available_licence?.company);
-      const updatedLicence = oldAvailableLicence + 1;
-
-      await subUserLicenceRepo.updateById(
-          oldCompanyLicence?.subUserLicenceId?.id,
-          { available_licence: { company: updatedLicence } }
-      );
-
-      //subtract from new company licence which is assign now
+      // get the available licence of new updated company
       const companyLicence = await companyRepo.findOne({ id: bodyReq?.user?.company_id });
-
       const availableLicence = Number(companyLicence?.subUserLicenceId?.available_licence?.company);
-      if (availableLicence === 0) {
-        ErrorResponse.message = "Company's User Limit Exceeded. New User not added to company";
-        return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
-      } else {
-        const updatedLicence = availableLicence - 1;
+
+      if (availableLicence >= usedLicence) {
+        //subtract from new company licence which is assign now
+        const updatedLicence = availableLicence - usedLicence;
 
         await subUserLicenceRepo.updateById(
           companyLicence?.subUserLicenceId?.id,
           { available_licence: { company: updatedLicence } }
         );
+
+        // Add licence to old company as this user is remove from this
+        const oldCompanyLicence = await companyRepo.findOne({ id: loggedInData?.company_id });
+
+        const oldAvailableLicence = Number(oldCompanyLicence?.subUserLicenceId?.available_licence?.company);
+        const oldUpdatedLicence = oldAvailableLicence + usedLicence;
+
+        await subUserLicenceRepo.updateById(
+            oldCompanyLicence?.subUserLicenceId?.id,
+            { available_licence: { company: oldUpdatedLicence } }
+        );
+
+        //update the company of childs also 
+        await userRepo.bulkUpdate(childIds, {company_id: bodyReq?.user?.company_id})
+
+      } else {
+        ErrorResponse.message = "Can't Change Company because Used Licence are greater";
+        return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
       }
     }
+
+    //when user callcenter is changes
+    if ((Number(bodyReq?.user?.callcenter_id) !== Number(loggedInData?.callcenter_id)) && loggedInData.role === USERS_ROLE.CALLCENTRE_ADMIN) {
+      //get child for used licence of callcenter user
+      const child = await userRepo.getAll({
+        where: {
+          created_by: uid,
+          role: USERS_ROLE.CALLCENTRE_ADMIN
+        }
+      })
+      const childIds = child.map(user => user.id);
+      const usedLicence = child.length + 1;
+
+
+      // get the available licence of new updated Callcenter
+      const callcenterLicence = await callCentreRepo.get(bodyReq?.user?.callcenter_id);
+      const availableLicence = Number(callcenterLicence?.subUserLicenceId?.available_licence?.callcenter);
+
+      if (availableLicence >= usedLicence) {
+        //subtract from new callcenter licence which is assign now
+        const updatedLicence = availableLicence - usedLicence;
+
+        await subUserLicenceRepo.updateById(
+          callcenterLicence?.subUserLicenceId?.id,
+          { available_licence: { callcenter: updatedLicence } }
+        );
+
+        // Add licence to old Callcenter as this user is remove from this
+        const oldCallcenterLicence = await callCentreRepo.get(loggedInData?.callcenter_id);
+
+        const oldAvailableLicence = Number(oldCallcenterLicence?.subUserLicenceId?.available_licence?.callcenter);
+        const oldUpdatedLicence = oldAvailableLicence + usedLicence;
+
+        await subUserLicenceRepo.updateById(
+            oldCallcenterLicence?.subUserLicenceId?.id,
+            { available_licence: { callcenter: oldUpdatedLicence } }
+        );
+
+        //update the Callcenter of childs also 
+        if (childIds.length > 0) {
+          await userRepo.bulkUpdate(childIds, {callcenter_id: bodyReq?.user?.callcenter_id})
+        }
+
+      } else {
+        ErrorResponse.message = "Can't Change Callcenter because Used Licence are greater";
+        return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+      }
+    }
+
+    const user = await userRepo.update(uid, bodyReq.user);
+    // userData = await user.generateUserData();
+    responseData.user = user
 
 
     const userJourneyfields = {
@@ -756,6 +892,15 @@ function getTimeDifferenceInSeconds(start, end) {
   if (isNaN(startTime) || isNaN(endTime)) return 0;
 
   return Math.floor((endTime - startTime) / 1000);
+}
+
+function areLicencesEqual(userLicence, availableLicence) {
+  for (const key in userLicence) {
+    if (userLicence[key] !== availableLicence[key]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 module.exports = {

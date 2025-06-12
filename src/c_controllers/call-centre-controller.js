@@ -3,6 +3,7 @@ const {
   CallCentreRepository,
   UserRepository,
   UserJourneyRepository,
+  SubUserLicenceRepository
 } = require("../../shared/c_repositories");
 const {
   SuccessRespnose,
@@ -14,6 +15,7 @@ const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/consta
 const callCentreRepository = new CallCentreRepository();
 const userRepository = new UserRepository();
 const userJourneyRepo = new UserJourneyRepository();
+const subUserLicenceRepo = new SubUserLicenceRepository();
 
 async function create(req, res) {
   const bodyReq = req.body;
@@ -51,6 +53,17 @@ async function create(req, res) {
     };
 
     const response = await callCentreRepository.create(data);
+    //entry in sub-user-licence
+    const subUserLicenceData = await subUserLicenceRepo.create({
+      callcenter_id: response.id,
+      total_licence: bodyReq.licence,
+      available_licence: bodyReq.licence,
+      created_by: req.user.id
+    })
+    
+    const subUserLicenceId = subUserLicenceData.id
+    await callCentreRepository.update(response.id, { sub_user_licence_id: subUserLicenceId })
+
     SuccessRespnose.data = response
     SuccessRespnose.message = "Successfully created call centre";
 
@@ -66,6 +79,7 @@ async function create(req, res) {
 
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
   } catch (error) {
+    console.log(error)
     Logger.error(
       `Call Centre -> unable to create: ${JSON.stringify(
         data
@@ -145,6 +159,7 @@ async function get(req, res) {
 async function updateCallCentre(req, res) {
   const callCentreId = req.params.id;
   const bodyReq = req.body;
+  console.log('bodyReq', bodyReq)
   const data = {
     name: bodyReq.name.trim(),
     domain: bodyReq.domain.trim(),
@@ -169,6 +184,25 @@ async function updateCallCentre(req, res) {
         .status(StatusCodes.BAD_REQUEST)
         .json(ErrorResponse);
     }
+
+    const callcenterData =  await callCentreRepository.get(callCentreId)
+    console.log('callcenterData', callcenterData)
+
+    const totalLicence = callcenterData?.subUserLicenceId?.total_licence?.callcenter
+    const availableLicence = callcenterData?.subUserLicenceId?.available_licence?.callcenter
+    const usedLicence = Number(totalLicence) - Number(availableLicence)
+    if (usedLicence > Number(bodyReq?.licence?.callcenter)) {
+            ErrorResponse.message = `Can't update Used licence are greater`;
+                return res
+                .status(StatusCodes.BAD_REQUEST)
+                .json(ErrorResponse);     
+    }
+
+    await subUserLicenceRepo.updateById(callcenterData?.sub_user_licence_id, {
+      total_licence: bodyReq.licence,
+      available_licence: bodyReq.licence,
+    })
+
     const response = await callCentreRepository.update(callCentreId, data);
 
     SuccessRespnose.data = response
@@ -186,6 +220,7 @@ async function updateCallCentre(req, res) {
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
+    console.log(error)
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg = error.message;
 
