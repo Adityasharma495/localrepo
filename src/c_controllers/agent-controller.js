@@ -696,7 +696,7 @@ function getTimeDifferenceInSeconds(login, logout) {
   const logoutTimestamp = logout;
 
   const diffMs = logoutTimestamp - loginTimestamp;
-  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffSeconds = Math.floor(Math.abs(diffMs / 1000));
   return diffSeconds;
 }
 
