@@ -10,7 +10,6 @@ const User = require("../../shared/c_db/User")
 
 const agentGroupRepo = new AgentGroupRepository();
 const agentRepo = new AgentRepository();
-const extensionRepo = new ExtensionRepository();
 const userRepo = new UserRepository();
 const subUserLicenceRepo = new SubUserLicenceRepository();
 const telephonyProfileRepo = new TelephonyProfileRepository();
@@ -194,7 +193,6 @@ await agentRepo.update(agent.id, {telephony_profile : telephonyProfile[0].id})
   
 }
 
-
 async function getDescendantUserIds(userId) {
   const directChildren = await User.findAll({
     where: { created_by: userId },
@@ -208,8 +206,6 @@ async function getDescendantUserIds(userId) {
   }
   return ids;
 }
-
-
 
 async function getAll(req, res) {
 
@@ -244,8 +240,6 @@ async function getAll(req, res) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
   }
 }
-
-
 
 async function getById(req, res) {
   const id = req.params.id;
@@ -350,11 +344,7 @@ async function deleteAgent(req, res) {
   const id = req.body.agentIds;
 
   try {
-
     const agents = await agentRepo.findMany(id);
-
-   
-
     const allocated = [];
     const notAllocated = [];
     let response;
@@ -371,41 +361,37 @@ async function deleteAgent(req, res) {
     const telephonyProfiles = []
     const deletedAgent = []
     const deletedUser = []
- 
 
-   // get extension ids from telephony_profile
-   for (const agent of notAllocated) {
-    if (agent.telephony_profile) {
-
-      const userDetail = await userRepo.getByName(agent.agent_name);
-
-      deletedUser.push(userDetail.id);
-
-      const telephonyProfile = await telephonyProfileRepo.get(agent.telephony_profile);
-
-      telephonyProfiles.push(agent.telephony_profile);
-
-
-
-      deletedAgent.push(agent.id);
-
-
-      if (telephonyProfile.profile.length > 0) {
-
-        extensionIds.push(telephonyProfile.profile[1].id);
-
-   
+    // get extension ids from telephony_profile
+    for (const agent of notAllocated) {
+      if (agent.telephony_profile) {
+        const userDetail = await userRepo.getByName(agent.agent_name);
+        deletedUser.push(userDetail.id);
+        const telephonyProfile = await telephonyProfileRepo.get(agent.telephony_profile);
+        telephonyProfiles.push(agent.telephony_profile);
+        deletedAgent.push(agent.id);
+        if (telephonyProfile.profile.length > 0) {
+          (telephonyProfile?.profile)
+                .filter(profile => profile.type === 'SIP' || profile.type === 'WEBRTC')
+                .forEach(profile => {
+                  if (profile.id) {
+                    extensionIds.push(profile.id);
+                  }
+                });
+        }
       }
     }
-  }
 
     if (notAllocated.length > 0) {
-
-      await extensionRepo.bulkUpdate( extensionIds, { is_allocated: 0 });
-      await userRepo.bulkUpdate( deletedUser, { is_deleted: true });
-  
-
-      await telephonyProfileRepo.hardDeleteMany(telephonyProfiles)
+      if (extensionIds.length > 0) {
+        await extensionRepo.bulkUpdate( extensionIds, { is_allocated: 0 });
+      }
+      if (deletedUser.length > 0) {
+        await userRepo.bulkUpdate( deletedUser, { is_deleted: true });
+      }
+      if (telephonyProfiles.length > 0) {
+        await telephonyProfileRepo.hardDeleteMany(telephonyProfiles)
+      }
       response = await agentRepo.deleteMany(id);
     }
 
@@ -446,6 +432,7 @@ async function deleteAgent(req, res) {
 
 
   } catch (error) {
+    console.log(error)
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg = error.message;
 
@@ -601,13 +588,8 @@ async function toggleStatus(req, res) {
   const { id } = req.params; // The agent's ID
 
   try {
-    // Fetch the agent by ID
     const agent = await agentRepo.get(id);
-
     const agentUser = await userRepo.getByName(agent.agent_name)
-
-
-
 
     if (!agent) {
       return res
@@ -615,7 +597,6 @@ async function toggleStatus(req, res) {
         .json({ message: "Agent not found" });
     }
 
-    // Toggle the status
     const newStatus = agent.login_status === "1" ? "0" : "1";
 
 
@@ -651,31 +632,18 @@ async function toggleStatus(req, res) {
           .json(ErrorResponse);
       }
     } else {
-
-      const userLoginCount = await userRepo.getAll({
-            where: {
-              id: agentUser.id,
-              login_at: { [Op.ne]: null },
-              logout_at: null
-            }
-         });
-
-      if (userLoginCount && userLoginCount.length > 0) {
-            ErrorResponse.message = 'User already logged in';
-            return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
-         }
-
       subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent + 1;
-
-      await userRepo.update(agentUser.id, {
-        logout_at: Date.now(),
-      })
-
       const userData = await userRepo.findOne({id: agentUser.id})
-      const duration = getTimeDifferenceInSeconds(userData.login_at, userData.logout_at)
+
+      const duration = getTimeDifferenceInSeconds(userData.login_at, Date.now())
 
       await userRepo.update(agentUser.id, {
         duration
+      })
+
+      await userRepo.update(agentUser.id, {
+        login_at:null,
+        logout_at: Date.now(),
       })
     }
 
@@ -701,6 +669,7 @@ async function toggleStatus(req, res) {
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
+    console.log(error)
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg = error.message;
 
@@ -724,10 +693,10 @@ async function toggleStatus(req, res) {
 
 function getTimeDifferenceInSeconds(login, logout) {
   const loginTimestamp = Date.parse(login);
-  const logoutTimestamp = Date.parse(logout);
+  const logoutTimestamp = logout;
 
   const diffMs = logoutTimestamp - loginTimestamp;
-  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffSeconds = Math.floor(Math.abs(diffMs / 1000));
   return diffSeconds;
 }
 

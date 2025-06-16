@@ -38,6 +38,20 @@ const inbound = (detail,level) =>{
    
 }
 
+const outbound = (detail,level) =>{
+    let outboundPrice = null;
+    if (detail.level === String(level) && detail.voice_plan_id && Array.isArray(detail.voice_plan_id.plans))
+    {
+       const outboundPlan = detail.voice_plan_id.plans.find(plan => plan.plan_type === "OUTBOUND");
+       if (outboundPlan) 
+       { 
+            outboundPrice = outboundPlan.pulse_price;
+       }
+    }
+    Logger.info(`Outbound Price : ${outboundPrice} LEVEL : ${level} `);
+    return outboundPrice;
+}
+
 const updateCredits = async(finalUpdateCredits)=>{
     
     if(finalUpdateCredits.length>0){
@@ -60,13 +74,19 @@ const updateCredits = async(finalUpdateCredits)=>{
             if(finalUpdateCredits[i].level === DID_LEVELS.COMPANY){
                 const companyDetail = await companyRepo.get(finalUpdateCredits[i].companyId);
                 if(companyDetail){
-                    const availableCredits = companyDetail[0].credits_available;
-                    const updatedCredtis = availableCredits - credits;
+                    const availableCredits = Number(companyDetail[0].credits_available);
+                    const updatedCredtis = availableCredits - Number(credits);
                     Logger.info(`Company ID : ${finalUpdateCredits[i].companyId} , Updated Credits : ${updatedCredtis} `);
-                    const company = await companyRepo.update(finalUpdateCredits[i].companyId, {credits_available : updatedCredtis});
+                    let company = null;
+                    if (updatedCredtis <= availableCredits) {
+                        company = await companyRepo.update(finalUpdateCredits[i].companyId, {credits_available : updatedCredtis});
+                    } else {
+                        Logger.info(`Updated Credits cannot be less than 0 for COMPANY ID : ${finalUpdateCredits[i].companyId}`);
+                    }
                     if(company){
 
                     Logger.info(` Credits Updated for Company ID : ${finalUpdateCredits[i].companyId}`);
+                    const dataAction = finalUpdateCredits[i].callLeg === 'A_PARTY' ? 'inbound_deduction' : 'outbound_deduction';
 
                     const data = {
                           user_id : finalUpdateCredits[i].companyId,
@@ -76,7 +96,7 @@ const updateCredits = async(finalUpdateCredits)=>{
                           action_user : finalUpdateCredits[i].companyId,
                           credits_rupees : credits,
                           balance : updatedCredtis,
-                          action : "inbound_deduction"
+                          action : dataAction
                     }
                     const creditHistory = await creditHistoryRepo.create(data);
                     if(creditHistory){
@@ -90,14 +110,20 @@ const updateCredits = async(finalUpdateCredits)=>{
                   const userDetail = await userRepo.get(finalUpdateCredits[i].userId);
                   if(userDetail){
                  
-                     const availableCredits = userDetail.credits_available;
-                     const updatedCredtis = availableCredits - credits;
+                     const availableCredits = Number(userDetail.credits_available);
+                     const updatedCredtis = availableCredits - Number(credits);
                      Logger.info(`USER ID : ${finalUpdateCredits[i].userId} , Updated Credits : ${updatedCredtis} `);
-                     const user = await userRepo.update(finalUpdateCredits[i].userId, {credits_available : updatedCredtis});
+                     let user = null;
+                     if (updatedCredtis <= availableCredits) {
+                        user = await userRepo.update(finalUpdateCredits[i].userId, {credits_available : updatedCredtis});
+                     } else {
+                        Logger.info(`Updated Credits cannot be less than 0 for USER ID : ${finalUpdateCredits[i].userId}`);
+                     }
                  
                     if(user){
                       Logger.info(` Credits Updated for USER ID : ${finalUpdateCredits[i].userId}`);
 
+                      const dataAction = finalUpdateCredits[i].callLeg === 'A_PARTY' ? 'inbound_deduction' : 'outbound_deduction';
                       const data = {
                           user_id : finalUpdateCredits[i].userId,
                           from_user : finalUpdateCredits[i].userId,
@@ -105,7 +131,7 @@ const updateCredits = async(finalUpdateCredits)=>{
                           action_user : finalUpdateCredits[i].userId,
                           credits_rupees : credits,
                           balance : updatedCredtis,
-                          action : "inbound_deduction",
+                          action : dataAction,
                           type: "User",
                     }
                     const creditHistory = await creditHistoryRepo.create(data);
@@ -122,9 +148,7 @@ const updateCredits = async(finalUpdateCredits)=>{
 
 }
 
-const billingCalculation = async(mappingDetails,billingDuration) =>{
-      
-    
+const billingCalculation = async(mappingDetails,billingDuration, callLeg) =>{
     
      try{
          
@@ -151,12 +175,16 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
                     if(mappingArray[i].level === DID_LEVELS.SUPER_PARENT_RESELLER){
                            const userDetails  = await userRepo.get(mappingArray[i].allocated_to);  
                            resellerSuperParentAvailableCredits = userDetails.credits_available;
-                           const pulsePrice = inbound(mappingArray[i],mappingArray[i].level);
+                           let pulsePrice = null;
+                           if (callLeg === "A_PARTY") {
+                            pulsePrice = inbound(mappingArray[i],mappingArray[i].level);
+                           } else if (callLeg === "B_PARTY") {
+                            pulsePrice = outbound(mappingArray[i],mappingArray[i].level);
+                           }
                            if(pulsePrice!=null){
                                 const pulsePrice1 =  (pulsePrice/100)*billingDuration
                                 resellerSuperParentNewCredits = pulsePrice1;
-
-                                if(resellerSuperParentAvailableCredits < resellerSuperParentNewCredits){
+                                if(Number(resellerSuperParentAvailableCredits) < Number(resellerSuperParentNewCredits)){
                                     const response = {
                                         code : -1,
                                         message: "Super Parent Reseller Voice Credits Low. Please Recharge.",
@@ -167,7 +195,8 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
                                     finalUserCreditsDeduction.push({
                                         level : mappingArray[i].level,
                                         userId : mappingArray[i].allocated_to,
-                                        resellerSuperParentNewCredits : resellerSuperParentNewCredits
+                                        resellerSuperParentNewCredits : resellerSuperParentNewCredits,
+                                        callLeg: callLeg
                                     });
                                 }
                            }
@@ -176,12 +205,17 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
                     else if(mappingArray[i].level === DID_LEVELS.PARENT_RESELLER){
                            const userDetails  = await userRepo.get(mappingArray[i].allocated_to);  
                            resellerParentAvailableCredits = userDetails.credits_available;
-                           const pulsePrice = inbound(mappingArray[i],mappingArray[i].level);
+                           let pulsePrice = null;
+                           if (callLeg === "A_PARTY") {
+                            pulsePrice = inbound(mappingArray[i],mappingArray[i].level);
+                           } else if (callLeg === "B_PARTY") {
+                            pulsePrice = outbound(mappingArray[i],mappingArray[i].level);
+                           }
                            if(pulsePrice!=null){
                                 const pulsePrice1 =  (pulsePrice/100)*billingDuration
                                 resellerParentNewCredits = pulsePrice1;
 
-                                if(resellerParentAvailableCredits < resellerParentNewCredits){
+                                if(Number(resellerParentAvailableCredits) < Number(resellerParentNewCredits)){
                                     const response = {
                                         code : -1,
                                         message: "Parent Reseller Voice Credits Low. Please Recharge.",
@@ -192,7 +226,8 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
                                     finalUserCreditsDeduction.push({
                                         level : mappingArray[i].level,
                                         userId : mappingArray[i].allocated_to,
-                                        resellerParentNewCredits : resellerParentNewCredits
+                                        resellerParentNewCredits : resellerParentNewCredits,
+                                        callLeg: callLeg
                                     });
                                 }
                            }
@@ -203,12 +238,17 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
 
                         resellerAvailableCredits = userDetails.credits_available;
 
-                        const pulsePrice = inbound(mappingArray[i],mappingArray[i].level);
+                        let pulsePrice = null;
+                           if (callLeg === "A_PARTY") {
+                            pulsePrice = inbound(mappingArray[i],mappingArray[i].level);
+                           } else if (callLeg === "B_PARTY") {
+                            pulsePrice = outbound(mappingArray[i],mappingArray[i].level);
+                           }
                            if(pulsePrice!=null){
                                 const pulsePrice1 =  (pulsePrice/100)*billingDuration;
                                 resellerNewCredits = pulsePrice1;
 
-                                if(resellerAvailableCredits < resellerNewCredits){
+                                if(Number(resellerAvailableCredits) < Number(resellerNewCredits)){
                                     const response = {
                                         code : -1,
                                         message: "Reseller Voice Credits Low. Please Recharge.",
@@ -219,7 +259,8 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
                                     finalUserCreditsDeduction.push({
                                         level : mappingArray[i].level,
                                         userId : mappingArray[i].allocated_to,
-                                        resellerNewCredits : resellerNewCredits
+                                        resellerNewCredits : resellerNewCredits,
+                                        callLeg: callLeg
                                     });
                                 }
                            }
@@ -228,11 +269,16 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
                         const companyDetails = await companyRepo.get(mappingArray[i].allocated_to);
                         companyParentAvailableCredits = companyDetails.credits_available;
 
-                        const pulsePrice = inbound(mappingArray[i],mappingArray[i].level);
+                        let pulsePrice = null;
+                           if (callLeg === "A_PARTY") {
+                            pulsePrice = inbound(mappingArray[i],mappingArray[i].level);
+                           } else if (callLeg === "B_PARTY") {
+                            pulsePrice = outbound(mappingArray[i],mappingArray[i].level);
+                           }
                            if(pulsePrice!=null){
                                 const pulsePrice1 =  (pulsePrice/100)*billingDuration;
                                 companyParentNewCredits = pulsePrice1;
-                                if(companyParentAvailableCredits < companyParentNewCredits){
+                                if(Number(companyParentAvailableCredits) < Number(companyParentNewCredits)){
                                     const response = {
                                         code : -1,
                                         message: "Company Parent Voice Credits Low. Please Recharge.",
@@ -243,7 +289,8 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
                                     finalUserCreditsDeduction.push({
                                         level : mappingArray[i].level,
                                         companyId : mappingArray[i].allocated_to,
-                                        companyParentNewCredits : companyParentNewCredits
+                                        companyParentNewCredits : companyParentNewCredits,
+                                        callLeg: callLeg
                                     });
                                 }
                            }
@@ -290,6 +337,9 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
 
          subscription
          .on('message', async (message, content, ackOrNack) => {
+            if (content.data.did.length === 11) {
+                content.data.did = content.data.did.substring(1, content.data.did.length);
+            }
             Logger.info("subscribed content : " + JSON.stringify(content));
             const billingJson = content;//JSON.parse(content);
 
@@ -297,6 +347,7 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
 
                 const did = billingJson.data.did;
                 const billingDuration = billingJson.data.billingDuration;
+                const callLeg = billingJson?.data?.callLeg || "A_PARTY";
 
                 Logger.info(`DID : ${did} , Billing Duration : ${billingDuration} `);
                 
@@ -306,7 +357,7 @@ const billingCalculation = async(mappingDetails,billingDuration) =>{
                     Logger.info("Number Details  "+JSON.stringify(numberDetails));
                     const didMappingDetails = await didUserMappingRepo.findDidMappingDetails({did : numberDetails.id});
                     Logger.info("User DID Mapping Detials : "+JSON.stringify(didMappingDetails));
-                    const finalDeduction = await billingCalculation(didMappingDetails,billingDuration);
+                    const finalDeduction = await billingCalculation(didMappingDetails,billingDuration, callLeg);
                     Logger.info("Billing Structure Deduction : "+JSON.stringify(finalDeduction));
                     const credits = await updateCredits(finalDeduction);
                 }else{

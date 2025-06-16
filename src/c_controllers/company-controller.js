@@ -1,5 +1,5 @@
 const { StatusCodes } = require('http-status-codes');
-const { CompanyRepository, UserJourneyRepository } = require('../../shared/c_repositories');
+const { CompanyRepository, UserJourneyRepository, SubUserLicenceRepository } = require('../../shared/c_repositories');
 const { SuccessRespnose, ErrorResponse } = require('../../shared/utils/common');
 const { Logger } = require('../../shared/config');
 const AppError = require('../../shared/utils/errors/app-error');
@@ -7,10 +7,11 @@ const { MODULE_LABEL, ACTION_LABEL } = require('../../shared/utils/common/consta
 
 const companyRepository = new CompanyRepository();
 const userJourneyRepo = new UserJourneyRepository();
+const subUserLicenceRepo = new SubUserLicenceRepository();
 
 async function create(req, res){
-
     const bodyReq = req.body;
+
     try {
 
         // check for duplicate Company name
@@ -30,6 +31,17 @@ async function create(req, res){
 
         const response = await companyRepository.create(bodyReq.company);
 
+        //entry in sub-user-licence
+        const data = await subUserLicenceRepo.create({
+          company_id: response.id,
+          total_licence: bodyReq.company.licence,
+          available_licence: bodyReq.company.licence,
+          created_by: req.user.id
+        })
+
+        const subUserLicenceId = data.id
+        await companyRepository.update(response.id, { sub_user_licence_id: subUserLicenceId })
+
         const userJourneyfields = {
             module_name: MODULE_LABEL.COMPANY,
             action: ACTION_LABEL.ADD,
@@ -46,7 +58,6 @@ async function create(req, res){
         return res.status(StatusCodes.CREATED).json(SuccessRespnose);
         
     } catch (error) {
-        console.log(error)
         Logger.error(`Company -> unable to create error: ${ JSON.stringify(error) }`);
 
         let statusCode = error.statusCode;
@@ -64,10 +75,6 @@ async function create(req, res){
     }
 
 }
-
-
-
-
 
 async function getAll(req, res) {
 
@@ -94,7 +101,7 @@ async function get(req, res) {
   const companyId = req.params.id;
 
   try {
-    const data = await companyRepository.get(companyId);
+    const data = await companyRepository.findOne({id: companyId});
     if (!data) throw new AppError('Company not found', StatusCodes.NOT_FOUND);
 
     SuccessRespnose.data = data;
@@ -102,7 +109,6 @@ async function get(req, res) {
     return res.status(StatusCodes.OK).json(SuccessRespnose);
 
   } catch (error) {
-    console.log("errorr", error);
     let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg = error.message || 'Something went wrong';
 
@@ -119,12 +125,44 @@ async function updateCompany(req, res) {
 
   try {
     const bodyReq = req.body;
+    const companyData =  await companyRepository.findOne({id: companyId})
+    if (companyData?.name !== bodyReq?.company?.name) {
+      const conditions = {
+            created_by: req.user.id, 
+            name: bodyReq.company.name 
+        }
+
+      const checkDuplicate = await companyRepository.findOne(conditions);
+            
+      if (checkDuplicate && Object.keys(checkDuplicate).length !== 0) {
+            ErrorResponse.message = `Company Name Already Exists`;
+                return res
+                .status(StatusCodes.BAD_REQUEST)
+                .json(ErrorResponse);
+      }
+    }
+
+    const totalLicence = companyData?.subUserLicenceId?.total_licence?.company
+    const availableLicence = companyData?.subUserLicenceId?.available_licence?.company
+    const usedLicence = Number(totalLicence) - Number(availableLicence)
+    if (usedLicence > Number(bodyReq?.company?.licence?.company)) {
+            ErrorResponse.message = `Can't update Used licence are greater`;
+                return res
+                .status(StatusCodes.BAD_REQUEST)
+                .json(ErrorResponse);     
+    }
+
+
+    await subUserLicenceRepo.updateById(companyData?.sub_user_licence_id, {
+      total_licence: bodyReq.company.licence,
+      available_licence: bodyReq.company.licence,
+    })
+
     const data = {
-      name: bodyReq?.company?.name?.trim().toLowerCase(),
-      phone: bodyReq?.company?.phone?.trim(),
-      pincode: bodyReq?.company?.pincode?.trim(),
-      address: bodyReq?.company?.address?.trim(),
-      category: bodyReq?.company?.category || null,
+      name: bodyReq?.company?.name,
+      phone: bodyReq?.company?.phone,
+      pincode: bodyReq?.company?.pincode,
+      address: bodyReq?.company?.address,
     };
 
     const response = await companyRepository.update(companyId, data);
