@@ -1,4 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
+
 const { IncomingReportRepository,
   IncomingReportJanuaryW1Repository, IncomingReportJanuaryW2Repository, IncomingReportJanuaryW3Repository, IncomingReportJanuaryW4Repository,
   IncomingReportFebruaryW1Repository, IncomingReportFebruaryW2Repository, IncomingReportFebruaryW3Repository, IncomingReportFebruaryW4Repository,
@@ -12,6 +13,7 @@ const { IncomingReportRepository,
   IncomingReportOctoberW1Repository, IncomingReportOctoberW2Repository, IncomingReportOctoberW3Repository, IncomingReportOctoberW4Repository,
   IncomingReportNovemberW1Repository, IncomingReportNovemberW2Repository, IncomingReportNovemberW3Repository, IncomingReportNovemberW4Repository,
   IncomingReportDecemberW1Repository, IncomingReportDecemberW2Repository, IncomingReportDecemberW3Repository, IncomingReportDecemberW4Repository,
+  UserRepository,
 } = require("../../shared/c_repositories");
 
 const {
@@ -33,8 +35,10 @@ const { SuccessRespnose, ErrorResponse } = require("../../shared/utils/common");
 const AppError = require("../../shared/utils/errors/app-error");
 const { Logger } = require("../../shared/config");
 const incomingReportRepo = new IncomingReportRepository();
+const userRepo = new UserRepository();
 
 const moment = require('moment');
+const { USERS_ROLE } = require("../../shared/utils/common/constants");
 
 async function createIncomingReport(req, res) {
   const bodyReq = req.body;
@@ -399,6 +403,21 @@ async function deleteIncomingReport(req, res) {
 // }
 
 
+async function getAllDescendantUserIdsRecursive(userId, collected = new Set()) {
+  // Skip super admin from being collected
+  collected.add(userId.toString());
+
+  const children = await userRepo.findAll({ created_by: userId });
+
+  for (const child of children) {
+    // Recursively collect children
+    await getAllDescendantUserIdsRecursive(child.id,collected);
+  }
+
+  return Array.from(collected);
+}
+
+
 
 
 async function getDidSpecificReport(req, res) {
@@ -406,7 +425,13 @@ async function getDidSpecificReport(req, res) {
 
     const { did, startDate, endDate } = req.params;
 
-    const userId = req.user.id
+    let userIds = [req.user.id];
+    const role = req.user.role
+
+    if (role === USERS_ROLE.RESELLER || role === USERS_ROLE.COMPANY_ADMIN) {
+      userIds = await getAllDescendantUserIdsRecursive(req.user.id);
+    }
+
 
     const InboundRepositories = {
       Januaryw1: new IncomingReportJanuaryW1Repository(), Januaryw2: new IncomingReportJanuaryW2Repository(),
@@ -486,7 +511,7 @@ async function getDidSpecificReport(req, res) {
     const endWeek = getWeekNumber(dateEnd.date());
 
 
-     
+
 
 
     const finalInboundData = [];
@@ -496,35 +521,26 @@ async function getDidSpecificReport(req, res) {
     for (let week = startWeek; week <= endWeek; week++) {
       const repoKey = `${startDateMonthName}w${week}`;
       const inboundRepo = InboundRepositories[repoKey];
-      // const outboundRepo = OutboundRepositories[repoKey];
 
+      if (!inboundRepo) continue;
 
-      if (week === startWeek && inboundRepo) {
+      const allUserReports = [];
 
-
-        
-
-        const inbound = await inboundRepo.getByDidByStartDate({ callee_number: did }, startDate,userId);
-        finalInboundData.push(...inbound);
-      } else if (week === endWeek && inboundRepo) {
-        const inbound = await inboundRepo.getByDidByEndDate({ callee_number: did }, endDate, userId);
-        finalInboundData.push(...inbound);
-      } else if (inboundRepo) {
-        const inbound = await inboundRepo.getByDidByDate({ callee_number: did },userId);
-        finalInboundData.push(...inbound);
+      const idsToQuery = userIds || [null];
+      for (const uid of idsToQuery) {
+        if (week === startWeek) {
+          const data = await inboundRepo.getByDidByStartDate({ callee_number: did }, startDate, uid,role);
+          allUserReports.push(...data);
+        } else if (week === endWeek) {
+          const data = await inboundRepo.getByDidByEndDate({ callee_number: did }, endDate, uid,role);
+          allUserReports.push(...data);
+        } else {
+          const data = await inboundRepo.getByDidByDate({ callee_number: did }, uid,role);
+          allUserReports.push(...data);
+        }
       }
 
-
-      // if (week === startWeek && outboundRepo) {
-      //   const outbound = await outboundRepo.getByDidByStartDate({ callee_number: did }, startDate);
-      //   finalOutboundData.push(...outbound);
-      // } else if (week === endWeek && outboundRepo) {
-      //   const outbound = await outboundRepo.getByDidByEndDate({ callee_number: did }, endDate);
-      //   finalOutboundData.push(...outbound);
-      // } else if (outboundRepo) {
-      //   const outbound = await outboundRepo.getByDidByDate({ callee_number: did });
-      //   finalOutboundData.push(...outbound);
-      // }
+      finalInboundData.push(...allUserReports);
     }
 
     const finalData = [...finalInboundData, ...finalOutboundData];
@@ -551,7 +567,7 @@ async function getDidSpecificReportwithTraceId(req, res) {
   try {
     let { did, startDate, endDate, trace_id } = req.params;
 
-   
+
 
     const InboundRepositories = {
       Januaryw1: new IncomingReportJanuaryW1Repository(), Januaryw2: new IncomingReportJanuaryW2Repository(),
@@ -647,4 +663,4 @@ async function getDidSpecificReportwithTraceId(req, res) {
 
 
 
-module.exports = { createIncomingReport, getAll, getById, updateIncomingReport, deleteIncomingReport, getDidSpecificReport,getDidSpecificReportwithTraceId };
+module.exports = { createIncomingReport, getAll, getById, updateIncomingReport, deleteIncomingReport, getDidSpecificReport, getDidSpecificReportwithTraceId };
