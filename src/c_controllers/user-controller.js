@@ -186,6 +186,7 @@ async function logoutUser(req, res) {
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
+    console.log(error)
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg = error.message;
 
@@ -599,13 +600,16 @@ async function signupUser(req, res) {
       user = await userRepo.create(bodyReq.user);
     }
 
+
     if (req.user.role !== USERS_ROLE.SUPER_ADMIN && req.user.role !== USERS_ROLE.SUB_SUPERADMIN && bodyReq.user.role !== USERS_ROLE.RESELLER) {
       const data = await subUserLicenceRepo.create({
         user_id: user.id,
         total_licence: bodyReq.user.sub_licence,
         available_licence: bodyReq.user.sub_licence,
-        created_by: req.user.id
-      })
+        created_by: req.user.id,
+        ...(user.role === USERS_ROLE.COMPANY_ADMIN && { company_id: user?.company_id }),
+        ...(user.role === USERS_ROLE.CALLCENTRE_ADMIN && { callcenter_id: user?.callcenter_id }),
+      });
       subUserLicenceId = data.id
       await userRepo.update(user.id, { sub_user_licence_id: subUserLicenceId })
 
