@@ -3,7 +3,8 @@ const {SuccessRespnose , ErrorResponse} = require("../../shared/utils/common");
 const AppError = require("../../shared/utils/errors/app-error");
 const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE} = require('../../shared/utils/common/constants');
 const { Logger } = require("../../shared/config");
-const {AgentRepository, ExtensionRepository, UserRepository, SubUserLicenceRepository, TelephonyProfileRepository, UserJourneyRepository, TelephonyProfileItemsRepository, AgentGroupRepository} = require('../../shared/c_repositories');
+const {AgentRepository, ExtensionRepository, UserRepository, SubUserLicenceRepository, TelephonyProfileRepository,
+  UserJourneyRepository, AgentGroupRepository, AgentScheduleMappingRepository, AsteriskCTQueueMembersRepository} = require('../../shared/c_repositories');
 const { Op } = require("sequelize");
 const { constants } = require("../backup/utils/common");
 const User = require("../../shared/c_db/User")
@@ -13,8 +14,10 @@ const agentRepo = new AgentRepository();
 const userRepo = new UserRepository();
 const subUserLicenceRepo = new SubUserLicenceRepository();
 const telephonyProfileRepo = new TelephonyProfileRepository();
-const telephonyProfileItemsRepo = new TelephonyProfileItemsRepository();
+const extensionRepo = new ExtensionRepository();
 const userJourneyRepo = new UserJourneyRepository();
+const agentScheduleMappingRepo = new AgentScheduleMappingRepository();
+const asteriskCTQueueMembersRepo = new AsteriskCTQueueMembersRepository();
 
 async function createAgent(req, res) {
 
@@ -585,12 +588,11 @@ async function updateAgent(req, res) {
 }
 
 async function toggleStatus(req, res) {
-  const { id } = req.params; // The agent's ID
+  const { id } = req.params;
+  let mergedAgents;
 
   try {
     const agent = await agentRepo.get(id);
-    const agentUser = await userRepo.getByName(agent.agent_name)
-
     if (!agent) {
       return res
         .status(StatusCodes.NOT_FOUND)
@@ -598,58 +600,95 @@ async function toggleStatus(req, res) {
     }
 
     const newStatus = agent.login_status === "1" ? "0" : "1";
-
-
     const subLicenceData = await subUserLicenceRepo.findOne({user_id : req.user.id})
 
     if (Number(newStatus)) {
-      if (subLicenceData.available_licence.live_agent !== 0) {
-         subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent - 1;
+        if (subLicenceData.available_licence.live_agent !== 0) {
+          subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent - 1;
+
+          const telephonyProfile = agent?.telephonyProfile?.profile.find(item => item.type === bodyReq?.type);
+
+          if (!telephonyProfile) {
+            ErrorResponse.message = `Telephony Profile not found for ${bodyReq?.type}`;
+            return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+          }
+
+          //get all the group associated with the agent
+          const callGroup = await agentScheduleMappingRepo.getGroupWithAgentId(agent?.id)
+          
+          if (callGroup.length === 0) {
+            ErrorResponse.message = `Agent is not in a group`;
+            return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+          }
+
+          for (const group of callGroup) {
+            await asteriskCTQueueMembersRepo.create({
+              queue_name: group?.group_name,              
+              interface: `LOCAL/${telephonyProfile?.number?.number}@dial_agent`,        
+              membername: 1,          
+              state_interface: `Custom:${telephonyProfile?.number?.number}`,             
+              paused: 0,
+            });
+          }
+
+          telephonyProfile.active_profile = true;
+
+          mergedAgents = agent?.telephonyProfile?.profile.map(agent =>
+            agent.type === telephonyProfile.type ? telephonyProfile : agent
+          );
+
+          await telephonyProfileRepo.update(agent?.telephonyProfile?.id, {profile: mergedAgents})
 
 
-         const userLoginCount = await userRepo.getAll({
-            where: {
-              id: agentUser.id,
-              login_at: { [Op.ne]: null },
-              logout_at: null
-            }
-         });
+          const userJourneyfields = {
+            module_name: MODULE_LABEL.USERS,
+            action: `${ACTION_LABEL.LOGIN_AS}${bodyReq?.type}`,
+            created_by: req.user.id
+          }
 
-         if (userLoginCount && userLoginCount.length > 0) {
-            ErrorResponse.message = 'User already logged in';
-            return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
-         }
+          await userJourneyRepo.create(userJourneyfields);
 
-         await userRepo.update(agentUser.id, {
-            login_at: Date.now(),
-            logout_at: null,
-            duration: null
-         });
-      } else {
-        ErrorResponse.message = 'Agent Live Limit Exceeds';
-        return res
-          .status(StatusCodes.BAD_REQUEST)
-          .json(ErrorResponse);
-      }
+
+        } else {
+          ErrorResponse.message = 'Agent Live Limit Exceeds';
+          return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+        }
     } else {
       subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent + 1;
-      const userData = await userRepo.findOne({id: agentUser.id})
 
-      const duration = getTimeDifferenceInSeconds(userData.login_at, Date.now())
+      const telephonyProfile = agent?.agentTelephony?.profile.find(item => item.type === bodyReq?.type);
+      //get all the group associated with the agent
+      const callGroup = await agentScheduleMappingRepo.getGroupWithAgentId(agent?.id)
+          
+      for (const group of callGroup) {
+        await asteriskCTQueueMembersRepo.delete({queue_name: group?.group_name})
+      }
 
-      await userRepo.update(agentUser.id, {
-        duration
-      })
+      telephonyProfile.active_profile = false;
 
-      await userRepo.update(agentUser.id, {
-        login_at:null,
-        logout_at: Date.now(),
-      })
+      mergedAgents = agent?.agentTelephony?.profile.map(agent =>
+        agent.type === telephonyProfile.type ? telephonyProfile : agent
+      );
+
+      await telephonyProfileRepo.update(agent?.agentTelephony?.id, {profile: mergedAgents})
+
+      const userJourneyfields = {
+        module_name: MODULE_LABEL.USERS,
+        action: `${ACTION_LABEL.LOGOUT_AS}${bodyReq?.type}`,
+        created_by: req.user.id
+      }
+      
+      await userJourneyRepo.create(userJourneyfields);
     }
 
     // Update the agent's status
     const updatedAgent = await agentRepo.update(id, { login_status: newStatus });
-
 
     //update sub user licence
     await subUserLicenceRepo.updateById(subLicenceData.id, {available_licence: subLicenceData.available_licence})
@@ -665,7 +704,7 @@ async function toggleStatus(req, res) {
 
     // Respond with the updated agent data
     SuccessRespnose.message = "Agent status updated successfully";
-    SuccessRespnose.data = { ...updatedAgent, status: newStatus };
+    SuccessRespnose.data = { ...updatedAgent, status: newStatus, telephonyProfile : mergedAgents };
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -689,15 +728,6 @@ async function toggleStatus(req, res) {
 
     return res.status(statusCode).json(ErrorResponse);
   }
-}
-
-function getTimeDifferenceInSeconds(login, logout) {
-  const loginTimestamp = Date.parse(login);
-  const logoutTimestamp = logout;
-
-  const diffMs = logoutTimestamp - loginTimestamp;
-  const diffSeconds = Math.floor(Math.abs(diffMs / 1000));
-  return diffSeconds;
 }
 
 async function getAgentRealTimeData(req, res) {

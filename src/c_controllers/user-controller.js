@@ -1,4 +1,5 @@
-const { UserRepository, CompanyRepository, SubUserLicenceRepository, CallCentreRepository , AgentRepository} = require("../../shared/c_repositories")
+const { UserRepository, CompanyRepository, SubUserLicenceRepository, CallCentreRepository,
+  AgentRepository, AsteriskCTQueueMembersRepository, AgentScheduleMappingRepository, TelephonyProfileRepository} = require("../../shared/c_repositories")
 const { UserJourneyRepository } = require("../../shared/c_repositories")
 const { StatusCodes } = require("http-status-codes");
 const {
@@ -17,6 +18,9 @@ const userJourneyRepo = new UserJourneyRepository();
 const subUserLicenceRepo = new SubUserLicenceRepository();
 const callCentreRepo = new CallCentreRepository();
 const agentRepo = new AgentRepository();
+const asteriskCTQueueMembersRepo = new AsteriskCTQueueMembersRepository();
+const agentScheduleMappingRepo = new AgentScheduleMappingRepository();
+const telephonyProfileRepo = new TelephonyProfileRepository();
 
 
 async function signinUser(req, res) {
@@ -28,25 +32,25 @@ async function signinUser(req, res) {
   try {
     //Fetch user via username
     const user = await userRepo.getByUsername(username);
-        if (user?.role === USERS_ROLE.CALLCENTRE_AGENT) {
-          const subLicenceData = await subUserLicenceRepo.findOne({user_id : user?.created_by})
+        // if (user?.role === USERS_ROLE.CALLCENTRE_AGENT) {
+        //   const subLicenceData = await subUserLicenceRepo.findOne({user_id : user?.created_by})
         
-          if (subLicenceData.available_licence.live_agent !== 0) {
-            subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent - 1;
-          } else {
-            ErrorResponse.message = 'Agent Live Limit Exceeds';
-              return res
-                .status(StatusCodes.BAD_REQUEST)
-                .json(ErrorResponse);
-          }
+        //   if (subLicenceData.available_licence.live_agent !== 0) {
+        //     subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent - 1;
+        //   } else {
+        //     ErrorResponse.message = 'Agent Live Limit Exceeds';
+        //       return res
+        //         .status(StatusCodes.BAD_REQUEST)
+        //         .json(ErrorResponse);
+        //   }
       
-          //update sub user licence
-          await subUserLicenceRepo.updateById(subLicenceData.id, {available_licence: subLicenceData.available_licence})
-          const agentData = await agentRepo.getByName(user?.name)
-          await agentRepo.update(agentData.id, {
-            login_status : "1"
-          })
-        }
+        //   //update sub user licence
+        //   await subUserLicenceRepo.updateById(subLicenceData.id, {available_licence: subLicenceData.available_licence})
+        //   const agentData = await agentRepo.getByName(user?.name)
+        //   await agentRepo.update(agentData.id, {
+        //     login_status : "1"
+        //   })
+        // }
 
         const userLoginCount = await userRepo.find({
           where: { 
@@ -70,6 +74,10 @@ async function signinUser(req, res) {
       if (isPasswordMatch) {
 
         const userData = await user.generateUserData(true);
+        if (userData?.role === USERS_ROLE.CALLCENTRE_AGENT) {
+          const agent = await agentRepo.getByName(userData?.name)
+          userData.agentData = agent
+        }
 
         SuccessRespnose.message = "Successfully signed in";
         SuccessRespnose.data = userData;
@@ -155,16 +163,16 @@ async function logoutUser(req, res) {
     const userData = await userRepo.get(id);
     const duration = getTimeDifferenceInSeconds(userData.login_at, Date.now())
 
-    if (userData?.role === USERS_ROLE.CALLCENTRE_AGENT) {
-      const subLicenceData = await subUserLicenceRepo.findOne({ user_id: userData?.created_by });
-      const agentData = await agentRepo.getByName(userData?.name)
-      subLicenceData.available_licence.live_agent += 1;
+    // if (userData?.role === USERS_ROLE.CALLCENTRE_AGENT) {
+    //   const subLicenceData = await subUserLicenceRepo.findOne({ user_id: userData?.created_by });
+    //   const agentData = await agentRepo.getByName(userData?.name)
+    //   subLicenceData.available_licence.live_agent += 1;
 
-      await subUserLicenceRepo.updateById(subLicenceData.id, { available_licence: subLicenceData.available_licence });
-      await agentRepo.update(agentData.id, {
-        login_status : "0"
-      })
-    }
+    //   await subUserLicenceRepo.updateById(subLicenceData.id, { available_licence: subLicenceData.available_licence });
+    //   await agentRepo.update(agentData.id, {
+    //     login_status : "0"
+    //   })
+    // }
 
     await userRepo.update(id, {
       duration
@@ -225,6 +233,12 @@ async function get(req, res) {
       userData.acl_settings._id = userData.acl_settings.id;
       delete userData.acl_settings.id;
     }
+
+    if (userData?.role === USERS_ROLE.CALLCENTRE_AGENT) {
+      const agent = await agentRepo.getByName(userData?.name)
+      userData.agentData = agent
+    }
+
     SuccessRespnose.message = "Success";
     SuccessRespnose.data = userData;
 
@@ -445,7 +459,7 @@ async function statusPasswordUpdateUser(req, res) {
   }
 }
 
-  async function switchUser(req, res) {
+async function switchUser(req, res) {
     try {
       const { id } = req.body;
       const targetUser = await userRepo.get(id);
@@ -455,36 +469,36 @@ async function statusPasswordUpdateUser(req, res) {
 
       const user = await userRepo.getByUsername(targetUser.username);
 
-      if (user?.role === USERS_ROLE.CALLCENTRE_AGENT) {
-            const userLoginCount = await userRepo.getAll({
-              where: {
-                id: user.id,
-                login_at: { [Op.ne]: null },
-                logout_at: null
-              }
-            });
+      // if (user?.role === USERS_ROLE.CALLCENTRE_AGENT) {
+      //       const userLoginCount = await userRepo.getAll({
+      //         where: {
+      //           id: user.id,
+      //           login_at: { [Op.ne]: null },
+      //           logout_at: null
+      //         }
+      //       });
       
-            if (userLoginCount && userLoginCount.length > 0) {
-              ErrorResponse.message = 'User already logged in';
-              return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
-            }
-            const subLicenceData = await subUserLicenceRepo.findOne({ user_id: user?.created_by });
+      //       if (userLoginCount && userLoginCount.length > 0) {
+      //         ErrorResponse.message = 'User already logged in';
+      //         return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+      //       }
+      //       const subLicenceData = await subUserLicenceRepo.findOne({ user_id: user?.created_by });
       
-            if (subLicenceData.available_licence.live_agent !== 0) {
-              subLicenceData.available_licence.live_agent -= 1;
-            } else {
-              ErrorResponse.message = 'Agent Live Limit Exceeds';
-              return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
-            }
+      //       if (subLicenceData.available_licence.live_agent !== 0) {
+      //         subLicenceData.available_licence.live_agent -= 1;
+      //       } else {
+      //         ErrorResponse.message = 'Agent Live Limit Exceeds';
+      //         return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+      //       }
       
-            // Update sub user licence
-            await subUserLicenceRepo.updateById(subLicenceData.id, { available_licence: subLicenceData.available_licence });
+      //       // Update sub user licence
+      //       await subUserLicenceRepo.updateById(subLicenceData.id, { available_licence: subLicenceData.available_licence });
       
-            const agentData = await agentRepo.getByName(user?.name)
-            await agentRepo.update(agentData.id, {
-              login_status : "1"
-            })
-      }
+      //       const agentData = await agentRepo.getByName(user?.name)
+      //       await agentRepo.update(agentData.id, {
+      //         login_status : "1"
+      //       })
+      // }
 
       const userData = await user.generateUserData(true);
 
@@ -493,6 +507,11 @@ async function statusPasswordUpdateUser(req, res) {
           logout_at: null,
           duration: null
       });
+
+      if (userData?.role === USERS_ROLE.CALLCENTRE_AGENT) {
+          const agent = await agentRepo.getByName(userData?.name)
+          userData.agentData = agent
+      }
 
       SuccessRespnose.message = "Successfully signed in";
       SuccessRespnose.data = userData;
@@ -505,7 +524,7 @@ async function statusPasswordUpdateUser(req, res) {
           ErrorResponse.message = error.message || 'Something went wrong';
           return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
         }
-      }
+}
 
 
 async function signupUser(req, res) {
@@ -905,6 +924,172 @@ function areLicencesEqual(userLicence, availableLicence) {
   return true;
 }
 
+async function loginAs(req, res) {
+  const bodyReq = req.body;
+  const id = req.params.id
+
+  try {
+        //Fetch user via username
+        const user = await userRepo.findOne({id: id});
+        const subLicenceData = await subUserLicenceRepo.findOne({user_id : user?.created_by})
+        
+          if (subLicenceData.available_licence.live_agent !== 0) {
+            subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent - 1;
+          } else {
+            ErrorResponse.message = 'Agent Live Limit Exceeds';
+              return res
+                .status(StatusCodes.BAD_REQUEST)
+                .json(ErrorResponse);
+          }
+      
+
+
+        const agent = await agentRepo.getByName(user?.name)
+        const telephonyProfile = agent?.agentTelephony?.profile.find(item => item.type === bodyReq?.type);
+
+
+        if (!telephonyProfile) {
+          ErrorResponse.message = `Telephony Profile not found for ${bodyReq?.type}`;
+          return res
+          .status(StatusCodes.BAD_REQUEST)
+          .json(ErrorResponse);
+        }
+
+        //get all the group associated with the agent
+        const callGroup = await agentScheduleMappingRepo.getGroupWithAgentId(agent?.id)
+        
+        if (callGroup.length === 0) {
+          ErrorResponse.message = `Agent is not in a group`;
+          return res
+          .status(StatusCodes.BAD_REQUEST)
+          .json(ErrorResponse);
+        }
+
+        for (const group of callGroup) {
+          await asteriskCTQueueMembersRepo.create({
+            queue_name: group?.group_name,              
+            interface: `LOCAL/${telephonyProfile?.number?.number}@dial_agent`,        
+            membername: 1,          
+            state_interface: `Custom:${telephonyProfile?.number?.number}`,             
+            paused: 0,
+          });
+        }
+
+        telephonyProfile.active_profile = true;
+
+        const mergedAgents = agent?.agentTelephony?.profile.map(agent =>
+          agent.type === telephonyProfile.type ? telephonyProfile : agent
+        );
+
+        await telephonyProfileRepo.update(agent?.agentTelephony?.id, {profile: mergedAgents})
+
+        //update sub user licence
+        await subUserLicenceRepo.updateById(subLicenceData.id, {available_licence: subLicenceData.available_licence})
+        await agentRepo.update(agent.id, {
+          login_status : "1"
+        })
+
+        SuccessRespnose.message = `Successfully login As ${bodyReq?.type}`;
+        SuccessRespnose.data = mergedAgents;
+
+        const userJourneyfields = {
+          module_name: MODULE_LABEL.USERS,
+          action: `${ACTION_LABEL.LOGIN_AS}${bodyReq?.type}`,
+          created_by: user.id
+        }
+
+        await userJourneyRepo.create(userJourneyfields);
+
+        Logger.info(`User -> Successfully login As ${bodyReq?.type}`);
+
+        return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    console.log(error)
+    ErrorResponse.error = error;
+    ErrorResponse.message = error.message;
+
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    if (error instanceof AppError) {
+      statusCode = StatusCodes.BAD_REQUEST;
+    }
+
+    Logger.error(
+      `User -> unable Successfully login As ${bodyReq?.type}, error: ${JSON.stringify(
+        error
+      )}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+async function logoutAs(req, res) {
+  const id = req.params.id
+  const bodyReq = req.body;
+
+  try {
+    const userData = await userRepo.get(id);
+
+    const subLicenceData = await subUserLicenceRepo.findOne({ user_id: userData?.created_by });
+    const agentData = await agentRepo.getByName(userData?.name)
+    subLicenceData.available_licence.live_agent += 1;
+
+    await subUserLicenceRepo.updateById(subLicenceData.id, { available_licence: subLicenceData.available_licence });
+    await agentRepo.update(agentData.id, {
+      login_status : "0"
+    })
+
+    const agent = await agentRepo.getByName(userData?.name)
+    const telephonyProfile = agent?.agentTelephony?.profile.find(item => item.type === bodyReq?.type);
+    //get all the group associated with the agent
+    const callGroup = await agentScheduleMappingRepo.getGroupWithAgentId(agent?.id)
+        
+    for (const group of callGroup) {
+      await asteriskCTQueueMembersRepo.delete({queue_name: group?.group_name})
+    }
+
+    telephonyProfile.active_profile = false;
+
+    const mergedAgents = agent?.agentTelephony?.profile.map(agent =>
+      agent.type === telephonyProfile.type ? telephonyProfile : agent
+    );
+
+    await telephonyProfileRepo.update(agent?.agentTelephony?.id, {profile: mergedAgents})
+
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.USERS,
+      action: `${ACTION_LABEL.LOGOUT_AS}${bodyReq?.type}`,
+      created_by: userData.id
+    }
+
+    await userJourneyRepo.create(userJourneyfields);
+    Logger.info(`User -> ${req.user.id} Logout successfully`);
+
+    SuccessRespnose.message = `Successfully logout from ${bodyReq?.type}`;
+    SuccessRespnose.data = mergedAgents;
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    console.log(error)
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    ErrorResponse.error = error;
+    if (error.name == "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "User not found";
+    }
+    ErrorResponse.message = errorMsg;
+
+    Logger.error(
+      `User -> unable to logout user: ${req.user.id}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+
 module.exports = {
   get,
   signinUser,
@@ -914,6 +1099,7 @@ module.exports = {
   statusPasswordUpdateUser,
   switchUser,
   signupUser,
-  updateUser
-
+  updateUser,
+  loginAs,
+  logoutAs
 }

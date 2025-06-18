@@ -12,6 +12,12 @@ const { UserController } = require("../../c_controllers");
   // SIGN IN USER ROUTE
   router.post('/signin', UserMiddleware.validateSignin, UserController.signinUser);
 
+  // login as Callcenter agent (PSTN, WEBRTC, SIP)
+  router.post('/login-as/:id', AuthMiddleware.validateUser, UserMiddleware.validateLoginAs, UserController.loginAs);
+
+  // logout from Callcenter agent (PSTN, WEBRTC, SIP)
+  router.post('/logout-from/:id', AuthMiddleware.validateUser, UserMiddleware.validateLoginAs, UserController.logoutAs);
+
   // LOGOUT USER ROUTE
   router.post("/logout/:id", AuthMiddleware.validateUser, UserController.logoutUser);
   // GET USER

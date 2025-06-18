@@ -1,17 +1,18 @@
 
 const { StatusCodes } = require("http-status-codes");
 const { AgentGroupRepository, UserJourneyRepository, MemberScheduleRepo, AgentRepository,
-  AgentGroupAgentRepository, AgentScheduleMappingRepository} = require("../../shared/c_repositories");
+AgentScheduleMappingRepository, AsteriskCTQueuesRepository} = require("../../shared/c_repositories");
 const {SuccessRespnose , ErrorResponse} = require("../../shared/utils/common");
 const AppError = require("../../shared/utils/errors/app-error");
-const {MODULE_LABEL, ACTION_LABEL} = require('../../shared/utils/common/constants');
+const {MODULE_LABEL, ACTION_LABEL, STRATEGY} = require('../../shared/utils/common/constants');
 const { Logger } = require("../../shared/config");
 
 const agentGroupRepo = new AgentGroupRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const memberScheduleRepo = new MemberScheduleRepo();
 const agentRepo = new AgentRepository();
-const agentScheduleMappingRepo = new AgentScheduleMappingRepository();
+const agentScheduleMappingRepo = new AgentScheduleMappingRepository();  
+const asteriskCTQueuesRepo = new AsteriskCTQueuesRepository();  
 
 
 
@@ -38,6 +39,23 @@ async function createAgentGroup(req, res) {
     });
 
     responseData.agent = agent;
+
+    //entry into asterisk_ct.queues
+    await asteriskCTQueuesRepo.addAsteriskCTQueues({
+      name: bodyReq.agent.group_name,
+      musiconhold: 'default',
+      timeout: '30',
+      ringinuse: 'no',
+      setinterfacevar: 'yes',
+      setqueuevar: 'yes',
+      setqueueentryvar:'yes',
+      monitor_format: 'wav',
+      announce_holdtime: 'no',
+      monitor_type: 'MixMonitor',
+      joinempty: 'paused',
+      leavewhenempty: 'paused',
+      reportholdtime:'no'
+    })
 
     // Log user journey for this action
     const userJourneyfields = {
@@ -231,6 +249,11 @@ async function updateAgentGroup(req, res) {
       );
     } else {
       agent = await agentGroupRepo.update(uid, bodyReq.agent);
+      if (bodyReq?.agent?.type === 'strategy') {
+        const agentGroup = await agentGroupRepo.get(uid)
+        const strategy = STRATEGY[bodyReq?.agent?.strategy]
+        await asteriskCTQueuesRepo.update(agentGroup?.group_name, {strategy: strategy})
+      }
     }
     
     if (!agent) {
@@ -338,6 +361,13 @@ async function deleteAgentGroup(req, res) {
   const ids = req.body.agentGroupIds;
 
   try {
+    for (const uid of ids) {
+      const agentGroup = await agentGroupRepo.get(uid);
+      if (agentGroup?.group_name) {
+        await asteriskCTQueuesRepo.delete({ name: agentGroup.group_name });
+      }
+    }
+    
     const response = await agentGroupRepo.deleteMany(ids);
     
     const userJourneyfields = {

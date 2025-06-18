@@ -360,6 +360,28 @@ function validateUserStatusRequest (req, res, next) {
     next();
 }
 
+function validateLoginAs(req, res, next){
+    
+    const bodyReq = req.body;
+
+    if(!req.is('application/json')){
+        ErrorResponse.message = 'Something went wrong while Login As';
+        ErrorResponse.error = new AppError(['Invalid content type, incoming request must be in application/json format'], StatusCodes.BAD_REQUEST);
+        return res
+                .status(StatusCodes.BAD_REQUEST)
+                .json(ErrorResponse);
+    }
+    else if(bodyReq.type == undefined || !bodyReq.type.trim()){
+        ErrorResponse.message = 'Something went wrong while Login As';
+        ErrorResponse.error = new AppError(['type not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+        return res
+                .status(StatusCodes.BAD_REQUEST)
+                .json(ErrorResponse);
+    }
+    next();
+
+}
+
 module.exports = {
     validateSignup,
     validateSignin,
@@ -367,5 +389,6 @@ module.exports = {
     modifyUserSignupBodyRequest,
     authenticateSuperAdmin,
     validateDeleteRequest,
-    validateUserStatusRequest
+    validateUserStatusRequest,
+    validateLoginAs
 }
