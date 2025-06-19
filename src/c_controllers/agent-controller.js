@@ -588,7 +588,8 @@ async function updateAgent(req, res) {
 }
 
 async function toggleStatus(req, res) {
-  const { id } = req.params;
+  const { id} = req.params;
+  const bodyReq = req.body
   let mergedAgents;
 
   try {
@@ -628,7 +629,7 @@ async function toggleStatus(req, res) {
           for (const group of callGroup) {
             await asteriskCTQueueMembersRepo.create({
               queue_name: group?.group_name,              
-              interface: `LOCAL/${telephonyProfile?.number?.number}@dial_agent`,        
+              interface: bodyReq?.type === 'PSTN' ? `LOCAL/${telephonyProfile?.number?.number}@dial_agent` : `LOCAL/${telephonyProfile?.number?.number}`,       
               membername: 1,          
               state_interface: `Custom:${telephonyProfile?.number?.number}`,             
               paused: 0,
@@ -661,8 +662,8 @@ async function toggleStatus(req, res) {
         }
     } else {
       subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent + 1;
+      const telephonyProfile = agent?.telephonyProfile?.profile.find(item => item.type === bodyReq?.type);
 
-      const telephonyProfile = agent?.agentTelephony?.profile.find(item => item.type === bodyReq?.type);
       //get all the group associated with the agent
       const callGroup = await agentScheduleMappingRepo.getGroupWithAgentId(agent?.id)
           
@@ -670,13 +671,14 @@ async function toggleStatus(req, res) {
         await asteriskCTQueueMembersRepo.delete({queue_name: group?.group_name})
       }
 
+
       telephonyProfile.active_profile = false;
 
-      mergedAgents = agent?.agentTelephony?.profile.map(agent =>
+      mergedAgents = agent?.telephonyProfile?.profile.map(agent =>
         agent.type === telephonyProfile.type ? telephonyProfile : agent
       );
 
-      await telephonyProfileRepo.update(agent?.agentTelephony?.id, {profile: mergedAgents})
+      await telephonyProfileRepo.update(agent?.telephonyProfile?.id, {profile: mergedAgents})
 
       const userJourneyfields = {
         module_name: MODULE_LABEL.USERS,

@@ -54,7 +54,8 @@ async function createAgentGroup(req, res) {
       monitor_type: 'MixMonitor',
       joinempty: 'paused',
       leavewhenempty: 'paused',
-      reportholdtime:'no'
+      reportholdtime:'no',
+      strategy: 'rrordered'
     })
 
     // Log user journey for this action
