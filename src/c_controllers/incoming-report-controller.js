@@ -526,6 +526,13 @@ async function getDidSpecificReport(req, res) {
 
       const allUserReports = [];
 
+
+      console.log("DID", did);
+      console.log("START DATE", startDate);
+      console.log("UID", userIds);
+      console.log("ROLE", role);
+
+
       const idsToQuery = userIds || [null];
       for (const uid of idsToQuery) {
         if (week === startWeek) {
@@ -566,8 +573,6 @@ async function getDidSpecificReport(req, res) {
 async function getDidSpecificReportwithTraceId(req, res) {
   try {
     let { did, startDate, endDate, trace_id } = req.params;
-
-
 
     const InboundRepositories = {
       Januaryw1: new IncomingReportJanuaryW1Repository(), Januaryw2: new IncomingReportJanuaryW2Repository(),
@@ -639,13 +644,18 @@ async function getDidSpecificReportwithTraceId(req, res) {
     did = did?.trim();
     trace_id = trace_id?.trim();
 
+
     const inboundData = inboundRepo ? await inboundRepo.getDidByTraceId(trace_id, did) : [];
-    const outboundData = outboundRepo ? await outboundRepo.getDidByTraceId(trace_id, did) : [];
+    const outboundData = outboundRepo ? await outboundRepo.getDidByTraceId(trace_id) : [];
 
 
-    const finalData = [...inboundData, ...outboundData];
+  const finalReport = {
+  incomingReports: inboundData,
+  outboundReports: outboundData
+};
 
-    SuccessRespnose.data = finalData;
+
+    SuccessRespnose.data = finalReport;
     SuccessRespnose.message = "Success";
 
     Logger.info(`Report with trace_id fetched successfully`);
