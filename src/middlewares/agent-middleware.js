@@ -54,7 +54,7 @@ function validateAgentCreate(req, res, next) {
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
     }
-    else if (bodyReq.type == undefined || !bodyReq.type.trim()) {
+    else if (bodyReq.type == undefined) {
         ErrorResponse.message = 'Something went wrong while agent Create';
         ErrorResponse.error = new AppError(['type not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
         return res
@@ -87,7 +87,7 @@ function modifyAgentBodyRequest(req, is_create = true) {
                 agent_name: bodyReq.agent_name.trim(),
                 agent_number: Number(bodyReq.agent_number),
                 access:bodyReq.access.trim(),
-                type:bodyReq.type.trim(),
+                type:bodyReq.type,
                 email_id:bodyReq.email_id.trim(),
                 description:bodyReq.description.trim(),
                 // login_status:bodyReq.login_status

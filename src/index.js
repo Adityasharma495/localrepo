@@ -20,7 +20,7 @@ app.use('/temp', express.static(path.join(__dirname, '../temp')));
 app.use('/api', apiRoutes);
 app.use('/api-docs', swaggerRoutes);
 
-// const { SubUserLicence} = require("../shared/c_db");
+// const { Agents} = require("../shared/c_db");
 
 const startServer = async () => {
     try {
@@ -34,7 +34,8 @@ const startServer = async () => {
         //     console.log('✅ Database synchronized!');
         // }
 
-        // await SubUserLicence.sync({ alter: true, logging: true });
+
+        // await Agents.sync({ alter: true, logging: true });
         
         // console.log('✅ Successfully synced CockroachDB!');
         // Logger.info('CockroachDB -> Successfully synced');

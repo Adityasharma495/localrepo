@@ -24,6 +24,8 @@ async function createAgent(req, res) {
   const bodyReq = req.body;
   const responseData = {};
 
+  console.log('bodyReq', bodyReq)
+
 
   try {
     let agent;
@@ -94,39 +96,53 @@ async function createAgent(req, res) {
 
 
   //  Entry in telephony_profile
+  let profiles = [];
 
-  const profiles = [
-    {
-      items: [
-        {
-          id: agent.id,
-          type: 'PSTN',
-          number: {
-            country_code: '91',
-            number: agent.agent_number
-          },
-          active_profile: false
-        }
-      ],
-      created_by: req.user.id
-    }
-  ];
-
+  if (bodyReq.agent.type.includes('Mobile')) {
+    profiles = [
+      {
+        items: [
+          {
+            id: agent.id,
+            type: 'Mobile',
+            number: {
+              country_code: '91',
+              number: agent.agent_number
+            },
+            active_profile: false
+          }
+        ],
+        created_by: req.user.id
+      }
+    ];
+  }
 
   // Include extensionData objects only if extensionData exists
-  if (extensionData) {
+  if (
+    extensionData &&
+    (bodyReq.agent.type.includes('Soft Phone') || bodyReq.agent.type.includes('WEBRTC'))
+  ) {
+    if (profiles.length === 0) {
+      profiles.push({
+        items: [],
+        created_by: req.user.id
+      });
+    }
 
-    profiles[0].items.push(
-      {
+    if (bodyReq.agent.type.includes('Soft Phone')) {
+      profiles[0].items.push({
         id: extensionData.id,
-        type: 'SIP',
+        type: 'Soft Phone',
         number: {
           country_code: null,
           number: extensionData.extension
         },
         active_profile: false
-      },
-      {
+      });
+    }
+
+    if (bodyReq.agent.type.includes('WEBRTC')) {
+      profiles[0].items.push({
         id: extensionData.id,
         type: 'WEBRTC',
         number: {
@@ -134,9 +150,10 @@ async function createAgent(req, res) {
           number: extensionData.extension
         },
         active_profile: false
-      }
-    );
+      });
+    }
   }
+
  
 
 
@@ -173,6 +190,7 @@ await agentRepo.update(agent.id, {telephony_profile : telephonyProfile[0].id})
 
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
   } catch (error) {
+    console.log(error)
     Logger.error(
       `Agent -> unable to create Agent: ${JSON.stringify(
         bodyReq
