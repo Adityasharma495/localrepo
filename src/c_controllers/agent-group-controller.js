@@ -98,7 +98,7 @@ async function createAgentGroup(req, res) {
 async function getAll(req, res) {
 
   try {
-    const data = await agentGroupRepo.getAll(req.user.id);
+    const data = await agentGroupRepo.getAll(req.user.role, req.user.id); 
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
