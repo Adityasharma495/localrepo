@@ -804,68 +804,71 @@ async function sendRealTimeAgentData(res, isClientConnected) {
 
 async function agentRealTimeData() {
   try {
-    const agentData = await agentRepo.findAllData();
+    const agentData = await agentRepo.findAllData(); // Step 1: Fetch all agents
     const agentNames = agentData.map(agent => agent.agent_name);
     const agentIds = agentData.map(agent => agent.id);
 
-    // Fetch users and agent groups
-    const users = await userRepo.getByNameBulk(agentNames);
-
-    let agentGroups;
-    if(agentData[0]?.created_by)
-    {
-       agentGroups = await agentGroupRepo.getAll(agentData[0]?.created_by);
-    }
-    
-
-    // Map users by name
+    const users = await userRepo.getByNameBulk(agentNames); // Step 2: Fetch user data
     const userMap = new Map();
     users.forEach(user => userMap.set(user.name, user));
 
-    // Map agent_id to all associated groups
-    const agentToGroupsMap = new Map();
-    agentGroups?.forEach(group => {
-      group?.agents?.forEach(agentEntry => {
-        const agentId = agentEntry.agent_id.toString();
-        if (!agentToGroupsMap.has(agentId)) {
-          agentToGroupsMap.set(agentId, []);
-        }
-        agentToGroupsMap.get(agentId).push(group);
-      });
+    // Step 3: Fetch all agent-group mappings (assumed from your mapping table)
+    const scheduleMappings = await agentScheduleMappingRepo.getAll(); // <-- create this method if it doesn't exist
+
+    // Step 4: Prepare a map of agent_id => Set of group_ids (for quick lookup)
+    const agentGroupMap = new Map();
+    scheduleMappings.forEach(mapping => {
+      const agentIdStr = mapping.agent_id.toString();
+      if (!agentGroupMap.has(agentIdStr)) {
+        agentGroupMap.set(agentIdStr, new Set());
+      }
+      agentGroupMap.get(agentIdStr).add(mapping.agent_group_id.toString());
     });
 
-    // Combine data
-    const combinedData = agentData?.map(agent => {
-      const agentIdStr = agent?.id?.toString();
-      const assignedGroups = agentToGroupsMap.get(agentIdStr) || [];
+    const combinedData = [];
 
-      // Get groups where this agent is NOT assigned
-      const noAssignedGroup = agentGroups?.filter(group =>
-        group?.agents?.every(entry => entry?.agent_id?.toString() !== agentIdStr)
+    // Step 5: For each agent, do the group separation
+    for (const agent of agentData) {
+      const createdBy = agent.created_by;
+      const agentIdStr = agent.id.toString();
+      const user = userMap.get(agent.agent_name) || null;
+
+      // Fetch all agent groups created by this user (creator of the agent)
+      const userGroups = await agentGroupRepo.getAll(createdBy); // Fetch per-agent basis
+      const userGroupIds = userGroups.map(group => group.id.toString());
+
+      // Groups assigned to this agent (from mapping table)
+      const assignedGroupIds = agentGroupMap.get(agentIdStr) || new Set();
+      const assignedGroups = userGroups.filter(group =>
+        assignedGroupIds.has(group.id.toString())
       );
 
-      return {
-        agent: agent,
-        user: userMap.get(agent.agent_name) || null,
+      // Groups NOT assigned to this agent
+      const notAssignedGroups = userGroups.filter(group =>
+        !assignedGroupIds.has(group.id.toString())
+      );
+
+      combinedData.push({
+        agent,
+        user,
         agentGroup: assignedGroups,
-        noAssignedGroup: noAssignedGroup,
-      };
-    });
+        noAssignedGroup: notAssignedGroups,
+      });
+    }
 
     SuccessRespnose.data = combinedData;
     SuccessRespnose.message = "Success";
-
     Logger.info(`Real Time Data -> received all successfully`);
     return SuccessRespnose;
 
   } catch (error) {
-    console.log("error",error);
+    console.log("error", error);
     ErrorResponse.error = { name: error.name, message: error.message };
     ErrorResponse.message = error.message;
-
     Logger.error(`Report -> Error retrieving Agent real time data, error: ${error}`);
   }
 }
+
 
 module.exports={
     createAgent,
