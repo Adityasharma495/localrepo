@@ -16,6 +16,7 @@ const {
   CreditsRepository,
   VoicePlansRepository,
   FlowJsonRepository,
+  VoiceCampaignRepository,
 } = require("../../shared/c_repositories");
 
 const { Parser } = require("json2csv");
@@ -41,6 +42,7 @@ async function exportData(req, res) {
     Extension: new ExtensionRepository(),
     Credits: new CreditsRepository(),
     VoicePlan: new VoicePlansRepository(),
+    Campaigns: new VoiceCampaignRepository(),
   };
 
   try {
