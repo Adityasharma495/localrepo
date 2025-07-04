@@ -14,6 +14,7 @@ const { IncomingReportRepository,
   IncomingReportNovemberW1Repository, IncomingReportNovemberW2Repository, IncomingReportNovemberW3Repository, IncomingReportNovemberW4Repository,
   IncomingReportDecemberW1Repository, IncomingReportDecemberW2Repository, IncomingReportDecemberW3Repository, IncomingReportDecemberW4Repository,
   UserRepository,
+  AgentRepository,
 } = require("../../shared/c_repositories");
 
 const {
@@ -647,11 +648,32 @@ async function getDidSpecificReportwithTraceId(req, res) {
 
     const inboundData = inboundRepo ? await inboundRepo.getDidByTraceId(trace_id, did) : [];
     const outboundData = outboundRepo ? await outboundRepo.getDidByTraceId(trace_id) : [];
+    
+    const calleeNumbers = outboundData.map(item => item.dataValues.callee_number);
+
+    const agentRepo = new AgentRepository();
+    const agentList = await agentRepo.findAll({ agent_number: calleeNumbers });
+    
 
 
-  const finalReport = {
-  incomingReports: inboundData,
-  outboundReports: outboundData
+const enrichedOutboundData = outboundData.map(outbound => {
+  const callee = outbound.dataValues.callee_number;
+  const matchedAgent = agentList.find(agent => agent.dataValues.agent_number === callee);
+
+  return {
+    ...outbound.dataValues,
+    agent_name: matchedAgent?.dataValues.agent_name || null,
+    agent_number: matchedAgent?.dataValues.agent_number || null,
+  };
+});
+
+
+const normalizedInboundData = inboundData.map(item => item.dataValues);
+
+// 5. Prepare final report
+const finalReport = {
+  incomingReports: normalizedInboundData,
+  outboundReports: enrichedOutboundData
 };
 
 
