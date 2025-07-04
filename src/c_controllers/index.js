@@ -39,4 +39,5 @@ module.exports = {
     OutgoingCallsController: require('./outgoing-calls-controller'),
     RemarkStatusController: require('./remark-status-controller'),
     RemarksController: require('./remarks-controller'),
+    VoiceCampaignController:require("./voice-campaign-controller")
 }

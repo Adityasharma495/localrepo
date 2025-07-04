@@ -5,6 +5,7 @@ const apiRoutes = require('./routes');
 const swaggerRoutes = require('./routes/swagger');
 const cors = require('cors');
 const path = require('path');
+const { VoiceCampaign } = require('../shared/c_db');
 
 const app = express();
 
@@ -35,7 +36,6 @@ const startServer = async () => {
         // }
 
 
-        // await Agents.sync({ alter: true, logging: true });
         
         // console.log('✅ Successfully synced CockroachDB!');
         // Logger.info('CockroachDB -> Successfully synced');
