@@ -40,14 +40,7 @@ function validateAgentCreate(req, res, next) {
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
-    }
-    else if (bodyReq.description == undefined || !bodyReq.description.trim()) {
-        ErrorResponse.message = 'Something went wrong while agent Create';
-        ErrorResponse.error = new AppError(['description not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-        return res
-            .status(StatusCodes.BAD_REQUEST)
-            .json(ErrorResponse);
-    }else if (bodyReq.username == undefined || !bodyReq.username.trim()) {
+    } else if (bodyReq.username == undefined || !bodyReq.username.trim()) {
         ErrorResponse.message = 'Something went wrong while agent Create';
         ErrorResponse.error = new AppError(['username not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
         return res
