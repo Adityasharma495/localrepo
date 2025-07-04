@@ -277,10 +277,11 @@ async function getById(req, res) {
 
     const telephony_profile_id = agentData.telephony_profile;
     const telephone_profile_data = await telephonyProfileRepo.get(telephony_profile_id)
-    const extensionDetail = await extensionRepo.get(telephone_profile_data.profile[1]?.id);
-    agentData.extensionName = extensionDetail?.username
-
-    
+    let extensionDetail = null
+    if ((telephone_profile_data.profile).length >= 2) {
+      extensionDetail = await extensionRepo.get(telephone_profile_data.profile[1]?.id);
+      agentData.extensionName = extensionDetail?.username
+    }
 
     if (agentData.length == 0) {
       const error = new Error();
@@ -290,7 +291,7 @@ async function getById(req, res) {
     SuccessRespnose.message = "Success";
     SuccessRespnose.data = {
       ...agentData.get({ plain: true }),
-      extensionName: extensionDetail?.username,
+      extensionName: extensionDetail ? extensionDetail?.username : '',
       username: userDetail?.username,
     };
 
