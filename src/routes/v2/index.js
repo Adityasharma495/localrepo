@@ -41,6 +41,7 @@ const didRemoveHistoryRoute = require('./did-remove-history-routes.js')
 const outgoingCallsRoutes = require('./outgoing-calls-routes.js');
 const remarkStatusRoutes = require("./remark-status-routes.js")
 const remarksRoutes = require("./remarks-routes.js")
+const voiceCampaignRoutes = require("./voice-campaign-routes.js")
 
 
 router.use('/users', userRoutes);
@@ -83,6 +84,7 @@ router.use('/did-remove-history', didRemoveHistoryRoute);
 router.use('/outgoing-calls', outgoingCallsRoutes);
 router.use('/remark-status', remarkStatusRoutes);
 router.use('/remarks', remarksRoutes);
+router.use('/voice-campaigns',voiceCampaignRoutes)
 
 
 module.exports = router;
