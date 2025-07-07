@@ -1001,7 +1001,7 @@ async function logoutAs(req, res) {
     const callGroup = await agentScheduleMappingRepo.getGroupWithAgentId(agent?.id)
         
     for (const group of callGroup) {
-      await asteriskCTQueueMembersRepo.delete({queue_name: group?.group_name})
+      await asteriskCTQueueMembersRepo.delete({queue_name: group?.group_name, state_interface: `Custom:${telephonyProfile?.number?.number}`})
     }
 
     telephonyProfile.active_profile = false;
