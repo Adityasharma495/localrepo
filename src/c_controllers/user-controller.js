@@ -32,8 +32,7 @@ async function signinUser(req, res) {
   try {
     //Fetch user via username
     const user = await userRepo.getByUsername(username);
-
-
+    if (req.user.role === USERS_ROLE.CALLCENTRE_AGENT) {
     const userLoginCount = await userRepo.find({
         where: { 
           id: user.id,
@@ -49,6 +48,8 @@ async function signinUser(req, res) {
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
       }
+    }
+
 
     if (user) {
       // if (user.isValidLogin() == false)
@@ -75,11 +76,13 @@ async function signinUser(req, res) {
 
         await userJourneyRepo.create(userJourneyfields);
 
+      if (req.user.role === USERS_ROLE.CALLCENTRE_AGENT) {
         userRepo.update(user.id, {
           login_at: Date.now(),
           logout_at: null,
           duration: null
         })
+      }  
 
         Logger.info(`User -> ${userData.id} login successfully`);
 
@@ -145,16 +148,18 @@ async function logoutUser(req, res) {
 
   try {
     const userData = await userRepo.get(id);
-    const duration = getTimeDifferenceInSeconds(userData.login_at, Date.now())
+    if (req.user.role === USERS_ROLE.CALLCENTRE_AGENT) {
+      const duration = getTimeDifferenceInSeconds(userData.login_at, Date.now())
 
-    await userRepo.update(id, {
-      duration
-    })
+      await userRepo.update(id, {
+        duration
+      })
 
-    await userRepo.update(id, {
-      login_at:null,
-      logout_at: Date.now(),
-    })
+      await userRepo.update(id, {
+        login_at:null,
+        logout_at: Date.now(),
+      })
+    }
 
     const userJourneyfields = {
       module_name: MODULE_LABEL.USERS,
@@ -442,29 +447,33 @@ async function switchUser(req, res) {
 
       const user = await userRepo.getByUsername(targetUser.username);
 
-      const userLoginCount = await userRepo.find({
-        where: { 
-          id: user.id,
-          login_at: { [Op.ne]: null },
-          logout_at: null,
-          duration: null  
-        }
-      });
+      if (req.user.role === USERS_ROLE.CALLCENTRE_AGENT) {
+        const userLoginCount = await userRepo.find({
+          where: { 
+            id: user.id,
+            login_at: { [Op.ne]: null },
+            logout_at: null,
+            duration: null  
+          }
+        });
 
-      if (userLoginCount) {
-        ErrorResponse.message = 'User already logged in';
-          return res
-            .status(StatusCodes.BAD_REQUEST)
-            .json(ErrorResponse);
+        if (userLoginCount) {
+          ErrorResponse.message = 'User already logged in';
+            return res
+              .status(StatusCodes.BAD_REQUEST)
+              .json(ErrorResponse);
+        }
       }
 
       const userData = await user.generateUserData(true);
 
-      await userRepo.update(user.id, {
-          login_at: Date.now(),
-          logout_at: null,
-          duration: null
-      });
+      if (req.user.role === USERS_ROLE.CALLCENTRE_AGENT) {
+        await userRepo.update(user.id, {
+            login_at: Date.now(),
+            logout_at: null,
+            duration: null
+        });
+      }  
 
       if (userData?.role === USERS_ROLE.CALLCENTRE_AGENT) {
           const agent = await agentRepo.getByName(userData?.name)
