@@ -648,7 +648,7 @@ async function toggleStatus(req, res) {
           for (const group of callGroup) {
             await asteriskCTQueueMembersRepo.create({
               queue_name: group?.group_name,              
-              interface: bodyReq?.type === 'PSTN' ? `LOCAL/${telephonyProfile?.number?.number}@dial_agent` : `LOCAL/${telephonyProfile?.number?.number}`,       
+              interface: bodyReq?.type === 'Mobile' ? `LOCAL/${telephonyProfile?.number?.number}@dial_agent` : `LOCAL/${telephonyProfile?.number?.number}`,       
               membername: 1,          
               state_interface: `Custom:${telephonyProfile?.number?.number}`,             
               paused: 0,

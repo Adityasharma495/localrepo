@@ -143,20 +143,24 @@ async function update(req, res) {
   const numberId = req.params.id;
   const bodyReq = req.body;
 
+  console.log('numberId', numberId)
+
   try {
     const existingNumber = await numberRepo.findOne({ actual_number: bodyReq.number.actual_number, is_deleted: false, id: { [Op.ne]: numberId } });
+    console.log({ actual_number: bodyReq.number.actual_number, is_deleted: false, id: { [Op.ne]: numberId } })
+    console.log('existingNumber', existingNumber)
     if (existingNumber) {
       ErrorResponse.message = 'Number Already Exists.';
         return res
         .status(StatusCodes.BAD_REQUEST)
         .json(ErrorResponse);
     }
-    const numberData = await numberRepo.findOne({ id: numberId });
+    // const numberData = await numberRepo.findOne({ id: numberId });
 
-    if (numberData.status !== bodyReq.number.status && req.user.role !== USERS_ROLE.SUPER_ADMIN) {
-      bodyReq.number.updated_status = bodyReq.number.status;
-      bodyReq.number.status = 9;
-    }
+    // if (numberData.status !== bodyReq.number.status && req.user.role !== USERS_ROLE.SUPER_ADMIN) {
+    //   bodyReq.number.updated_status = bodyReq.number.status;
+    //   bodyReq.number.status = 9;
+    // }
 
     bodyReq.number.operator = bodyReq.number.operator.toUpperCase()
 
@@ -218,9 +222,9 @@ async function bulkUpdate(req, res) {
             status: row.Status,
             actual_number: row['DID'],
             category: row?.Category || null,
-            currency: row.Currency,
-            country_code: row['Country Code'],
-            state_code: row?.['State Code'] || null,
+            currency: row.Currency.toUpperCase() || null,
+            country_code: row['Country Code'].toUpperCase() || null,
+            state_code: row?.['State Code'].toUpperCase() || null,
             cost: row.Cost,
             operator: row.Operator.toUpperCase(),
             number_type: bodyReq.numberType,
@@ -232,11 +236,7 @@ async function bulkUpdate(req, res) {
       .on('end', async () => {
         await Promise.all(dataPromises);
 
-        const bulkOps = records.map(record => ({
-          insertOne: { document: record },
-        }));
-
-        await numberRepo.bulkCreate(records);
+        await numberRepo.bulkUpdate(records);
 
         SuccessRespnose.message = 'Successfully Uploaded Numbers.';
         return res.status(StatusCodes.CREATED).json(SuccessRespnose);
@@ -302,8 +302,8 @@ async function uploadNumbers(req, res) {
             status: 1,
             actual_number: Number(row['DID']),
             category: bodyReq.category,
-            currency: bodyReq.currency,
-            country_code: row['Country Code'],
+            currency: bodyReq.currency.toUpperCase(),
+            country_code: row['Country Code'].toUpperCase() || null,
             state_code: row?.['State Code'] || null,
             cost: row.Cost,
             operator: row.Operator.toUpperCase(),
@@ -583,6 +583,7 @@ async function assignBulkDID(req, res) {
         records.push(row);
       })
       .on('end', async () => {
+
         for (const record of records) {
           const numberType = bodyReq.type === 'VMN' ? 'VMN' : 'TOLL FREE';
           const existingNumber = await numberRepo.findOne({
@@ -590,11 +591,17 @@ async function assignBulkDID(req, res) {
             number_type: numberType
           });
 
+          const didDetail = await numberRepo.findOne({
+            actual_number: record?.DID,
+            number_type: 'DID'
+          });
+
           if (existingNumber) {
             await numberRepo.update(existingNumber.id, {
               status: NUMBER_STATUS_LABLE[record['STATUS']],
               routing_destination: Number(record.DID),
               routing_type: numberType,
+              routing_id: didDetail?.id
             });
           }
         }
