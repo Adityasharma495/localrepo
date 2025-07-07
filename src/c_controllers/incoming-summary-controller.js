@@ -10,6 +10,7 @@ const incomingSummaryRepo = new IncomingSummaryRepository();
 const { constants } = require("../../shared/utils/common");
 
 async function getAll(req, res) {
+
   try {
 
     const data = await incomingSummaryRepo.getAll(req.user.role, req.user.id);
