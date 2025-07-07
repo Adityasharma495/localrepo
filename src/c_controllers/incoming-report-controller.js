@@ -424,7 +424,8 @@ async function getAllDescendantUserIdsRecursive(userId, collected = new Set()) {
 async function getDidSpecificReport(req, res) {
   try {
 
-    const { did, startDate, endDate } = req.params;
+    let { did, startDate, endDate } = req.params;
+
 
     let userIds = [req.user.id];
     const role = req.user.role
@@ -528,16 +529,12 @@ async function getDidSpecificReport(req, res) {
       const allUserReports = [];
 
 
-      console.log("DID", did);
-      console.log("START DATE", startDate);
-      console.log("UID", userIds);
-      console.log("ROLE", role);
-
-
       const idsToQuery = userIds || [null];
+
       for (const uid of idsToQuery) {
         if (week === startWeek) {
-          const data = await inboundRepo.getByDidByStartDate({ callee_number: did }, startDate, uid,role);
+
+          const data = await inboundRepo.getByDidByDate({ callee_number: did }, startDate,endDate, uid);
           allUserReports.push(...data);
         } else if (week === endWeek) {
           const data = await inboundRepo.getByDidByEndDate({ callee_number: did }, endDate, uid,role);
