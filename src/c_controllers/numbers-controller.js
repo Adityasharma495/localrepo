@@ -236,6 +236,32 @@ async function bulkUpdate(req, res) {
       .on('end', async () => {
         await Promise.all(dataPromises);
 
+        const actualNumberTypePairs = records.map(r => ({
+          actual_number: r.actual_number,
+          number_type: r.number_type
+        }));
+
+        const existingRecords = await numberRepo.getExistingNumberPairs(actualNumberTypePairs);
+
+        const existingSet = new Set(
+          existingRecords.map(r => `${r.actual_number}_${r.number_type}`)
+        );
+
+        const filteredRecords = records.filter(r =>
+          existingSet.has(`${r.actual_number}_${r.number_type}`)
+        );
+
+        // Optional: Log skipped records
+        const skippedRecords = records.length - filteredRecords.length;
+        if (skippedRecords > 0) {
+          Logger.info(`${skippedRecords} records skipped as they do not exist in DB`);
+        }
+
+        if (filteredRecords.length === 0) {
+          return res.status(StatusCodes.BAD_REQUEST).json({
+            message: 'No valid records found to update.',
+          });
+        }
         await numberRepo.bulkUpdate(records);
 
         SuccessRespnose.message = 'Successfully Uploaded Numbers.';
@@ -321,8 +347,23 @@ async function uploadNumbers(req, res) {
         await Promise.all(dataPromises);
 
         try {
+          const actualNumbers = records.map(item => item.actual_number);
+          const existingNumbers = await numberRepo.getNumbersByActualNumbers(actualNumbers); 
+
+          const existingNumberSet = new Set(existingNumbers.map(num => num.actual_number));
+
+          const filteredRecords = records.filter(item => existingNumberSet.has(item.actual_number));
+          const skippedNumbers = records.filter(item => !existingNumberSet.has(item.actual_number));
+
+          Logger.info(`Skipped ${skippedNumbers.length} duplicate numbers: ${skippedNumbers.map(n => n.actual_number).join(', ')}`);
+
+          if (filteredRecords.length === 0) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+              message: 'All numbers in the file already exist.',
+            });
+          }
           const batchSize = 100;
-          for (let i = 0; i < records.length; i += batchSize) {
+          for (let i = 0; i < filteredRecords.length; i += batchSize) {
             const batch = records.slice(i, i + batchSize);
             const insertedRecords = await numberRepo.insertMany(batch);
             // DID allocation
@@ -341,7 +382,7 @@ async function uploadNumbers(req, res) {
 
           if (!headersSent) {
             const SuccessRespnose = {
-              message: 'Successfully Uploaded Numbers.',
+              message: `Successfully uploaded ${filteredRecords.length} numbers and Skipped ${skippedNumbers.length} duplicate numbers`,
               data: { file_destination: dest }
             };
             Logger.info('Numbers uploaded successfully');

@@ -28,11 +28,10 @@ async function signinUser(req, res) {
   const bodyReq = req.body;
   const username = bodyReq.username;
 
-
   try {
     //Fetch user via username
     const user = await userRepo.getByUsername(username);
-    if (req.user.role === USERS_ROLE.CALLCENTRE_AGENT) {
+    if (req?.user?.role === USERS_ROLE.CALLCENTRE_AGENT || username !== 'superadmin') {
     const userLoginCount = await userRepo.find({
         where: { 
           id: user.id,
@@ -76,7 +75,7 @@ async function signinUser(req, res) {
 
         await userJourneyRepo.create(userJourneyfields);
 
-      if (req.user.role === USERS_ROLE.CALLCENTRE_AGENT) {
+      if (req?.user?.role === USERS_ROLE.CALLCENTRE_AGENT || username !== 'superadmin') {
         userRepo.update(user.id, {
           login_at: Date.now(),
           logout_at: null,
