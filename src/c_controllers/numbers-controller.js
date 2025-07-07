@@ -883,7 +883,7 @@ async function getAllocatedNumbers(req, res) {
         allocatedNumbers = await didUserMappingRepository.getForOthers(allocatedToId, 2);
         level = 2
 
-        if (!allocatedNumbers) {
+        if (allocatedNumbers.length === 0) {
           allocatedNumbers = await didUserMappingRepository.getForOthers(allocatedToId, 4);
           level = 4
         }
@@ -891,8 +891,7 @@ async function getAllocatedNumbers(req, res) {
         loggedUser?.createdByUser?.createdByUser?.role === USERS_ROLE.SUPER_ADMIN) {
           allocatedNumbers = await didUserMappingRepository.getForOthers(allocatedToId, 3);
           level = 3
-
-          if (!allocatedNumbers) {
+          if (allocatedNumbers.length === 0) {
             allocatedNumbers = await didUserMappingRepository.getForOthers(allocatedToId, 4);
             level = 4
           }
@@ -997,6 +996,7 @@ async function removeAllocatedNumbers(req, res) {
 
       const isSame = allocatedNumbers?.mapping_detail[0].parent_id.toString() === superadminCheck.id.toString();
 
+
       if (isSame) {
 
         const removedDetails = await didUserMappingRepository.deleteMappingDetail(did, { allocated_to: user_id })
@@ -1028,7 +1028,7 @@ async function removeAllocatedNumbers(req, res) {
         else if (req.user.role !== USERS_ROLE.RESELLER) {
           const getLoggedDetail = await userRepo.get(req.user.id)
 
-          allocatedToId = getLoggedDetail?.companies?._id?.id
+          allocatedToId = getLoggedDetail?.company?.id
         } else {
           allocatedToId = req.user.id
         }
@@ -1062,6 +1062,7 @@ async function removeAllocatedNumbers(req, res) {
     SuccessRespnose.message = 'Success';
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
+    console.log('error', error)
     ErrorResponse.message = error.message;
     ErrorResponse.error = error;
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
