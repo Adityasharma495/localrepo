@@ -454,7 +454,8 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
               const startDate = cdrJson.timings.START;
               const userId = cdrJson.userId;
               Logger.info("USer ID :  "+userId);
-              const connectedCalls = ((Number(cdrJson?.duration?.billing) + Number(cdrJson?.duration?.patch)) > 0 ? 1 : 0);
+              // const connectedCalls = ((Number(cdrJson?.duration?.billing) + Number(cdrJson?.duration?.patch)) > 0 ? 1 : 0);
+              const connectedCalls = (Number(cdrJson.status) > 0 ? 1 : 0);
               Logger.info("connect : "+connectedCalls);
 
               let incoming;
@@ -522,10 +523,15 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
                    )} error: ${JSON.stringify(error)}`
             );
            }
-           if((reportFlag === true || outboundFlag === true) && summaryFlag === true){
+           Logger.info("reportFlag :  "+reportFlag);
+           Logger.info("outboundFlag :  "+outboundFlag);
+           Logger.info("summaryFlag :  "+summaryFlag);
+           Logger.info("cdrJson?.callLeg :  "+cdrJson?.callLeg);
+           if((reportFlag === true || outboundFlag === true) && (summaryFlag === true || cdrJson?.callLeg === 'B_PARTY')){
+            const billingDuration = (cdrJson?.callLeg === "A_PARTY") ? (Number(cdrJson.duration.billing) + Number(cdrJson.duration.patch)) : Number(cdrJson.duration.billing)
             const data = {
                   did: cdrJson?.callLeg === "A_PARTY" ? cdrJson?.calleeTo : cdrJson?.callerFrom,
-                  billingDuration : (Number(cdrJson.duration.billing) + Number(cdrJson.duration.patch)),
+                  billingDuration : billingDuration,
                   callLeg: cdrJson.callLeg
             }
             insertDataInBillingQueue(broker, "billing_publisher" , {data});

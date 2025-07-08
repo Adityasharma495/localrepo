@@ -554,22 +554,45 @@ async function get(req, res) {
 async function deleteNumber(req, res) {
   const ids = req.body.numberIds;
   try {
-    await numberRepo.deleteMany(ids);
+    // Fetch all number records
+    const numbers = await numberRepo.find({ id: { [Op.in]: ids } });
 
-    await userJourneyRepo.create({
-      module_name: 'NUMBERS',
-      action: ACTION_LABEL.DELETE,
-      created_by: req.user.id,
+    const deletableIds = [];
+    let notDeletedCount = 0;
+
+    for (const number of numbers) {
+      if (number.allocated_to || number.routing_id) {
+        notDeletedCount++;
+      } else {
+        deletableIds.push(number.id);
+      }
+    }
+
+    // Delete only the eligible numbers
+    if (deletableIds.length > 0) {
+      await numberRepo.deleteMany(deletableIds);
+
+      await userJourneyRepo.create({
+        module_name: 'NUMBERS',
+        action: ACTION_LABEL.DELETE,
+        created_by: req.user.id,
+      });
+    }
+
+    const finalMessage = `${deletableIds.length} number(s) deleted and ${notDeletedCount} not deleted due to mapping`;
+
+    return res.status(StatusCodes.OK).json({
+      message: finalMessage,
+      deletedIds: deletableIds,
     });
 
-    SuccessRespnose.message = 'Deleted successfully!';
-    return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     ErrorResponse.message = error.message;
     ErrorResponse.error = error;
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
   }
 }
+
 
 async function getDIDNumbers(req, res) {
   const numberType = 'DID';
@@ -757,6 +780,8 @@ async function DIDUserMapping(req, res) {
             action: "ADD",
             level: 1
           })
+
+          await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
           successDIDs.push(did);
 
           successActualNumbers.push(didDetail.map((data) => data.actual_number))
