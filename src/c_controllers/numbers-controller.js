@@ -1094,11 +1094,8 @@ async function removeAllocatedNumbers(req, res) {
 
       } else {
         let allocatedToId
-
-        if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
-          allocatedToId = req.user.id
-        }
-        else if (req.user.role !== USERS_ROLE.RESELLER) {
+        
+        if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
           const getLoggedDetail = await userRepo.get(req.user.id)
 
           allocatedToId = getLoggedDetail?.company?.id
