@@ -1163,13 +1163,14 @@ async function setInboundRouting(req, res) {
       });
     }
 
-    if (bodyReq.action === 'agent') {
+    if ((bodyReq.action === 'agent' || bodyReq.action === 'queue') && Object.keys(bodyReq?.agentSchedule).length > 0) {
       await memberScheduleRepo.create({ ...bodyReq.agentSchedule, module_id: bodyReq.id });
     }
 
     SuccessRespnose.message = 'Success';
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
+    console.log(error)
     ErrorResponse.message = error.message;
     ErrorResponse.error = error;
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
