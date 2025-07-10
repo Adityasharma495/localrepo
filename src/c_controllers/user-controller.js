@@ -32,8 +32,8 @@ async function signinUser(req, res) {
     //Fetch user via username
     const user = await userRepo.getByUsername(username);
     if (req?.user?.role === USERS_ROLE.CALLCENTRE_AGENT || username !== 'superadmin') {
-      const userLoginCount = await userRepo.find({
-        where: {
+    const userLoginCount = await userRepo.find({
+        where: { 
           id: user.id,
           login_at: { [Op.ne]: null },
           logout_at: null,
@@ -75,13 +75,13 @@ async function signinUser(req, res) {
 
         await userJourneyRepo.create(userJourneyfields);
 
-        if (req?.user?.role === USERS_ROLE.CALLCENTRE_AGENT || username !== 'superadmin') {
-          userRepo.update(user.id, {
-            login_at: Date.now(),
-            logout_at: null,
-            duration: null
-          })
-        }
+      if (req?.user?.role === USERS_ROLE.CALLCENTRE_AGENT || username !== 'superadmin') {
+        userRepo.update(user.id, {
+          login_at: Date.now(),
+          logout_at: null,
+          duration: null
+        })
+      }  
 
         // Logger.info(User -> ${ userData.id } login successfully);
 
@@ -437,61 +437,60 @@ async function statusPasswordUpdateUser(req, res) {
 }
 
 async function switchUser(req, res) {
-  try {
-    const { id } = req.body;
-    const targetUser = await userRepo.get(id);
-    if (!targetUser) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const user = await userRepo.getByUsername(targetUser.username);
-
-    if (req.user.role === USERS_ROLE.CALLCENTRE_AGENT) {
-      const userLoginCount = await userRepo.find({
-        where: {
-          id: user.id,
-          login_at: { [Op.ne]: null },
-          logout_at: null,
-          duration: null
-        }
-      });
-
-      if (userLoginCount) {
-        ErrorResponse.message = 'User already logged in';
-        return res
-          .status(StatusCodes.BAD_REQUEST)
-          .json(ErrorResponse);
+    try {
+      const { id } = req.body;
+      const targetUser = await userRepo.get(id);
+      if (!targetUser) {
+        return res.status(404).json({ error: 'User not found' });
       }
-    }
 
-    const userData = await user.generateUserData(true);
+      const user = await userRepo.getByUsername(targetUser.username);
 
-    if (req.user.role === USERS_ROLE.CALLCENTRE_AGENT) {
-      await userRepo.update(user.id, {
-        login_at: Date.now(),
-        logout_at: null,
-        duration: null
-      });
-    }
+      if (targetUser.role === USERS_ROLE.CALLCENTRE_AGENT) {
+        const userLoginCount = await userRepo.find({
+          where: { 
+            id: user.id,
+            login_at: { [Op.ne]: null },
+            logout_at: null,
+            duration: null  
+          }
+        });
 
-    if (userData?.role === USERS_ROLE.CALLCENTRE_AGENT) {
-      const agent = await agentRepo.getByName(userData?.name)
-      userData.agentData = agent
-    }
+        if (userLoginCount) {
+          ErrorResponse.message = 'User already logged in';
+            return res
+              .status(StatusCodes.BAD_REQUEST)
+              .json(ErrorResponse);
+        }
+      }
 
-    SuccessRespnose.message = "Successfully signed in";
-    SuccessRespnose.data = userData;
+      const userData = await user.generateUserData(true);
 
-    Logger.info(`User -> ${JSON.stringify(userData)} login successfully`);
+      if (targetUser.role === USERS_ROLE.CALLCENTRE_AGENT) {
+        await userRepo.update(user.id, {
+            login_at: Date.now(),
+            logout_at: null,
+            duration: null
+        });
+      }  
 
-    return res.status(StatusCodes.OK).json(SuccessRespnose);
-  } catch (error) {
-    console.error('Error in switchUser:', error);
-    ErrorResponse.message = error.message || 'Something went wrong';
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
-  }
+      if (userData?.role === USERS_ROLE.CALLCENTRE_AGENT) {
+          const agent = await agentRepo.getByName(userData?.name)
+          userData.agentData = agent
+      }
+
+      SuccessRespnose.message = "Successfully signed in";
+      SuccessRespnose.data = userData;
+
+      // Logger.info(User -> ${JSON.stringify(userData)} login successfully);
+
+      return res.status(StatusCodes.OK).json(SuccessRespnose);
+        } catch (error) {
+          console.error('Error in switchUser:', error);
+          ErrorResponse.message = error.message || 'Something went wrong';
+          return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+        }
 }
-
 
 async function signupUser(req, res) {
   const bodyReq = req.body;
@@ -928,6 +927,24 @@ async function loginAs(req, res) {
         .status(StatusCodes.BAD_REQUEST)
         .json(ErrorResponse);
     }
+        for (const group of callGroup) {
+          let interfaceValue = '';
+            if (telephonyProfile?.type === 'Mobile') {
+              interfaceValue = `LOCAL/${telephonyProfile?.number?.number}@dial_agent`;
+            } else if (telephonyProfile?.type === 'Soft Phone') {
+              interfaceValue = `LOCAL/${telephonyProfile?.number?.number}@dial_agent_sip`;
+            } else if (telephonyProfile?.type === 'WEBRTC') {
+              interfaceValue = `LOCAL/${telephonyProfile?.number?.number}@dial_agent_webrtc`;
+            }
+
+          await asteriskCTQueueMembersRepo.create({
+            queue_name: group?.group_name,              
+            interface: interfaceValue,        
+            membername: 1,          
+            state_interface: `Custom:${telephonyProfile?.number?.number}`,             
+            paused: 0,
+          });
+        }
 
     for (const group of callGroup) {
       await asteriskCTQueueMembersRepo.create({

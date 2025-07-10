@@ -17,6 +17,9 @@ router.get('/get-report/:did/:startDate/:endDate',AuthMiddleware.validateUser, I
 // get did-specific with trace_id
 router.get('/get-report/:did/:startDate/:endDate/:trace_id',AuthMiddleware.validateUser, IncomingReportController.getDidSpecificReportwithTraceId);
 
+//  get all incoming reports
+router.get('/get-report/incoming',AuthMiddleware.validateUser, IncomingReportController.getAllIncomingReports);
+
 // get all incoming-report api/v2/incoming-report/
 router.get('/', AuthMiddleware.validateUser, IncomingReportController.getAll);
 

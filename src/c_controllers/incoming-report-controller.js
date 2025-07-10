@@ -81,7 +81,11 @@ async function createIncomingReport(req, res) {
 
 async function getAll(req, res) {
   try {
+
+    console.log("CAME HERE TO GET ALL");
     const data = await incomingReportRepo.getAll(req.user.role, req.user.id);
+
+    console.log("DATA", data);
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
@@ -412,7 +416,7 @@ async function getAllDescendantUserIdsRecursive(userId, collected = new Set()) {
 
   for (const child of children) {
     // Recursively collect children
-    await getAllDescendantUserIdsRecursive(child.id,collected);
+    await getAllDescendantUserIdsRecursive(child.id, collected);
   }
 
   return Array.from(collected);
@@ -532,13 +536,13 @@ async function getDidSpecificReport(req, res) {
       for (const uid of idsToQuery) {
         if (week === startWeek) {
 
-          const data = await inboundRepo.getByDidByDate({ callee_number: did }, startDate,endDate, uid);
+          const data = await inboundRepo.getByDidByDate({ callee_number: did }, startDate, endDate, uid);
           allUserReports.push(...data);
         } else if (week === endWeek) {
-          const data = await inboundRepo.getByDidByEndDate({ callee_number: did }, endDate, uid,role);
+          const data = await inboundRepo.getByDidByEndDate({ callee_number: did }, endDate, uid, role);
           allUserReports.push(...data);
         } else {
-          const data = await inboundRepo.getByDidByDate({ callee_number: did }, uid,role);
+          const data = await inboundRepo.getByDidByDate({ callee_number: did }, uid, role);
           allUserReports.push(...data);
         }
       }
@@ -649,33 +653,33 @@ async function getDidSpecificReportwithTraceId(req, res) {
 
     console.log("OUTBOUND DATA", outboundData);
     console.log("Inbound DATA", inboundData);
-    
+
     const calleeNumbers = outboundData.map(item => item.dataValues.callee_number);
 
     const agentRepo = new AgentRepository();
     const agentList = await agentRepo.findAll({ agent_number: calleeNumbers });
-    
 
 
-const enrichedOutboundData = outboundData.map(outbound => {
-  const callee = outbound.dataValues.callee_number;
-  const matchedAgent = agentList.find(agent => agent.dataValues.agent_number === callee);
 
-  return {
-    ...outbound.dataValues,
-    agent_name: matchedAgent?.dataValues.agent_name || null,
-    agent_number: matchedAgent?.dataValues.agent_number || null,
-  };
-});
+    const enrichedOutboundData = outboundData.map(outbound => {
+      const callee = outbound.dataValues.callee_number;
+      const matchedAgent = agentList.find(agent => agent.dataValues.agent_number === callee);
+
+      return {
+        ...outbound.dataValues,
+        agent_name: matchedAgent?.dataValues.agent_name || null,
+        agent_number: matchedAgent?.dataValues.agent_number || null,
+      };
+    });
 
 
-const normalizedInboundData = inboundData.map(item => item.dataValues);
+    const normalizedInboundData = inboundData.map(item => item.dataValues);
 
-// 5. Prepare final report
-const finalReport = {
-  incomingReports: normalizedInboundData,
-  outboundReports: enrichedOutboundData
-};
+    // 5. Prepare final report
+    const finalReport = {
+      incomingReports: normalizedInboundData,
+      outboundReports: enrichedOutboundData
+    };
 
 
     SuccessRespnose.data = finalReport;
@@ -693,7 +697,76 @@ const finalReport = {
   }
 }
 
+async function getAllIncomingReports(req, res) {
+
+  const current_role = req.user.role;
+  const current_uid = req.user.id;
+
+
+  console.log("CAME GERE ASDASD");
+  const InboundRepositories = {
+    Januaryw1: new IncomingReportJanuaryW1Repository(), Januaryw2: new IncomingReportJanuaryW2Repository(),
+    Januaryw3: new IncomingReportJanuaryW3Repository(), Januaryw4: new IncomingReportJanuaryW4Repository(),
+    Februaryw1: new IncomingReportFebruaryW1Repository(), Februaryw2: new IncomingReportFebruaryW2Repository(),
+    Februaryw3: new IncomingReportFebruaryW3Repository(), Februaryw4: new IncomingReportFebruaryW4Repository(),
+    Marchw1: new IncomingReportMarchW1Repository(), Marchw2: new IncomingReportMarchW2Repository(),
+    Marchw3: new IncomingReportMarchW3Repository(), Marchw4: new IncomingReportMarchW4Repository(),
+    Aprilw1: new IncomingReportAprilW1Repository(), Aprilw2: new IncomingReportAprilW2Repository(),
+    Aprilw3: new IncomingReportAprilW3Repository(), Aprilw4: new IncomingReportAprilW4Repository(),
+    Mayw1: new IncomingReportMayW1Repository(), Mayw2: new IncomingReportMayW2Repository(),
+    Mayw3: new IncomingReportMayW3Repository(), Mayw4: new IncomingReportMayW4Repository(),
+    Junew1: new IncomingReportJuneW1Repository(), Junew2: new IncomingReportJuneW2Repository(),
+    Junew3: new IncomingReportJuneW3Repository(), Junew4: new IncomingReportJuneW4Repository(),
+    Julyw1: new IncomingReportJulyW1Repository(), Julyw2: new IncomingReportJulyW2Repository(),
+    Julyw3: new IncomingReportJulyW3Repository(), Julyw4: new IncomingReportJulyW4Repository(),
+    Augustw1: new IncomingReportAugustW1Repository(), Augustw2: new IncomingReportAugustW2Repository(),
+    Augustw3: new IncomingReportAugustW3Repository(), Augustw4: new IncomingReportAugustW4Repository(),
+    Septemberw1: new IncomingReportSeptemberW1Repository(), Septemberw2: new IncomingReportSeptemberW2Repository(),
+    Septemberw3: new IncomingReportSeptemberW3Repository(), Septemberw4: new IncomingReportSeptemberW4Repository(),
+    Octoberw1: new IncomingReportOctoberW1Repository(), Octoberw2: new IncomingReportOctoberW2Repository(),
+    Octoberw3: new IncomingReportOctoberW3Repository(), Octoberw4: new IncomingReportOctoberW4Repository(),
+    Novemberw1: new IncomingReportNovemberW1Repository(), Novemberw2: new IncomingReportNovemberW2Repository(),
+    Novemberw3: new IncomingReportNovemberW3Repository(), Novemberw4: new IncomingReportNovemberW4Repository(),
+    Decemberw1: new IncomingReportDecemberW1Repository(), Decemberw2: new IncomingReportDecemberW2Repository(),
+    Decemberw3: new IncomingReportDecemberW3Repository(), Decemberw4: new IncomingReportDecemberW4Repository(),
+  };
+
+  try {
+    const allDataPromises = Object.values(InboundRepositories).map(repo =>
+      repo.getAll(current_role, current_uid)
+    );
+
+    const allResults = await Promise.all(allDataPromises);
+    const combinedResults = allResults.flat();
+
+    // Convert to plain JSON
+    const plainResults = combinedResults.map(item => item.get({ plain: true }));
+
+    const abandoned_calls = plainResults.filter(item => !item.answer_status || item.answer_status === '0').length;
+
+
+    return res.status(200).json({
+      success: true,
+      message: 'Fetched all incoming reports successfully',
+      data: {
+        abandoned_calls:abandoned_calls
+      }
+    });
+  } catch (error) {
+    console.error("Error in getAllIncomingReports:", error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch incoming reports',
+      error: error.message || error
+    });
+  }
+
+
+}
 
 
 
-module.exports = { createIncomingReport, getAll, getById, updateIncomingReport, deleteIncomingReport, getDidSpecificReport, getDidSpecificReportwithTraceId };
+
+
+
+module.exports = { createIncomingReport, getAll, getById, updateIncomingReport, deleteIncomingReport, getDidSpecificReport, getDidSpecificReportwithTraceId, getAllIncomingReports };

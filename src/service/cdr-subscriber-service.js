@@ -1,6 +1,6 @@
 const Broker = require('rascal').BrokerAsPromised;
 const config = require('../../shared/config/rabitmq-config.json');
-const {  IncomingSummaryRepository } = require("../../shared/c_repositories");
+const {  IncomingSummaryRepository, AgentRepository } = require("../../shared/c_repositories");
 const incomingSummaryRepo = new IncomingSummaryRepository();
 const { IncomingReportJanuaryW1Repository,IncomingReportJanuaryW2Repository,IncomingReportJanuaryW3Repository,IncomingReportJanuaryW4Repository,
   IncomingReportFebruaryW1Repository,IncomingReportFebruaryW2Repository,IncomingReportFebruaryW3Repository,IncomingReportFebruaryW4Repository,
@@ -290,6 +290,7 @@ const outboundRepositoryMap = {
   outboundReport12W3Repo:outboundReport12W3Repo,
   outboundReport12W4Repo:outboundReport12W4Repo,
 };
+const agentRepository = new AgentRepository();
 
 const insertDataInBillingQueue =   async (con,pub,message) =>{
     try {
@@ -340,8 +341,26 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
             let report_data = {};
             let summary_data = {};
 
-            if (cdrJson.calleeTo.length === 11) {
-              cdrJson.calleeTo = cdrJson.calleeTo.substring(1, cdrJson.calleeTo.length);
+            if (cdrJson?.calleeTo) {
+              if (cdrJson.calleeTo.startsWith("+91")) {
+                cdrJson.calleeTo = cdrJson.calleeTo.slice(3)
+              }
+            }
+            if (cdrJson?.callerFrom) {
+              if (cdrJson.callerFrom.startsWith("+91")) {
+                cdrJson.callerFrom = cdrJson.callerFrom.slice(3)
+              }
+            }
+
+            if (cdrJson?.calleeTo) {
+              if (cdrJson.calleeTo.length === 11) {
+                cdrJson.calleeTo = cdrJson.calleeTo.substring(1, cdrJson.calleeTo.length);
+              }
+            }
+            if (cdrJson?.callerFrom) {
+              if (cdrJson.callerFrom.length === 11) {
+                cdrJson.callerFrom = cdrJson.callerFrom.substring(1, cdrJson.callerFrom.length);
+              }
             }
 
             try {
@@ -356,6 +375,7 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
                  billing_duration : cdrJson.duration.billing,
                  trace_id: cdrJson.traceId,
                  patch_duration: cdrJson.duration.patch,
+                 answer_status: cdrJson?.status != null ? String(cdrJson.status) : null,
               }
 
             Logger.info("Report Date : "+JSON.stringify(report_data));
@@ -380,6 +400,24 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
               report = await repoInstance.create(report_data);
 
             } else if(cdrJson.callLeg === "B_PARTY") {
+              if (cdrJson.agent) {
+                let agentData;
+                if (cdrJson.agent.number) {
+                  agentData = await agentRepository.find({where: {
+                    agent_number: cdrJson.agent.number
+                  }});
+                }
+                if (agentData) {
+                  if (agentData.agent_number) {
+                    if (agentData.agent_number.length === 11) {
+                      agentData.agent_number = agentData.agent_number.substring(1, agentData.agent_number.length);
+                    }
+                    report_data["agent_number"] = agentData.agent_number;
+                  }
+                  report_data["agent_name"] = agentData.agent_name;
+                  report_data["agent_id"] = agentData.id;
+                }
+              }
 
               report_data["ring_duration"] =  cdrJson.ring;
               const key = `outboundReport${month}W${week}Repo`;
@@ -416,7 +454,8 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
               const startDate = cdrJson.timings.START;
               const userId = cdrJson.userId;
               Logger.info("USer ID :  "+userId);
-              const connectedCalls = (cdrJson.duration.billing > 0 ? 1 : 0);
+              // const connectedCalls = ((Number(cdrJson?.duration?.billing) + Number(cdrJson?.duration?.patch)) > 0 ? 1 : 0);
+              const connectedCalls = (Number(cdrJson.status) > 0 ? 1 : 0);
               Logger.info("connect : "+connectedCalls);
 
               let incoming;
@@ -424,6 +463,16 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
               if (cdrJson.callLeg === "A_PARTY") {
                 incoming = await incomingSummaryRepo.isSummaryExist(userId , did , startDateCheck);
                 if(incoming){
+                  if (incoming?.did) {
+                    if (incoming.did.startsWith("+91")) {
+                      incoming.did = incoming?.did?.slice(3)
+                    }
+
+                    if (incoming?.did?.length === 11) {
+                      incoming.did = incoming?.did?.substring(1, incoming?.did?.length);
+                    }
+                  }
+                  
                    summary_data = {
                         did : incoming.did,
                         user_id: cdrJson.userId ? cdrJson.userId : null,
@@ -435,7 +484,7 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
                         sms_count : (Number(incoming.sms_count) || 0) + (Number(cdrJson.smsCount) || 0), 
                         parent_id : cdrJson.userId ? cdrJson.userId : null,
                         s_parent_id : cdrJson.userId ? cdrJson.userId : null,
-                        billing_duration: Number(incoming.billing_duration)+Number(cdrJson.duration.billing)   
+                        billing_duration: Number(incoming.billing_duration)+(Number(cdrJson.duration.billing) + Number(cdrJson.duration.patch))   
                    }
 
                    const summary = await incomingSummaryRepo.updateSummary(summary_data, startDate);
@@ -455,7 +504,7 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
                        dtmf_count : cdrJson.dtmfCount ?? 0,
                        retry_count : cdrJson.retryCount ?? 0,
                        sms_count : cdrJson.smsCount ?? 0,
-                       billing_duration : Number(cdrJson.duration.billing) 
+                       billing_duration : (Number(cdrJson.duration.billing) + Number(cdrJson.duration.patch)) 
                    }
 
                    const summary = await incomingSummaryRepo.create(summary_data);
@@ -474,10 +523,15 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
                    )} error: ${JSON.stringify(error)}`
             );
            }
-           if((reportFlag === true || outboundFlag === true) && summaryFlag === true){
+           Logger.info("reportFlag :  "+reportFlag);
+           Logger.info("outboundFlag :  "+outboundFlag);
+           Logger.info("summaryFlag :  "+summaryFlag);
+           Logger.info("cdrJson?.callLeg :  "+cdrJson?.callLeg);
+           if((reportFlag === true || outboundFlag === true) && (summaryFlag === true || cdrJson?.callLeg === 'B_PARTY')){
+            const billingDuration = (cdrJson?.callLeg === "A_PARTY") ? (Number(cdrJson.duration.billing) + Number(cdrJson.duration.patch)) : Number(cdrJson.duration.billing)
             const data = {
-                  did : cdrJson.calleeTo,
-                  billingDuration : cdrJson.duration.billing ,
+                  did: cdrJson?.callLeg === "A_PARTY" ? cdrJson?.calleeTo : cdrJson?.callerFrom,
+                  billingDuration : billingDuration,
                   callLeg: cdrJson.callLeg
             }
             insertDataInBillingQueue(broker, "billing_publisher" , {data});

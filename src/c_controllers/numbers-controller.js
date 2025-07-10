@@ -143,20 +143,24 @@ async function update(req, res) {
   const numberId = req.params.id;
   const bodyReq = req.body;
 
+  console.log('numberId', numberId)
+
   try {
     const existingNumber = await numberRepo.findOne({ actual_number: bodyReq.number.actual_number, is_deleted: false, id: { [Op.ne]: numberId } });
+    console.log({ actual_number: bodyReq.number.actual_number, is_deleted: false, id: { [Op.ne]: numberId } })
+    console.log('existingNumber', existingNumber)
     if (existingNumber) {
       ErrorResponse.message = 'Number Already Exists.';
         return res
         .status(StatusCodes.BAD_REQUEST)
         .json(ErrorResponse);
     }
-    const numberData = await numberRepo.findOne({ id: numberId });
+    // const numberData = await numberRepo.findOne({ id: numberId });
 
-    if (numberData.status !== bodyReq.number.status && req.user.role !== USERS_ROLE.SUPER_ADMIN) {
-      bodyReq.number.updated_status = bodyReq.number.status;
-      bodyReq.number.status = 9;
-    }
+    // if (numberData.status !== bodyReq.number.status && req.user.role !== USERS_ROLE.SUPER_ADMIN) {
+    //   bodyReq.number.updated_status = bodyReq.number.status;
+    //   bodyReq.number.status = 9;
+    // }
 
     bodyReq.number.operator = bodyReq.number.operator.toUpperCase()
 
@@ -218,9 +222,9 @@ async function bulkUpdate(req, res) {
             status: row.Status,
             actual_number: row['DID'],
             category: row?.Category || null,
-            currency: row.Currency,
-            country_code: row['Country Code'],
-            state_code: row?.['State Code'] || null,
+            currency: row.Currency.toUpperCase() || null,
+            country_code: row['Country Code'].toUpperCase() || null,
+            state_code: row?.['State Code'].toUpperCase() || null,
             cost: row.Cost,
             operator: row.Operator.toUpperCase(),
             number_type: bodyReq.numberType,
@@ -232,11 +236,33 @@ async function bulkUpdate(req, res) {
       .on('end', async () => {
         await Promise.all(dataPromises);
 
-        const bulkOps = records.map(record => ({
-          insertOne: { document: record },
+        const actualNumberTypePairs = records.map(r => ({
+          actual_number: r.actual_number,
+          number_type: r.number_type
         }));
 
-        await numberRepo.bulkCreate(records);
+        const existingRecords = await numberRepo.getExistingNumberPairs(actualNumberTypePairs);
+
+        const existingSet = new Set(
+          existingRecords.map(r => `${r.actual_number}_${r.number_type}`)
+        );
+
+        const filteredRecords = records.filter(r =>
+          existingSet.has(`${r.actual_number}_${r.number_type}`)
+        );
+
+        // Optional: Log skipped records
+        const skippedRecords = records.length - filteredRecords.length;
+        if (skippedRecords > 0) {
+          Logger.info(`${skippedRecords} records skipped as they do not exist in DB`);
+        }
+
+        if (filteredRecords.length === 0) {
+          return res.status(StatusCodes.BAD_REQUEST).json({
+            message: 'No valid records found to update.',
+          });
+        }
+        await numberRepo.bulkUpdate(records);
 
         SuccessRespnose.message = 'Successfully Uploaded Numbers.';
         return res.status(StatusCodes.CREATED).json(SuccessRespnose);
@@ -302,8 +328,8 @@ async function uploadNumbers(req, res) {
             status: 1,
             actual_number: Number(row['DID']),
             category: bodyReq.category,
-            currency: bodyReq.currency,
-            country_code: row['Country Code'],
+            currency: bodyReq.currency.toUpperCase(),
+            country_code: row['Country Code'].toUpperCase() || null,
             state_code: row?.['State Code'] || null,
             cost: row.Cost,
             operator: row.Operator.toUpperCase(),
@@ -321,8 +347,23 @@ async function uploadNumbers(req, res) {
         await Promise.all(dataPromises);
 
         try {
+          const actualNumbers = records.map(item => item.actual_number);
+          const existingNumbers = await numberRepo.getNumbersByActualNumbers(actualNumbers); 
+
+          const existingNumberSet = new Set(existingNumbers.map(num => num.actual_number));
+
+          const filteredRecords = records.filter(item => existingNumberSet.has(item.actual_number));
+          const skippedNumbers = records.filter(item => !existingNumberSet.has(item.actual_number));
+
+          Logger.info(`Skipped ${skippedNumbers.length} duplicate numbers: ${skippedNumbers.map(n => n.actual_number).join(', ')}`);
+
+          if (filteredRecords.length === 0) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+              message: 'All numbers in the file already exist.',
+            });
+          }
           const batchSize = 100;
-          for (let i = 0; i < records.length; i += batchSize) {
+          for (let i = 0; i < filteredRecords.length; i += batchSize) {
             const batch = records.slice(i, i + batchSize);
             const insertedRecords = await numberRepo.insertMany(batch);
             // DID allocation
@@ -341,7 +382,7 @@ async function uploadNumbers(req, res) {
 
           if (!headersSent) {
             const SuccessRespnose = {
-              message: 'Successfully Uploaded Numbers.',
+              message: `Successfully uploaded ${filteredRecords.length} numbers and Skipped ${skippedNumbers.length} duplicate numbers`,
               data: { file_destination: dest }
             };
             Logger.info('Numbers uploaded successfully');
@@ -513,22 +554,45 @@ async function get(req, res) {
 async function deleteNumber(req, res) {
   const ids = req.body.numberIds;
   try {
-    await numberRepo.deleteMany(ids);
+    // Fetch all number records
+    const numbers = await numberRepo.find({ id: { [Op.in]: ids } });
 
-    await userJourneyRepo.create({
-      module_name: 'NUMBERS',
-      action: ACTION_LABEL.DELETE,
-      created_by: req.user.id,
+    const deletableIds = [];
+    let notDeletedCount = 0;
+
+    for (const number of numbers) {
+      if (number.allocated_to || number.routing_id) {
+        notDeletedCount++;
+      } else {
+        deletableIds.push(number.id);
+      }
+    }
+
+    // Delete only the eligible numbers
+    if (deletableIds.length > 0) {
+      await numberRepo.deleteMany(deletableIds);
+
+      await userJourneyRepo.create({
+        module_name: 'NUMBERS',
+        action: ACTION_LABEL.DELETE,
+        created_by: req.user.id,
+      });
+    }
+
+    const finalMessage = `${deletableIds.length} number(s) deleted and ${notDeletedCount} not deleted due to mapping`;
+
+    return res.status(StatusCodes.OK).json({
+      message: finalMessage,
+      deletedIds: deletableIds,
     });
 
-    SuccessRespnose.message = 'Deleted successfully!';
-    return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     ErrorResponse.message = error.message;
     ErrorResponse.error = error;
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
   }
 }
+
 
 async function getDIDNumbers(req, res) {
   const numberType = 'DID';
@@ -583,6 +647,7 @@ async function assignBulkDID(req, res) {
         records.push(row);
       })
       .on('end', async () => {
+
         for (const record of records) {
           const numberType = bodyReq.type === 'VMN' ? 'VMN' : 'TOLL FREE';
           const existingNumber = await numberRepo.findOne({
@@ -590,11 +655,17 @@ async function assignBulkDID(req, res) {
             number_type: numberType
           });
 
+          const didDetail = await numberRepo.findOne({
+            actual_number: record?.DID,
+            number_type: 'DID'
+          });
+
           if (existingNumber) {
             await numberRepo.update(existingNumber.id, {
               status: NUMBER_STATUS_LABLE[record['STATUS']],
               routing_destination: Number(record.DID),
               routing_type: numberType,
+              routing_id: didDetail?.id
             });
           }
         }
@@ -709,6 +780,8 @@ async function DIDUserMapping(req, res) {
             action: "ADD",
             level: 1
           })
+
+          await voicePlanRepo.update(bodyReq?.voice_plan_id, { is_allocated: 1 });
           successDIDs.push(did);
 
           successActualNumbers.push(didDetail.map((data) => data.actual_number))
@@ -1021,11 +1094,8 @@ async function removeAllocatedNumbers(req, res) {
 
       } else {
         let allocatedToId
-
-        if (req.user.role === USERS_ROLE.SUPER_ADMIN) {
-          allocatedToId = req.user.id
-        }
-        else if (req.user.role !== USERS_ROLE.RESELLER) {
+        
+        if (req.user.role === USERS_ROLE.COMPANY_ADMIN) {
           const getLoggedDetail = await userRepo.get(req.user.id)
 
           allocatedToId = getLoggedDetail?.company?.id
@@ -1090,13 +1160,14 @@ async function setInboundRouting(req, res) {
       });
     }
 
-    if (bodyReq.action === 'agent') {
+    if ((bodyReq.action === 'agent' || bodyReq.action === 'queue') && Object.keys(bodyReq?.agentSchedule).length > 0) {
       await memberScheduleRepo.create({ ...bodyReq.agentSchedule, module_id: bodyReq.id });
     }
 
     SuccessRespnose.message = 'Success';
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
+    console.log(error)
     ErrorResponse.message = error.message;
     ErrorResponse.error = error;
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
