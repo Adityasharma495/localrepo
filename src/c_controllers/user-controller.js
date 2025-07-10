@@ -1,5 +1,5 @@
 const { UserRepository, CompanyRepository, SubUserLicenceRepository, CallCentreRepository,
-  AgentRepository, AsteriskCTQueueMembersRepository, AgentScheduleMappingRepository, TelephonyProfileRepository} = require("../../shared/c_repositories")
+  AgentRepository, AsteriskCTQueueMembersRepository, AgentScheduleMappingRepository, TelephonyProfileRepository } = require("../../shared/c_repositories")
 const { UserJourneyRepository } = require("../../shared/c_repositories")
 const { StatusCodes } = require("http-status-codes");
 const {
@@ -28,25 +28,24 @@ async function signinUser(req, res) {
   const bodyReq = req.body;
   const username = bodyReq.username;
 
-
   try {
     //Fetch user via username
     const user = await userRepo.getByUsername(username);
-    if (req.user.role === USERS_ROLE.CALLCENTRE_AGENT) {
-    const userLoginCount = await userRepo.find({
-        where: { 
+    if (req?.user?.role === USERS_ROLE.CALLCENTRE_AGENT || username !== 'superadmin') {
+      const userLoginCount = await userRepo.find({
+        where: {
           id: user.id,
           login_at: { [Op.ne]: null },
           logout_at: null,
-          duration: null  
+          duration: null
         }
       });
 
       if (userLoginCount) {
         ErrorResponse.message = 'User already logged in';
-          return res
-            .status(StatusCodes.BAD_REQUEST)
-            .json(ErrorResponse);
+        return res
+          .status(StatusCodes.BAD_REQUEST)
+          .json(ErrorResponse);
       }
     }
 
@@ -76,15 +75,15 @@ async function signinUser(req, res) {
 
         await userJourneyRepo.create(userJourneyfields);
 
-      if (req.user.role === USERS_ROLE.CALLCENTRE_AGENT) {
-        userRepo.update(user.id, {
-          login_at: Date.now(),
-          logout_at: null,
-          duration: null
-        })
-      }  
+        if (req?.user?.role === USERS_ROLE.CALLCENTRE_AGENT || username !== 'superadmin') {
+          userRepo.update(user.id, {
+            login_at: Date.now(),
+            logout_at: null,
+            duration: null
+          })
+        }
 
-        Logger.info(`User -> ${userData.id} login successfully`);
+        // Logger.info(User -> ${ userData.id } login successfully);
 
         return res.status(StatusCodes.OK).json(SuccessRespnose);
       }
@@ -114,32 +113,32 @@ async function signinUser(req, res) {
 
 async function getAll(req, res) {
   try {
-      const userRole = req.query.role;
-      let response;
+    const userRole = req.query.role;
+    let response;
 
 
-      if (userRole === "noRole") {
-          response = await userRepo.getAll();
-      } else {
-          response = await userRepo.getAllByRoles(
-              req.user.id,
-              req.user.role,
-              userRole
-          );
-      }
-
-      SuccessRespnose.data =response;
-
-      return res.status(StatusCodes.OK).json(SuccessRespnose);
-  } catch (error) {
-      ErrorResponse.message = error.message;
-      ErrorResponse.error = error;
-
-      Logger.error(
-          `User -> unable to get users list, error: ${JSON.stringify(error)}`
+    if (userRole === "noRole") {
+      response = await userRepo.getAll();
+    } else {
+      response = await userRepo.getAllByRoles(
+        req.user.id,
+        req.user.role,
+        userRole
       );
+    }
 
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+    SuccessRespnose.data = response;
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    ErrorResponse.message = error.message;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `User -> unable to get users list, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
   }
 }
 
@@ -156,7 +155,7 @@ async function logoutUser(req, res) {
       })
 
       await userRepo.update(id, {
-        login_at:null,
+        login_at: null,
         logout_at: Date.now(),
       })
     }
@@ -164,7 +163,7 @@ async function logoutUser(req, res) {
     const userJourneyfields = {
       module_name: MODULE_LABEL.USERS,
       action: ACTION_LABEL.LOGOUT,
-      created_by:  req.user.id
+      created_by: req.user.id
     }
 
     await userJourneyRepo.create(userJourneyfields);
@@ -275,17 +274,17 @@ async function deleteUser(req, res) {
               (Number(deleteUser?.sub_user_licence?.available_licence[key]) || 0) +
               (Number(loggedInUser?.sub_user_licence?.available_licence[key]) || 0);
           }
-          const companyLicence = await companyRepo.findOne({id: deleteUser?.company_id})
+          const companyLicence = await companyRepo.findOne({ id: deleteUser?.company_id })
           const availableLicence = Number(companyLicence?.subUserLicenceId?.available_licence?.company);
           const updatedLicence = availableLicence + 1;
-          await subUserLicenceRepo.updateById(companyLicence?.subUserLicenceId?.id, {available_licence: {company: updatedLicence}})
+          await subUserLicenceRepo.updateById(companyLicence?.subUserLicenceId?.id, { available_licence: { company: updatedLicence } })
 
           if (req.user.role !== USERS_ROLE.RESELLER) {
-            await subUserLicenceRepo.update(req.user.id, {available_licence: mergedLicence})
+            await subUserLicenceRepo.update(req.user.id, { available_licence: mergedLicence })
           }
-          await subUserLicenceRepo.update(userId, {is_deleted: true})
+          await subUserLicenceRepo.update(userId, { is_deleted: true })
         }
-         // if Callcenter admin is deleted
+        // if Callcenter admin is deleted
         if (deleteUser?.role === USERS_ROLE.CALLCENTRE_ADMIN) {
           const mergedLicence = {};
 
@@ -298,10 +297,10 @@ async function deleteUser(req, res) {
           const callcenterLicence = await callCentreRepo.get(deleteUser?.callcenter_id)
           const availableLicence = Number(callcenterLicence?.subUserLicenceId?.available_licence?.callcenter);
           const updatedLicence = availableLicence + 1;
-          await subUserLicenceRepo.updateById(callcenterLicence?.subUserLicenceId?.id, {available_licence: {callcenter: updatedLicence}})
+          await subUserLicenceRepo.updateById(callcenterLicence?.subUserLicenceId?.id, { available_licence: { callcenter: updatedLicence } })
 
-          await subUserLicenceRepo.update(req.user.id, {available_licence: mergedLicence})
-          await subUserLicenceRepo.update(userId, {is_deleted: true})
+          await subUserLicenceRepo.update(req.user.id, { available_licence: mergedLicence })
+          await subUserLicenceRepo.update(userId, { is_deleted: true })
         }
 
         const availableLicence = loggedInUser?.sub_user_licence?.available_licence;
@@ -319,7 +318,7 @@ async function deleteUser(req, res) {
         if (loggedInUser?.sub_user_licence?.id) {
           await subUserLicenceRepo.updateById(loggedInUser?.sub_user_licence?.id, { available_licence: mergedLicence })
         }
-        await subUserLicenceRepo.update(userId, {is_deleted: true})
+        await subUserLicenceRepo.update(userId, { is_deleted: true })
       }
       await userRepo.deleteMany(userIds, req.user);
     }
@@ -438,59 +437,59 @@ async function statusPasswordUpdateUser(req, res) {
 }
 
 async function switchUser(req, res) {
-    try {
-      const { id } = req.body;
-      const targetUser = await userRepo.get(id);
-      if (!targetUser) {
-        return res.status(404).json({ error: 'User not found' });
-      }
+  try {
+    const { id } = req.body;
+    const targetUser = await userRepo.get(id);
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
-      const user = await userRepo.getByUsername(targetUser.username);
+    const user = await userRepo.getByUsername(targetUser.username);
 
-      if (req.user.role === USERS_ROLE.CALLCENTRE_AGENT) {
-        const userLoginCount = await userRepo.find({
-          where: { 
-            id: user.id,
-            login_at: { [Op.ne]: null },
-            logout_at: null,
-            duration: null  
-          }
-        });
-
-        if (userLoginCount) {
-          ErrorResponse.message = 'User already logged in';
-            return res
-              .status(StatusCodes.BAD_REQUEST)
-              .json(ErrorResponse);
+    if (req.user.role === USERS_ROLE.CALLCENTRE_AGENT) {
+      const userLoginCount = await userRepo.find({
+        where: {
+          id: user.id,
+          login_at: { [Op.ne]: null },
+          logout_at: null,
+          duration: null
         }
+      });
+
+      if (userLoginCount) {
+        ErrorResponse.message = 'User already logged in';
+        return res
+          .status(StatusCodes.BAD_REQUEST)
+          .json(ErrorResponse);
       }
+    }
 
-      const userData = await user.generateUserData(true);
+    const userData = await user.generateUserData(true);
 
-      if (req.user.role === USERS_ROLE.CALLCENTRE_AGENT) {
-        await userRepo.update(user.id, {
-            login_at: Date.now(),
-            logout_at: null,
-            duration: null
-        });
-      }  
+    if (req.user.role === USERS_ROLE.CALLCENTRE_AGENT) {
+      await userRepo.update(user.id, {
+        login_at: Date.now(),
+        logout_at: null,
+        duration: null
+      });
+    }
 
-      if (userData?.role === USERS_ROLE.CALLCENTRE_AGENT) {
-          const agent = await agentRepo.getByName(userData?.name)
-          userData.agentData = agent
-      }
+    if (userData?.role === USERS_ROLE.CALLCENTRE_AGENT) {
+      const agent = await agentRepo.getByName(userData?.name)
+      userData.agentData = agent
+    }
 
-      SuccessRespnose.message = "Successfully signed in";
-      SuccessRespnose.data = userData;
+    SuccessRespnose.message = "Successfully signed in";
+    SuccessRespnose.data = userData;
 
-      Logger.info(`User -> ${JSON.stringify(userData)} login successfully`);
+    Logger.info(`User -> ${JSON.stringify(userData)} login successfully`);
 
-      return res.status(StatusCodes.OK).json(SuccessRespnose);
-        } catch (error) {
-          console.error('Error in switchUser:', error);
-          ErrorResponse.message = error.message || 'Something went wrong';
-          return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
-        }
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    console.error('Error in switchUser:', error);
+    ErrorResponse.message = error.message || 'Something went wrong';
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
 }
 
 
@@ -510,7 +509,7 @@ async function signupUser(req, res) {
     });
     if (existingUserData) {
       ErrorResponse.message = 'User With Same Username or Email Already exists.';
-        return res
+      return res
         .status(StatusCodes.BAD_REQUEST)
         .json(ErrorResponse);
     }
@@ -530,7 +529,7 @@ async function signupUser(req, res) {
           .status(StatusCodes.BAD_REQUEST)
           .json(ErrorResponse);
       }
-  
+
     }
 
     // when company user is created
@@ -635,7 +634,7 @@ async function signupUser(req, res) {
 async function updateUser(req, res) {
   const uid = req.params.id;
   const bodyReq = req.body;
- 
+
   try {
     const responseData = {};
     let userData;
@@ -647,10 +646,10 @@ async function updateUser(req, res) {
         { email: bodyReq?.user?.email?.trim() }
       ]
     });
-    
+
     if (existingUserData) {
       ErrorResponse.message = 'User With Same Username or Email Already exists.';
-        return res
+      return res
         .status(StatusCodes.BAD_REQUEST)
         .json(ErrorResponse);
     }
@@ -677,8 +676,8 @@ async function updateUser(req, res) {
           if (used_licence[key] > (updated_licence[key] || 0)) {
             ErrorResponse.message = `Can't Set ${USER_ROLE_VALUE_LICENCE[key]} Licence Because used licence Are greater.`;
             return res
-                  .status(StatusCodes.BAD_REQUEST)
-                  .json(ErrorResponse);
+              .status(StatusCodes.BAD_REQUEST)
+              .json(ErrorResponse);
           }
         }
 
@@ -691,7 +690,7 @@ async function updateUser(req, res) {
           {
             available_licence: newAvailLicence,
             total_licence: bodyReq.user.sub_licence
-        })
+          })
       }
 
     } else {
@@ -713,8 +712,8 @@ async function updateUser(req, res) {
           if (used_licence[key] > (updated_licence[key] || 0)) {
             ErrorResponse.message = `Can't Set ${USER_ROLE_VALUE[key]} Licence Because used licence Are greater.`;
             return res
-                  .status(StatusCodes.BAD_REQUEST)
-                  .json(ErrorResponse);
+              .status(StatusCodes.BAD_REQUEST)
+              .json(ErrorResponse);
           }
         }
 
@@ -727,11 +726,11 @@ async function updateUser(req, res) {
           {
             available_licence: newAvailLicence,
             total_licence: bodyReq.user.sub_licence
-        })
-        await subUserLicenceRepo.update(req.user.id, {available_licence: bodyReq.user.parent_licence})
+          })
+        await subUserLicenceRepo.update(req.user.id, { available_licence: bodyReq.user.parent_licence })
       }
     }
-    
+
     //when user company is changes
     if ((Number(bodyReq?.user?.company_id) !== Number(loggedInData?.company_id)) && loggedInData.role === USERS_ROLE.COMPANY_ADMIN) {
       //get child for used licence of company user
@@ -764,12 +763,12 @@ async function updateUser(req, res) {
         const oldUpdatedLicence = oldAvailableLicence + usedLicence;
 
         await subUserLicenceRepo.updateById(
-            oldCompanyLicence?.subUserLicenceId?.id,
-            { available_licence: { company: oldUpdatedLicence } }
+          oldCompanyLicence?.subUserLicenceId?.id,
+          { available_licence: { company: oldUpdatedLicence } }
         );
 
         //update the company of childs also 
-        await userRepo.bulkUpdate(childIds, {company_id: bodyReq?.user?.company_id})
+        await userRepo.bulkUpdate(childIds, { company_id: bodyReq?.user?.company_id })
 
       } else {
         ErrorResponse.message = "Can't Change Company because Used Licence are greater";
@@ -810,13 +809,13 @@ async function updateUser(req, res) {
         const oldUpdatedLicence = oldAvailableLicence + usedLicence;
 
         await subUserLicenceRepo.updateById(
-            oldCallcenterLicence?.subUserLicenceId?.id,
-            { available_licence: { callcenter: oldUpdatedLicence } }
+          oldCallcenterLicence?.subUserLicenceId?.id,
+          { available_licence: { callcenter: oldUpdatedLicence } }
         );
 
         //update the Callcenter of childs also 
         if (childIds.length > 0) {
-          await userRepo.bulkUpdate(childIds, {callcenter_id: bodyReq?.user?.callcenter_id})
+          await userRepo.bulkUpdate(childIds, { callcenter_id: bodyReq?.user?.callcenter_id })
         }
 
       } else {
@@ -894,80 +893,80 @@ async function loginAs(req, res) {
   const id = req.params.id
 
   try {
-        //Fetch user via username
-        const user = await userRepo.findOne({id: id});
-        const subLicenceData = await subUserLicenceRepo.findOne({user_id : user?.created_by})
-        
-          if (subLicenceData.available_licence.live_agent !== 0) {
-            subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent - 1;
-          } else {
-            ErrorResponse.message = 'Agent Live Limit Exceeds';
-              return res
-                .status(StatusCodes.BAD_REQUEST)
-                .json(ErrorResponse);
-          }
-      
+    //Fetch user via username
+    const user = await userRepo.findOne({ id: id });
+    const subLicenceData = await subUserLicenceRepo.findOne({ user_id: user?.created_by })
+
+    if (subLicenceData.available_licence.live_agent !== 0) {
+      subLicenceData.available_licence.live_agent = subLicenceData.available_licence.live_agent - 1;
+    } else {
+      ErrorResponse.message = 'Agent Live Limit Exceeds';
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(ErrorResponse);
+    }
 
 
-        const agent = await agentRepo.getByName(user?.name)
-        const telephonyProfile = agent?.agentTelephony?.profile.find(item => item.type === bodyReq?.type);
+
+    const agent = await agentRepo.getByName(user?.name)
+    const telephonyProfile = agent?.agentTelephony?.profile.find(item => item.type === bodyReq?.type);
 
 
-        if (!telephonyProfile) {
-          ErrorResponse.message = `Telephony Profile not found for ${bodyReq?.type}`;
-          return res
-          .status(StatusCodes.BAD_REQUEST)
-          .json(ErrorResponse);
-        }
+    if (!telephonyProfile) {
+      ErrorResponse.message = `Telephony Profile not found for ${bodyReq?.type}`;
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(ErrorResponse);
+    }
 
-        //get all the group associated with the agent
-        const callGroup = await agentScheduleMappingRepo.getGroupWithAgentId(agent?.id)
-        
-        if (callGroup.length === 0) {
-          ErrorResponse.message = `Agent is not in a group`;
-          return res
-          .status(StatusCodes.BAD_REQUEST)
-          .json(ErrorResponse);
-        }
+    //get all the group associated with the agent
+    const callGroup = await agentScheduleMappingRepo.getGroupWithAgentId(agent?.id)
 
-        for (const group of callGroup) {
-          await asteriskCTQueueMembersRepo.create({
-            queue_name: group?.group_name,              
-            interface: `LOCAL/${telephonyProfile?.number?.number}@dial_agent`,        
-            membername: 1,          
-            state_interface: `Custom:${telephonyProfile?.number?.number}`,             
-            paused: 0,
-          });
-        }
+    if (callGroup.length === 0) {
+      ErrorResponse.message = `Agent is not in a group`;
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(ErrorResponse);
+    }
 
-        telephonyProfile.active_profile = true;
+    for (const group of callGroup) {
+      await asteriskCTQueueMembersRepo.create({
+        queue_name: group?.group_name,
+        interface: `LOCAL/${telephonyProfile?.number?.number}@dial_agent`,
+        membername: 1,
+        state_interface: `Custom:${telephonyProfile?.number?.number}`,
+        paused: 0,
+      });
+    }
 
-        const mergedAgents = agent?.agentTelephony?.profile.map(agent =>
-          agent.type === telephonyProfile.type ? telephonyProfile : agent
-        );
+    telephonyProfile.active_profile = true;
 
-        await telephonyProfileRepo.update(agent?.agentTelephony?.id, {profile: mergedAgents})
+    const mergedAgents = agent?.agentTelephony?.profile.map(agent =>
+      agent.type === telephonyProfile.type ? telephonyProfile : agent
+    );
 
-        //update sub user licence
-        await subUserLicenceRepo.updateById(subLicenceData.id, {available_licence: subLicenceData.available_licence})
-        await agentRepo.update(agent.id, {
-          login_status : "1"
-        })
+    await telephonyProfileRepo.update(agent?.agentTelephony?.id, { profile: mergedAgents })
 
-        SuccessRespnose.message = `Successfully login As ${bodyReq?.type}`;
-        SuccessRespnose.data = mergedAgents;
+    //update sub user licence
+    await subUserLicenceRepo.updateById(subLicenceData.id, { available_licence: subLicenceData.available_licence })
+    await agentRepo.update(agent.id, {
+      login_status: "1"
+    })
 
-        const userJourneyfields = {
-          module_name: MODULE_LABEL.USERS,
-          action: `${ACTION_LABEL.LOGIN_AS}${bodyReq?.type}`,
-          created_by: user.id
-        }
+    SuccessRespnose.message = `Successfully login As ${bodyReq?.type}`;
+    SuccessRespnose.data = mergedAgents;
 
-        await userJourneyRepo.create(userJourneyfields);
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.USERS,
+      action: `${ACTION_LABEL.LOGIN_AS}${bodyReq?.type}`,
+      created_by: user.id
+    }
 
-        Logger.info(`User -> Successfully login As ${bodyReq?.type}`);
+    await userJourneyRepo.create(userJourneyfields);
 
-        return res.status(StatusCodes.OK).json(SuccessRespnose);
+    Logger.info(`User -> Successfully login As ${bodyReq?.type}`);
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     console.log(error)
     ErrorResponse.error = error;
@@ -1001,16 +1000,16 @@ async function logoutAs(req, res) {
 
     await subUserLicenceRepo.updateById(subLicenceData.id, { available_licence: subLicenceData.available_licence });
     await agentRepo.update(agentData.id, {
-      login_status : "0"
+      login_status: "0"
     })
 
     const agent = await agentRepo.getByName(userData?.name)
     const telephonyProfile = agent?.agentTelephony?.profile.find(item => item.type === bodyReq?.type);
     //get all the group associated with the agent
     const callGroup = await agentScheduleMappingRepo.getGroupWithAgentId(agent?.id)
-        
+
     for (const group of callGroup) {
-      await asteriskCTQueueMembersRepo.delete({queue_name: group?.group_name, state_interface: `Custom:${telephonyProfile?.number?.number}`})
+      await asteriskCTQueueMembersRepo.delete({ queue_name: group?.group_name, state_interface: `Custom:${telephonyProfile?.number?.number}` })
     }
 
     telephonyProfile.active_profile = false;
@@ -1019,7 +1018,7 @@ async function logoutAs(req, res) {
       agent.type === telephonyProfile.type ? telephonyProfile : agent
     );
 
-    await telephonyProfileRepo.update(agent?.agentTelephony?.id, {profile: mergedAgents})
+    await telephonyProfileRepo.update(agent?.agentTelephony?.id, { profile: mergedAgents })
 
     const userJourneyfields = {
       module_name: MODULE_LABEL.USERS,

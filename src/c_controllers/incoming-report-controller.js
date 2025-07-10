@@ -425,8 +425,6 @@ async function getDidSpecificReport(req, res) {
   try {
 
     let { did, startDate, endDate } = req.params;
-
-
     let userIds = [req.user.id];
     const role = req.user.role
 
@@ -548,6 +546,8 @@ async function getDidSpecificReport(req, res) {
       finalInboundData.push(...allUserReports);
     }
 
+    console.log("FINAL OUTBOUN DATA", finalOutboundData);
+
     const finalData = [...finalInboundData, ...finalOutboundData];
 
 
@@ -645,6 +645,10 @@ async function getDidSpecificReportwithTraceId(req, res) {
 
     const inboundData = inboundRepo ? await inboundRepo.getDidByTraceId(trace_id, did) : [];
     const outboundData = outboundRepo ? await outboundRepo.getDidByTraceId(trace_id) : [];
+
+
+    console.log("OUTBOUND DATA", outboundData);
+    console.log("Inbound DATA", inboundData);
     
     const calleeNumbers = outboundData.map(item => item.dataValues.callee_number);
 
