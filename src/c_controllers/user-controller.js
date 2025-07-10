@@ -930,9 +930,18 @@ async function loginAs(req, res) {
         }
 
         for (const group of callGroup) {
+          let interfaceValue = '';
+            if (telephonyProfile?.type === 'Mobile') {
+              interfaceValue = `LOCAL/${telephonyProfile?.number?.number}@dial_agent`;
+            } else if (telephonyProfile?.type === 'Soft Phone') {
+              interfaceValue = `LOCAL/${telephonyProfile?.number?.number}@dial_agent_sip`;
+            } else if (telephonyProfile?.type === 'WEBRTC') {
+              interfaceValue = `LOCAL/${telephonyProfile?.number?.number}@dial_agent_webrtc`;
+            }
+
           await asteriskCTQueueMembersRepo.create({
             queue_name: group?.group_name,              
-            interface: telephonyProfile?.type === 'Mobile' ? `LOCAL/${telephonyProfile?.number?.number}@dial_agent` : `LOCAL/${telephonyProfile?.number?.number}`,        
+            interface: interfaceValue,        
             membername: 1,          
             state_interface: `Custom:${telephonyProfile?.number?.number}`,             
             paused: 0,

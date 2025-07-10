@@ -646,13 +646,23 @@ async function toggleStatus(req, res) {
           }
 
           for (const group of callGroup) {
+            let interfaceValue = '';
+            if (bodyReq?.type === 'Mobile') {
+              interfaceValue = `LOCAL/${telephonyProfile?.number?.number}@dial_agent`;
+            } else if (bodyReq?.type === 'Soft Phone') {
+              interfaceValue = `LOCAL/${telephonyProfile?.number?.number}@dial_agent_sip`;
+            } else if (bodyReq?.type === 'WEBRTC') {
+              interfaceValue = `LOCAL/${telephonyProfile?.number?.number}@dial_agent_webrtc`;
+            }
+
             await asteriskCTQueueMembersRepo.create({
-              queue_name: group?.group_name,              
-              interface: bodyReq?.type === 'Mobile' ? `LOCAL/${telephonyProfile?.number?.number}@dial_agent` : `LOCAL/${telephonyProfile?.number?.number}`,       
-              membername: 1,          
-              state_interface: `Custom:${telephonyProfile?.number?.number}`,             
+              queue_name: group?.group_name,
+              interface: interfaceValue,
+              membername: 1,
+              state_interface: `Custom:${telephonyProfile?.number?.number}`,
               paused: 0,
             });
+
           }
 
           telephonyProfile.active_profile = true;
