@@ -75,6 +75,7 @@ try {
         time_between_call: bodyReq.timeBetweenCalls,
         start_hours: bodyReq.startHour,
         end_hours: bodyReq.endHour,
+        queue: bodyReq.selectedQueue,
     }
 
     // console.log("FINAL COMAPNI DATA", findlCampaignData);
