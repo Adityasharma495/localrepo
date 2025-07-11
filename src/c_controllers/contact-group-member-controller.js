@@ -242,6 +242,7 @@ async function updateContactGroupMember(req, res) {
 
 async function uploadMembersData(req, res) {
   const dest = req.file.path;
+  const bodyReq = Object.assign({}, req.body);
   try {
     const validatePhoneNumber = (number) => {
       if (!number) return null;
@@ -261,6 +262,13 @@ async function uploadMembersData(req, res) {
       });
     }
 
+    if (!bodyReq.contact_group_id) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: "Contact Group Id not found",
+        error: new Error("Contact Group Id not found"),
+      });
+    }
+
     const records = [];
     const dataPromises = [];
     let headersSent = false;
@@ -272,19 +280,15 @@ async function uploadMembersData(req, res) {
       .on("data", (row) => {
         const dataPromise = (async () => {
           try {
-            const contactGroupId = row["Contact Group Id"] || null;
-            if (!contactGroupId) {
-              throw new Error("Contact Group Id is required");
-            }
             const existingContacts =
               await contactGroupMemberRepo.getUnderOneContactGroup(
-                contactGroupId
+                bodyReq.contact_group_id
               );
             const existingNumbers = existingContacts.map(
               (contact) => contact.primary_number
             );
 
-            const primaryNumber = validatePhoneNumber(row["Primary Number"]);
+            const primaryNumber = validatePhoneNumber(row["Primary Number(Required)"]);
             if (!primaryNumber) {
               invalidCount++;
               throw new Error(
@@ -298,13 +302,13 @@ async function uploadMembersData(req, res) {
             }
 
             const transformedRecord = {
-              first_name: row["First Name"] || null,
-              last_name: row["Last Name"] || null,
-              state: row["State"] || null,
-              city: row["City"] || null,
-              country: row["Country"] || null,
-              company: row["Company"] || null,
-              street: row["Street"] || null,
+              first_name: row["First Name(Required)"] || null,
+              last_name: row["Last Name(Required)"] || null,
+              state: row["State(Required)"] || null,
+              city: row["City(Required)"] || null,
+              country: row["Country(Required)"] || null,
+              company: row["Company(Required)"] || null,
+              street: row["Street(Required)"] || null,
               primary_number: primaryNumber,
               alt1_number: row["Alternate Number 1(Optional)"]
                 ? validatePhoneNumber(row["Alternate Number 1(Optional)"])
@@ -312,7 +316,7 @@ async function uploadMembersData(req, res) {
               alt2_number: row["Alternate Number 2(Optional)"]
                 ? validatePhoneNumber(row["Alternate Number 2(Optional)"])
                 : null,
-              contact_group_id: contactGroupId,
+              contact_group_id: bodyReq.contact_group_id,
               created_by: req.user.id,
               created_at: new Date(),
               updated_at: new Date(),
