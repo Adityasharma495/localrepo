@@ -17,6 +17,9 @@ const {
   VoicePlansRepository,
   FlowJsonRepository,
   VoiceCampaignRepository,
+  BreakRepository,
+  ContactGroupRepository,
+  ContactGroupMemberRepository,
 } = require("../../shared/c_repositories");
 
 const { Parser } = require("json2csv");
@@ -43,6 +46,9 @@ async function exportData(req, res) {
     Credits: new CreditsRepository(),
     VoicePlan: new VoicePlansRepository(),
     Campaigns: new VoiceCampaignRepository(),
+    Breaks: new BreakRepository(),
+    Contact_Groups: new ContactGroupRepository(),
+    Contact_Group_Members: new ContactGroupMemberRepository(),
   };
 
   try {

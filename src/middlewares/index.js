@@ -26,5 +26,6 @@ module.exports = {
     CompanyMiddleware: require('./company-middleware'),
     DidAllocateHistoryMiddleware: require("./did-allocate-history-middleware"),
     RemarkStatusMiddleware: require("./remark-status-middleware"),
-    VoiceCampaignMiddleware:require('./voice-campaign-middleware')
+    VoiceCampaignMiddleware:require('./voice-campaign-middleware'),
+    ContactGroupMembersMiddleware: require('./contact-group-members-middleware'),
 }
