@@ -1,3 +1,5 @@
+const { ContactGroup } = require("../../shared/c_db");
+
 module.exports = {
     UserController:require("./user-controller"),
     CreditController: require("./credits-controller"),
@@ -39,5 +41,8 @@ module.exports = {
     OutgoingCallsController: require('./outgoing-calls-controller'),
     RemarkStatusController: require('./remark-status-controller'),
     RemarksController: require('./remarks-controller'),
-    VoiceCampaignController:require("./voice-campaign-controller")
+    VoiceCampaignController:require("./voice-campaign-controller"),
+    BreakController: require("./break-controller"),
+    ContactGroupController: require("./contact-group-controller"),
+    ContactGroupMemberController: require("./contact-group-member-controller"),
 }

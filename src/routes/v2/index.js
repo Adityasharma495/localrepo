@@ -41,9 +41,15 @@ const didRemoveHistoryRoute = require('./did-remove-history-routes.js')
 const outgoingCallsRoutes = require('./outgoing-calls-routes.js');
 const remarkStatusRoutes = require("./remark-status-routes.js")
 const remarksRoutes = require("./remarks-routes.js")
-const voiceCampaignRoutes = require("./voice-campaign-routes.js")
+const voiceCampaignRoutes = require("./voice-campaign-routes.js");
+const breakRoutes = require("./break-routes.js");
+const contactGroupRoutes = require("./contact-group-routes.js");
+const contactGroupMemberRoutes = require("./contact-group-member-routes.js");
 
 
+router.use('/contact-group-member', contactGroupMemberRoutes);
+router.use('/contact-groups', contactGroupRoutes);
+router.use('/breaks', breakRoutes);
 router.use('/users', userRoutes);
 router.use('/credits', creditRoutes);
 router.use('/user-journey', userJourney);
