@@ -702,8 +702,6 @@ async function getAllIncomingReports(req, res) {
   const current_role = req.user.role;
   const current_uid = req.user.id;
 
-
-  console.log("CAME GERE ASDASD");
   const InboundRepositories = {
     Januaryw1: new IncomingReportJanuaryW1Repository(), Januaryw2: new IncomingReportJanuaryW2Repository(),
     Januaryw3: new IncomingReportJanuaryW3Repository(), Januaryw4: new IncomingReportJanuaryW4Repository(),
