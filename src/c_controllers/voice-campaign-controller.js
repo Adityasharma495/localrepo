@@ -75,7 +75,7 @@ try {
         time_between_call: bodyReq.timeBetweenCalls,
         start_hours: bodyReq.startHour,
         end_hours: bodyReq.endHour,
-        queue: bodyReq.selectedQueue,
+        queue: bodyReq.selectedQueue || null,
     }
 
     // console.log("FINAL COMAPNI DATA", findlCampaignData);
@@ -113,8 +113,9 @@ try {
 }
 
 async function getCampaigns(req, res) {
+  const agent_id = req?.query?.agent_id || null;
   try {
-    const data = await voiceCampaignRepo.getAll(req.user.role, req.user.id);
+    const data = await voiceCampaignRepo.getAll(req.user.role, req.user.id, agent_id);
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
