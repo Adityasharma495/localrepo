@@ -75,6 +75,7 @@ try {
         time_between_call: bodyReq.timeBetweenCalls,
         start_hours: bodyReq.startHour,
         end_hours: bodyReq.endHour,
+        queue: bodyReq.selectedQueue,
     }
 
     // console.log("FINAL COMAPNI DATA", findlCampaignData);
@@ -133,7 +134,31 @@ async function getCampaigns(req, res) {
   }
 }
 
+async function getOne(req, res) {
+  const id = req.params.id;
+  try {
+    const data = await voiceCampaignRepo.findOne({ campaign_id: id });
+    SuccessRespnose.data = data;
+    SuccessRespnose.message = "Success";
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    console.log("error", error);
+    ErrorResponse.message = error.message;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `Voice Campaigns -> unable to get voice campaign, error: ${JSON.stringify(
+        error
+      )}`
+    );
+
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
+}
+
 module.exports={
     CreateVoiceCampaign,
     getCampaigns,
+    getOne,
 }
