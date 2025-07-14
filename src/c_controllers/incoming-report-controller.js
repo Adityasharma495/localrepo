@@ -535,8 +535,7 @@ async function getDidSpecificReport(req, res) {
 
       for (const uid of idsToQuery) {
         if (week === startWeek) {
-
-          const data = await inboundRepo.getByDidByDate({ callee_number: did }, startDate, endDate, uid);
+          const data = await inboundRepo.getByDidByDate({ callee_number: did }, startDate, endDate, uid, role);
           allUserReports.push(...data);
         } else if (week === endWeek) {
           const data = await inboundRepo.getByDidByEndDate({ callee_number: did }, endDate, uid, role);
@@ -550,7 +549,6 @@ async function getDidSpecificReport(req, res) {
       finalInboundData.push(...allUserReports);
     }
 
-    console.log("FINAL OUTBOUN DATA", finalOutboundData);
 
     const finalData = [...finalInboundData, ...finalOutboundData];
 
@@ -650,9 +648,6 @@ async function getDidSpecificReportwithTraceId(req, res) {
     const inboundData = inboundRepo ? await inboundRepo.getDidByTraceId(trace_id, did) : [];
     const outboundData = outboundRepo ? await outboundRepo.getDidByTraceId(trace_id) : [];
 
-
-    console.log("OUTBOUND DATA", outboundData);
-    console.log("Inbound DATA", inboundData);
 
     const calleeNumbers = outboundData.map(item => item.dataValues.callee_number);
 
