@@ -24,9 +24,6 @@ async function createAgent(req, res) {
   const bodyReq = req.body;
   const responseData = {};
 
-  console.log('bodyReq', bodyReq)
-
-
   try {
     let agent;
     let extensionData;
@@ -49,6 +46,19 @@ async function createAgent(req, res) {
         duplicateField = "Agent Number";
       } else if (checkDuplicate.agent_name === bodyReq.agent.agent_name) {
         duplicateField = "Agent Name";
+      }
+    
+      ErrorResponse.message = `${duplicateField} Already Exists`;
+      return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+    }
+
+    const userConditions = { username: bodyReq.agent.username }
+    const checkUserDuplicate = await userRepo.findOne(userConditions);
+
+    if (checkUserDuplicate) {
+      let duplicateField = "";
+      if (checkUserDuplicate.username === bodyReq.agent.username) {
+        duplicateField = "User's Username";
       }
     
       ErrorResponse.message = `${duplicateField} Already Exists`;
