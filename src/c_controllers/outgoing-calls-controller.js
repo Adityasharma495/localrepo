@@ -2,6 +2,7 @@ const { StatusCodes } = require("http-status-codes");
 const { SuccessRespnose, ErrorResponse } = require("../../shared/utils/common");
 const { Logger } = require("../../shared/config");
 const { Op } = require("sequelize");
+
 const {
   OutboundReportJanuaryW1Repository,
   OutboundReportJanuaryW2Repository,
@@ -64,9 +65,11 @@ const {
   OutboundReportDecemberW4Repository,
 
   UserRepository,
+  AgentRepository,
 } = require("../../shared/c_repositories");
 
 const userRepository = new UserRepository();
+const agentRepo = new AgentRepository();
 
 const allOutboundRepositories = {
   janW1: new OutboundReportJanuaryW1Repository(),
@@ -120,41 +123,58 @@ const allOutboundRepositories = {
 };
 
 const { constants } = require("../../shared/utils/common");
+const { USERS_ROLE } = require("../backup/utils/common/constants");
 
 async function getAll(req, res) {
   try {
     const userRole = req.user.role;
     const userId = req.user.id;
+
+
+    let agentId;
+
+    if(userRole===USERS_ROLE.CALLCENTRE_AGENT)
+    {
+    const user = await userRepository.findOne({id:userId})
+    const agent = await agentRepo.findOne({agent_name:user.username})
+    agentId = agent.id;
+    }
+
+
     let userIds = [];
 
     if (userRole !== constants.USERS_ROLE.SUPER_ADMIN) {
       userIds = await userRepository.getAllDescendantUserIds(userId);
     }
-
     const where =
       userRole === constants.USERS_ROLE.SUPER_ADMIN
-        ? {}
+        ? {} : userRole ===constants.USERS_ROLE.CALLCENTRE_AGENT ?{
+          [Op.or]: [
+              { agent_id: agentId },
+              ...(userIds.length > 0
+                ? [
+                    { agent_id:agentId },
+                  ]
+                : []),
+            ],
+        }
         : {
             [Op.or]: [
               { user_id: userId },
-              { agent_id: userId },
               ...(userIds.length > 0
                 ? [
                     { user_id: { [Op.in]: userIds } },
-                    { agent_id: { [Op.in]: userIds } },
                   ]
                 : []),
             ],
           };
-
-    const allData = await Promise.all(
-      Object.values(allOutboundRepositories).map((repo) =>
+      const allData = await Promise.all(
+        Object.values(allOutboundRepositories).map((repo) =>
         repo.getAllData({ where })
       )
     );
 
     const combinedData = allData.flat();
-
     SuccessRespnose.data = combinedData;
     SuccessRespnose.message = "Success";
 
