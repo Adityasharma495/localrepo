@@ -534,9 +534,12 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
                   billingDuration : billingDuration,
                   callLeg: cdrJson.callLeg
             }
-            insertDataInBillingQueue(broker, "billing_publisher" , {data});
-
-            Logger.info("Data Published in Billing Queue");
+            if (data?.billingDuration == 0) {
+              Logger.info("Billing Duration is 0, data not added to billing queue");
+            } else {
+              await insertDataInBillingQueue(broker, "billing_publisher" , {data});
+              Logger.info("Data Published in Billing Queue");
+            }
            }
 
             ackOrNack();
