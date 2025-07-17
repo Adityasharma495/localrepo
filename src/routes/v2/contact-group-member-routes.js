@@ -31,6 +31,12 @@ router.get(
   ContactGroupMemberController.get
 );
 
+router.get(
+  "/all/members",
+  AuthMiddleware.validateUser,
+  ContactGroupMemberController.getAllContacts
+);
+
 router.post(
   "/:id",
   AuthMiddleware.validateUser,

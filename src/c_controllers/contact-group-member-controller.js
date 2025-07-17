@@ -5,6 +5,7 @@ const {
 } = require("../../shared/c_repositories");
 const csv = require("csv-parser");
 const { SuccessRespnose, ErrorResponse } = require("../../shared/utils/common");
+const { Op } = require("sequelize");
 const {
   MODULE_LABEL,
   ACTION_LABEL,
@@ -19,7 +20,37 @@ async function createContactGroupMember(req, res) {
   const bodyReq = req.body;
   try {
     bodyReq.created_by = req.user.id;
+    if (bodyReq.primary_number) {
+      bodyReq.primary_number = Number(bodyReq.primary_number);
+    }
+    if (bodyReq.alt1_number) {
+      bodyReq.alt1_number = Number(bodyReq.alt1_number);
+    }
+    if (bodyReq.alt2_number) {
+      bodyReq.alt2_number = Number(bodyReq.alt2_number);
+    }    
     const responseData = {};
+
+    const existingContact = await contactGroupMemberRepo.findOne({
+      first_name: bodyReq?.first_name?.trim(),
+      last_name: bodyReq?.last_name?.trim(),
+    });
+
+    if (existingContact) {
+      ErrorResponse.message =
+        "Contact With same first name and last name already exists.";
+      return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+    }
+
+    const existingContactWithPrimaryNumber =
+      await contactGroupMemberRepo.findOne({
+        primary_number: bodyReq.primary_number,
+      });
+
+    if (existingContactWithPrimaryNumber) {
+      ErrorResponse.message = "Contact With same primary number already exists.";
+      return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+    }
 
     // Create contactGroupMember with corrected payload
     const contactGroupMemberData = await contactGroupMemberRepo.create(bodyReq);
@@ -45,6 +76,7 @@ async function createContactGroupMember(req, res) {
 
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
   } catch (error) {
+    console.log("error ", error);
     Logger.error(
       `ContactGroupMember -> unable to create contactGroupMember: ${JSON.stringify(
         bodyReq
@@ -77,6 +109,30 @@ async function getAll(req, res) {
 
     Logger.error(
       `ContactGroupMember -> unable to get contactGroupMember list, error: ${JSON.stringify(
+        error
+      )}`
+    );
+
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
+}
+
+async function getAllContacts(req, res) {
+  try {
+    const data = await contactGroupMemberRepo.getAllContacts(
+      req.user.role,
+      req.user.id
+    );
+    SuccessRespnose.data = data;
+    SuccessRespnose.message = "Success";
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    ErrorResponse.message = error.message;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `ContactGroupMember -> unable to get getAllContacts list, error: ${JSON.stringify(
         error
       )}`
     );
@@ -186,6 +242,40 @@ async function updateContactGroupMember(req, res) {
 
   try {
     const responseData = {};
+    if (bodyReq.primary_number) {
+      bodyReq.primary_number = Number(bodyReq.primary_number);
+    } 
+    if (bodyReq.alt1_number) {
+      bodyReq.alt1_number = Number(bodyReq.alt1_number);
+    }
+    if (bodyReq.alt2_number) {
+      bodyReq.alt2_number = Number(bodyReq.alt2_number);
+    }
+
+    const existingData = await contactGroupMemberRepo.findOne({
+      id: { [Op.ne]: uid },
+      [Op.and]: [
+        { first_name: bodyReq?.first_name?.trim() },
+        { last_name: bodyReq?.last_name?.trim() },
+      ],
+    });
+
+    if (existingData) {
+      ErrorResponse.message =
+        "Contact With same first name and last name already exists";
+      return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+    }
+
+    const existinNumberData = await contactGroupMemberRepo.findOne({
+      id: { [Op.ne]: uid },
+      primary_number: bodyReq?.primary_number
+    });
+
+    if (existinNumberData) {
+      ErrorResponse.message =
+        "Contact With same primary number already exists";
+      return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+    }
 
     const contactGroupMemberData = await contactGroupMemberRepo.update(
       uid,
@@ -407,4 +497,5 @@ module.exports = {
   updateContactGroupMember,
   getUnderOneContactGroup,
   uploadMembersData,
+  getAllContacts,
 };

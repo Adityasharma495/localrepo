@@ -21,6 +21,16 @@ async function createContactGroup(req, res) {
     bodyReq.created_by = req?.user?.id;
     const responseData = {};
 
+    const existingContact = await contactGroupRepo.findOne({
+      group_name: bodyReq?.group_name?.trim(),
+    });
+    
+    if (existingContact) {
+      ErrorResponse.message =
+        "Contact Group With same name already exists.";
+        return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+    }
+
     // Create ContactGroup with corrected payload
     const contactGroupData = await contactGroupRepo.create(bodyReq);
     responseData.contactGroup = contactGroupData;

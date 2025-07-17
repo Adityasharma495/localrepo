@@ -20,6 +20,7 @@ const {
   BreakRepository,
   ContactGroupRepository,
   ContactGroupMemberRepository,
+  AllContactGroupRepository,
 } = require("../../shared/c_repositories");
 
 const { Parser } = require("json2csv");
@@ -49,6 +50,7 @@ async function exportData(req, res) {
     Breaks: new BreakRepository(),
     Contact_Groups: new ContactGroupRepository(),
     Contact_Group_Members: new ContactGroupMemberRepository(),
+    All_Contacts: new AllContactGroupRepository(),
   };
 
   try {
