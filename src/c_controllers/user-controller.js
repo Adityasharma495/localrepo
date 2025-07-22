@@ -1060,6 +1060,55 @@ async function logoutAs(req, res) {
   }
 }
 
+async function updateBreakStatus(req, res) {
+  const uid = req.params.id;
+  const bodyReq = req.body;
+
+  try {
+    const responseData = {};
+    await userRepo.update(uid, { break_id: bodyReq.break_id });
+
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.USERS,
+      action: ACTION_LABEL.STATUS_UPDATE,
+      created_by: req?.user?.id
+    }
+
+    const userJourney = await userJourneyRepo.create(userJourneyfields);
+    responseData.userJourney = userJourney
+
+
+    SuccessRespnose.message = "User Break Status Updated Successfully!";
+    SuccessRespnose.data = responseData;
+
+    Logger.info(`User Break Status-> ${uid} updated successfully`);
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+
+  } catch (error) {
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    ErrorResponse.error = error;
+    if (error.name == "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "User not found";
+    } else if (error.name == "MongoServerError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      if (error.codeName == "DuplicateKey")
+        errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
+    }
+    ErrorResponse.message = errorMsg;
+
+    Logger.error(
+      `User -> unable to update user break status of user ${uid}, data: ${JSON.stringify(
+        bodyReq
+      )}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
 
 module.exports = {
   get,
@@ -1072,5 +1121,6 @@ module.exports = {
   signupUser,
   updateUser,
   loginAs,
-  logoutAs
+  logoutAs,
+  updateBreakStatus,
 }

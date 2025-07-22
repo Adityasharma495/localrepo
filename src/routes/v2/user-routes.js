@@ -35,4 +35,7 @@ const { UserController } = require("../../c_controllers");
   //User Update: /api/v1/users/:id PATCH
   router.patch("/:id", AuthMiddleware.validateUser, UserMiddleware.validateUserStatusRequest, UserController.statusPasswordUpdateUser);
 
+  //User Break Update: /api/v1/users/:id/break POST
+  router.post("/:id/break", AuthMiddleware.validateUser, UserController.updateBreakStatus);
+
 module.exports = router;
