@@ -1,10 +1,12 @@
-const { MemberScheduleRepo, ScriptRepository, VoiceCampaignRepository, UserJourneyRepository } = require("../../shared/c_repositories")
+const { MemberScheduleRepo, ScriptRepository, VoiceCampaignRepository, UserJourneyRepository, CampiagnConfigRepository, AgentConfigRepository } = require("../../shared/c_repositories")
 
 
 const memberScheduleRepo = new MemberScheduleRepo()
 const scriptRepo = new ScriptRepository();
 const voiceCampaignRepo = new VoiceCampaignRepository();
 const userJourneyRepo = new UserJourneyRepository();
+const campiagnConfigRepo = new CampiagnConfigRepository();
+const agentConfigRepo = new AgentConfigRepository();
 const {
   SuccessRespnose,
   ErrorResponse,
@@ -14,10 +16,10 @@ const { StatusCodes } = require("http-status-codes");
 const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/constants");
 
 async function CreateVoiceCampaign(req,res){
-
     const bodyReq = req.body
+    // console.log('bodyReq', bodyReq)
+    // process.exit(0)
     const {member_schedule, script, ...campaignData} = bodyReq
-
 
 try {
     
@@ -25,8 +27,6 @@ try {
     const createdMemberSchedule = await memberScheduleRepo.create(member_schedule)
     const member_schedule_id = createdMemberSchedule.id
 
-
-    // console.log("CREATED MEMBER SCHEDULE", createdMemberSchedule);
     let script_id;
     // created and extracted scripts id
     if (bodyReq.scriptOption === "new") {
@@ -53,39 +53,99 @@ try {
     } else {
         agentsData = [];
     }
-    
-
-
-    // console.log("CREATED SCRIPT ID", script_id);
 
     // create Voice Campaign
-
     const now = new Date();
-    const findlCampaignData = {
-        ...campaignData,
-        script_id:script_id,
-        memberschedule_id:member_schedule_id,
-        created_at: now,
-        updated_at: now,
-        user_id: req.user.id,
-        schedule_date: now,
-        is_recording: is_recording,
-        agents: agentsData,
-        retry_interval: bodyReq.timeBetweenCalls,
-        time_between_call: bodyReq.timeBetweenCalls,
-        start_hours: bodyReq.startHour,
-        end_hours: bodyReq.endHour,
-        queue: bodyReq.selectedQueue || null,
+    function normalizeValue(value) {
+      return value === "" ? null : value;
     }
 
-    // console.log("FINAL COMAPNI DATA", findlCampaignData);
-
-
+    const findlCampaignData = {
+      ...Object.fromEntries(
+        Object.entries(campaignData).map(([key, value]) => [key, normalizeValue(value)])
+      ),
+      script_id: normalizeValue(script_id),
+      memberschedule_id: normalizeValue(member_schedule_id),
+      created_at: now,
+      updated_at: now,
+      user_id: req.user.id,
+      schedule_date: now,
+      is_recording: is_recording,
+      agents: agentsData,
+      retry_interval: normalizeValue(bodyReq.timeBetweenCalls),
+      time_between_call: normalizeValue(bodyReq.timeBetweenCalls),
+      start_hours: normalizeValue(bodyReq.startHour),
+      end_hours: normalizeValue(bodyReq.endHour),
+      queue: normalizeValue(bodyReq.selectedQueue),
+    };
 
     const createdVoiceCampaign = await voiceCampaignRepo.create(findlCampaignData) 
+    if (bodyReq?.template_id == 1) {
+      await campiagnConfigRepo.create({
+        name: 'Welcome',
+        value: bodyReq?.voice_file,
+        campaign_id: createdVoiceCampaign?.campaign_id,
+        dtmf: null,
+        created_by: req.user.id
+      })
+    } 
+    if (bodyReq?.template_id == 2 || bodyReq?.template_id == 3) {
+      const fileMappings = {
+        welcome_file: 'Welcome',
+        no_input_file: 'No Input',
+        wrong_input_file: 'Wrong Input',
+        thanks_file: 'Thanks',
+        no_agent_file: 'No Agent'
+      };
 
-    
-    // console.log("CREATED VOICE CAMPIAGN DATA", createdVoiceCampaign);
+      const configsToInsert = [];
+
+      for (const [key, fileData] of Object.entries(bodyReq)) {
+        if (
+          fileMappings[key] &&
+          fileData.enabled === true &&
+          fileData.selected && fileData.selected.trim() !== ""
+        ) {
+          configsToInsert.push({
+            name: fileMappings[key],
+            value: fileData.selected,
+            campaign_id: createdVoiceCampaign?.campaign_id,
+            dtmf: bodyReq?.dtmf,
+            created_by: req.user.id
+          });
+        }
+      }
+
+      if (bodyReq?.menu_voice_file) {
+        configsToInsert.push({
+          name: 'Menu',
+          value: bodyReq?.menu_voice_file,
+          campaign_id: createdVoiceCampaign?.campaign_id,
+          dtmf: bodyReq?.dtmf,
+          created_by: req.user.id
+        });
+      }
+
+
+      // Insert if there are valid records
+      if (configsToInsert.length > 0) {
+        await campiagnConfigRepo.bulkCreate(configsToInsert);
+      }
+
+    } 
+    if (bodyReq?.template_id == 3) {
+        if (bodyReq.assignedQueues && bodyReq.assignedQueues.length > 0) {
+          const queueRecords = bodyReq.assignedQueues.map(queue => ({
+            campaign_id: createdVoiceCampaign?.campaign_id,
+            agent_group: queue.queueId,
+            dtmf: queue.dtmf,
+            created_by: req?.user?.id
+          }));
+
+          // Insert into DB
+          await agentConfigRepo.bulkCreate(queueRecords);
+        }
+    }
     SuccessRespnose.data = createdVoiceCampaign;
     SuccessRespnose.message = "Successfully created a new Voice Plan";
 
@@ -101,6 +161,7 @@ try {
 
 
 } catch (error) {
+  console.log(error)
     let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg = error.message;
 

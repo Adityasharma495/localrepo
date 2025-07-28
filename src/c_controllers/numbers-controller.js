@@ -834,6 +834,7 @@ async function DIDUserMapping(req, res) {
           }
 
           let level;
+          let company_id
 
           if (bodyReq.allocated_to_role === USERS_ROLE.RESELLER) {
               const data = await userRepo.get(req.user.id)
@@ -847,6 +848,7 @@ async function DIDUserMapping(req, res) {
               const isCompanyUser = await companyRepo.findOne({id: bodyReq.allocated_to})
               if (isCompanyUser) {
                   level = DID_ALLOCATION_LEVEL.COMPANY_ADMIN
+                  company_id = bodyReq.allocated_to
               } 
               
           } else if (bodyReq.allocated_to_role === USERS_ROLE.CALLCENTRE_ADMIN) {
@@ -861,10 +863,12 @@ async function DIDUserMapping(req, res) {
           });
 
           await numberRepo.update(did, {
-              level,
-              allocated_to: bodyReq.allocated_to,
-              voice_plan_id: bodyReq?.voice_plan_id,
+            level,
+            allocated_to: bodyReq.allocated_to,
+            voice_plan_id: bodyReq?.voice_plan_id,
+            ...((level === DID_ALLOCATION_LEVEL.COMPANY_ADMIN && company_id) && { company_id })
           });
+
 
           await didAllocateHistoryRepo.update({DID: did}, {active: false})
 
