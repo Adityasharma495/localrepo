@@ -82,20 +82,21 @@ try {
     const createdVoiceCampaign = await voiceCampaignRepo.create(findlCampaignData) 
     if (bodyReq?.template_id == 1) {
       await campiagnConfigRepo.create({
-        name: 'Welcome',
+        name: 'welcome',
         value: bodyReq?.voice_file,
         campaign_id: createdVoiceCampaign?.campaign_id,
         dtmf: null,
         created_by: req.user.id
       })
     } 
+
     if (bodyReq?.template_id == 2 || bodyReq?.template_id == 3) {
       const fileMappings = {
-        welcome_file: 'Welcome',
-        no_input_file: 'No Input',
-        wrong_input_file: 'Wrong Input',
-        thanks_file: 'Thanks',
-        no_agent_file: 'No Agent'
+        welcome_file: 'welcome',
+        no_input_file: 'noinput',
+        wrong_input_file: 'wronginput',
+        thanks_file: 'thanks',
+        no_agent_file: 'noagent'
       };
 
       const configsToInsert = [];
@@ -118,7 +119,7 @@ try {
 
       if (bodyReq?.menu_voice_file) {
         configsToInsert.push({
-          name: 'Menu',
+          name: 'menu',
           value: bodyReq?.menu_voice_file,
           campaign_id: createdVoiceCampaign?.campaign_id,
           dtmf: bodyReq?.dtmf,
@@ -133,6 +134,7 @@ try {
       }
 
     } 
+    
     if (bodyReq?.template_id == 3) {
         if (bodyReq.assignedQueues && bodyReq.assignedQueues.length > 0) {
           const queueRecords = bodyReq.assignedQueues.map(queue => ({
