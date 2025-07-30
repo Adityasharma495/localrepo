@@ -880,6 +880,8 @@ async function agentRealTimeData() {
     }
 
     const queueKeys = await redisClient.keys('queue:*:*:*:calls');
+    Logger.info('Queue Data from Redis -> Queue Data Fetched from Redis');
+    console.log('queueKeys', queueKeys)
     const queueData = [];
 
     let totalCount = 0;
@@ -920,6 +922,10 @@ async function agentRealTimeData() {
       average: formatDuration(averageSeconds),
       count: totalCount
     };
+
+    console.log('queuedata', queuedata)
+    console.dir(queuedata, { depth: null });
+
 
     SuccessRespnose.data = {
       agents: combinedData,
