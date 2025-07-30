@@ -8,6 +8,7 @@ const {AgentRepository, ExtensionRepository, UserRepository, SubUserLicenceRepos
 const { Op } = require("sequelize");
 const { constants } = require("../backup/utils/common");
 const User = require("../../shared/c_db/User")
+const redisClient = require('../../shared/config/redis-client');
 
 const agentGroupRepo = new AgentGroupRepository();
 const agentRepo = new AgentRepository();
@@ -819,22 +820,22 @@ async function sendRealTimeAgentData(res, isClientConnected) {
   }
 
   if (isClientConnected.value) {
-      setTimeout(() => sendRealTimeAgentData(res, isClientConnected), 4000);
+      setTimeout(() => sendRealTimeAgentData(res, isClientConnected), 2500);
   }
 }
 
 async function agentRealTimeData() {
   try {
-    const agentData = await agentRepo.findAllData(); // Step 1: Fetch all agents
+    const agentData = await agentRepo.findAllData();
     const agentNames = agentData.map(agent => agent.agent_name);
     const agentIds = agentData.map(agent => agent.id);
 
-    const users = await userRepo.getByNameBulk(agentNames); // Step 2: Fetch user data
+    const users = await userRepo.getByNameBulk(agentNames);
     const userMap = new Map();
     users.forEach(user => userMap.set(user.name, user));
 
-    // Step 3: Fetch all agent-group mappings (assumed from your mapping table)
-    const scheduleMappings = await agentScheduleMappingRepo.getAll(); // <-- create this method if it doesn't exist
+    // Step 3: Fetch all agent-group mappings
+    const scheduleMappings = await agentScheduleMappingRepo.getAll(); 
 
     // Step 4: Prepare a map of agent_id => Set of group_ids (for quick lookup)
     const agentGroupMap = new Map();
@@ -875,11 +876,60 @@ async function agentRealTimeData() {
         agentGroup: assignedGroups,
         noAssignedGroup: notAssignedGroups,
       });
+      
     }
 
-    SuccessRespnose.data = combinedData;
-    SuccessRespnose.message = "Success";
-    Logger.info(`Real Time Data -> received all successfully`);
+    const queueKeys = await redisClient.keys('queue:*:*:*:calls');
+    const queueData = [];
+
+    let totalCount = 0;
+    let totalWaitTime = 0;
+    const now = Math.floor(Date.now() / 1000);
+
+    for (const key of queueKeys) {
+      const value = await redisClient.get(key);
+      let parsedValue;
+      try {
+        parsedValue = JSON.parse(value);
+      } catch (e) {
+        parsedValue = value;
+      }
+
+      const calls = Object.values(parsedValue);
+      for (const call of calls) {
+        totalCount++;
+        const enqueueTime = parseInt(call.enqueueTime, 10);
+        const diff = now - enqueueTime;
+        totalWaitTime += diff;
+      }
+
+      queueData.push({ key, value: parsedValue });
+    }
+
+    const averageSeconds = totalCount > 0 ? totalWaitTime / totalCount : 0;
+
+    const formatDuration = (seconds) => {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = Math.floor(seconds % 60);
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    };
+
+    const queuedata = {
+      queueData,
+      average: formatDuration(averageSeconds),
+      count: totalCount
+    };
+
+    SuccessRespnose.data = {
+      agents: combinedData,
+      queues: queuedata
+    };
+    
+
+    SuccessRespnose.message = 'Success';
+    Logger.info('Real Time Data -> received all successfully');
+
     return SuccessRespnose;
 
   } catch (error) {
