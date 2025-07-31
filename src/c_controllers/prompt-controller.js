@@ -1,6 +1,6 @@
 const { exec } = require("child_process");
 const { StatusCodes } = require("http-status-codes");
-const { ErrorResponse, SuccessRespnose } = require("../../shared/utils/common");
+const { ErrorResponse, SuccessRespnose, constants } = require("../../shared/utils/common");
 const { MODULE_LABEL, ACTION_LABEL, BACKEND_API_BASE_URL, STORAGE_PATH, SERVER, USERS_ROLE } = require('../../shared/utils/common/constants');
 const { Logger } = require("../../shared/config");
 const fs = require("fs");
@@ -185,7 +185,13 @@ async function updatePromptStatus(req, res) {
 
 async function getAllPrompt(req, res) {
     try {
-        const results = await promptRepo.get({created_by: req.user.id, is_deleted: false});
+        let results;
+        if (req?.user?.role === constants.USERS_ROLE.SUPER_ADMIN) {
+            results = await promptRepo.get({is_deleted: false});
+        }
+        else {
+            results = await promptRepo.get({created_by: req.user.id, is_deleted: false});
+        }
         if (results.length > 0) {
             SuccessRespnose.data = results;
             SuccessRespnose.message = "Prompt fetched successfully";
