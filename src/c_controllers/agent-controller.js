@@ -786,7 +786,7 @@ async function getAgentRealTimeData(req, res) {
       res.end();
     });
 
-    await sendRealTimeAgentData(res, isClientConnected);
+    await sendRealTimeAgentData(req, res, isClientConnected);
 
   } catch (error) {
     ErrorResponse.error = { name: error.name, message: error.message };
@@ -805,10 +805,10 @@ async function getAgentRealTimeData(req, res) {
 
 }
 
-async function sendRealTimeAgentData(res, isClientConnected) {
+async function sendRealTimeAgentData(req, res, isClientConnected) {
   try {
     if (!isClientConnected.value) return;
-    const realTimeAgentData = await agentRealTimeData();
+    const realTimeAgentData = await agentRealTimeData(req);
 
     res.write(`data: ${JSON.stringify(realTimeAgentData)}\n\n`);
 
@@ -820,15 +820,23 @@ async function sendRealTimeAgentData(res, isClientConnected) {
   }
 
   if (isClientConnected.value) {
-      setTimeout(() => sendRealTimeAgentData(res, isClientConnected), 2500);
+      setTimeout(() => sendRealTimeAgentData(req, res, isClientConnected), 2500);
   }
 }
 
-async function agentRealTimeData() {
+async function agentRealTimeData(req) {
   try {
-    const agentData = await agentRepo.findAllData();
+    let agentData;
+    let userDetail
+    if (req.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
+      agentData = await agentRepo.findAllData(req.user.id);
+      userDetail = await userRepo.get(req.user.id)
+
+    } else {
+      agentData = await agentRepo.findAllData();
+    }
     const agentNames = agentData.map(agent => agent.agent_name);
-    const agentIds = agentData.map(agent => agent.id);
+    // const agentIds = agentData.map(agent => agent.id);
 
     const users = await userRepo.getByNameBulk(agentNames);
     const userMap = new Map();
@@ -879,7 +887,15 @@ async function agentRealTimeData() {
       
     }
 
-    const queueKeys = await redisClient.keys('queue:*:*:*:calls');
+    let queueKeys = await redisClient.keys('queue:*:*:*:calls');
+    //created by callcenter only
+    if (req.user.role === USERS_ROLE.CALLCENTRE_ADMIN) {
+      queueKeys = queueKeys.filter(key => {
+        const parts = key.split(':');
+        return parts.length > 2 && parts[2] === userDetail.callcenter_id;
+      });
+    }
+
     Logger.info('Queue Data from Redis -> Queue Data Fetched from Redis');
     console.log('queueKeys', queueKeys)
     const queueData = [];
