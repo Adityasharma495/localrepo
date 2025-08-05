@@ -962,6 +962,44 @@ async function agentRealTimeData(req) {
   }
 }
 
+async function updateBreakAllocation(req, res) {
+  const agent_id = req.params.id;
+  const bodyReq = req.body;
+
+  try {
+    let updatedResult
+    if (bodyReq.break === 'Added') {
+      updatedResult = await agentRepo.update(
+        agent_id ,
+        { break_id: bodyReq.break_id }
+      );
+    } else {
+      updatedResult = await agentRepo.update(
+        agent_id ,
+        { break_id: null }
+      );     
+    }
+
+    Logger.info(`Break ${bodyReq.break} Successfully for the Agent: ${JSON.stringify(agent_id)}`);
+    SuccessRespnose.message = `Break ${bodyReq.break} Successfully`;
+    SuccessRespnose.data = { updatedResult };
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    console.log(error)
+    const statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+
+    ErrorResponse.message = error.message || "Internal Server Error";
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `Agent -> failed to ${bodyReq.break} break, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
 
 module.exports={
     createAgent,
@@ -975,4 +1013,5 @@ module.exports={
     sendRealTimeAgentData,
     getAgentRealTimeData,
     getByParentId,
+    updateBreakAllocation
 }

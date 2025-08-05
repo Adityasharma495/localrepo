@@ -4,7 +4,7 @@ const { AuthMiddleware, AgentMiddleware } = require("../../middlewares")
 const {AgentController} = require("../../c_controllers")
 
 
-//get: /api/v2/agent/real-time POST
+
 router.get('/real-time',AuthMiddleware.validateUser, AgentController.getAgentRealTimeData);
 
 router.post('/',AuthMiddleware.validateUser,AgentMiddleware.validateAgentCreate,AgentMiddleware.modifyAgentCreateBodyRequest,AgentController.createAgent);
@@ -19,9 +19,10 @@ router.post("/delete", AuthMiddleware.validateUser, AgentMiddleware.validateDele
 
 router.post('/:id',AuthMiddleware.validateUser, AgentMiddleware.modifyAgentUpdateBodyRequest,AgentController.updateAgent);
 
-
 router.post("/status/:id", AuthMiddleware.validateUser, AgentController.toggleStatus);
 
 router.post("/allocate",AuthMiddleware.validateUser,AgentController.updateAllocation)
+
+router.post("/break/:id",AuthMiddleware.validateUser,AgentController.updateBreakAllocation)
 
 module.exports = router;
