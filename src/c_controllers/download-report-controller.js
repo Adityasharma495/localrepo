@@ -16,6 +16,7 @@ async function createDownloadReport(req, res) {
     const getData = await downloadReportRepo.findOne({
       user_id: bodyReq.user_id,
       did: bodyReq.did,
+      status: 0
     });
 
     if (getData) {
