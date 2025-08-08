@@ -147,27 +147,19 @@ async function getAll(req, res) {
       userIds = await userRepository.getAllDescendantUserIds(userId);
     }
     const where =
-      userRole === constants.USERS_ROLE.SUPER_ADMIN
-        ? {} : userRole ===constants.USERS_ROLE.CALLCENTRE_AGENT ?{
-          [Op.or]: [
-              { agent_id: agentId },
-              ...(userIds.length > 0
-                ? [
-                    { agent_id:agentId },
-                  ]
-                : []),
-            ],
-        }
-        : {
-            [Op.or]: [
-              { user_id: userId },
-              ...(userIds.length > 0
-                ? [
-                    { user_id: { [Op.in]: userIds } },
-                  ]
-                : []),
-            ],
-          };
+     userRole === constants.USERS_ROLE.SUPER_ADMIN
+    ? {}
+    : userRole === constants.USERS_ROLE.CALLCENTRE_AGENT
+    ? { agent_id: agentId }
+    : {
+        [Op.or]: [
+          { user_id: userId },
+          ...(userIds.length > 0
+            ? [{ user_id: { [Op.in]: userIds } }]
+            : []),
+        ],
+      };
+
       const allData = await Promise.all(
         Object.values(allOutboundRepositories).map((repo) =>
         repo.getAllData({ where })
@@ -177,6 +169,8 @@ async function getAll(req, res) {
     const combinedData = allData.flat();
     SuccessRespnose.data = combinedData;
     SuccessRespnose.message = "Success";
+
+
 
     Logger.info(`Outgoing Calls -> retrieved all successfully`);
     return res.status(StatusCodes.OK).json(SuccessRespnose);
