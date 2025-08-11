@@ -120,7 +120,8 @@ async function createAgent(req, res) {
               country_code: '91',
               number: agent.agent_number
             },
-            active_profile: false
+            active_profile: false,
+            password: bodyReq.agent.password
           }
         ],
         created_by: req.user.id
@@ -148,7 +149,10 @@ async function createAgent(req, res) {
           country_code: null,
           number: extensionData.extension
         },
-        active_profile: false
+        active_profile: false,
+        host:"rtc.nspl.cloud",
+        sip_port: 5061,
+        password: bodyReq.agent.password
       });
     }
 
@@ -160,13 +164,14 @@ async function createAgent(req, res) {
           country_code: null,
           number: extensionData.extension
         },
-        active_profile: false
+        active_profile: false,
+        host:"rtc.nspl.cloud",
+        port: 443,
+        sip_port: 5061,
+        password: bodyReq.agent.password
       });
     }
   }
-
- 
-
 
 const telephonyProfile = await telephonyProfileRepo.create(profiles);
 
