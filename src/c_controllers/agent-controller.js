@@ -1,7 +1,7 @@
 const { StatusCodes } = require("http-status-codes");
 const {SuccessRespnose , ErrorResponse} = require("../../shared/utils/common");
 const AppError = require("../../shared/utils/errors/app-error");
-const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE} = require('../../shared/utils/common/constants');
+const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE, CALL_CONNECT} = require('../../shared/utils/common/constants');
 const { Logger } = require("../../shared/config");
 const {AgentRepository, ExtensionRepository, UserRepository, SubUserLicenceRepository, TelephonyProfileRepository,
   UserJourneyRepository, AgentGroupRepository, AgentScheduleMappingRepository, AsteriskCTQueueMembersRepository} = require('../../shared/c_repositories');
@@ -150,8 +150,8 @@ async function createAgent(req, res) {
           number: extensionData.extension
         },
         active_profile: false,
-        host:"rtc.nspl.cloud",
-        sip_port: 5061,
+        host:CALL_CONNECT.WEBSOCKET_HOST,
+        sip_port: CALL_CONNECT.SIP_PORT,
         password: bodyReq.agent.password
       });
     }
@@ -165,9 +165,9 @@ async function createAgent(req, res) {
           number: extensionData.extension
         },
         active_profile: false,
-        host:"rtc.nspl.cloud",
-        port: 443,
-        sip_port: 5061,
+        host:CALL_CONNECT.WEBSOCKET_HOST,
+        port: CALL_CONNECT.WEBSOCKET_PORT,
+        sip_port: CALL_CONNECT.SIP_PORT,
         password: bodyReq.agent.password
       });
     }
