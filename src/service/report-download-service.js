@@ -1,5 +1,5 @@
 const config = require('../../shared/config/rabitmq-config.json');
-const { DownloadReportRepository , IncomingReportRepository } = require("../../shared/c_repositories");
+const { DownloadReportRepository , IncomingReportRepository, UserRepository } = require("../../shared/c_repositories");
 const { IncomingReportJanuaryW1Repository,IncomingReportJanuaryW2Repository,IncomingReportJanuaryW3Repository,IncomingReportJanuaryW4Repository,
   IncomingReportFebruaryW1Repository,IncomingReportFebruaryW2Repository,IncomingReportFebruaryW3Repository,IncomingReportFebruaryW4Repository,
   IncomingReportMarchW1Repository,IncomingReportMarchW2Repository,IncomingReportMarchW3Repository,IncomingReportMarchW4Repository,
@@ -12,6 +12,19 @@ const { IncomingReportJanuaryW1Repository,IncomingReportJanuaryW2Repository,Inco
   IncomingReportOctoberW1Repository,IncomingReportOctoberW2Repository,IncomingReportOctoberW3Repository,IncomingReportOctoberW4Repository,
   IncomingReportNovemberW1Repository,IncomingReportNovemberW2Repository,IncomingReportNovemberW3Repository,IncomingReportNovemberW4Repository,
   IncomingReportDecemberW1Repository,IncomingReportDecemberW2Repository,IncomingReportDecemberW3Repository,IncomingReportDecemberW4Repository, } = require("../../shared/c_repositories");
+
+const { OutboundReportJanuaryW1Repository,OutboundReportJanuaryW2Repository,OutboundReportJanuaryW3Repository,OutboundReportJanuaryW4Repository,
+  OutboundReportFebruaryW1Repository,OutboundReportFebruaryW2Repository,OutboundReportFebruaryW3Repository,OutboundReportFebruaryW4Repository,
+  OutboundReportMarchW1Repository,OutboundReportMarchW2Repository,OutboundReportMarchW3Repository,OutboundReportMarchW4Repository,
+  OutboundReportAprilW1Repository,OutboundReportAprilW2Repository,OutboundReportAprilW3Repository,OutboundReportAprilW4Repository,
+  OutboundReportMayW1Repository,OutboundReportMayW2Repository,OutboundReportMayW3Repository,OutboundReportMayW4Repository,
+  OutboundReportJuneW1Repository,OutboundReportJuneW2Repository,OutboundReportJuneW3Repository,OutboundReportJuneW4Repository,
+  OutboundReportJulyW1Repository,OutboundReportJulyW2Repository,OutboundReportJulyW3Repository,OutboundReportJulyW4Repository,
+  OutboundReportAugustW1Repository,OutboundReportAugustW2Repository,OutboundReportAugustW3Repository,OutboundReportAugustW4Repository,
+  OutboundReportSeptemberW1Repository,OutboundReportSeptemberW2Repository,OutboundReportSeptemberW3Repository,OutboundReportSeptemberW4Repository,
+  OutboundReportOctoberW1Repository,OutboundReportOctoberW2Repository,OutboundReportOctoberW3Repository,OutboundReportOctoberW4Repository,
+  OutboundReportNovemberW1Repository,OutboundReportNovemberW2Repository,OutboundReportNovemberW3Repository,OutboundReportNovemberW4Repository,
+  OutboundReportDecemberW1Repository,OutboundReportDecemberW2Repository,OutboundReportDecemberW3Repository,OutboundReportDecemberW4Repository, } = require("../../shared/c_repositories");
 
 const incomingReport1W1Repo = new IncomingReportJanuaryW1Repository();
 const incomingReport1W2Repo = new IncomingReportJanuaryW2Repository();
@@ -73,6 +86,68 @@ const incomingReport12W2Repo = new IncomingReportDecemberW2Repository();
 const incomingReport12W3Repo = new IncomingReportDecemberW3Repository();
 const incomingReport12W4Repo = new IncomingReportDecemberW4Repository();
 
+const outboundReport1W1Repo = new OutboundReportJanuaryW1Repository();
+const outboundReport1W2Repo = new OutboundReportJanuaryW2Repository();
+const outboundReport1W3Repo = new OutboundReportJanuaryW3Repository();
+const outboundReport1W4Repo = new OutboundReportJanuaryW4Repository();
+
+const outboundReport2W1Repo = new OutboundReportFebruaryW1Repository();
+const outboundReport2W2Repo = new OutboundReportFebruaryW2Repository();
+const outboundReport2W3Repo = new OutboundReportFebruaryW3Repository();
+const outboundReport2W4Repo = new OutboundReportFebruaryW4Repository();
+
+const outboundReport3W1Repo = new OutboundReportMarchW1Repository();
+const outboundReport3W2Repo = new OutboundReportMarchW2Repository();
+const outboundReport3W3Repo = new OutboundReportMarchW3Repository();
+const outboundReport3W4Repo = new OutboundReportMarchW4Repository();
+
+const outboundReport4W1Repo = new OutboundReportAprilW1Repository();
+const outboundReport4W2Repo = new OutboundReportAprilW2Repository();
+const outboundReport4W3Repo = new OutboundReportAprilW3Repository();
+const outboundReport4W4Repo = new OutboundReportAprilW4Repository();
+
+const outboundReport5W1Repo = new OutboundReportMayW1Repository();
+const outboundReport5W2Repo = new OutboundReportMayW2Repository();
+const outboundReport5W3Repo = new OutboundReportMayW3Repository();
+const outboundReport5W4Repo = new OutboundReportMayW4Repository();
+
+const outboundReport6W1Repo = new OutboundReportJuneW1Repository();
+const outboundReport6W2Repo = new OutboundReportJuneW2Repository();
+const outboundReport6W3Repo = new OutboundReportJuneW3Repository();
+const outboundReport6W4Repo = new OutboundReportJuneW4Repository();
+
+const outboundReport7W1Repo = new OutboundReportJulyW1Repository();
+const outboundReport7W2Repo = new OutboundReportJulyW2Repository();
+const outboundReport7W3Repo = new OutboundReportJulyW3Repository();
+const outboundReport7W4Repo = new OutboundReportJulyW4Repository();
+
+const outboundReport8W1Repo = new OutboundReportAugustW1Repository();
+const outboundReport8W2Repo = new OutboundReportAugustW2Repository();
+const outboundReport8W3Repo = new OutboundReportAugustW3Repository();
+const outboundReport8W4Repo = new OutboundReportAugustW4Repository();
+
+const outboundReport9W1Repo = new OutboundReportSeptemberW1Repository();
+const outboundReport9W2Repo = new OutboundReportSeptemberW2Repository();
+const outboundReport9W3Repo = new OutboundReportSeptemberW3Repository();
+const outboundReport9W4Repo = new OutboundReportSeptemberW4Repository();
+
+const outboundReport10W1Repo = new OutboundReportOctoberW1Repository();
+const outboundReport10W2Repo = new OutboundReportOctoberW2Repository();
+const outboundReport10W3Repo = new OutboundReportOctoberW3Repository();
+const outboundReport10W4Repo = new OutboundReportOctoberW4Repository();
+
+const outboundReport11W1Repo = new OutboundReportNovemberW1Repository();
+const outboundReport11W2Repo = new OutboundReportNovemberW2Repository();
+const outboundReport11W3Repo = new OutboundReportNovemberW3Repository();
+const outboundReport11W4Repo = new OutboundReportNovemberW4Repository();
+
+const outboundReport12W1Repo = new OutboundReportDecemberW1Repository();
+const outboundReport12W2Repo = new OutboundReportDecemberW2Repository();
+const outboundReport12W3Repo = new OutboundReportDecemberW3Repository();
+const outboundReport12W4Repo = new OutboundReportDecemberW4Repository();
+
+const userRepo = new UserRepository();
+
 const repositoryMap = {
   incomingReport1W1Repo: incomingReport1W1Repo,
   incomingReport1W2Repo: incomingReport1W2Repo,
@@ -133,6 +208,68 @@ const repositoryMap = {
   incomingReport12W2Repo:incomingReport12W2Repo,
   incomingReport12W3Repo:incomingReport12W3Repo,
   incomingReport12W4Repo:incomingReport12W4Repo,
+};
+
+const outboundRepositoryMap = {
+  outboundReport1W1Repo: outboundReport1W1Repo,
+  outboundReport1W2Repo: outboundReport1W2Repo,
+  outboundReport1W3Repo: outboundReport1W3Repo,
+  outboundReport1W4Repo: outboundReport1W4Repo,
+
+  outboundReport2W1Repo: outboundReport2W1Repo,
+  outboundReport2W2Repo: outboundReport2W2Repo,
+  outboundReport2W3Repo: outboundReport2W3Repo,
+  outboundReport2W4Repo: outboundReport2W4Repo,
+
+  outboundReport3W1Repo: outboundReport3W1Repo,
+  outboundReport3W2Repo: outboundReport3W2Repo,
+  outboundReport3W3Repo: outboundReport3W3Repo,
+  outboundReport3W4Repo: outboundReport3W4Repo,
+
+  outboundReport4W1Repo: outboundReport4W1Repo,
+  outboundReport4W2Repo: outboundReport4W2Repo,
+  outboundReport4W3Repo: outboundReport4W3Repo,
+  outboundReport4W4Repo: outboundReport4W4Repo,
+
+  outboundReport5W1Repo: outboundReport5W1Repo,
+  outboundReport5W2Repo: outboundReport5W2Repo,
+  outboundReport5W3Repo: outboundReport5W3Repo,
+  outboundReport5W4Repo: outboundReport5W4Repo,
+
+  outboundReport6W1Repo: outboundReport6W1Repo,
+  outboundReport6W2Repo: outboundReport6W2Repo,
+  outboundReport6W3Repo: outboundReport6W3Repo,
+  outboundReport6W4Repo: outboundReport6W4Repo,
+
+  outboundReport7W1Repo: outboundReport7W1Repo,
+  outboundReport7W2Repo: outboundReport7W2Repo,
+  outboundReport7W3Repo: outboundReport7W3Repo,
+  outboundReport7W4Repo: outboundReport7W4Repo,
+
+  outboundReport8W1Repo: outboundReport8W1Repo,
+  outboundReport8W2Repo: outboundReport8W2Repo,
+  outboundReport8W3Repo: outboundReport8W3Repo,
+  outboundReport8W4Repo: outboundReport8W4Repo,
+
+  outboundReport9W1Repo: outboundReport9W1Repo,
+  outboundReport9W2Repo: outboundReport9W2Repo,
+  outboundReport9W3Repo: outboundReport9W3Repo,
+  outboundReport9W4Repo: outboundReport9W4Repo,
+
+  outboundReport10W1Repo: outboundReport10W1Repo,
+  outboundReport10W2Repo: outboundReport10W2Repo,
+  outboundReport10W3Repo: outboundReport10W3Repo,
+  outboundReport10W4Repo: outboundReport10W4Repo,
+
+  outboundReport11W1Repo: outboundReport11W1Repo,
+  outboundReport11W2Repo: outboundReport11W2Repo,
+  outboundReport11W3Repo: outboundReport11W3Repo,
+  outboundReport11W4Repo: outboundReport11W4Repo,
+
+  outboundReport12W1Repo: outboundReport12W1Repo,
+  outboundReport12W2Repo: outboundReport12W2Repo,
+  outboundReport12W3Repo: outboundReport12W3Repo,
+  outboundReport12W4Repo: outboundReport12W4Repo,
 };
 
 const incomingReportRepo = new IncomingReportRepository();
@@ -210,6 +347,8 @@ const reports = async () => {
                     const key = `incomingReport${month}W${week}Repo`;
                     const repoInstance = repositoryMap[key];
 
+                    const outboundKey = `outboundReport${month}W${week}Repo`;
+                    const outboundRepoInstance = outboundRepositoryMap[outboundKey];
                     const query = {
                         [Op.and]: [
                           {
@@ -230,11 +369,46 @@ const reports = async () => {
                     Logger.info(`Incomming Report Data Count : ${incomingReportData.length} `);
                     const RECORDS_PER_FILE = DOWNLOAD_REPORT_FILE_RECORD_SIZE;
                     if (incomingReportData.length > 0) {
-                        const extractedData = incomingReportData.map(record => ({
+                        const finalReportData = [];
+                        for (const record of incomingReportData) {
+                          const incomingFormatted = {
                             ...record.dataValues,
                             caller_number: `'${record.dataValues.caller_number}'`,
-                            callee_number: `'${record.dataValues.callee_number}'`
-                        }));
+                            callee_number: `'${record.dataValues.callee_number}'`,
+                            type: "INBOUND"
+                          };
+                          finalReportData.push(incomingFormatted); 
+
+                          if (record?.trace_id) {
+                            const outboundData = await outboundRepoInstance.getDidByTraceId(
+                              record.trace_id,
+                              record.callee_number,
+                              query.startDate,
+                              query.endDate
+                            );
+
+                            if (outboundData?.length > 0) {
+                              for (const outRecord of outboundData) {
+                                const user = await userRepo.findOne({
+                                  name: outRecord.dataValues.agent_name,
+                                });
+                                
+                                finalReportData.push({
+                                  ...outRecord.dataValues,
+                                  caller_number: `'${outRecord.dataValues.caller_number}'`,
+                                  callee_number: `'${outRecord.dataValues.callee_number}'`,
+                                  type: "OUTBOUND",
+                                  user_id: user ? user.id : null 
+                                });
+                              }
+                            }
+                          }
+                        }
+                        // const extractedData = incomingReportData.map(record => ({
+                        //     ...record.dataValues,
+                        //     caller_number: `'${record.dataValues.caller_number}'`,
+                        //     callee_number: `'${record.dataValues.callee_number}'`
+                        // }));
 
                         const timestamp = moment().format('YYYYMMDD_HHmmss');
                         Logger.info(`Time : ${timestamp} `);
@@ -249,10 +423,10 @@ const reports = async () => {
 
                         archive.pipe(output);
                         const totalChunks = Math.ceil(
-                          extractedData.length / RECORDS_PER_FILE
+                          finalReportData.length / RECORDS_PER_FILE
                         );
                         for (let i = 0; i < totalChunks; i++) {
-                          const chunk = extractedData.slice(
+                          const chunk = finalReportData.slice(
                             i * RECORDS_PER_FILE,
                             (i + 1) * RECORDS_PER_FILE
                           );
