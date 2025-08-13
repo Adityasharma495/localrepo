@@ -1,6 +1,6 @@
 const Broker = require('rascal').BrokerAsPromised;
 const config = require('../../shared/config/rabitmq-config.json');
-const {  IncomingSummaryRepository, AgentRepository } = require("../../shared/c_repositories");
+const {  IncomingSummaryRepository, AgentRepository, UserRepository } = require("../../shared/c_repositories");
 const incomingSummaryRepo = new IncomingSummaryRepository();
 const { IncomingReportJanuaryW1Repository,IncomingReportJanuaryW2Repository,IncomingReportJanuaryW3Repository,IncomingReportJanuaryW4Repository,
   IncomingReportFebruaryW1Repository,IncomingReportFebruaryW2Repository,IncomingReportFebruaryW3Repository,IncomingReportFebruaryW4Repository,
@@ -290,6 +290,8 @@ const outboundRepositoryMap = {
   outboundReport12W3Repo:outboundReport12W3Repo,
   outboundReport12W4Repo:outboundReport12W4Repo,
 };
+
+const userRepository = new UserRepository();
 const agentRepository = new AgentRepository();
 
 const insertDataInBillingQueue =   async (con,pub,message) =>{
@@ -402,6 +404,7 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
             } else if(cdrJson.callLeg === "B_PARTY") {
               if (cdrJson.agent) {
                 let agentData;
+                let userIdFromAgentData;
                 if (cdrJson.agent.number) {
                   agentData = await agentRepository.find({where: {
                     agent_number: cdrJson.agent.number
@@ -414,6 +417,8 @@ const insertDataInBillingQueue =   async (con,pub,message) =>{
                     }
                     report_data["agent_number"] = agentData.agent_number;
                   }
+                  userIdFromAgentData = await userRepository.find({ where: { name: agentData.agent_name } });
+                  report_data["user_id"] = userIdFromAgentData.id;
                   report_data["agent_name"] = agentData.agent_name;
                   report_data["agent_id"] = agentData.id;
                 }
