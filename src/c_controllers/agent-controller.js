@@ -1,7 +1,7 @@
 const { StatusCodes } = require("http-status-codes");
 const {SuccessRespnose , ErrorResponse} = require("../../shared/utils/common");
 const AppError = require("../../shared/utils/errors/app-error");
-const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE} = require('../../shared/utils/common/constants');
+const {MODULE_LABEL, ACTION_LABEL, USERS_ROLE, CALL_CONNECT} = require('../../shared/utils/common/constants');
 const { Logger } = require("../../shared/config");
 const {AgentRepository, ExtensionRepository, UserRepository, SubUserLicenceRepository, TelephonyProfileRepository,
   UserJourneyRepository, AgentGroupRepository, AgentScheduleMappingRepository, AsteriskCTQueueMembersRepository} = require('../../shared/c_repositories');
@@ -73,17 +73,7 @@ async function createAgent(req, res) {
 
       //fetch logged in user sub licence data(available_licence)
       const subLicenceData = loggedInData.sub_user_licence.available_licence
-      
 
-
-
-      // if available_licence are 0 then return
-      // if (Number(subLicenceData.agent) === 0) {
-      //    ErrorResponse.message = 'Licence is not available';
-      //   return res
-      //       .status(StatusCodes.BAD_REQUEST)
-      //       .json(ErrorResponse);
-      // }
 
       // if available_licence are not 0 then update sub user licence
       const updatedData = {
@@ -120,7 +110,8 @@ async function createAgent(req, res) {
               country_code: '91',
               number: agent.agent_number
             },
-            active_profile: false
+            active_profile: false,
+            password: bodyReq.agent.password
           }
         ],
         created_by: req.user.id
@@ -148,7 +139,10 @@ async function createAgent(req, res) {
           country_code: null,
           number: extensionData.extension
         },
-        active_profile: false
+        active_profile: false,
+        host:CALL_CONNECT.WEBSOCKET_HOST,
+        sip_port: CALL_CONNECT.SIP_PORT,
+        password: bodyReq.agent.password
       });
     }
 
@@ -160,13 +154,14 @@ async function createAgent(req, res) {
           country_code: null,
           number: extensionData.extension
         },
-        active_profile: false
+        active_profile: false,
+        host:CALL_CONNECT.WEBSOCKET_HOST,
+        port: CALL_CONNECT.WEBSOCKET_PORT,
+        sip_port: CALL_CONNECT.SIP_PORT,
+        password: bodyReq.agent.password
       });
     }
   }
-
- 
-
 
 const telephonyProfile = await telephonyProfileRepo.create(profiles);
 
@@ -530,7 +525,6 @@ async function updateAgent(req, res) {
     const responseData = {};
     const currentData = await agentRepo.get(uid);
 
-
     // Check for duplicate agent_number if it is being changed
     if (Number(currentData.agent_number) !== bodyReq.agent.agent_number) {
       const numberCondition = {
@@ -560,29 +554,35 @@ async function updateAgent(req, res) {
       }
     }
 
-    //Check for extension change
-    // if (currentData.extension[0] && bodyReq.agent.extension[0] && (currentData.extension[0].toString() !== bodyReq.agent.extension[0].toString())) {
-    //   if ((currentData.extension).length > 0) {
-    //     await extensionRepo.bulkUpdate( currentData.extension, { is_allocated: 0 });
-    //   }
-
-    //   if ((bodyReq.agent.extension).length > 0) {
-    //     await extensionRepo.bulkUpdate( bodyReq.agent.extension, { is_allocated: 1 });
-    //   }
-    // }
-
-    // if ((currentData.extension).length === 0 && (bodyReq.agent.extension).length > 0) {
-    //   if ((bodyReq.agent.extension).length > 0) {
-    //     await extensionRepo.bulkUpdate( bodyReq.agent.extension, { is_allocated: 1 });
-    //   }
-    // }
-
     const agent = await agentRepo.update(uid, bodyReq.agent);
     if (!agent) {
       const error = new Error();
       error.name = 'CastError';
       throw error;
     }
+
+    //update telephony profile and queue_member of asterisk_ct
+    let newNumber
+    const telephony_profile = currentData.telephonyProfile.profile
+    telephony_profile.forEach(profile => {
+      if (profile.type === 'Mobile') {
+        newNumber = bodyReq.agent.agent_number
+        profile.number.number = bodyReq.agent.agent_number;
+      }
+    });
+    await telephonyProfileRepo.update(currentData.telephony_profile, {profile: telephony_profile})
+
+    //current value
+    const currentQueueData = await asteriskCTQueueMembersRepo.getAll({state_interface: `Custom:${currentData.agent_number}`})
+    for (const item of currentQueueData) {
+      const payload = {
+        interface: `LOCAL/${bodyReq.agent.agent_number}@dial_agent`, 
+        state_interface: `Custom:${bodyReq.agent.agent_number}`,
+      };
+
+      await asteriskCTQueueMembersRepo.update(item.uniqueid, payload);
+    }  
+
     responseData.agent = agent;
     const userJourneyfields = {
       module_name: MODULE_LABEL.AGENT,
