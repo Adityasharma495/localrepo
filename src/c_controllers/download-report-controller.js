@@ -63,8 +63,8 @@ async function createDownloadReport(req, res) {
 
 async function getAll(req, res) {
   try {
-    const data = await downloadReportRepo.getAll(constants.USERS_ROLE.SUPER_ADMIN, req.user.id);
-    // const data = await downloadReportRepo.getAll(req.user.role, req.user.id);
+    // const data = await downloadReportRepo.getAll(constants.USERS_ROLE.SUPER_ADMIN, req.user.id);
+    const data = await downloadReportRepo.getAll(req.user.role, req.user.id);
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
