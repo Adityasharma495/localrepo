@@ -496,8 +496,7 @@ async function getDidSpecificReport(req, res) {
     const startDateMonthName = dateStart.format('MMMM');
     const endDateMonthName = dateEnd.format('MMMM');
 
-
-
+    
     if (startDateMonthName !== endDateMonthName) {
       ErrorResponse.message = 'You can check only 1 month data';
       return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
@@ -566,7 +565,7 @@ async function getDidSpecificReport(req, res) {
           }
         }
       }
-
+      
       finalInboundData.push(...allUserReports);
     }
 

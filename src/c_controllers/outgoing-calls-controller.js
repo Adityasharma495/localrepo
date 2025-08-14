@@ -125,68 +125,149 @@ const allOutboundRepositories = {
 const { constants } = require("../../shared/utils/common");
 const { USERS_ROLE } = require("../backup/utils/common/constants");
 
+// async function getAll(req, res) {
+//   try {
+//     const userRole = req.user.role;
+//     const userId = req.user.id;
+
+
+//     let agentId;
+
+//     if(userRole===USERS_ROLE.CALLCENTRE_AGENT)
+//     {
+//     const user = await userRepository.findOne({id:userId})
+//     const agent = await agentRepo.findOne({agent_name:user.username})
+//     agentId = agent.id;
+//     }
+
+
+//     let userIds = [];
+
+//     if (userRole !== constants.USERS_ROLE.SUPER_ADMIN) {
+//       userIds = await userRepository.getAllDescendantUserIds(userId);
+//     }
+//     const where =
+//      userRole === constants.USERS_ROLE.SUPER_ADMIN
+//     ? {}
+//     : userRole === constants.USERS_ROLE.CALLCENTRE_AGENT
+//     ? { agent_id: agentId }
+//     : {
+//         [Op.or]: [
+//           { user_id: userId },
+//           ...(userIds.length > 0
+//             ? [{ user_id: { [Op.in]: userIds } }]
+//             : []),
+//         ],
+//       };
+
+//       const allData = await Promise.all(
+//         Object.values(allOutboundRepositories).map((repo) =>
+//         repo.getAllData({ where })
+//       )
+//     );
+
+//     const combinedData = allData.flat();
+//     SuccessRespnose.data = combinedData;
+//     SuccessRespnose.message = "Success";
+
+
+
+//     Logger.info(`Outgoing Calls -> retrieved all successfully`);
+//     return res.status(StatusCodes.OK).json(SuccessRespnose);
+//   } catch (error) {
+//     ErrorResponse.message = error.message;
+//     ErrorResponse.error = error;
+
+//     Logger.error(
+//       `Outgoing Calls -> unable to get Outgoing Calls list, error: ${JSON.stringify(
+//         error
+//       )}`
+//     );
+
+//     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+//   }
+// }
+
+
 async function getAll(req, res) {
   try {
     const userRole = req.user.role;
     const userId = req.user.id;
-
-
     let agentId;
 
-    if(userRole===USERS_ROLE.CALLCENTRE_AGENT)
-    {
-    const user = await userRepository.findOne({id:userId})
-    const agent = await agentRepo.findOne({agent_name:user.username})
-    agentId = agent.id;
+    if (userRole === USERS_ROLE.CALLCENTRE_AGENT) {
+      const user = await userRepository.findOne({ id: userId });
+      const agent = await agentRepo.findOne({ agent_name: user.username });
+      agentId = agent.id;
     }
 
-
     let userIds = [];
-
     if (userRole !== constants.USERS_ROLE.SUPER_ADMIN) {
       userIds = await userRepository.getAllDescendantUserIds(userId);
     }
-    const where =
-     userRole === constants.USERS_ROLE.SUPER_ADMIN
-    ? {}
-    : userRole === constants.USERS_ROLE.CALLCENTRE_AGENT
-    ? { agent_id: agentId }
-    : {
-        [Op.or]: [
-          { user_id: userId },
-          ...(userIds.length > 0
-            ? [{ user_id: { [Op.in]: userIds } }]
-            : []),
-        ],
-      };
 
-      const allData = await Promise.all(
-        Object.values(allOutboundRepositories).map((repo) =>
+    // Base where condition based on role
+    let where =
+      userRole === constants.USERS_ROLE.SUPER_ADMIN
+        ? {}
+        : userRole === constants.USERS_ROLE.CALLCENTRE_AGENT
+        ? { agent_id: agentId }
+        : {
+            [Op.or]: [
+              { user_id: userId },
+              ...(userIds.length > 0
+                ? [{ user_id: { [Op.in]: userIds } }]
+                : []),
+            ],
+          };
+
+    // Add date range filter if provided
+
+
+    const { startDate, endDate } = req.query;
+    
+    const startUtc = new Date(`${startDate}T00:00:00+05:30`);
+    const endUtc = new Date(`${endDate}T23:59:59+05:30`);
+    if (startDate && endDate) {
+      where = {
+        start_time: {
+          [Op.gte]: startUtc,
+          [Op.lte]: endUtc
+        }
+      };
+    }
+
+    // Fetch from all outbound repositories
+    const allData = await Promise.all(
+      Object.values(allOutboundRepositories).map((repo) =>
         repo.getAllData({ where })
       )
     );
 
+
+
     const combinedData = allData.flat();
+
     SuccessRespnose.data = combinedData;
     SuccessRespnose.message = "Success";
-
-
-
     Logger.info(`Outgoing Calls -> retrieved all successfully`);
     return res.status(StatusCodes.OK).json(SuccessRespnose);
+
   } catch (error) {
     ErrorResponse.message = error.message;
     ErrorResponse.error = error;
-
     Logger.error(
-      `Outgoing Calls -> unable to get Outgoing Calls list, error: ${JSON.stringify(
-        error
-      )}`
+      `Outgoing Calls -> unable to get list, error: ${JSON.stringify(error)}`
     );
-
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
   }
 }
+
+
+
+
+
+
 
 module.exports = {
   getAll,
