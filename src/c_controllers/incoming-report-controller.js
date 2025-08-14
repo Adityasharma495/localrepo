@@ -32,7 +32,7 @@ const {
   OutboundReportDecemberW1Repository, OutboundReportDecemberW2Repository, OutboundReportDecemberW3Repository, OutboundReportDecemberW4Repository
 } = require("../../shared/c_repositories");
 
-const { SuccessRespnose, ErrorResponse } = require("../../shared/utils/common");
+const { SuccessRespnose, ErrorResponse, constants } = require("../../shared/utils/common");
 const AppError = require("../../shared/utils/errors/app-error");
 const { Logger } = require("../../shared/config");
 const incomingReportRepo = new IncomingReportRepository();
@@ -464,32 +464,32 @@ async function getDidSpecificReport(req, res) {
       Decemberw3: new IncomingReportDecemberW3Repository(), Decemberw4: new IncomingReportDecemberW4Repository(),
     };
 
-    // const OutboundRepositories = {
-    //   Januaryw1: new OutboundReportJanuaryW1Repository(), Januaryw2: new OutboundReportJanuaryW2Repository(),
-    //   Januaryw3: new OutboundReportJanuaryW3Repository(), Januaryw4: new OutboundReportJanuaryW4Repository(),
-    //   Februaryw1: new OutboundReportFebruaryW1Repository(), Februaryw2: new OutboundReportFebruaryW2Repository(),
-    //   Februaryw3: new OutboundReportFebruaryW3Repository(), Februaryw4: new OutboundReportFebruaryW4Repository(),
-    //   Marchw1: new OutboundReportMarchW1Repository(), Marchw2: new OutboundReportMarchW2Repository(),
-    //   Marchw3: new OutboundReportMarchW3Repository(), Marchw4: new OutboundReportMarchW4Repository(),
-    //   Aprilw1: new OutboundReportAprilW1Repository(), Aprilw2: new OutboundReportAprilW2Repository(),
-    //   Aprilw3: new OutboundReportAprilW3Repository(), Aprilw4: new OutboundReportAprilW4Repository(),
-    //   Mayw1: new OutboundReportMayW1Repository(), Mayw2: new OutboundReportMayW2Repository(),
-    //   Mayw3: new OutboundReportMayW3Repository(), Mayw4: new OutboundReportMayW4Repository(),
-    //   Junew1: new OutboundReportJuneW1Repository(), Junew2: new OutboundReportJuneW2Repository(),
-    //   Junew3: new OutboundReportJuneW3Repository(), Junew4: new OutboundReportJuneW4Repository(),
-    //   Julyw1: new OutboundReportJulyW1Repository(), Julyw2: new OutboundReportJulyW2Repository(),
-    //   Julyw3: new OutboundReportJulyW3Repository(), Julyw4: new OutboundReportJulyW4Repository(),
-    //   Augustw1: new OutboundReportAugustW1Repository(), Augustw2: new OutboundReportAugustW2Repository(),
-    //   Augustw3: new OutboundReportAugustW3Repository(), Augustw4: new OutboundReportAugustW4Repository(),
-    //   Septemberw1: new OutboundReportSeptemberW1Repository(), Septemberw2: new OutboundReportSeptemberW2Repository(),
-    //   Septemberw3: new OutboundReportSeptemberW3Repository(), Septemberw4: new OutboundReportSeptemberW4Repository(),
-    //   Octoberw1: new OutboundReportOctoberW1Repository(), Octoberw2: new OutboundReportOctoberW2Repository(),
-    //   Octoberw3: new OutboundReportOctoberW3Repository(), Octoberw4: new OutboundReportOctoberW4Repository(),
-    //   Novemberw1: new OutboundReportNovemberW1Repository(), Novemberw2: new OutboundReportNovemberW2Repository(),
-    //   Novemberw3: new OutboundReportNovemberW3Repository(), Novemberw4: new OutboundReportNovemberW4Repository(),
-    //   Decemberw1: new OutboundReportDecemberW1Repository(), Decemberw2: new OutboundReportDecemberW2Repository(),
-    //   Decemberw3: new OutboundReportDecemberW3Repository(), Decemberw4: new OutboundReportDecemberW4Repository(),
-    // };
+    const OutboundRepositories = {
+      Januaryw1: new OutboundReportJanuaryW1Repository(), Januaryw2: new OutboundReportJanuaryW2Repository(),
+      Januaryw3: new OutboundReportJanuaryW3Repository(), Januaryw4: new OutboundReportJanuaryW4Repository(),
+      Februaryw1: new OutboundReportFebruaryW1Repository(), Februaryw2: new OutboundReportFebruaryW2Repository(),
+      Februaryw3: new OutboundReportFebruaryW3Repository(), Februaryw4: new OutboundReportFebruaryW4Repository(),
+      Marchw1: new OutboundReportMarchW1Repository(), Marchw2: new OutboundReportMarchW2Repository(),
+      Marchw3: new OutboundReportMarchW3Repository(), Marchw4: new OutboundReportMarchW4Repository(),
+      Aprilw1: new OutboundReportAprilW1Repository(), Aprilw2: new OutboundReportAprilW2Repository(),
+      Aprilw3: new OutboundReportAprilW3Repository(), Aprilw4: new OutboundReportAprilW4Repository(),
+      Mayw1: new OutboundReportMayW1Repository(), Mayw2: new OutboundReportMayW2Repository(),
+      Mayw3: new OutboundReportMayW3Repository(), Mayw4: new OutboundReportMayW4Repository(),
+      Junew1: new OutboundReportJuneW1Repository(), Junew2: new OutboundReportJuneW2Repository(),
+      Junew3: new OutboundReportJuneW3Repository(), Junew4: new OutboundReportJuneW4Repository(),
+      Julyw1: new OutboundReportJulyW1Repository(), Julyw2: new OutboundReportJulyW2Repository(),
+      Julyw3: new OutboundReportJulyW3Repository(), Julyw4: new OutboundReportJulyW4Repository(),
+      Augustw1: new OutboundReportAugustW1Repository(), Augustw2: new OutboundReportAugustW2Repository(),
+      Augustw3: new OutboundReportAugustW3Repository(), Augustw4: new OutboundReportAugustW4Repository(),
+      Septemberw1: new OutboundReportSeptemberW1Repository(), Septemberw2: new OutboundReportSeptemberW2Repository(),
+      Septemberw3: new OutboundReportSeptemberW3Repository(), Septemberw4: new OutboundReportSeptemberW4Repository(),
+      Octoberw1: new OutboundReportOctoberW1Repository(), Octoberw2: new OutboundReportOctoberW2Repository(),
+      Octoberw3: new OutboundReportOctoberW3Repository(), Octoberw4: new OutboundReportOctoberW4Repository(),
+      Novemberw1: new OutboundReportNovemberW1Repository(), Novemberw2: new OutboundReportNovemberW2Repository(),
+      Novemberw3: new OutboundReportNovemberW3Repository(), Novemberw4: new OutboundReportNovemberW4Repository(),
+      Decemberw1: new OutboundReportDecemberW1Repository(), Decemberw2: new OutboundReportDecemberW2Repository(),
+      Decemberw3: new OutboundReportDecemberW3Repository(), Decemberw4: new OutboundReportDecemberW4Repository(),
+    };
 
     const dateStart = moment(startDate);
     const dateEnd = moment(endDate);
@@ -526,6 +526,9 @@ async function getDidSpecificReport(req, res) {
       const repoKey = `${startDateMonthName}w${week}`;
       const inboundRepo = InboundRepositories[repoKey];
 
+      const outboundRepoKey = `${startDateMonthName}w${week}`;
+      const outboundRepo = OutboundRepositories[outboundRepoKey];
+
       if (!inboundRepo) continue;
 
       const allUserReports = [];
@@ -537,12 +540,30 @@ async function getDidSpecificReport(req, res) {
         if (week === startWeek) {
           const data = await inboundRepo.getByDidByDate({ callee_number: did }, startDate, endDate, uid, role);
           allUserReports.push(...data);
+          if (req?.user?.role === constants.USERS_ROLE.CALLCENTRE_AGENT) {
+            if (outboundRepo) {
+              const outboundData = await outboundRepo.getByDidByDate({ callee_number: did }, startDate, endDate, uid, role);
+              allUserReports.push(...outboundData);
+            }
+          }
         } else if (week === endWeek) {
           const data = await inboundRepo.getByDidByEndDate({ callee_number: did }, endDate, uid, role);
           allUserReports.push(...data);
+          if (req?.user?.role === constants.USERS_ROLE.CALLCENTRE_AGENT) {
+            if (outboundRepo) {
+              const outboundData = await outboundRepo.getByDidByEndDate({ callee_number: did }, endDate, uid, role);
+              allUserReports.push(...outboundData);
+            }
+          }
         } else {
           const data = await inboundRepo.getByDidByDate({ callee_number: did }, uid, role);
           allUserReports.push(...data);
+          if (req?.user?.role === constants.USERS_ROLE.CALLCENTRE_AGENT) {
+            if (outboundRepo) {
+              const outboundData = await outboundRepo.getByDidByDate({ callee_number: did }, uid, role);
+              allUserReports.push(...outboundData);
+            }
+          }
         }
       }
 

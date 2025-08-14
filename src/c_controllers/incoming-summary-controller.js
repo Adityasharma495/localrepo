@@ -4,10 +4,12 @@ const {
   ErrorResponse,
 } = require("../../shared/utils/common");
 const { Logger } = require("../../shared/config");
-const { IncomingSummaryRepository } = require("../../shared/c_repositories");
+const { IncomingSummaryRepository, AgentRepository } = require("../../shared/c_repositories");
 const incomingSummaryRepo = new IncomingSummaryRepository();
 
 const { constants } = require("../../shared/utils/common");
+
+const agentRepository = new AgentRepository();
 
 const { OutboundReportJanuaryW1Repository,OutboundReportJanuaryW2Repository,OutboundReportJanuaryW3Repository,OutboundReportJanuaryW4Repository,
   OutboundReportFebruaryW1Repository,OutboundReportFebruaryW2Repository,OutboundReportFebruaryW3Repository,OutboundReportFebruaryW4Repository,
@@ -105,45 +107,54 @@ async function getAll(req, res) {
     if (req?.user?.role !== constants.USERS_ROLE.CALLCENTRE_AGENT) {
       data = await incomingSummaryRepo.getAll(req.user.role, req.user.id);
     } else {
-      const results = await Promise.all(
-        repos.map(repo => repo.getAll(req.user.role, req.user.id))
-      );
-      const allData = results.flat();
-      const grouped = allData.reduce((acc, row) => {
-  const key = row.did || row.caller_number;
-  const hasConnectedCall = !!Number(row.billing_duration);
+      const agent = await agentRepository.findOne({ agent_name: req?.user?.username });
+  if (!agent) return;
 
-  if (!acc[key]) {
-    acc[key] = {
-      ...row,
-      nos_processed: 1,
-      connected_calls: hasConnectedCall ? 1 : 0, 
-      sms_count: Number(row.sms_count) || 0,
-      billing_duration: Number(row.billing_duration) || 0,
-      dtmf_count: Number(row.dtmf_count) || 0,
-      retry_count: Number(row.retry_count) || 0,
-      webhook_count: Number(row.webhook_count) || 0,
-      user_id: row.user_id,
-      did: row.caller_number,
-      schedule_date: row.start_time
-    };
-  } else {
-    acc[key].nos_processed += 1;
+  const outboundResults = await Promise.all(
+    repos.map(repo =>
+      repo.getAllData({ where: { callee_number: agent.agent_number } })
+    )
+  );
 
-    if (hasConnectedCall) {
-      acc[key].connected_calls += 1;
+  const outboundAllData = outboundResults.flat();
+
+  const groupedOutbound = outboundAllData.reduce((acc, row) => {
+    const scheduleDate = row.start_time
+      ? new Date(row.start_time).toISOString().split("T")[0] 
+      : "Unknown Date";
+
+    const hasConnectedCall = !!Number(row.billing_duration);
+
+    if (!acc[scheduleDate]) {
+      acc[scheduleDate] = {
+        did: row.callee_number,
+        schedule_date: scheduleDate,
+        nos_processed: 1,
+        connected_calls: hasConnectedCall ? 1 : 0,
+        sms_count: Number(row.sms_count) || 0,
+        billing_duration: Number(row.billing_duration) || 0,
+        dtmf_count: Number(row.dtmf_count) || 0,
+        retry_count: Number(row.retry_count) || 0,
+        webhook_count: Number(row.webhook_count) || 0,
+        user_id: row.user_id,
+        agent_number: row.agent_number
+      };
+    } else {
+      acc[scheduleDate].nos_processed += 1;
+      if (hasConnectedCall) {
+        acc[scheduleDate].connected_calls += 1;
+      }
+      acc[scheduleDate].sms_count += Number(row.sms_count) || 0;
+      acc[scheduleDate].billing_duration += Number(row.billing_duration) || 0;
+      acc[scheduleDate].dtmf_count += Number(row.dtmf_count) || 0;
+      acc[scheduleDate].retry_count += Number(row.retry_count) || 0;
+      acc[scheduleDate].webhook_count += Number(row.webhook_count) || 0;
     }
 
-    acc[key].sms_count += Number(row.sms_count) || 0;
-    acc[key].billing_duration += Number(row.billing_duration) || 0;
-    acc[key].dtmf_count += Number(row.dtmf_count) || 0;
-    acc[key].retry_count += Number(row.retry_count) || 0;
-    acc[key].webhook_count += Number(row.webhook_count) || 0;
-  }
+    return acc;
+  }, {});
 
-  return acc;
-      }, {});
-      data = Object.values(grouped);
+  data = Object.values(groupedOutbound);
     }
 
     SuccessRespnose.data = data;

@@ -388,6 +388,7 @@ const reports = async () => {
                             );
 
                             if (outboundData?.length > 0) {
+                              Logger.info(`Outbound Report Data Count : ${outboundData.length} `);
                               for (const outRecord of outboundData) {
                                 const user = await userRepo.findOne({
                                   name: outRecord.dataValues.agent_name,
@@ -459,6 +460,85 @@ const reports = async () => {
                         {download_link : file_url , status : 2}
                         );
                     }
+                    else if (incomingReportData.length === 0) {
+    Logger.info(`No Incoming Data Found — checking outbound reports...`);
+
+    const outboundQuery = {
+      [Op.and]: [
+        {
+          [Op.or]: [
+            { callee_number: didWithPlus },
+            { callee_number: didWithoutPlus }
+          ]
+        },
+        {
+          start_time: {
+            [Op.gte]: new Date(startOfDay),
+            [Op.lt]: new Date(endOfDay)
+          }
+        }
+      ]
+    };
+
+    const outboundReportData = await outboundRepoInstance.getByDid(outboundQuery);
+    Logger.info(`Outbound Report Data Count : ${outboundReportData.length} `);
+
+    if (outboundReportData.length > 0) {
+      const finalReportData = [];
+
+      for (const outRecord of outboundReportData) {
+        const user = await userRepo.findOne({
+          name: outRecord.dataValues.agent_name,
+        });
+
+        finalReportData.push({
+          ...outRecord.dataValues,
+          caller_number: `'${outRecord.dataValues.caller_number}'`,
+          callee_number: `'${outRecord.dataValues.callee_number}'`,
+          type: "OUTBOUND",
+          user_id: user ? user.id : null
+        });
+      }
+
+      // Create report exactly like in the incoming part
+      const timestamp = moment().format('YYYYMMDD_HHmmss');
+      fileName = `report_${report.did}_${timestamp}.zip`;
+      const csvFilePath = path.join(BASE_FOLDER, `report_${report.did}_${timestamp}.csv`);
+      const zipFilePath = path.join(BASE_FOLDER, `report_${report.did}_${timestamp}.zip`);
+      const output = fs.createWriteStream(zipFilePath);
+      const archive = archiver('zip', { zlib: { level: 9 } });
+
+      archive.pipe(output);
+      const totalChunks = Math.ceil(finalReportData.length / RECORDS_PER_FILE);
+      for (let i = 0; i < totalChunks; i++) {
+        const chunk = finalReportData.slice(i * RECORDS_PER_FILE, (i + 1) * RECORDS_PER_FILE);
+        const csvData = parse(chunk);
+        const partNumber = i + 1;
+        const csvFileName = `report_${report.did}_${partNumber}.csv`;
+        const tempCsvFilePath = path.join(BASE_FOLDER, csvFileName);
+        fs.writeFileSync(tempCsvFilePath, csvData, "utf8");
+        const stream = fs.createReadStream(tempCsvFilePath);
+        archive.append(stream, { name: csvFileName });
+        stream.on("close", () => {
+          fs.unlink(tempCsvFilePath, (err) => {
+            if (err) console.error("Failed to delete temp CSV:", err);
+          });
+        });
+      }
+      await archive.finalize();
+
+      const file_url = `${BACKEND_API_BASE_URL}/assets/reports/${report.did}/${fileName}`;
+      await downloadReportRepo.update(
+        report.id,
+        { download_link: file_url, status: 2 }
+      );
+
+      Logger.info(`Outbound-only report generated: ${file_url}`);
+    } else {
+      Logger.info(`No Outbound Data Found — skipping report generation.`);
+    }
+}
+
 
                     
 
