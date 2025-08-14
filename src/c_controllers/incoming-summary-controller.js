@@ -13,6 +13,9 @@ async function getAll(req, res) {
 
   try {
 
+    console.log("REQUESR ID", req.user.id);
+
+    
     const data = await incomingSummaryRepo.getAll(req.user.role, req.user.id);
 
     SuccessRespnose.data = data;
@@ -35,6 +38,47 @@ async function getAll(req, res) {
   }
 }
 
+
+async function getByDateRange(req, res) {
+  try {
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: "startDate and endDate are required in query params",
+      });
+    }
+    
+    const data = await incomingSummaryRepo.getByDateRange(
+      req.user.role,
+      req.user.id,
+      startDate,
+      endDate
+    );
+
+    SuccessRespnose.data = data;
+    SuccessRespnose.message = "Success";
+
+    Logger.info(
+      `Incoming Summary -> retrieved data for range ${startDate} to ${endDate}`
+    );
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    ErrorResponse.message = error.message;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `Incoming Summary -> unable to get range data, error: ${JSON.stringify(
+        error
+      )}`
+    );
+
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
+}
+
 module.exports = {
   getAll,
+  getByDateRange
 };
