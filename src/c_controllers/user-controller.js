@@ -871,6 +871,9 @@ async function updateUser(req, res) {
 
 function getTimeDifferenceInSeconds(login, logout) {
   const loginTimestamp = Date.parse(login);
+  if (!loginTimestamp) {
+    return 0;
+  }
   const logoutTimestamp = logout;
 
   const diffMs = logoutTimestamp - loginTimestamp;
