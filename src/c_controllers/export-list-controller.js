@@ -21,6 +21,11 @@ const {
   ContactGroupRepository,
   ContactGroupMemberRepository,
   AllContactGroupRepository,
+  IncomingSummaryRepository,
+  PromptRepository,
+  DownloadReportRepository,
+  RemarkStatusRepository,
+  CompanyRepository,
 } = require("../../shared/c_repositories");
 
 const { Parser } = require("json2csv");
@@ -51,6 +56,11 @@ async function exportData(req, res) {
     Contact_Groups: new ContactGroupRepository(),
     Contact_Group_Members: new ContactGroupMemberRepository(),
     All_Contacts: new AllContactGroupRepository(),
+    Incoming_Summary: new IncomingSummaryRepository(),
+    Prompts: new PromptRepository(),
+    Download_Report: new DownloadReportRepository(),
+    Remarks_Status: new RemarkStatusRepository(),
+    Company: new CompanyRepository(),
   };
 
   try {
