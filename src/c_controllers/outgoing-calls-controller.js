@@ -190,6 +190,7 @@ const { USERS_ROLE } = require("../backup/utils/common/constants");
 
 
 async function getAll(req, res) {
+
   try {
     const userRole = req.user.role;
     const userId = req.user.id;
@@ -225,16 +226,22 @@ async function getAll(req, res) {
 
 
     const { startDate, endDate } = req.query;
-    
-    const startUtc = new Date(`${startDate}T00:00:00+05:30`);
-    const endUtc = new Date(`${endDate}T23:59:59+05:30`);
+  
+
     if (startDate && endDate) {
+      const startUtc = new Date(`${startDate}T00:00:00+05:30`);
+      const endUtc = new Date(`${endDate}T23:59:59+05:30`);
+
       where = {
+        ...where,  // keep role conditions
         start_time: {
           [Op.gte]: startUtc,
           [Op.lte]: endUtc
         }
       };
+
+      console.log("WHERE CLAUSE", where);
+
     }
 
     // Fetch from all outbound repositories
