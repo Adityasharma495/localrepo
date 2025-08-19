@@ -61,6 +61,7 @@ async function exportData(req, res) {
     Download_Report: new DownloadReportRepository(),
     Remarks_Status: new RemarkStatusRepository(),
     Company: new CompanyRepository(),
+    Voice_Files: new PromptRepository(),
   };
 
   try {
