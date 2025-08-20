@@ -38,7 +38,7 @@ async function createIVR(req, res) {
 
     // Check for duplicate flow name
     const duplicateConditions = {
-      created_by: req.user.id,
+      // created_by: req.user.id,
       flow_name: bodyReq.nodesData.flowName
     };
     
@@ -236,7 +236,7 @@ async function updateIVR(req, res) {
     if (currentFlowData?.flow_name !== bodyReq.nodesData.flowName) {
       const duplicateCheck = await (Number(userDetail?.flow_type == 1) ? flowsRepo : flowJsonRepository)
         .findOne({
-          created_by: req.user.id,
+          // created_by: req.user.id,
           flow_name: bodyReq.nodesData.flowName
         }, { transaction });
 
