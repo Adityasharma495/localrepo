@@ -100,11 +100,11 @@ const repos = [
 ];
 
 async function getAll(req, res) {
-
   try {
 
     let data;
     if (req?.user?.role !== constants.USERS_ROLE.CALLCENTRE_AGENT) {
+      
       data = await incomingSummaryRepo.getAll(req.user.role, req.user.id);
     } else {
       const agent = await agentRepository.findOne({ agent_name: req?.user?.username });
@@ -115,6 +115,7 @@ async function getAll(req, res) {
       repo.getAllData({ where: { callee_number: agent.agent_number } })
     )
   );
+
 
   const outboundAllData = outboundResults.flat();
 
@@ -156,7 +157,6 @@ async function getAll(req, res) {
 
   data = Object.values(groupedOutbound);
     }
-
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
