@@ -4,7 +4,6 @@ const AppError = require('../../shared/utils/errors/app-error');
 const { Authentication } = require('../../shared/utils/common');
 
 async function validateUser(req, res, next){
-
     try {
         const token = req.headers['authorization'] || req.query.token;
 

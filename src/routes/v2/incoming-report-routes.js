@@ -11,6 +11,9 @@ router.post("/delete", AuthMiddleware.validateUser, IncomingReportMiddleware.val
 router.post('/create', AuthMiddleware.validateUser, IncomingReportMiddleware.validateIncomingReportRequest,
 IncomingReportMiddleware.modifyIncomingReportCreateBodyRequest, IncomingReportController.createIncomingReport);
 
+// get specific incomin reports
+router.get('/get-report/incoming/:startDate/:endDate',AuthMiddleware.validateUser,IncomingReportController.getSpecificIncomingReports);
+
 // get did-specific download-report api/v2/download-report/:did
 router.get('/get-report/:did/:startDate/:endDate',AuthMiddleware.validateUser, IncomingReportController.getDidSpecificReport);
 
@@ -19,6 +22,8 @@ router.get('/get-report/:did/:startDate/:endDate/:trace_id',AuthMiddleware.valid
 
 //  get all incoming reports
 router.get('/get-report/incoming',AuthMiddleware.validateUser, IncomingReportController.getAllIncomingReports);
+
+
 
 // get all incoming-report api/v2/incoming-report/
 router.get('/', AuthMiddleware.validateUser, IncomingReportController.getAll);
