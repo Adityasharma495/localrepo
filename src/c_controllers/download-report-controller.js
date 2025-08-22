@@ -1,5 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
-const { DownloadReportRepository } = require("../../shared/c_repositories");
+const { DownloadReportRepository, UserJourneyRepository } = require("../../shared/c_repositories");
 const {
   SuccessRespnose,
   ErrorResponse,
@@ -7,6 +7,7 @@ const {
 const { Logger } = require("../../shared/config");
 const downloadReportRepo = new DownloadReportRepository();
 const { constants } = require("../../shared/utils/common");
+const userJourneyRepo = new UserJourneyRepository();
 
 async function createDownloadReport(req, res) {
   const bodyReq = req.body;
@@ -30,6 +31,11 @@ async function createDownloadReport(req, res) {
     const report = await downloadReportRepo.create(bodyReq);
 
     responseData.downloadReport = report;
+    await userJourneyRepo.create({
+      module_name: 'DOWNLOAD_REPORT',
+      action: "CREATE",
+      created_by: req?.user?.id,
+    });
 
     SuccessRespnose.data = responseData;
     SuccessRespnose.message = "Successfully created a Download Report";

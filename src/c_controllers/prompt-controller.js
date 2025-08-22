@@ -167,6 +167,11 @@ async function updatePromptStatus(req, res) {
         const result = await promptRepo.update(promptId, { prompt_status: status });
 
         if (result) {
+            await userJourneyRepo.create({
+                module_name: MODULE_LABEL.PROMPTS,
+                action: ACTION_LABEL.STATUS_UPDATE,
+                created_by: req.user.id
+            });
             return res.status(StatusCodes.OK).json({
                 message: "Prompt status updated successfully",
             });

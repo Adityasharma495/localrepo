@@ -331,6 +331,13 @@ async function updateMemberScheduleAgent(req, res) {
 
       agentScheduleMappingRepo.update({agent_id : bodyReq.agent_id, agent_group_id: id}, {priority: bodyReq.priority});
     }
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.AGENT_GROUP,
+      action: "EDIT MEMBER SCHEDULE",
+      created_by: req?.user?.id
+    };
+
+    await userJourneyRepo.create(userJourneyfields);
 
 
     // Success response
@@ -417,6 +424,13 @@ async function removeAgent(req, res) {
     if (checkAgentStatus.length === 0) {
       await agentRepo.update(bodyReq.agent_id, {is_allocated: 0})
     }
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.AGENT_GROUP,
+      action: "REMOVE AGENT",
+      created_by: req?.user?.id
+    };
+
+    await userJourneyRepo.create(userJourneyfields);
 
     // Success response
     SuccessRespnose.message = "Agent time schedule updated successfully.";

@@ -15,6 +15,7 @@ const { IncomingReportRepository,
   IncomingReportDecemberW1Repository, IncomingReportDecemberW2Repository, IncomingReportDecemberW3Repository, IncomingReportDecemberW4Repository,
   UserRepository,
   AgentRepository,
+  UserJourneyRepository
 } = require("../../shared/c_repositories");
 
 const {
@@ -37,6 +38,7 @@ const AppError = require("../../shared/utils/errors/app-error");
 const { Logger } = require("../../shared/config");
 const incomingReportRepo = new IncomingReportRepository();
 const userRepo = new UserRepository();
+const userJourneyRepo = new UserJourneyRepository();
 
 const moment = require('moment');
 const { USERS_ROLE } = require("../../shared/utils/common/constants");
@@ -55,6 +57,11 @@ async function createIncomingReport(req, res) {
     Logger.info(
       `Incoming Report -> created successfully: ${JSON.stringify(responseData)}`
     );
+    await userJourneyRepo.create({
+      module_name: 'INCOMING_REPORT',
+      action: "CREATE",
+      created_by: req?.user?.id,
+    });
 
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
   } catch (error) {
@@ -164,6 +171,11 @@ async function updateIncomingReport(req, res) {
     SuccessRespnose.data = responseData;
 
     Logger.info(`Incoming Report -> ${uid} updated successfully`);
+    await userJourneyRepo.create({
+      module_name: 'INCOMING_REPORT',
+      action: "UPDATE",
+      created_by: req?.user?.id,
+    });
     return res.status(StatusCodes.OK).json(SuccessRespnose);
 
   } catch (error) {
@@ -196,6 +208,11 @@ async function deleteIncomingReport(req, res) {
     SuccessRespnose.data = response;
 
     Logger.info(`Incoming Report -> ${idArray} deleted successfully`);
+    await userJourneyRepo.create({
+      module_name: 'INCOMING_REPORT',
+      action: "DELETE",
+      created_by: req?.user?.id,
+    });
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {

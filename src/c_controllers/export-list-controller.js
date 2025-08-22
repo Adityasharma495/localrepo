@@ -30,6 +30,7 @@ const {
 
 const { Parser } = require("json2csv");
 const { Logger } = require("../../shared/config");
+const userJourneyRepo = new UserJourneyRepository();
 
 async function exportData(req, res) {
   const { model } = req.params;
@@ -89,6 +90,12 @@ async function exportData(req, res) {
     res.header("Content-Type", "text/csv");
     res.attachment(`${model}.csv`);
     res.data = csv;
+
+    await userJourneyRepo.create({
+      module_name: 'EXPORT',
+      action: "CREATE",
+      created_by: req?.user?.id,
+    });
 
     Logger.info(`Export List -> data exported successfully for ${model}`);
 

@@ -892,6 +892,11 @@ async function DIDUserMapping(req, res) {
       }
 
     }
+    await userJourneyRepo.create({
+      module_name: 'NUMBERS',
+      action: "DID ALLOCATED",
+      created_by: req?.user?.id,
+    });
     return res.status(200).json({
       message: "DIDs allocated successfully",
       data: {
@@ -1133,6 +1138,11 @@ async function removeAllocatedNumbers(req, res) {
 
       }
     }
+    await userJourneyRepo.create({
+      module_name: 'NUMBERS',
+      action: "DID REMOVED",
+      created_by: req?.user?.id,
+    });
 
     SuccessRespnose.message = 'Success';
     return res.status(StatusCodes.OK).json(SuccessRespnose);
@@ -1168,6 +1178,11 @@ async function setInboundRouting(req, res) {
     if ((bodyReq.action === 'agent' || bodyReq.action === 'queue') && Object.keys(bodyReq?.agentSchedule).length > 0) {
       await memberScheduleRepo.create({ ...bodyReq.agentSchedule, module_id: bodyReq.id });
     }
+    await userJourneyRepo.create({
+      module_name: 'NUMBERS',
+      action: "INBOUND ROUTING SET",
+      created_by: req?.user?.id,
+    });
 
     SuccessRespnose.message = 'Success';
     return res.status(StatusCodes.OK).json(SuccessRespnose);

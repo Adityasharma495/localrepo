@@ -123,6 +123,13 @@ async function uploadMembers(req, res) {
     });
 
     const result = await contactGroupMembersRepo.insertMany(newRecords);
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.CONTACTGROUP,
+      action: ACTION_LABEL.UPLOAD,
+      created_by: req?.user?.id,
+    };
+    
+    await userJourneyRepo.create(userJourneyfields);
 
     return res.status(StatusCodes.CREATED).json({
       message: "Members copied successfully",

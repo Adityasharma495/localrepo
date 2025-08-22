@@ -21,6 +21,8 @@ app.use('/temp', express.static(path.join(__dirname, '../temp')));
 app.use('/api', apiRoutes);
 app.use('/api-docs', swaggerRoutes);
 
+require("./script/user-journey-cleanup");
+
 // const { Agents} = require("../shared/c_db");
 
 const startServer = async () => {
