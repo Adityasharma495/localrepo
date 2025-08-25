@@ -1,4 +1,5 @@
-const { MemberScheduleRepo, ScriptRepository, VoiceCampaignRepository, UserJourneyRepository, CampiagnConfigRepository, AgentConfigRepository } = require("../../shared/c_repositories")
+const { MemberScheduleRepo, ScriptRepository, VoiceCampaignRepository, UserJourneyRepository, CampiagnConfigRepository,
+  AgentConfigRepository, CampaignCliRepository, CampaignContactGroupRepository } = require("../../shared/c_repositories")
 
 
 const memberScheduleRepo = new MemberScheduleRepo()
@@ -7,6 +8,8 @@ const voiceCampaignRepo = new VoiceCampaignRepository();
 const userJourneyRepo = new UserJourneyRepository();
 const campiagnConfigRepo = new CampiagnConfigRepository();
 const agentConfigRepo = new AgentConfigRepository();
+const campaignCliRepo = new CampaignCliRepository();
+const campaignContactGroupRepo = new CampaignContactGroupRepository();
 const {
   SuccessRespnose,
   ErrorResponse,
@@ -17,8 +20,6 @@ const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/consta
 
 async function CreateVoiceCampaign(req,res){
     const bodyReq = req.body
-    // console.log('bodyReq', bodyReq)
-    // process.exit(0)
     const {member_schedule, script, ...campaignData} = bodyReq
 
 try {
@@ -148,6 +149,26 @@ try {
           await agentConfigRepo.bulkCreate(queueRecords);
         }
     }
+
+    if (bodyReq.did && bodyReq.did.length > 0) {
+      const didRecords = bodyReq.did.map(did => ({
+        campaign_id: createdVoiceCampaign?.campaign_id,
+        cli: did
+      }));
+      // Insert into DB
+      await campaignCliRepo.create(didRecords);
+    }
+
+
+    if (bodyReq.call_group && bodyReq.call_group.length > 0) {
+      const contactGroupRecords = bodyReq.call_group.map(call_group => ({
+        campaign_id: createdVoiceCampaign?.campaign_id,
+        contact_group_id: call_group
+      }));
+      // Insert into DB
+      await campaignContactGroupRepo.create(contactGroupRecords);
+    }
+
     SuccessRespnose.data = createdVoiceCampaign;
     SuccessRespnose.message = "Successfully created a new Voice Plan";
 
