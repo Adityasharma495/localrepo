@@ -1,0 +1,256 @@
+const { StatusCodes } = require("http-status-codes");
+const { Op } = require("sequelize");
+const {
+  WebhookRepository,
+  UserJourneyRepository,
+} = require("../../shared/c_repositories");
+const { SuccessRespnose, ErrorResponse } = require("../../shared/utils/common");
+const {
+  MODULE_LABEL,
+  ACTION_LABEL,
+} = require("../../shared/utils/common/constants");
+const { Logger } = require("../../shared/config");
+
+const webhookRepo = new WebhookRepository();
+const userJourneyRepo = new UserJourneyRepository();
+
+async function createWebhook(req, res) {
+  const bodyReq = req.body;
+  try {
+    bodyReq.created_by = req.user.id;
+    const responseData = {};
+
+    //   Check if webhook with same name already exists for this user
+    const existingWebhook = await webhookRepo.findOne({
+      webhook_name: bodyReq.webhook_name,
+      created_by: bodyReq.created_by,
+    });
+
+    if (existingWebhook) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: "Webhook name already exists, please choose another name.",
+      });
+    }
+
+    //   Create webhook with corrected payload
+    const webhookData = await webhookRepo.create(bodyReq);
+    responseData.webhook = webhookData;
+
+    //  Add user journey
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.WEBHOOK,
+      action: ACTION_LABEL.ADD,
+      created_by: req?.user?.id,
+    };
+
+    const userJourney = await userJourneyRepo.create(userJourneyfields);
+    responseData.userJourney = userJourney;
+
+    SuccessRespnose.data = responseData;
+    SuccessRespnose.message = "Successfully created a new webhook";
+
+    Logger.info(
+      `Webhook -> created successfully: ${JSON.stringify(responseData)}`
+    );
+
+    return res.status(StatusCodes.CREATED).json(SuccessRespnose);
+  } catch (error) {
+    console.log("errorr", error);
+    Logger.error(
+      `Webhook -> unable to create webhook: ${JSON.stringify(
+        bodyReq
+      )} error: ${JSON.stringify(error)}`
+    );
+
+    let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg =
+      error.message || "Something went wrong while creating webhook";
+
+    ErrorResponse.message = errorMsg;
+    ErrorResponse.error = error;
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+async function getAll(req, res) {
+  try {
+    const data = await webhookRepo.getAll(req.user.role, req.user.id);
+    SuccessRespnose.data = data;
+    SuccessRespnose.message = "Success";
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    ErrorResponse.message = error.message;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `Webhook -> unable to get webhook list, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
+}
+
+async function get(req, res) {
+  const id = req.params.id;
+
+  try {
+    const webhookData = await webhookRepo.get(id);
+    if (webhookData.length == 0) {
+      const error = new Error();
+      error.name = "CastError";
+      throw error;
+    }
+    SuccessRespnose.message = "Success";
+    SuccessRespnose.data = webhookData;
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    ErrorResponse.error = error;
+    if (error.name == "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Webhook not found";
+    }
+    ErrorResponse.message = errorMsg;
+
+    Logger.error(
+      `User -> unable to get ${id}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+async function deleteWebhook(req, res) {
+  const id = req.body.id;
+
+  try {
+    const response = await webhookRepo.delete(id);
+
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.WEBHOOK,
+      action: ACTION_LABEL.DELETE,
+      created_by: req?.user?.id,
+    };
+
+    await userJourneyRepo.create(userJourneyfields);
+    SuccessRespnose.message = "Deleted successfully!";
+    SuccessRespnose.data = response;
+
+    Logger.info(`Webhook -> ${id} deleted successfully`);
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message;
+
+    ErrorResponse.error = error;
+    if (error.name == "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Webhook not found";
+    }
+    ErrorResponse.message = errorMsg;
+
+    Logger.error(
+      `Webhook -> unable to delete Webhook: ${id}, error: ${JSON.stringify(
+        error
+      )}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+async function updateWebhook(req, res) {
+  const uid = req.params.id;
+  const bodyReq = req.body;
+
+  try {
+    const responseData = {};
+
+    //  Ensure webhook exists first
+    const existingWebhook = await webhookRepo.findOne({ id: uid });
+    if (!existingWebhook) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ message: "Webhook not found" });
+    }
+
+    //  Check if another webhook already exists with same name & created_by
+    if (bodyReq.webhook_name) {
+      const duplicateWebhook = await webhookRepo.findOne({
+          webhook_name: bodyReq.webhook_name,
+          created_by: req.user.id,
+          id: { [Op.ne]: uid }, // exclude the current webhook
+      });
+
+      if (duplicateWebhook) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          message: "Webhook name already exists, please choose another name.",
+        });
+      }
+    }
+
+    //  Proceed with update
+    const webhookData = await webhookRepo.update(uid, bodyReq);
+    if (!webhookData) {
+      const error = new Error();
+      error.name = "CastError";
+      throw error;
+    }
+
+    responseData.webhook = webhookData;
+
+    //  Add user journey
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.WEBHOOK,
+      action: ACTION_LABEL.EDIT,
+      created_by: req?.user?.id,
+    };
+
+    const userJourney = await userJourneyRepo.create(userJourneyfields);
+    responseData.userJourney = userJourney;
+
+    SuccessRespnose.message = "Updated successfully!";
+    SuccessRespnose.data = responseData;
+
+    Logger.info(`Webhook -> ${uid} updated successfully`);
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+    let errorMsg = error.message || "Something went wrong";
+
+    if (error.name === "CastError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      errorMsg = "Webhook not found";
+    } else if (error.name === "MongoServerError") {
+      statusCode = StatusCodes.BAD_REQUEST;
+      if (error.codeName === "DuplicateKey") {
+        errorMsg = `Duplicate key, record already exists for ${error.keyValue.name}`;
+      }
+    }
+
+    ErrorResponse.message = errorMsg;
+
+    Logger.error(
+      `Webhook-> unable to update webhook: ${uid}, data: ${JSON.stringify(
+        bodyReq
+      )}, error: ${JSON.stringify(error)}`
+    );
+
+    return res.status(statusCode).json(ErrorResponse);
+  }
+}
+
+module.exports = {
+  createWebhook,
+  getAll,
+  get,
+  deleteWebhook,
+  updateWebhook,
+};

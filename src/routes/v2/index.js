@@ -3,6 +3,8 @@ const router = express.Router();
 
 
 const userRoutes = require('./user-routes');
+const webhookRoutes = require('./webhook-routes');
+const smswebhookRoutes = require('./sms-webhook-routes');
 const creditRoutes = require('./credit-routes');
 const userJourney = require('./user-journey-route');
 const serverManagement = require('./server-management-routes');
@@ -48,6 +50,8 @@ const contactGroupMemberRoutes = require("./contact-group-member-routes.js");
 
 
 router.use('/contact-group-member', contactGroupMemberRoutes);
+router.use('/webhook', webhookRoutes);
+router.use('/sms-webhook',smswebhookRoutes);
 router.use('/contact-groups', contactGroupRoutes);
 router.use('/breaks', breakRoutes);
 router.use('/users', userRoutes);

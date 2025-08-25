@@ -1,4 +1,4 @@
-const { ContactGroup } = require("../../shared/c_db");
+const { ContactGroup, SmsWebhooks } = require("../../shared/c_db");
 
 module.exports = {
     UserController:require("./user-controller"),
@@ -45,4 +45,6 @@ module.exports = {
     BreakController: require("./break-controller"),
     ContactGroupController: require("./contact-group-controller"),
     ContactGroupMemberController: require("./contact-group-member-controller"),
+    WebhookController: require("./webhook-controller"),
+    SmsWebhookController:require("./sms-webhook-controller"),
 }

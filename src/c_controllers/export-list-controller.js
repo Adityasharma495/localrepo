@@ -26,6 +26,8 @@ const {
   DownloadReportRepository,
   RemarkStatusRepository,
   CompanyRepository,
+  WebhookRepository,
+  SMSWebhookRepository,
 } = require("../../shared/c_repositories");
 
 const { Parser } = require("json2csv");
@@ -63,6 +65,8 @@ async function exportData(req, res) {
     Remarks_Status: new RemarkStatusRepository(),
     Company: new CompanyRepository(),
     Voice_Files: new PromptRepository(),
+    Webhooks: new WebhookRepository(),
+    Sms_Webhooks: new SMSWebhookRepository(),
   };
 
   try {
