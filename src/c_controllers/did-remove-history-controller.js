@@ -1,5 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
-const { DidRemoveHistoryRepository, UserRepository, CompanyRepository, CallCentreRepository} = require("../../shared/c_repositories");
+const { DidRemoveHistoryRepository, UserRepository, CompanyRepository, CallCentreRepository, UserJourneyRepository} = require("../../shared/c_repositories");
 const { SuccessRespnose, ErrorResponse} = require("../../shared/utils/common");
 const { Logger } = require("../../shared/config");
 
@@ -7,6 +7,7 @@ const userRepo = new UserRepository();
 const companyRepo = new CompanyRepository();
 const callCentreRepo = new CallCentreRepository();
 const didRemoveHistoryRepo = new DidRemoveHistoryRepository();
+const userJourneyRepo = new UserJourneyRepository();
 
 async function create(req, res) {
   const bodyReq = req.body;
@@ -25,6 +26,11 @@ async function create(req, res) {
       data: responseData,
       message: "Successfully Added a new entry in DID Remove history",
     };
+    await userJourneyRepo.create({
+      module_name: 'DID_REMOVE_HISTORY',
+      action: "CREATE",
+      created_by: req?.user?.id,
+    });
 
     Logger.info(
       `DID Remove history -> created successfully: ${JSON.stringify(responseData)}`

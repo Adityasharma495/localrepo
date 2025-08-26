@@ -478,6 +478,13 @@ async function switchUser(req, res) {
           const agent = await agentRepo.getByName(userData?.name)
           userData.agentData = agent
       }
+      const userJourneyfields = {
+        module_name: MODULE_LABEL.USERS,
+        action: "SWITCH USER",
+        created_by: req?.user?.id
+      }
+
+      const userJourney = await userJourneyRepo.create(userJourneyfields);
 
       SuccessRespnose.message = "Successfully signed in";
       SuccessRespnose.data = userData;

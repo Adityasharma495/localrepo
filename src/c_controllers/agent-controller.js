@@ -497,6 +497,13 @@ async function updateAllocation(req, res) {
     if (updatedCount === 0) {
       throw new AppError("No agents were updated. Please check the provided IDs.", StatusCodes.BAD_REQUEST);
     }
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.AGENT,
+      action: "UPDATE ALLOCATION",
+      created_by: req?.user?.id
+    }
+
+    await userJourneyRepo.create(userJourneyfields);
 
     Logger.info(`Agents allocation updated successfully for IDs: ${JSON.stringify(agentIds)}`);
     SuccessRespnose.message = "Agents successfully allocated.";
@@ -968,17 +975,27 @@ async function updateBreakAllocation(req, res) {
 
   try {
     let updatedResult
+    let userJourneyAction;
     if (bodyReq.break === 'Added') {
       updatedResult = await agentRepo.update(
         agent_id ,
         { break_id: bodyReq.break_id }
       );
+      userJourneyAction = "BREAK APPLIED";
     } else {
+      userJourneyAction = "BREAK REMOVED";
       updatedResult = await agentRepo.update(
         agent_id ,
         { break_id: null }
       );     
     }
+    const userJourneyfields = {
+      module_name: MODULE_LABEL.AGENT,
+      action: userJourneyAction,
+      created_by: req?.user?.id
+    }
+
+    await userJourneyRepo.create(userJourneyfields);
 
     Logger.info(`Break ${bodyReq.break} Successfully for the Agent: ${JSON.stringify(agent_id)}`);
     SuccessRespnose.message = `Break ${bodyReq.break} Successfully`;

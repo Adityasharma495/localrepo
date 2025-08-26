@@ -1,5 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
-const { DidAllocateHistoryRepository, CompanyRepository,CallCentreRepository, UserRepository } = require("../../shared/c_repositories");
+const { DidAllocateHistoryRepository, CompanyRepository,CallCentreRepository, UserRepository, UserJourneyRepository } = require("../../shared/c_repositories");
 const { SuccessRespnose, ErrorResponse} = require("../../shared/utils/common");
 const { Logger } = require("../../shared/config");
 
@@ -7,6 +7,7 @@ const didAllocateHistoryRepo = new DidAllocateHistoryRepository();
 const companyRepo = new CompanyRepository();
 const callCentreRepo = new CallCentreRepository();
 const userRepo = new UserRepository();
+const userJourneyRepo = new UserJourneyRepository();
 
 async function create(req, res) {
   const bodyReq = req.body;
@@ -25,6 +26,11 @@ async function create(req, res) {
       data: responseData,
       message: "Successfully Added a new entry in DID allocate history",
     };
+    await userJourneyRepo.create({
+      module_name: 'DID_ALLOCATE',
+      action: "CREATE",
+      created_by: req?.user?.id,
+    });
 
     Logger.info(
       `DID Allocate history -> created successfully: ${JSON.stringify(responseData)}`
