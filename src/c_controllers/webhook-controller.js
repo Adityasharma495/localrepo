@@ -22,7 +22,7 @@ async function createWebhook(req, res) {
 
     //   Check if webhook with same name already exists for this user
     const existingWebhook = await webhookRepo.findOne({
-      webhook_name: bodyReq.webhook_name,
+      webhook_name: bodyReq.webhook_name.trim(),
       created_by: bodyReq.created_by,
     });
 
@@ -183,7 +183,7 @@ async function updateWebhook(req, res) {
     //  Check if another webhook already exists with same name & created_by
     if (bodyReq.webhook_name) {
       const duplicateWebhook = await webhookRepo.findOne({
-          webhook_name: bodyReq.webhook_name,
+          webhook_name: bodyReq.webhook_name.trim(),
           created_by: req.user.id,
           id: { [Op.ne]: uid }, // exclude the current webhook
       });

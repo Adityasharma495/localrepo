@@ -26,7 +26,16 @@ async function CreateVoiceCampaign(req,res){
     const {member_schedule, script, ...campaignData} = bodyReq
 
 try {
+    const existingData = await voiceCampaignRepo.findOne({
+      campaign_name: bodyReq.campaign_name.trim(),
+      user_id: req.user.id,
+    });
     
+    if (existingData) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: "Campaign name already exists, please choose another name.",
+      });
+    }
     // created and extracted member schedule id
     const createdMemberSchedule = await memberScheduleRepo.create(member_schedule)
     const member_schedule_id = createdMemberSchedule.id
@@ -105,7 +114,7 @@ try {
 
     const createdVoiceCampaign = await voiceCampaignRepo.create(findlCampaignData) 
     const campaignId = createdVoiceCampaign.campaign_id;
-    const duration = findlCampaignData.duration || 1;
+    const duration = findlCampaignData.duration || 0;
     const recordsToInsert = [];
 
     const smsWebhookEntries = [
@@ -145,7 +154,7 @@ try {
             url: smsWebhook.url,
             sms_text: smsWebhook.sms_text,
             payload: smsWebhook.payload,
-            duration: entry.flag === "sendSmsOnSuccess" ? duration : 1,
+            duration: entry.flag === "sendSmsOnSuccess" ? duration : 0,
             req_type: smsWebhook.request_type,
             event: entry.event,
           });
@@ -166,7 +175,7 @@ try {
         campaign_id: campaignId,
         webhook_id: webhook.id,
         url: webhook.url,
-        duration: 1,
+        duration: 0,
         req_type: req_type,
         event: req_type,
       });
