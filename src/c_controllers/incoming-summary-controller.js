@@ -100,7 +100,6 @@ const repos = [
 ];
 
 async function getAll(req, res) {
-
   try {
 
     let data;
@@ -108,13 +107,14 @@ async function getAll(req, res) {
       data = await incomingSummaryRepo.getAll(req.user.role, req.user.id);
     } else {
       const agent = await agentRepository.findOne({ agent_name: req?.user?.username });
-  if (!agent) return;
+     if (!agent) return;
 
-  const outboundResults = await Promise.all(
+    const outboundResults = await Promise.all(
     repos.map(repo =>
       repo.getAllData({ where: { callee_number: agent.agent_number } })
     )
   );
+
 
   const outboundAllData = outboundResults.flat();
 
@@ -156,7 +156,7 @@ async function getAll(req, res) {
 
   data = Object.values(groupedOutbound);
     }
-
+    console.log("DATA", data.length );
     SuccessRespnose.data = data;
     SuccessRespnose.message = "Success";
 
@@ -181,7 +181,6 @@ async function getAll(req, res) {
 async function getByDateRange(req, res) {
   try {
     const { startDate, endDate } = req.query;
-
     if (!startDate || !endDate) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         message: "startDate and endDate are required in query params",

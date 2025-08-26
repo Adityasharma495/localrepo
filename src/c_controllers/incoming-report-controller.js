@@ -796,7 +796,75 @@ async function getAllIncomingReports(req, res) {
 
 
 
+async function getSpecificIncomingReports(req, res) {
+
+  const current_role = req.user.role;
+  const current_uid = req.user.id;
+
+
+  const { startDate, endDate } = req.params;
+
+  const InboundRepositories = {
+    Januaryw1: new IncomingReportJanuaryW1Repository(), Januaryw2: new IncomingReportJanuaryW2Repository(),
+    Januaryw3: new IncomingReportJanuaryW3Repository(), Januaryw4: new IncomingReportJanuaryW4Repository(),
+    Februaryw1: new IncomingReportFebruaryW1Repository(), Februaryw2: new IncomingReportFebruaryW2Repository(),
+    Februaryw3: new IncomingReportFebruaryW3Repository(), Februaryw4: new IncomingReportFebruaryW4Repository(),
+    Marchw1: new IncomingReportMarchW1Repository(), Marchw2: new IncomingReportMarchW2Repository(),
+    Marchw3: new IncomingReportMarchW3Repository(), Marchw4: new IncomingReportMarchW4Repository(),
+    Aprilw1: new IncomingReportAprilW1Repository(), Aprilw2: new IncomingReportAprilW2Repository(),
+    Aprilw3: new IncomingReportAprilW3Repository(), Aprilw4: new IncomingReportAprilW4Repository(),
+    Mayw1: new IncomingReportMayW1Repository(), Mayw2: new IncomingReportMayW2Repository(),
+    Mayw3: new IncomingReportMayW3Repository(), Mayw4: new IncomingReportMayW4Repository(),
+    Junew1: new IncomingReportJuneW1Repository(), Junew2: new IncomingReportJuneW2Repository(),
+    Junew3: new IncomingReportJuneW3Repository(), Junew4: new IncomingReportJuneW4Repository(),
+    Julyw1: new IncomingReportJulyW1Repository(), Julyw2: new IncomingReportJulyW2Repository(),
+    Julyw3: new IncomingReportJulyW3Repository(), Julyw4: new IncomingReportJulyW4Repository(),
+    Augustw1: new IncomingReportAugustW1Repository(), Augustw2: new IncomingReportAugustW2Repository(),
+    Augustw3: new IncomingReportAugustW3Repository(), Augustw4: new IncomingReportAugustW4Repository(),
+    Septemberw1: new IncomingReportSeptemberW1Repository(), Septemberw2: new IncomingReportSeptemberW2Repository(),
+    Septemberw3: new IncomingReportSeptemberW3Repository(), Septemberw4: new IncomingReportSeptemberW4Repository(),
+    Octoberw1: new IncomingReportOctoberW1Repository(), Octoberw2: new IncomingReportOctoberW2Repository(),
+    Octoberw3: new IncomingReportOctoberW3Repository(), Octoberw4: new IncomingReportOctoberW4Repository(),
+    Novemberw1: new IncomingReportNovemberW1Repository(), Novemberw2: new IncomingReportNovemberW2Repository(),
+    Novemberw3: new IncomingReportNovemberW3Repository(), Novemberw4: new IncomingReportNovemberW4Repository(),
+    Decemberw1: new IncomingReportDecemberW1Repository(), Decemberw2: new IncomingReportDecemberW2Repository(),
+    Decemberw3: new IncomingReportDecemberW3Repository(), Decemberw4: new IncomingReportDecemberW4Repository(),
+  };
+
+  try {
+    const allDataPromises = Object.values(InboundRepositories).map(repo =>
+      repo.getByDidByDate({}, startDate, endDate, current_uid, current_role)
+    );
+
+    const allResults = await Promise.all(allDataPromises);
+    const combinedResults = allResults.flat();
+
+    // Convert to plain JSON
+    const plainResults = combinedResults.map(item => item.get({ plain: true }));
+
+    const abandoned_calls = plainResults.filter(item => !item.answer_status || item.answer_status === '0').length;
+
+    return res.status(200).json({
+      success: true,
+      message: 'Fetched specific incoming reports successfully',
+      data: {
+        abandoned_calls: abandoned_calls
+      }
+    });
+  } catch (error) {
+    console.error("Error in getSpecificIncomingReports:", error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch specific incoming reports',
+      error: error.message || error
+    });
+  }
+}
 
 
 
-module.exports = { createIncomingReport, getAll, getById, updateIncomingReport, deleteIncomingReport, getDidSpecificReport, getDidSpecificReportwithTraceId, getAllIncomingReports };
+
+
+
+
+module.exports = { createIncomingReport, getAll, getById, updateIncomingReport, deleteIncomingReport, getDidSpecificReport, getDidSpecificReportwithTraceId, getAllIncomingReports,getSpecificIncomingReports };

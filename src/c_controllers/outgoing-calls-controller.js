@@ -240,9 +240,9 @@ async function getAll(req, res) {
         }
       };
 
-      console.log("WHERE CLAUSE", where);
 
     }
+
 
     // Fetch from all outbound repositories
     const allData = await Promise.all(
@@ -250,8 +250,6 @@ async function getAll(req, res) {
         repo.getAllData({ where })
       )
     );
-
-
 
     const combinedData = allData.flat();
 
