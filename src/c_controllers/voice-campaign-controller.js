@@ -1,5 +1,5 @@
 const { MemberScheduleRepo, ScriptRepository, VoiceCampaignRepository, UserJourneyRepository, CampiagnConfigRepository,
-  AgentConfigRepository, CampaignCliRepository, CampaignContactGroupRepository } = require("../../shared/c_repositories")
+  AgentConfigRepository, CampaignCliRepository, CampaignContactGroupRepository, WebhookRepository, SMSWebhookRepository, VoiceCampaignWebhookRepository } = require("../../shared/c_repositories")
 
 
 const memberScheduleRepo = new MemberScheduleRepo()
@@ -10,6 +10,9 @@ const campiagnConfigRepo = new CampiagnConfigRepository();
 const agentConfigRepo = new AgentConfigRepository();
 const campaignCliRepo = new CampaignCliRepository();
 const campaignContactGroupRepo = new CampaignContactGroupRepository();
+const webhookRepository = new WebhookRepository();
+const smswebhookRepository = new SMSWebhookRepository();
+const voiceCampaignWebhookRepository = new VoiceCampaignWebhookRepository();
 const {
   SuccessRespnose,
   ErrorResponse,
@@ -80,7 +83,95 @@ try {
       queue: normalizeValue(bodyReq.selectedQueue),
     };
 
+    const smsWebhookIds = [
+      findlCampaignData.successSmsWebhook,
+      findlCampaignData.failSmsWebhook,
+      findlCampaignData.smsOnDtmf,
+      findlCampaignData.smsOnPatchSuccess,
+      findlCampaignData.smsOnPatchFailed,
+    ].filter(Boolean);
+
+    const smsEventsMap = {
+      successSmsWebhook: "CALL_CONNECTED",
+      failSmsWebhook: "CALL_FAILED",
+      smsOnDtmf: "VALID_DTMF",
+      smsOnPatchSuccess: "PATCH_CONNECTED",
+      smsOnPatchFailed: "PATCH_FAILED",
+    };
+
+    const webhookIds = [findlCampaignData.webhook].filter(Boolean);
+    const smsWebhooksData = await smswebhookRepository.findAllByIds(smsWebhookIds);
+    const webhooksData = await webhookRepository.findAllByIds(webhookIds);
+
     const createdVoiceCampaign = await voiceCampaignRepo.create(findlCampaignData) 
+    const campaignId = createdVoiceCampaign.campaign_id;
+    const duration = findlCampaignData.duration || 1;
+    const recordsToInsert = [];
+
+    const smsWebhookEntries = [
+      {
+        id: findlCampaignData.successSmsWebhook,
+        flag: "sendSmsOnSuccess",
+        event: smsEventsMap.successSmsWebhook,
+      },
+      {
+        id: findlCampaignData.failSmsWebhook,
+        flag: "sendSmsOnFail",
+        event: smsEventsMap.failSmsWebhook,
+      },
+      {
+        id: findlCampaignData.smsOnDtmf,
+        flag: "enableSmsOnDtmf",
+        event: smsEventsMap.smsOnDtmf,
+      },
+      {
+        id: findlCampaignData.smsOnPatchSuccess,
+        flag: "enableSmsOnPatchSuccess",
+        event: smsEventsMap.smsOnPatchSuccess,
+      },
+      {
+        id: findlCampaignData.smsOnPatchFailed,
+        flag: "enableSmsOnPatchFailed",
+        event: smsEventsMap.smsOnPatchFailed,
+      },
+    ];
+    for (const entry of smsWebhookEntries) {
+      if (findlCampaignData[entry.flag] && entry.id) {
+        const smsWebhook = smsWebhooksData.find((s) => s.id == entry.id);
+        if (smsWebhook) {
+          recordsToInsert.push({
+            campaign_id: campaignId,
+            sms_webhook_id: smsWebhook.id,
+            url: smsWebhook.url,
+            sms_text: smsWebhook.sms_text,
+            payload: smsWebhook.payload,
+            duration: entry.flag === "sendSmsOnSuccess" ? duration : 1,
+            req_type: smsWebhook.request_type,
+            event: entry.event,
+          });
+        }
+      }
+    }
+    for (const webhook of webhooksData) {
+      let req_type = "GET";
+      if (webhook.event_id == 1) {
+        req_type = "HANGUP";
+      } else if (webhook.event_id == 2) {
+        req_type = "DTMF";
+      } else if (webhook.event_id == 3) {
+        req_type = "CONNECTED_CALLS";
+      }
+
+      recordsToInsert.push({
+        campaign_id: campaignId,
+        webhook_id: webhook.id,
+        url: webhook.url,
+        duration: 1,
+        req_type: req_type,
+        event: req_type,
+      });
+    }
+
     if (bodyReq?.template_id == 1) {
       await campiagnConfigRepo.create({
         name: 'welcome',
@@ -167,6 +258,10 @@ try {
       }));
       // Insert into DB
       await campaignContactGroupRepo.create(contactGroupRecords);
+    }
+
+    for (const record of recordsToInsert) {
+      await voiceCampaignWebhookRepository.create(record);
     }
 
     SuccessRespnose.data = createdVoiceCampaign;
