@@ -21,7 +21,7 @@ app.use('/api-docs', swaggerRoutes);
 
 require("./script/user-journey-cleanup");
 
-// const { CampaignConfig} = require("../shared/c_db");
+// const { CampaignSchedule} = require("../shared/c_db");
 
 const startServer = async () => {
     try {
@@ -40,7 +40,7 @@ const startServer = async () => {
         // console.log('✅ Successfully synced CockroachDB!');
         // Logger.info('CockroachDB -> Successfully synced');
 
-        // await CampaignConfig.sync({ alter: true, logging: true  });
+        // await CampaignSchedule.sync({ alter: true, logging: true  });
 
         // Start Express server
         app.listen(ServerConfig.PORT, () => {

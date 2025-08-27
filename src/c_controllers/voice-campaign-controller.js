@@ -1,6 +1,6 @@
 const { MemberScheduleRepo, ScriptRepository, VoiceCampaignRepository, UserJourneyRepository, CampiagnConfigRepository,
   AgentConfigRepository, CampaignCliRepository, CampaignContactGroupRepository, WebhookRepository, SMSWebhookRepository,
-  VoiceCampaignWebhookRepository , CampaignCallGroupRepository} = require("../../shared/c_repositories")
+  VoiceCampaignWebhookRepository , CampaignCallGroupRepository, CampaignScheduleRepository} = require("../../shared/c_repositories")
 
 
 const memberScheduleRepo = new MemberScheduleRepo()
@@ -15,6 +15,7 @@ const webhookRepository = new WebhookRepository();
 const smswebhookRepository = new SMSWebhookRepository();
 const voiceCampaignWebhookRepository = new VoiceCampaignWebhookRepository();
 const campaignCallGroupRepo = new CampaignCallGroupRepository();
+const campaignScheduleRepo = new CampaignScheduleRepository();
 
 const {
   SuccessRespnose,
@@ -40,7 +41,7 @@ try {
       });
     }
     // created and extracted member schedule id
-    const createdMemberSchedule = await memberScheduleRepo.create(member_schedule)
+    const createdMemberSchedule = await campaignScheduleRepo.create(member_schedule)
     const member_schedule_id = createdMemberSchedule.id
 
     let script_id;
