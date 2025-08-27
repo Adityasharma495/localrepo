@@ -1,5 +1,6 @@
 const { MemberScheduleRepo, ScriptRepository, VoiceCampaignRepository, UserJourneyRepository, CampiagnConfigRepository,
-  AgentConfigRepository, CampaignCliRepository, CampaignContactGroupRepository, WebhookRepository, SMSWebhookRepository, VoiceCampaignWebhookRepository } = require("../../shared/c_repositories")
+  AgentConfigRepository, CampaignCliRepository, CampaignContactGroupRepository, WebhookRepository, SMSWebhookRepository,
+  VoiceCampaignWebhookRepository , CampaignCallGroupRepository} = require("../../shared/c_repositories")
 
 
 const memberScheduleRepo = new MemberScheduleRepo()
@@ -13,6 +14,8 @@ const campaignContactGroupRepo = new CampaignContactGroupRepository();
 const webhookRepository = new WebhookRepository();
 const smswebhookRepository = new SMSWebhookRepository();
 const voiceCampaignWebhookRepository = new VoiceCampaignWebhookRepository();
+const campaignCallGroupRepo = new CampaignCallGroupRepository();
+
 const {
   SuccessRespnose,
   ErrorResponse,
@@ -89,7 +92,6 @@ try {
       time_between_call: normalizeValue(bodyReq.timeBetweenCalls),
       start_hours: normalizeValue(bodyReq.startHour),
       end_hours: normalizeValue(bodyReq.endHour),
-      queue: normalizeValue(bodyReq.selectedQueue),
     };
 
     const smsWebhookIds = [
@@ -240,14 +242,24 @@ try {
         if (bodyReq.assignedQueues && bodyReq.assignedQueues.length > 0) {
           const queueRecords = bodyReq.assignedQueues.map(queue => ({
             campaign_id: createdVoiceCampaign?.campaign_id,
-            agent_group: queue.queueId,
+            call_group_id: queue.queueId,
             dtmf: queue.dtmf,
-            created_by: req?.user?.id
           }));
 
           // Insert into DB
-          await agentConfigRepo.bulkCreate(queueRecords);
+          await campaignCallGroupRepo.bulkCreate(queueRecords);
         }
+    }
+
+    if (normalizeValue(bodyReq.selectedQueue)) {
+      const params= {
+            campaign_id: createdVoiceCampaign?.campaign_id,
+            call_group_id: normalizeValue(bodyReq.selectedQueue),
+            dtmf: null,
+          }
+
+          // Insert into DB
+          await campaignCallGroupRepo.create(params);
     }
 
     if (bodyReq.did && bodyReq.did.length > 0) {
