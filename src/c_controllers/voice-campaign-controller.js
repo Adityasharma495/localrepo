@@ -40,9 +40,7 @@ try {
         message: "Campaign name already exists, please choose another name.",
       });
     }
-    // created and extracted member schedule id
-    const createdMemberSchedule = await campaignScheduleRepo.create(member_schedule)
-    const member_schedule_id = createdMemberSchedule.id
+   
 
     let script_id;
     // created and extracted scripts id
@@ -82,7 +80,6 @@ try {
         Object.entries(campaignData).map(([key, value]) => [key, normalizeValue(value)])
       ),
       script_id: normalizeValue(script_id),
-      memberschedule_id: normalizeValue(member_schedule_id),
       created_at: now,
       updated_at: now,
       user_id: req.user.id,
@@ -262,6 +259,9 @@ try {
           // Insert into DB
           await campaignCallGroupRepo.create(params);
     }
+
+    // created entry in campaign Schedule
+    await campaignScheduleRepo.create({...member_schedule, campaign_id: createdVoiceCampaign?.campaign_id})
 
     if (bodyReq.did && bodyReq.did.length > 0) {
       const didRecords = bodyReq.did.map(did => ({
