@@ -47,4 +47,5 @@ module.exports = {
     ContactGroupMemberController: require("./contact-group-member-controller"),
     WebhookController: require("./webhook-controller"),
     SmsWebhookController:require("./sms-webhook-controller"),
+    ScriptsController: require("./scripts-controller"),
 }

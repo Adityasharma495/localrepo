@@ -47,6 +47,7 @@ try {
     let script_id;
     // created and extracted scripts id
     if (bodyReq.scriptOption === "new") {
+        script.created_by = req.user.id;
         const createdScript = await scriptRepo.create(script)
         script_id = createdScript.id
     } else if (bodyReq.scriptOption === "existing") {

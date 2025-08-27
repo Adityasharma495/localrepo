@@ -118,7 +118,7 @@ async function get(req, res) {
     ErrorResponse.message = errorMsg;
 
     Logger.error(
-      `User -> unable to get ${id}, error: ${JSON.stringify(error)}`
+      `Webhook -> unable to get ${id}, error: ${JSON.stringify(error)}`
     );
 
     return res.status(statusCode).json(ErrorResponse);
