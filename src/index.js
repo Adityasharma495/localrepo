@@ -40,7 +40,7 @@ const startServer = async () => {
         // console.log('✅ Successfully synced CockroachDB!');
         // Logger.info('CockroachDB -> Successfully synced');
 
-        // await CampaignConfig.sync({ alter: true, logging: true  });
+        // await CampaignSchedule.sync({ alter: true, logging: true  });
 
         // Start Express server
         app.listen(ServerConfig.PORT, () => {
