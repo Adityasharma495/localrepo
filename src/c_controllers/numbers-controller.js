@@ -1175,7 +1175,7 @@ async function setInboundRouting(req, res) {
       });
     }
 
-    if ((bodyReq.action === 'agent' || bodyReq.action === 'queue') && Object.keys(bodyReq?.agentSchedule).length > 0) {
+    if ((bodyReq.action === 'agent' || bodyReq.action === 'queue') && (bodyReq?.agentSchedule && Object.keys(bodyReq?.agentSchedule).length > 0)) {
       await memberScheduleRepo.create({ ...bodyReq.agentSchedule, module_id: bodyReq.id });
     }
     await userJourneyRepo.create({
