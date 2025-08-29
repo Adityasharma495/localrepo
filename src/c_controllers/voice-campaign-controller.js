@@ -360,8 +360,39 @@ async function getOne(req, res) {
   }
 }
 
+async function UpdateVoiceCampaign(req, res) {
+  const id = req.params.id;
+  const bodyReq = req.body;
+  try {
+    const data = await voiceCampaignRepo.update(id, bodyReq);
+    SuccessRespnose.data = data;
+    SuccessRespnose.message = "Success";
+
+    await userJourneyRepo.create({
+      module_name: MODULE_LABEL.VOICE_CAMPAIGNS,
+      action: ACTION_LABEL.EDIT,
+      created_by: req?.user?.id
+    });
+    Logger.info(`Voice Campaign ${id} -> updated successfully`);
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    console.log("error updating campaign", error);
+    ErrorResponse.message = error.message;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `Voice Campaigns -> unable to update voice campaign, error: ${JSON.stringify(
+        error
+      )}`
+    );
+
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
+}
+
 module.exports={
     CreateVoiceCampaign,
     getCampaigns,
     getOne,
+    UpdateVoiceCampaign,
 }
