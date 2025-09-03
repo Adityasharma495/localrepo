@@ -4,6 +4,7 @@ const { AuthMiddleware, AgentMiddleware } = require("../../middlewares")
 const {AgentController} = require("../../c_controllers")
 
 
+router.post('/bulk-logout', AuthMiddleware.validateUser ,AgentController.bulkLogout);
 
 router.get('/real-time',AuthMiddleware.validateUser, AgentController.getAgentRealTimeData);
 
@@ -24,5 +25,7 @@ router.post("/status/:id", AuthMiddleware.validateUser, AgentController.toggleSt
 router.post("/allocate",AuthMiddleware.validateUser,AgentController.updateAllocation)
 
 router.post("/break/:id",AuthMiddleware.validateUser,AgentController.updateBreakAllocation)
+
+
 
 module.exports = router;

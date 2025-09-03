@@ -1017,6 +1017,106 @@ async function updateBreakAllocation(req, res) {
   }
 }
 
+async function bulkLogout(req, res) {
+  const ids = req.body.agentIds;
+
+  try {
+    if (!ids || ids.length === 0) {
+      return res.status(StatusCodes.BAD_REQUEST).json({ message: "No agent IDs provided" });
+    }
+
+    // fetch all agents by ids
+    const agents = await agentRepo.get(ids);
+    if (!agents || agents.length === 0) {
+      return res.status(StatusCodes.NOT_FOUND).json({ message: "Agents not found" });
+    }
+
+    let notLoggedOutCount = 0;
+    let journeyLogs = [];
+
+    // loop over agents
+    for (const agent of agents) {
+      if (agent.login_status === "0") {
+        continue;
+      }
+      notLoggedOutCount++;
+
+
+      // find telephony profile where active_profile is true
+      const telephonyProfile = agent?.telephonyProfile?.profile.find(
+        (item) => item.active_profile === true
+      );
+
+      if (!telephonyProfile) {
+        continue;
+      }
+
+      // get groups and delete records
+      const callGroups = await agentScheduleMappingRepo.getGroupWithAgentId(agent?.id);
+
+      for (const group of callGroups) {
+        await asteriskCTQueueMembersRepo.delete({
+          queue_name: group?.group_name,
+          state_interface: `Custom:${telephonyProfile?.number?.number}`,
+        });
+      }
+
+      // update telephony profile
+      telephonyProfile.active_profile = false;
+
+      const mergedAgents = agent?.telephonyProfile?.profile.map((a) =>
+        a.type === telephonyProfile.type ? telephonyProfile : a
+      );
+
+      await telephonyProfileRepo.update(agent?.telephonyProfile?.id, { profile: mergedAgents });
+
+      // user journey log
+      journeyLogs.push({
+        module_name: MODULE_LABEL.USERS,
+        action: `${ACTION_LABEL.LOGOUT_AS}${telephonyProfile.type}`,
+        created_by: req.user.id,
+      });
+    }
+
+    // create all journeys in bulk
+    if (journeyLogs.length > 0) {
+      await userJourneyRepo.bulkCreate(journeyLogs);
+    }
+
+    // update all agent statuses at once
+    const updatedAgents = await agentRepo.bulkUpdate(
+      { id: ids },            
+      { login_status: "0" }    
+    );
+
+    // update subuser licence
+    const subLicenceData = await subUserLicenceRepo.findOne({ user_id: req.user.id });
+    subLicenceData.available_licence.live_agent =
+      subLicenceData.available_licence.live_agent + notLoggedOutCount;
+
+    await subUserLicenceRepo.updateById(subLicenceData.id, {
+      available_licence: subLicenceData.available_licence,
+    });
+
+    if (!updatedAgents) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: "Failed to update agent status" });
+    }
+
+    Logger.info(`Agents -> ${ids.join(", ")} logged out`);
+
+    SuccessRespnose.message = "Agents logged out successfully";
+    SuccessRespnose.data = { updatedAgents };
+
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: "Bulk logout failed", error: error.message });
+  }
+}
 
 module.exports={
     createAgent,
@@ -1030,5 +1130,6 @@ module.exports={
     sendRealTimeAgentData,
     getAgentRealTimeData,
     getByParentId,
-    updateBreakAllocation
+    updateBreakAllocation,
+    bulkLogout
 }
