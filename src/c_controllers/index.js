@@ -48,4 +48,7 @@ module.exports = {
     WebhookController: require("./webhook-controller"),
     SmsWebhookController:require("./sms-webhook-controller"),
     ScriptsController: require("./scripts-controller"),
+    GroupsController: require("./groups-controller"),
+    LocationController: require("./locations-controller"),
+    VoiceDialerController: require("./voice-dialer-controller"),
 }

@@ -48,6 +48,9 @@ const breakRoutes = require("./break-routes.js");
 const contactGroupRoutes = require("./contact-group-routes.js");
 const contactGroupMemberRoutes = require("./contact-group-member-routes.js");
 const scriptsRoutes = require("./scripts-routes.js");
+const groupsRoutes = require("./groups-routes.js");
+const locationRoutes = require("./locations-routes.js");
+const VoiceDialerRoutes = require("./voice-dialer-routes.js");
 
 
 router.use('/contact-group-member', contactGroupMemberRoutes);
@@ -97,6 +100,9 @@ router.use('/remark-status', remarkStatusRoutes);
 router.use('/remarks', remarksRoutes);
 router.use('/voice-campaigns',voiceCampaignRoutes)
 router.use('/scripts', scriptsRoutes);
+router.use('/groups', groupsRoutes);
+router.use("/locations", locationRoutes);
+router.use("/voice-dialers", VoiceDialerRoutes);
 
 
 module.exports = router;
