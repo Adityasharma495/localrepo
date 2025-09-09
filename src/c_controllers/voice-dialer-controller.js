@@ -3,6 +3,7 @@ const { Op } = require("sequelize");
 const {
   VoiceDialerRepository,
   UserJourneyRepository,
+  GroupsDialerMappingRepository,
 } = require("../../shared/c_repositories");
 const { SuccessRespnose, ErrorResponse } = require("../../shared/utils/common");
 const {
@@ -13,6 +14,7 @@ const { Logger } = require("../../shared/config");
 
 const smswebhookRepo = new VoiceDialerRepository();
 const userJourneyRepo = new UserJourneyRepository();
+const groupsDialerMappingRepository = new GroupsDialerMappingRepository();
 
 async function createDialer(req, res) {
   const bodyReq = req.body;
@@ -35,6 +37,19 @@ async function createDialer(req, res) {
     //   Create webhook with corrected payload
     const webhookData = await smswebhookRepo.create(bodyReq);
     responseData.dialer = webhookData;
+
+    if (bodyReq?.groups) {
+      if (bodyReq?.groups?.length > 0) {
+        const groupsData = bodyReq.groups;
+        const insertPayload = groupsData.map((groupId) => ({
+          group_id: groupId,
+          dialer_id: webhookData.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        }));
+        await groupsDialerMappingRepository.insertMany(insertPayload);
+      }
+    }
 
     //  Add user journey
     const userJourneyfields = {

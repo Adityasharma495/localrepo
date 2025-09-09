@@ -21,7 +21,7 @@ async function createGroup(req, res) {
     const responseData = {};
 
     const existingWebhook = await smswebhookRepo.findOne({
-      group_name: bodyReq.group_name.trim(),
+      group_name: bodyReq.group_name.trim().toLowerCase(),
       created_by: bodyReq.created_by,
     });
 
@@ -183,7 +183,7 @@ async function updateGroup(req, res) {
     //  Check if another webhook already exists with same name & created_by
     if (bodyReq.group_name) {
       const duplicateWebhook = await smswebhookRepo.findOne({
-        group_name: bodyReq.group_name.trim(),
+        group_name: bodyReq.group_name.trim().toLowerCase(),
         created_by: req.user.id,
         id: { [Op.ne]: uid }, // exclude the current webhook
       });
