@@ -169,6 +169,9 @@ async function updateGroup(req, res) {
   const uid = req.params.id;
   const bodyReq = req.body;
 
+  console.log("ACEM TO UPDATE");
+  console.log(bodyReq);
+  console.log(uid);
   try {
     const responseData = {};
 
