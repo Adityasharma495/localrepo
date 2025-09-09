@@ -1,6 +1,6 @@
 const { UserRepository, CompanyRepository, SubUserLicenceRepository, CallCentreRepository,
   AgentRepository, AsteriskCTQueueMembersRepository, AgentScheduleMappingRepository, TelephonyProfileRepository } = require("../../shared/c_repositories")
-const { UserJourneyRepository } = require("../../shared/c_repositories")
+const { UserJourneyRepository, UserGroupsRepository, UserLocationsRepository } = require("../../shared/c_repositories")
 const { StatusCodes } = require("http-status-codes");
 const {
   SuccessRespnose,
@@ -21,6 +21,8 @@ const agentRepo = new AgentRepository();
 const asteriskCTQueueMembersRepo = new AsteriskCTQueueMembersRepository();
 const agentScheduleMappingRepo = new AgentScheduleMappingRepository();
 const telephonyProfileRepo = new TelephonyProfileRepository();
+const userGroupsRepository = new UserGroupsRepository();
+const userLocationsRepository = new UserLocationsRepository();
 
 
 async function signinUser(req, res) {
@@ -607,6 +609,32 @@ async function signupUser(req, res) {
       }
     }
 
+    if (bodyReq?.groups) {
+      if (bodyReq?.groups?.length > 0) {
+        const groupsData = bodyReq.groups;
+        const insertPayload = groupsData.map((groupId) => ({
+          group_id: groupId,
+          user_id: user.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        }));
+        await userGroupsRepository.insertMany(insertPayload);
+      }
+    }
+
+    if (bodyReq?.locations) {
+      if (bodyReq?.locations?.length > 0) {
+        const locationsData = bodyReq.locations;
+        const insertPayload = locationsData.map((locationId) => ({
+          location_id: locationId,
+          user_id: user.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        }));
+        await userLocationsRepository.insertMany(insertPayload);
+      }
+    }
+
     responseData.user = await user.generateUserData();
     responseData.userJourney = await userJourneyRepo.create({
       module_name: MODULE_LABEL.USERS,
@@ -827,6 +855,34 @@ async function updateUser(req, res) {
       } else {
         ErrorResponse.message = "Can't Change Callcenter because Used Licence are greater";
         return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+      }
+    }
+
+    if (bodyReq?.groups) {
+      if (bodyReq?.groups?.length > 0) {
+        const groupsData = bodyReq.groups;
+        const insertPayload = groupsData.map((groupId) => ({
+          group_id: groupId,
+          user_id: user.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        }));
+        await userGroupsRepository.hardDeleteMany(bodyReq.groups);
+        await userGroupsRepository.insertMany(insertPayload);
+      }
+    }
+
+    if (bodyReq?.locations) {
+      if (bodyReq?.locations?.length > 0) {
+        const locationsData = bodyReq.locations;
+        const insertPayload = locationsData.map((locationId) => ({
+          location_id: locationId,
+          user_id: user.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        }));
+        await userLocationsRepository.hardDeleteMany(bodyReq.locations);
+        await userLocationsRepository.insertMany(insertPayload);
       }
     }
 
