@@ -3,6 +3,7 @@ const { Op } = require("sequelize");
 const {
   VoiceDialerRepository,
   UserJourneyRepository,
+  GroupsDialerMappingRepository,
 } = require("../../shared/c_repositories");
 const { SuccessRespnose, ErrorResponse } = require("../../shared/utils/common");
 const {
@@ -13,6 +14,7 @@ const { Logger } = require("../../shared/config");
 
 const smswebhookRepo = new VoiceDialerRepository();
 const userJourneyRepo = new UserJourneyRepository();
+const groupsDialerMappingRepository = new GroupsDialerMappingRepository();
 
 async function createDialer(req, res) {
   const bodyReq = req.body;
@@ -35,6 +37,19 @@ async function createDialer(req, res) {
     //   Create webhook with corrected payload
     const webhookData = await smswebhookRepo.create(bodyReq);
     responseData.dialer = webhookData;
+
+    if (bodyReq?.groups) {
+      if (bodyReq?.groups?.length > 0) {
+        const groupsData = bodyReq.groups;
+        const insertPayload = groupsData.map((groupId) => ({
+          group_id: groupId,
+          dialer_id: webhookData.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        }));
+        await groupsDialerMappingRepository.insertMany(insertPayload);
+      }
+    }
 
     //  Add user journey
     const userJourneyfields = {
@@ -174,7 +189,7 @@ async function updateDialer(req, res) {
     const responseData = {};
 
     //  Ensure webhook exists first
-    const existingWebhook = await smswebhookRepo.findOne({ id: uid });
+    const existingWebhook = await smswebhookRepo.findOne({ dialer_id: uid });
     if (!existingWebhook) {
       return res
         .status(StatusCodes.NOT_FOUND)
@@ -186,7 +201,7 @@ async function updateDialer(req, res) {
       const duplicateWebhook = await smswebhookRepo.findOne({
         dialer_name: bodyReq.dialer_name.trim(),
         created_by: req.user.id,
-        id: { [Op.ne]: uid }, // exclude the current webhook
+        dialer_id: { [Op.ne]: uid }, // exclude the current webhook
       });
 
       if (duplicateWebhook) {
