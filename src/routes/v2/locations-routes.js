@@ -7,13 +7,13 @@ const router = express.Router();
 router.post(
   "/delete",
   AuthMiddleware.validateUser,
-  LocationController.deleteSmsWebhook
+  LocationController.deleteLocation
 );
 
 router.post(
   "/",
   AuthMiddleware.validateUser,
-  LocationController.createSmsWebhook
+  LocationController.createLocation
 );
 
 router.get("/", AuthMiddleware.validateUser, LocationController.getAll);
@@ -23,7 +23,7 @@ router.get("/:id", AuthMiddleware.validateUser, LocationController.get);
 router.post(
   "/:id",
   AuthMiddleware.validateUser,
-  LocationController.updateSmsWebhook
+  LocationController.updateLocation
 );
 
 module.exports = router;

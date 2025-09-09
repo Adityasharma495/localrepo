@@ -7,13 +7,13 @@ const router = express.Router();
 router.post(
   "/delete",
   AuthMiddleware.validateUser,
-  VoiceDialerController.deleteSmsWebhook
+  VoiceDialerController.deleteDialer
 );
 
 router.post(
   "/",
   AuthMiddleware.validateUser,
-  VoiceDialerController.createSmsWebhook
+  VoiceDialerController.createDialer
 );
 
 router.get("/", AuthMiddleware.validateUser, VoiceDialerController.getAll);
@@ -23,7 +23,7 @@ router.get("/:id", AuthMiddleware.validateUser, VoiceDialerController.get);
 router.post(
   "/:id",
   AuthMiddleware.validateUser,
-  VoiceDialerController.updateSmsWebhook
+  VoiceDialerController.updateDialer
 );
 
 module.exports = router;

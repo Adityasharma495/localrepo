@@ -7,13 +7,13 @@ const router = express.Router();
 router.post(
   "/delete",
   AuthMiddleware.validateUser,
-  GroupsController.deleteSmsWebhook
+  GroupsController.deleteGroup
 );
 
 router.post(
   "/",
   AuthMiddleware.validateUser,
-  GroupsController.createSmsWebhook
+  GroupsController.createGroup
 );
 
 router.get("/", AuthMiddleware.validateUser, GroupsController.getAll);
@@ -23,7 +23,7 @@ router.get("/:id", AuthMiddleware.validateUser, GroupsController.get);
 router.post(
   "/:id",
   AuthMiddleware.validateUser,
-  GroupsController.updateSmsWebhook
+  GroupsController.updateGroup
 );
 
 module.exports = router;
