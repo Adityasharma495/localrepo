@@ -189,7 +189,7 @@ async function updateDialer(req, res) {
     const responseData = {};
 
     //  Ensure webhook exists first
-    const existingWebhook = await smswebhookRepo.findOne({ id: uid });
+    const existingWebhook = await smswebhookRepo.findOne({ dialer_id: uid });
     if (!existingWebhook) {
       return res
         .status(StatusCodes.NOT_FOUND)
@@ -201,7 +201,7 @@ async function updateDialer(req, res) {
       const duplicateWebhook = await smswebhookRepo.findOne({
         dialer_name: bodyReq.dialer_name.trim(),
         created_by: req.user.id,
-        id: { [Op.ne]: uid }, // exclude the current webhook
+        dialer_id: { [Op.ne]: uid }, // exclude the current webhook
       });
 
       if (duplicateWebhook) {
