@@ -122,8 +122,6 @@ async function get(req, res) {
     SuccessRespnose.message = "Success";
     SuccessRespnose.data = webhookData;
 
-    console.log(SuccessRespnose);
-
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
@@ -187,7 +185,6 @@ async function deleteDialer(req, res) {
 async function updateDialer(req, res) {
   const uid = req.params.id;
   const bodyReq = req.body;
-
   try {
     const responseData = {};
 
