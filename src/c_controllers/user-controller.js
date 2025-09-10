@@ -625,9 +625,8 @@ async function signupUser(req, res) {
     if (bodyReq?.locations) {
       if (bodyReq?.locations?.length > 0) {
         const locationsData = bodyReq.locations;
-        const insertPayload = locationsData.map((loc) => ({
-          location_id: loc.id,
-          location_name: loc.location_name,
+        const insertPayload = locationsData.map((locationId) => ({
+          location_id: locationId,
           user_id: user.id,
           created_at: new Date(),
           updated_at: new Date(),
