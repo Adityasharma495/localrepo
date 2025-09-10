@@ -18,6 +18,7 @@ const groupsDialerMappingRepository = new GroupsDialerMappingRepository();
 
 async function createDialer(req, res) {
   const bodyReq = req.body;
+
   try {
     bodyReq.created_by = req.user.id;
     const responseData = {};
@@ -120,6 +121,8 @@ async function get(req, res) {
     }
     SuccessRespnose.message = "Success";
     SuccessRespnose.data = webhookData;
+
+    console.log(SuccessRespnose);
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
