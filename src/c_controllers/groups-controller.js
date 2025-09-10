@@ -23,6 +23,7 @@ async function createGroup(req, res) {
     const existingWebhook = await smswebhookRepo.findOne({
       group_name: bodyReq.group_name.trim().toLowerCase(),
       created_by: bodyReq.created_by,
+      is_deleted: false,
     });
 
     if (existingWebhook) {
@@ -173,7 +174,7 @@ async function updateGroup(req, res) {
     const responseData = {};
 
     //  Ensure webhook exists first
-    const existingWebhook = await smswebhookRepo.findOne({ group_id: uid });
+    const existingWebhook = await smswebhookRepo.findOne({ group_id: uid, is_deleted: false });
     if (!existingWebhook) {
       return res
         .status(StatusCodes.NOT_FOUND)
@@ -186,6 +187,7 @@ async function updateGroup(req, res) {
         group_name: bodyReq.group_name.trim().toLowerCase(),
         created_by: req.user.id,
         group_id: { [Op.ne]: uid }, // exclude the current webhook
+        is_deleted: false,
       });
 
       if (duplicateWebhook) {
