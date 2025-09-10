@@ -1,6 +1,6 @@
 const { MemberScheduleRepo, ScriptRepository, VoiceCampaignRepository, UserJourneyRepository, CampiagnConfigRepository,
   AgentConfigRepository, CampaignCliRepository, CampaignContactGroupRepository, WebhookRepository, SMSWebhookRepository,
-  VoiceCampaignWebhookRepository , CampaignCallGroupRepository, CampaignScheduleRepository} = require("../../shared/c_repositories")
+  VoiceCampaignWebhookRepository , CampaignCallGroupRepository, CampaignScheduleRepository, VoiceCampaignLocationsRepository, UserGroupsRepository, VoiceCampaignGroupsRepository} = require("../../shared/c_repositories")
 
 
 const memberScheduleRepo = new MemberScheduleRepo()
@@ -16,6 +16,9 @@ const smswebhookRepository = new SMSWebhookRepository();
 const voiceCampaignWebhookRepository = new VoiceCampaignWebhookRepository();
 const campaignCallGroupRepo = new CampaignCallGroupRepository();
 const campaignScheduleRepo = new CampaignScheduleRepository();
+const voiceCampaignLocationsRepository = new VoiceCampaignLocationsRepository();
+const userGroupsRepository = new UserGroupsRepository();
+const voiceCampaignGroupsRepository = new VoiceCampaignGroupsRepository();
 
 const {
   SuccessRespnose,
@@ -285,6 +288,23 @@ try {
 
     for (const record of recordsToInsert) {
       await voiceCampaignWebhookRepository.create(record);
+    }
+
+    if (bodyReq.location_id) {
+      await voiceCampaignLocationsRepository.create({ campaign_id: campaignId, location_id: bodyReq.location_id, location_name: bodyReq.location_name });
+    }
+
+    const userGroups = await userGroupsRepository.getAll({ where: { user_id: req.user.id } });
+    if (userGroups) {
+      if (userGroups.length > 0) {
+        const insertPayload = userGroups.map((ug) => ({
+          group_id: ug.group_id,
+          campaign_id: campaignId,
+          created_at: new Date(),
+          updated_at: new Date(),
+        }));
+        await voiceCampaignGroupsRepository.insertMany(insertPayload);
+      }
     }
 
     SuccessRespnose.data = createdVoiceCampaign;

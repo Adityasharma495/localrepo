@@ -859,6 +859,7 @@ async function updateUser(req, res) {
     }
 
     if (bodyReq?.groups) {
+      await userGroupsRepository.hardDeleteMany([user.id]);
       if (bodyReq?.groups?.length > 0) {
         const groupsData = bodyReq.groups;
         const insertPayload = groupsData.map((groupId) => ({
@@ -867,21 +868,21 @@ async function updateUser(req, res) {
           created_at: new Date(),
           updated_at: new Date(),
         }));
-        await userGroupsRepository.hardDeleteMany(bodyReq.groups);
         await userGroupsRepository.insertMany(insertPayload);
       }
     }
 
     if (bodyReq?.locations) {
+      await userLocationsRepository.hardDeleteManyByUser([user.id]);
       if (bodyReq?.locations?.length > 0) {
         const locationsData = bodyReq.locations;
-        const insertPayload = locationsData.map((locationId) => ({
-          location_id: locationId,
+        const insertPayload = locationsData.map((loc) => ({
+          location_id: loc.id,
+          location_name: loc.location_name,
           user_id: user.id,
           created_at: new Date(),
           updated_at: new Date(),
         }));
-        await userLocationsRepository.hardDeleteMany(bodyReq.locations);
         await userLocationsRepository.insertMany(insertPayload);
       }
     }
