@@ -43,7 +43,7 @@ async function createDialer(req, res) {
         const groupsData = bodyReq.groups;
         const insertPayload = groupsData.map((groupId) => ({
           group_id: groupId,
-          dialer_id: webhookData.id,
+          dialer_id: webhookData.dialer_id,
           created_at: new Date(),
           updated_at: new Date(),
         }));
