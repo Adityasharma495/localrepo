@@ -504,6 +504,7 @@ async function switchUser(req, res) {
 async function signupUser(req, res) {
   const bodyReq = req.body;
 
+
   if (bodyReq?.user?.acl_settings) {
     bodyReq.user.acl_settings_id = bodyReq?.user?.acl_settings;
   }
