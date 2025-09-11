@@ -812,7 +812,7 @@ async function updateUser(req, res) {
     }
 
     //when user callcenter is changes
-    if ((Number(bodyReq?.user?.callcenter_id) !== Number(loggedInData?.callcenter_id)) && loggedInData.role === USERS_ROLE.CALLCENTRE_ADMIN) {
+    if ((Number(bodyReq?.user?.callcenter_id) !== Number(loggedInData?.callcenter_id)) && loggedInData.role === USERS_ROLE.CALLCENTRE_ADMIN && bodyReq?.user?.callcenter_id) {
       //get child for used licence of callcenter user
       const child = await userRepo.getAll({
         where: {
