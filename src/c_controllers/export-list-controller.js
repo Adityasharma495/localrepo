@@ -28,6 +28,9 @@ const {
   CompanyRepository,
   WebhookRepository,
   SMSWebhookRepository,
+  GroupRepository,
+  LocationsRepository,
+  VoiceDialerRepository
 } = require("../../shared/c_repositories");
 
 const { Parser } = require("json2csv");
@@ -67,6 +70,9 @@ async function exportData(req, res) {
     Voice_Files: new PromptRepository(),
     Webhooks: new WebhookRepository(),
     Sms_Webhooks: new SMSWebhookRepository(),
+    Groups: new GroupRepository(),
+    Locations: new LocationsRepository(),
+    Dialers: new VoiceDialerRepository(),
   };
 
   try {
