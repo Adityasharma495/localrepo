@@ -21,7 +21,7 @@ async function createLocation(req, res) {
     const responseData = {};
 
     const existingWebhook = await smswebhookRepo.findOne({
-      location_name: bodyReq.location_name.trim().toLowerCase(),
+      location_name: bodyReq.location_name.trim(),
       created_by: bodyReq.created_by,
       is_deleted: false,
     });
@@ -180,7 +180,7 @@ async function updateLocation(req, res) {
     //  Check if another webhook already exists with same name & created_by
     if (bodyReq.location_name) {
       const duplicateWebhook = await smswebhookRepo.findOne({
-        location_name: bodyReq.location_name.trim().toLowerCase(),
+        location_name: bodyReq.location_name.trim(),
         created_by: req.user.id,
         location_id: { [Op.ne]: uid }, // exclude the current webhook
         is_deleted: false,

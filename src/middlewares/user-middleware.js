@@ -278,6 +278,16 @@ function modifyUserSignupBodyRequest(req, res, next, is_create){
         if (bodyReq.role === constants.USERS_ROLE.CALLCENTRE_ADMIN && req.user.role === constants.USERS_ROLE.COMPANY_ADMIN) {
             inputData.user.callcenter_id = bodyReq?.callcenterId || ''
         }
+        if (bodyReq.groups) {
+            inputData.groups = bodyReq.groups;
+        } else {
+            inputData.groups = [];
+        }
+        if (bodyReq.locations) {
+            inputData.locations = bodyReq.locations;
+        } else {
+            inputData.locations = [];
+        }
         
     
         req.body = inputData;
