@@ -1,6 +1,6 @@
 const { MemberScheduleRepo, ScriptRepository, VoiceCampaignRepository, UserJourneyRepository, CampiagnConfigRepository,
   AgentConfigRepository, CampaignCliRepository, CampaignContactGroupRepository, WebhookRepository, SMSWebhookRepository,
-  VoiceCampaignWebhookRepository , CampaignCallGroupRepository, CampaignScheduleRepository, VoiceCampaignLocationsRepository, UserGroupsRepository, VoiceCampaignGroupsRepository} = require("../../shared/c_repositories")
+  VoiceCampaignWebhookRepository , CampaignCallGroupRepository, CampaignScheduleRepository, VoiceCampaignLocationsRepository, UserGroupsRepository, VoiceCampaignGroupsRepository, UserRepository} = require("../../shared/c_repositories")
 
 
 const memberScheduleRepo = new MemberScheduleRepo()
@@ -19,6 +19,7 @@ const campaignScheduleRepo = new CampaignScheduleRepository();
 const voiceCampaignLocationsRepository = new VoiceCampaignLocationsRepository();
 const userGroupsRepository = new UserGroupsRepository();
 const voiceCampaignGroupsRepository = new VoiceCampaignGroupsRepository();
+const userRepository = new UserRepository();
 
 const {
   SuccessRespnose,
@@ -95,6 +96,19 @@ try {
       start_hours: normalizeValue(bodyReq.startHour),
       end_hours: normalizeValue(bodyReq.endHour),
     };
+
+    if (req?.user?.id) {
+      const userData = await userRepository.get(req.user.id);
+      if (userData) {
+        findlCampaignData.call_centre_id = userData.callcenter_id;
+        if (userData.created_by) {
+          const parentData = await userRepository.get(userData.created_by);
+          if (parentData.company_id) {
+            findlCampaignData.company_id = parentData.company_id;
+          }
+        }
+      }
+    }
 
     const smsWebhookIds = [
       findlCampaignData.successSmsWebhook,
