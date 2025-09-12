@@ -47,7 +47,7 @@ async function exportData(req, res) {
     Numbers: new NumbersRepository(),
     IVR: new FlowJsonRepository(),
     DataCenter: new DataCenterRepository(),
-    ServerManagement: new ServerManagementRepository(),
+    GatewayManagement: new ServerManagementRepository(),
     Module: new ModuleRepository(),
     UserJourney: new UserJourneyRepository(),
     AclSetting: new AclSettingsRepository(),
@@ -72,7 +72,7 @@ async function exportData(req, res) {
     Sms_Webhooks: new SMSWebhookRepository(),
     Groups: new GroupRepository(),
     Locations: new LocationsRepository(),
-    Dialers: new VoiceDialerRepository(),
+    PBX: new VoiceDialerRepository(),
   };
 
   try {

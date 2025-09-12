@@ -29,10 +29,10 @@ async function createServerManagement(req, res) {
     responseData.userJourney = userJourney
 
     SuccessRespnose.data = responseData;
-    SuccessRespnose.message = "Successfully created a new Server";
+    SuccessRespnose.message = "Successfully created a new Gateway";
 
     Logger.info(
-      `Server Management -> created successfully: ${JSON.stringify(
+      `Gateway Management -> created successfully: ${JSON.stringify(
         responseData
       )}`
     );
@@ -40,7 +40,7 @@ async function createServerManagement(req, res) {
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
   } catch (error) {
     Logger.error(
-      `Server Management -> unable to create Server: ${JSON.stringify(
+      `Gateway Management -> unable to create Gateway: ${JSON.stringify(
         bodyReq
       )} error: ${JSON.stringify(error)}`
     );
@@ -72,7 +72,7 @@ async function getAll(req, res) {
     ErrorResponse.error = error;
 
     Logger.error(
-      `Server Management -> unable to get server list, error: ${JSON.stringify(
+      `Gateway Management -> unable to get Gateway list, error: ${JSON.stringify(
         error
       )}`
     );
@@ -144,14 +144,14 @@ async function updateServerManagement(req, res) {
     SuccessRespnose.message = "Updated successfully!";
     SuccessRespnose.data = responseData;
 
-    Logger.info(`Server Management -> ${uid} updated successfully`);
+    Logger.info(`Gateway Management -> ${uid} updated successfully`);
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg = error.message;
     if (error.name == "CastError") {
       statusCode = StatusCodes.BAD_REQUEST;
-      errorMsg = "Server not found";
+      errorMsg = "Gateway not found";
     } else if (error.name == "MongoServerError") {
       statusCode = StatusCodes.BAD_REQUEST;
       if (error.codeName == "DuplicateKey")
@@ -160,7 +160,7 @@ async function updateServerManagement(req, res) {
     ErrorResponse.message = errorMsg;
 
     Logger.error(
-      `Server Management-> unable to update server: ${uid}, data: ${JSON.stringify(
+      `Gateway Management-> unable to update Gateway: ${uid}, data: ${JSON.stringify(
         bodyReq
       )}, error: ${JSON.stringify(error)}`
     );
@@ -184,7 +184,7 @@ async function deleteServerManagement(req, res) {
     SuccessRespnose.message = "Deleted successfully!";
     SuccessRespnose.data = response;
 
-    Logger.info(`Server Management -> ${idArray} deleted successfully`);
+    Logger.info(`Gateway Management -> ${idArray} deleted successfully`);
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -194,12 +194,12 @@ async function deleteServerManagement(req, res) {
     ErrorResponse.error = error;
     if (error.name == "CastError") {
       statusCode = StatusCodes.BAD_REQUEST;
-      errorMsg = "Server not found";
+      errorMsg = "Gateway not found";
     }
     ErrorResponse.message = errorMsg;
 
     Logger.error(
-      `Server Management -> unable to delete server: ${idArray}, error: ${JSON.stringify(
+      `Gateway Management -> unable to delete Gateway: ${idArray}, error: ${JSON.stringify(
         error
       )}`
     );

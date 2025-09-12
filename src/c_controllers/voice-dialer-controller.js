@@ -32,7 +32,7 @@ async function createDialer(req, res) {
     if (existingWebhook) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         message:
-          "Dialer With same name already exists, please choose another name.",
+          "PBX With same name already exists, please choose another name.",
       });
     }
 
@@ -49,7 +49,6 @@ async function createDialer(req, res) {
           created_at: new Date(),
           updated_at: new Date(),
         }));
-        console.log("insertPayload", insertPayload);
         await groupsDialerMappingRepository.insertMany(insertPayload);
       }
     }
@@ -65,23 +64,23 @@ async function createDialer(req, res) {
     responseData.userJourney = userJourney;
 
     SuccessRespnose.data = responseData;
-    SuccessRespnose.message = "Successfully created a new Dialer";
+    SuccessRespnose.message = "Successfully created a new PBX";
 
     Logger.info(
-      `Voice Dialer -> created successfully: ${JSON.stringify(responseData)}`
+      `PBX -> created successfully: ${JSON.stringify(responseData)}`
     );
 
     return res.status(StatusCodes.CREATED).json(SuccessRespnose);
   } catch (error) {
     Logger.error(
-      `Voice Dialer -> unable to create dialer: ${JSON.stringify(
+      `PBX -> unable to create PBX: ${JSON.stringify(
         bodyReq
       )} error: ${JSON.stringify(error)}`
     );
 
     let statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
     let errorMsg =
-      error.message || "Something went wrong while creating dialer";
+      error.message || "Something went wrong while creating PBX";
 
     ErrorResponse.message = errorMsg;
     ErrorResponse.error = error;
@@ -102,7 +101,7 @@ async function getAll(req, res) {
     ErrorResponse.error = error;
 
     Logger.error(
-      `Voice Dialer -> unable to get dialers list, error: ${JSON.stringify(
+      `PBX -> unable to get PBXs list, error: ${JSON.stringify(
         error
       )}`
     );
@@ -132,12 +131,12 @@ async function get(req, res) {
     ErrorResponse.error = error;
     if (error.name == "CastError") {
       statusCode = StatusCodes.BAD_REQUEST;
-      errorMsg = "Dialers not found";
+      errorMsg = "PBXs not found";
     }
     ErrorResponse.message = errorMsg;
 
     Logger.error(
-      `Voice Dialers -> unable to get ${id}, error: ${JSON.stringify(error)}`
+      `PBX -> unable to get ${id}, error: ${JSON.stringify(error)}`
     );
 
     return res.status(statusCode).json(ErrorResponse);
@@ -160,7 +159,7 @@ async function deleteDialer(req, res) {
     SuccessRespnose.message = "Deleted successfully!";
     SuccessRespnose.data = response;
 
-    Logger.info(`Voice Dialers -> ${id} deleted successfully`);
+    Logger.info(`PBX -> ${id} deleted successfully`);
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -170,12 +169,12 @@ async function deleteDialer(req, res) {
     ErrorResponse.error = error;
     if (error.name == "CastError") {
       statusCode = StatusCodes.BAD_REQUEST;
-      errorMsg = "Voice Dialers not found";
+      errorMsg = "PBXs not found";
     }
     ErrorResponse.message = errorMsg;
 
     Logger.error(
-      `Voice Dialers -> unable to delete dialers: ${id}, error: ${JSON.stringify(
+      `PBX -> unable to delete PBXs: ${id}, error: ${JSON.stringify(
         error
       )}`
     );
@@ -195,7 +194,7 @@ async function updateDialer(req, res) {
     if (!existingWebhook) {
       return res
         .status(StatusCodes.NOT_FOUND)
-        .json({ message: "Dialer not found" });
+        .json({ message: "PBX not found" });
     }
 
     //  Check if another webhook already exists with same name & created_by
@@ -210,7 +209,7 @@ async function updateDialer(req, res) {
       if (duplicateWebhook) {
         return res.status(StatusCodes.BAD_REQUEST).json({
           message:
-            "Voice Dialer with same name already exists, please choose another name.",
+            "PBX with same name already exists, please choose another name.",
         });
       }
     }
@@ -238,7 +237,7 @@ async function updateDialer(req, res) {
     SuccessRespnose.message = "Updated successfully!";
     SuccessRespnose.data = responseData;
 
-    Logger.info(`Voice Dialer -> ${uid} updated successfully`);
+    Logger.info(`PBX -> ${uid} updated successfully`);
 
     return res.status(StatusCodes.OK).json(SuccessRespnose);
   } catch (error) {
@@ -247,7 +246,7 @@ async function updateDialer(req, res) {
 
     if (error.name === "CastError") {
       statusCode = StatusCodes.BAD_REQUEST;
-      errorMsg = "Voice Dialer not found";
+      errorMsg = "PBX not found";
     } else if (error.name === "MongoServerError") {
       statusCode = StatusCodes.BAD_REQUEST;
       if (error.codeName === "DuplicateKey") {
@@ -258,7 +257,7 @@ async function updateDialer(req, res) {
     ErrorResponse.message = errorMsg;
 
     Logger.error(
-      `Loation-> unable to update dialer: ${uid}, data: ${JSON.stringify(
+      `PBX-> unable to update PBX: ${uid}, data: ${JSON.stringify(
         bodyReq
       )}, error: ${JSON.stringify(error)}`
     );
