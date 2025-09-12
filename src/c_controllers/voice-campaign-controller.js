@@ -1,6 +1,7 @@
 const { MemberScheduleRepo, ScriptRepository, VoiceCampaignRepository, UserJourneyRepository, CampiagnConfigRepository,
   AgentConfigRepository, CampaignCliRepository, CampaignContactGroupRepository, WebhookRepository, SMSWebhookRepository,
-  VoiceCampaignWebhookRepository , CampaignCallGroupRepository, CampaignScheduleRepository, VoiceCampaignLocationsRepository, UserGroupsRepository, VoiceCampaignGroupsRepository, UserRepository} = require("../../shared/c_repositories")
+  VoiceCampaignWebhookRepository , CampaignCallGroupRepository, CampaignScheduleRepository, VoiceCampaignLocationsRepository, UserGroupsRepository, VoiceCampaignGroupsRepository, UserRepository,
+  ContactGroupMemberRepository} = require("../../shared/c_repositories")
 
 
 const memberScheduleRepo = new MemberScheduleRepo()
@@ -20,6 +21,7 @@ const voiceCampaignLocationsRepository = new VoiceCampaignLocationsRepository();
 const userGroupsRepository = new UserGroupsRepository();
 const voiceCampaignGroupsRepository = new VoiceCampaignGroupsRepository();
 const userRepository = new UserRepository();
+const contactGroupMemberRepo = new ContactGroupMemberRepository();
 
 const {
   SuccessRespnose,
@@ -81,6 +83,9 @@ try {
       return value === "" ? null : value;
     }
 
+    //find total number of contacts
+    const total_numbers =  await contactGroupMemberRepo.getTotalMembersByGroups(bodyReq.call_group)
+
     const findlCampaignData = {
       ...Object.fromEntries(
         Object.entries(campaignData).map(([key, value]) => [key, normalizeValue(value)])
@@ -96,6 +101,7 @@ try {
       time_between_call: normalizeValue(bodyReq.timeBetweenCalls),
       start_hours: normalizeValue(bodyReq.startHour),
       end_hours: normalizeValue(bodyReq.endHour),
+      total_nos: total_numbers
     };
 
     if (req?.user?.id) {
