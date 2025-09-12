@@ -64,6 +64,7 @@ async function create(req, res) {
       operator: bodyReq.number.operator.toUpperCase(),
       number_type: bodyReq.number.number_type,
       created_by: req.user.id,
+      trunk_id: bodyReq.number.trunk_id
     });
 
     const didMapping = await didUserMappingRepository.create({
@@ -228,7 +229,8 @@ async function bulkUpdate(req, res) {
             cost: row.Cost,
             operator: row.Operator.toUpperCase(),
             number_type: bodyReq.numberType,
-            created_by: req.user.id
+            created_by: req.user.id,
+            trunk_id: row.TrunkId || null
           });
         })();
         dataPromises.push(dataPromise);
@@ -337,7 +339,8 @@ async function uploadNumbers(req, res) {
             number_type: bodyReq.numberType,
             uploaded_file_id: uploadFile._id,
             created_at: toIST(new Date()),
-            updatedAt: toIST(new Date())
+            updatedAt: toIST(new Date()),
+            trunk_id: bodyReq.trunk_id
           });
         })();
 

@@ -28,6 +28,7 @@ const {
 const { Logger } = require("../../shared/config");
 const { StatusCodes } = require("http-status-codes");
 const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/constants");
+const singlecallRedisClient = require("../../shared/config/redis-client-singlecall"); 
 
 async function CreateVoiceCampaign(req,res){
     const bodyReq = req.body
@@ -424,9 +425,56 @@ async function UpdateVoiceCampaign(req, res) {
   }
 }
 
+async function HandleSingleCall(req, res) {
+  const bodyReq = req.body;
+
+  try {
+    if (!bodyReq.cli) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: "cli not existed in payload",
+      });
+    }
+
+    // get the server name for the cli
+    const servername = await voiceCampaignRepo.getServerNameByNumber(bodyReq.cli);
+
+    if (!servername) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: "ServerName Not found",
+      });
+    }
+
+    bodyReq.trunk = servername.server_name;
+    const redisKey = `base_${servername.server_name}`;
+
+    // Push the object into Redis list
+    await singlecallRedisClient.lPush(redisKey, JSON.stringify(bodyReq));
+
+    // Get the count of objects in the list
+    const count = await singlecallRedisClient.lLen(redisKey);
+
+    return res.status(StatusCodes.OK).json({
+      message: "Pushed to Redis successfully",
+      redisKey,
+      count,
+    });
+  } catch (error) {
+    ErrorResponse.message = error.message;
+    ErrorResponse.error = error;
+
+    Logger.error(
+      `SingleCall -> Error while handling single call: ${JSON.stringify(error)}`
+    );
+
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
+}
+
+
 module.exports={
     CreateVoiceCampaign,
     getCampaigns,
     getOne,
     UpdateVoiceCampaign,
+    HandleSingleCall
 }

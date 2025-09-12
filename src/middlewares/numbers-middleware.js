@@ -65,6 +65,12 @@ async function validateCreate(req, res, next) {
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
+    }  else if (bodyReq.trunk_id == undefined || !bodyReq.trunk_id) {
+        ErrorResponse.message = 'Something went wrong while creating Numbers';
+        ErrorResponse.error = new AppError(['Trunk is not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
     }
 
     if (bodyReq.numberType !== undefined && bodyReq.numberType === 'DID') {
@@ -121,7 +127,8 @@ function modifyNumberRequest(req, is_create = true) {
                 state_code: null,
                 cost: bodyReq.cost,
                 operator: bodyReq.operator,
-                number_type: bodyReq.numberType
+                number_type: bodyReq.numberType,
+                trunk_id: bodyReq.trunk_id
             }
         }
 
@@ -196,6 +203,12 @@ function validateUpdate(req, res, next) {
     else if (bodyReq.operator == undefined || !bodyReq.operator.trim()) {
         ErrorResponse.message = 'Something went wrong while Updating Numbers';
         ErrorResponse.error = new AppError(['operator not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+    }  else if (bodyReq.trunk_id == undefined || !bodyReq.trunk_id) {
+        ErrorResponse.message = 'Something went wrong while Updating Numbers';
+        ErrorResponse.error = new AppError(['Trunk is not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
@@ -305,6 +318,12 @@ async function validateUploadNumbers(req, res, next) {
     else if (bodyReq.currency == undefined || !bodyReq.currency.trim()) {
         ErrorResponse.message = 'Something went wrong while creating uploading numbers';
         ErrorResponse.error = new AppError(['currency not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+    } else if (bodyReq.trunk_id == undefined || !bodyReq.trunk_id) {
+        ErrorResponse.message = 'Something went wrong while creating uploading numbers';
+        ErrorResponse.error = new AppError(['Trunk is not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
         return res
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
