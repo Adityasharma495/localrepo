@@ -29,6 +29,7 @@ const { Logger } = require("../../shared/config");
 const { StatusCodes } = require("http-status-codes");
 const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/constants");
 const singlecallRedisClient = require("../../shared/config/redis-client-singlecall"); 
+const logger = require("../backup/config/logger-config");
 
 async function CreateVoiceCampaign(req,res){
     const bodyReq = req.body
@@ -445,7 +446,9 @@ async function HandleSingleCall(req, res) {
     }
 
     // get the server name for the cli
-    const servername = await voiceCampaignRepo.getServerNameByNumber(bodyReq.cli);
+    const last10Digits = bodyReq.cli.replace(/\D/g, "").slice(-10);
+    console.log("CLI : "+last10Digits);
+    const servername = await voiceCampaignRepo.getServerNameByNumber(last10Digits);
 
     if (!servername) {
       return res.status(StatusCodes.BAD_REQUEST).json({
