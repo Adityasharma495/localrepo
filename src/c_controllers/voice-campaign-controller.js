@@ -1,7 +1,7 @@
 const { MemberScheduleRepo, ScriptRepository, VoiceCampaignRepository, UserJourneyRepository, CampiagnConfigRepository,
   AgentConfigRepository, CampaignCliRepository, CampaignContactGroupRepository, WebhookRepository, SMSWebhookRepository,
   VoiceCampaignWebhookRepository , CampaignCallGroupRepository, CampaignScheduleRepository, VoiceCampaignLocationsRepository, UserGroupsRepository, VoiceCampaignGroupsRepository, UserRepository,
-  ContactGroupMemberRepository} = require("../../shared/c_repositories")
+  ContactGroupMemberRepository, FlowJsonRepository} = require("../../shared/c_repositories")
 
 
 const memberScheduleRepo = new MemberScheduleRepo()
@@ -22,6 +22,7 @@ const userGroupsRepository = new UserGroupsRepository();
 const voiceCampaignGroupsRepository = new VoiceCampaignGroupsRepository();
 const userRepository = new UserRepository();
 const contactGroupMemberRepo = new ContactGroupMemberRepository();
+const flowJsonRepos = new FlowJsonRepository();
 
 const {
   SuccessRespnose,
@@ -31,6 +32,8 @@ const { Logger } = require("../../shared/config");
 const { StatusCodes } = require("http-status-codes");
 const { MODULE_LABEL, ACTION_LABEL } = require("../../shared/utils/common/constants");
 const singlecallRedisClient = require("../../shared/config/redis-client-singlecall"); 
+const {VOICE_CONTEXT} = require("../../shared/utils/common/constants");
+
 
 async function CreateVoiceCampaign(req,res){
     const bodyReq = req.body
@@ -86,6 +89,17 @@ try {
     //find total number of contacts
     const total_numbers =  await contactGroupMemberRepo.getTotalMembersByGroups(bodyReq.call_group)
 
+    //context value
+    let context
+    if (bodyReq.template_id == 4) {
+      const ivrDetail = await flowJsonRepos.get(bodyReq.ivr)
+      if (ivrDetail.length > 0) {
+        context= `${ivrDetail[0].flow_name}_${req.user.id}`
+      }
+    } else {
+      context = VOICE_CONTEXT[Number(bodyReq.template_id)]
+    }
+
     const findlCampaignData = {
       ...Object.fromEntries(
         Object.entries(campaignData).map(([key, value]) => [key, normalizeValue(value)])
@@ -101,7 +115,8 @@ try {
       time_between_call: normalizeValue(bodyReq.timeBetweenCalls),
       start_hours: normalizeValue(bodyReq.startHour),
       end_hours: normalizeValue(bodyReq.endHour),
-      total_nos: total_numbers
+      total_nos: total_numbers,
+      context: context
     };
 
     if (req?.user?.id) {
@@ -450,8 +465,8 @@ async function HandleSingleCall(req, res) {
       });
     }
 
-    // get the server name for the cli
-    const servername = await voiceCampaignRepo.getServerNameByNumber(bodyReq.cli);
+    const cli = bodyReq.cli.toString().slice(-10);
+    const servername = await voiceCampaignRepo.getServerNameByNumber(cli);
 
     if (!servername) {
       return res.status(StatusCodes.BAD_REQUEST).json({
