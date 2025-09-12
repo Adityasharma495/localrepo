@@ -91,10 +91,10 @@ try {
 
     //context value
     let context
-    if (bodyReq.template_id == 4) {
+    if (bodyReq.template_id == 3) {
       const ivrDetail = await flowJsonRepos.get(bodyReq.ivr)
       if (ivrDetail.length > 0) {
-        context= `${ivrDetail[0].flow_name}_${req.user.id}`
+        context= `${ivrDetail[0].flow_name}`
       }
     } else {
       context = VOICE_CONTEXT[Number(bodyReq.template_id)]
