@@ -305,8 +305,17 @@ try {
       await voiceCampaignWebhookRepository.create(record);
     }
 
-    if (bodyReq.location_id) {
-      await voiceCampaignLocationsRepository.create({ campaign_id: campaignId, location_id: bodyReq.location_id, location_name: bodyReq.location_name });
+    if (bodyReq.locations) {
+      if (bodyReq?.locations?.length > 0) {
+        const locationsData = bodyReq.locations.map(loc => ({
+          campaign_id: campaignId,
+          location_id: loc.id,
+          location_name: loc.location_name,
+          created_at: new Date(),
+          updated_at: new Date(),
+        }));
+        await voiceCampaignLocationsRepository.insertMany(locationsData);
+      }
     }
 
     const userGroups = await userGroupsRepository.getAll({ where: { user_id: req.user.id } });
