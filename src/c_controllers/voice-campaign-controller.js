@@ -221,7 +221,7 @@ try {
       });
     }
 
-    if (bodyReq?.template_id == 1) {
+    if (bodyReq?.template_id == 0) {
       await campiagnConfigRepo.create({
         name: 'welcome',
         value: bodyReq?.voice_file,
@@ -231,7 +231,7 @@ try {
       })
     } 
 
-    if (bodyReq?.template_id == 2 || bodyReq?.template_id == 3) {
+    if (bodyReq?.template_id == 1 || bodyReq?.template_id == 2) {
       const fileMappings = {
         welcome_file: 'welcome',
         no_input_file: 'noinput',
@@ -276,7 +276,7 @@ try {
 
     } 
     
-    if (bodyReq?.template_id == 3) {
+    if (bodyReq?.template_id == 2) {
         if (bodyReq.assignedQueues && bodyReq.assignedQueues.length > 0) {
           const queueRecords = bodyReq.assignedQueues.map(queue => ({
             campaign_id: createdVoiceCampaign?.campaign_id,
