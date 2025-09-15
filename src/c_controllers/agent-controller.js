@@ -1041,6 +1041,8 @@ async function bulkLogout(req, res) {
       }
       notLoggedOutCount++;
 
+      //update user table also
+      await userRepo.bulkUpdate({ name: `${agent.agent_name}`, is_deleted: false } ,{ login_at: null })
 
       // find telephony profile where active_profile is true
       const telephonyProfile = agent?.telephonyProfile?.profile.find(
