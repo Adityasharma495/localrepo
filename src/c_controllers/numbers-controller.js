@@ -225,7 +225,7 @@ async function bulkUpdate(req, res) {
             category: row?.Category || null,
             currency: row.Currency.toUpperCase() || null,
             country_code: row['Country Code'].toUpperCase() || null,
-            state_code: row?.['State Code'].toUpperCase() || null,
+            state_code: row?.['State Code']?.toUpperCase() || null,
             cost: row.Cost,
             operator: row.Operator.toUpperCase(),
             number_type: bodyReq.numberType,
