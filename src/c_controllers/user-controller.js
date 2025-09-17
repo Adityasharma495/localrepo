@@ -34,6 +34,8 @@ async function signinUser(req, res) {
     //Fetch user via username
     const user = await userRepo.getByUsername(username);
     if (req?.user?.role === USERS_ROLE.CALLCENTRE_AGENT || username !== 'superadmin') {
+
+      console.log("CAME TO ONE");
     const userLoginCount = await userRepo.find({
         where: { 
           id: user.id,
@@ -43,12 +45,12 @@ async function signinUser(req, res) {
         }
       });
 
-      if (userLoginCount) {
-        ErrorResponse.message = 'User already logged in';
-        return res
-          .status(StatusCodes.BAD_REQUEST)
-          .json(ErrorResponse);
-      }
+      // if (userLoginCount) {
+      //   ErrorResponse.message = 'User already logged in';
+      //   return res
+      //     .status(StatusCodes.BAD_REQUEST)
+      //     .json(ErrorResponse);
+      // }
     }
 
 
@@ -369,9 +371,13 @@ async function statusPasswordUpdateUser(req, res) {
   const uid = req.params.id;
   const bodyReq = req.body;
 
+
+
   try {
     const responseData = {};
+
     const user = await userRepo.get(uid);
+
     if (bodyReq.hasOwnProperty("status")) {
       if (user.status == 1) {
         user.status = 0;
@@ -397,21 +403,22 @@ async function statusPasswordUpdateUser(req, res) {
       Logger.info(`User Status-> ${uid} updated successfully`);
       return res.status(StatusCodes.OK).json(SuccessRespnose);
     } else {
-      // update password
-      const newPassword = bodyReq.newPassword;
+  // update password
+  const newPassword = bodyReq.newPassword;
 
-      user.actual_password = newPassword;
-      await userRepo.update(uid, { actual_password: user.actual_password });
+  // update user object
+  user.actual_password = newPassword;
+  user.password = newPassword;
 
-      user.password = newPassword;
-      await userRepo.update(uid, { password: user.password });
+  // this will trigger beforeUpdate hook → hash password
+  await user.save();
 
-      SuccessRespnose.message = "User Password Updated Successfully!";
-      SuccessRespnose.data = responseData;
+  SuccessRespnose.message = "User Password Updated Successfully!";
+  SuccessRespnose.data = responseData;
 
-      Logger.info(`User Password -> ${uid} updated successfully`);
-      return res.status(StatusCodes.OK).json(SuccessRespnose);
-    }
+  Logger.info(`User Password -> ${uid} updated successfully`);
+  return res.status(StatusCodes.OK).json(SuccessRespnose);
+}
 
   } catch (error) {
     let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
