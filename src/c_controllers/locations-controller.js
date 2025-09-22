@@ -3,6 +3,7 @@ const { Op } = require("sequelize");
 const {
   LocationsRepository,
   UserJourneyRepository,
+  UserLocationsRepository,
 } = require("../../shared/c_repositories");
 const { SuccessRespnose, ErrorResponse } = require("../../shared/utils/common");
 const {
@@ -13,6 +14,7 @@ const { Logger } = require("../../shared/config");
 
 const smswebhookRepo = new LocationsRepository();
 const userJourneyRepo = new UserJourneyRepository();
+const userLocationsRepository = new UserLocationsRepository();
 
 async function createLocation(req, res) {
   const bodyReq = req.body;
@@ -246,10 +248,129 @@ async function updateLocation(req, res) {
   }
 }
 
+async function bulkAddToUsersLocation(req, res) {
+  const { location_id, user_ids } = req.body;
+
+  try {
+    if (!location_id) {
+      return res.status(400).json({ message: "location_id is required" });
+    }
+
+    if (!Array.isArray(user_ids) || user_ids.length === 0) {
+      return res.status(400).json({ message: "user_ids must be a non-empty array" });
+    }
+
+    const location = await smswebhookRepo.findOne({ location_id: location_id, is_deleted: false});
+    if (!location) {
+      return res.status(404).json({ message: "Location not found" });
+    }
+
+    const existingUserLocations = await userLocationsRepository.findByLocationId(location_id);
+    const existingUserIds = [
+      ...new Set(existingUserLocations.map((ul) => ul.user_id.toString()))
+    ];
+    const newUserIds = user_ids.filter((id) => !existingUserIds.includes(id.toString()));
+
+    if (newUserIds.length === 0) {
+      return res.status(200).json({ message: "All users already assigned to location" });
+    }
+
+    const bulkData = newUserIds.map((user_id) => ({
+      user_id,
+      location_id,
+    }));
+
+    const insertedRows = await userLocationsRepository.insertMany(bulkData);
+
+    const userJourneyFields = {
+      module_name: MODULE_LABEL.LOCATION,
+      action: "Bulk Add To Users",
+      created_by: req?.user?.id,
+    };
+    await userJourneyRepo.create(userJourneyFields);
+
+    SuccessRespnose.message = "Users added to location successfully";
+    SuccessRespnose.data = insertedRows;
+
+    Logger.info(`Bulk added users to location -> ${location_id}: ${newUserIds}`);
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    Logger.error(
+      `BulkAddToUsersLocation failed for location: ${location_id}, data: ${JSON.stringify(
+        req.body
+      )}, error: ${error}`
+    );
+
+    return res.status(500).json({ message: error.message || "Something went wrong" });
+  }
+}
+
+async function bulkDeleteFromUsersLocation(req, res) {
+  const { location_id, user_ids } = req.body;
+
+  try {
+    if (!location_id) {
+      return res.status(400).json({ message: "location_id is required" });
+    }
+
+    if (!Array.isArray(user_ids) || user_ids.length === 0) {
+      return res.status(400).json({ message: "user_ids must be a non-empty array" });
+    }
+
+    const location = await smswebhookRepo.findOne({ location_id: location_id, is_deleted: false});
+    if (!location) {
+      return res.status(404).json({ message: "Location not found" });
+    }
+
+    const existingUserLocations = await userLocationsRepository.findByLocationId(location_id);
+    const existingUserIds = [
+      ...new Set(existingUserLocations.map((ul) => ul.user_id.toString()))
+    ];
+    const deleteUserIds = user_ids.filter((id) => existingUserIds.includes(id.toString()));
+
+    if (deleteUserIds.length === 0) {
+      return res.status(200).json({ message: "No users found in this location to delete" });
+    }
+
+    const deletedRows = await userLocationsRepository.hardDeleteManyByLocationAndUserId(
+      deleteUserIds,
+      location_id
+    );
+
+    const userJourneyFields = {
+      module_name: MODULE_LABEL.LOCATION,
+      action: "Bulk Delete From Users",
+      created_by: req?.user?.id,
+      details: JSON.stringify({ location_id, user_ids: deleteUserIds }),
+    };
+    await userJourneyRepo.create(userJourneyFields);
+
+    SuccessRespnose.message = "Users removed from location successfully";
+    SuccessRespnose.data = {
+      location_id,
+      deleted_users: deleteUserIds,
+      deletedCount: deletedRows,
+    };
+
+    Logger.info(`Bulk deleted users from location -> ${location_id}: ${deleteUserIds}`);
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    Logger.error(
+      `BulkDeleteFromUsersLocation failed for location: ${location_id}, data: ${JSON.stringify(
+        req.body
+      )}, error: ${error}`
+    );
+
+    return res.status(500).json({ message: error.message || "Something went wrong" });
+  }
+}
+
 module.exports = {
   createLocation,
   getAll,
   get,
   deleteLocation,
   updateLocation,
+  bulkAddToUsersLocation,
+  bulkDeleteFromUsersLocation,
 };

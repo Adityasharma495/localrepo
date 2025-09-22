@@ -21,6 +21,18 @@ router.get("/", AuthMiddleware.validateUser, LocationController.getAll);
 router.get("/:id", AuthMiddleware.validateUser, LocationController.get);
 
 router.post(
+  "/bulk-add",
+  AuthMiddleware.validateUser,
+  LocationController.bulkAddToUsersLocation
+);
+
+router.post(
+  "/bulk-delete",
+  AuthMiddleware.validateUser,
+  LocationController.bulkDeleteFromUsersLocation
+);
+
+router.post(
   "/:id",
   AuthMiddleware.validateUser,
   LocationController.updateLocation

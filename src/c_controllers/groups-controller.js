@@ -3,6 +3,7 @@ const { Op } = require("sequelize");
 const {
   GroupRepository,
   UserJourneyRepository,
+  UserGroupsRepository,
 } = require("../../shared/c_repositories");
 const { SuccessRespnose, ErrorResponse } = require("../../shared/utils/common");
 const {
@@ -13,6 +14,7 @@ const { Logger } = require("../../shared/config");
 
 const smswebhookRepo = new GroupRepository();
 const userJourneyRepo = new UserJourneyRepository();
+const userGroupsRepository = new UserGroupsRepository();
 
 async function createGroup(req, res) {
   const bodyReq = req.body;
@@ -253,10 +255,125 @@ async function updateGroup(req, res) {
   }
 }
 
+async function bulkAddToUsers(req, res) {
+  const { group_id, user_ids } = req.body;
+
+  try {
+    if (!group_id) {
+      return res.status(400).json({ message: "group_id is required" });
+    }
+
+    if (!Array.isArray(user_ids) || user_ids.length === 0) {
+      return res.status(400).json({ message: "user_ids must be a non-empty array" });
+    }
+
+    const group = await smswebhookRepo.findOne({ group_id: group_id, is_deleted: false});
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    const existingUserGroups = await userGroupsRepository.findByGroupId(group_id);
+    const existingUserIds = [
+      ...new Set(existingUserGroups.map((ug) => ug.user_id.toString()))
+    ];
+    const newUserIds = user_ids.filter((id) => !existingUserIds.includes(id.toString()));
+
+    if (newUserIds.length === 0) {
+      return res.status(200).json({ message: "All users already in group" });
+    }
+
+    const bulkData = newUserIds.map((user_id) => ({
+      user_id,
+      group_id,
+    }));
+
+    const insertedRows = await userGroupsRepository.insertMany(bulkData);
+
+    const userJourneyFields = {
+      module_name: MODULE_LABEL.GROUP,
+      action: "Bulk Add To Users",
+      created_by: req?.user?.id,
+    };
+    await userJourneyRepo.create(userJourneyFields);
+
+    SuccessRespnose.message = "Bulk Group To Users Added Successfully";
+    SuccessRespnose.data = insertedRows;
+
+    Logger.info(`Bulk added users to group -> ${group_id}: ${newUserIds}`);
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    Logger.error(
+      `BulkAddToUsers failed for group: ${group_id}, data: ${JSON.stringify(
+        req.body
+      )}, error: ${error}`
+    );
+
+    return res.status(500).json({ message: error.message || "Something went wrong" });
+  }
+}
+
+async function bulkDeleteFromUsers(req, res) {
+  const { group_id, user_ids } = req.body;
+
+  try {
+    if (!group_id) {
+      return res.status(400).json({ message: "group_id is required" });
+    }
+
+    if (!Array.isArray(user_ids) || user_ids.length === 0) {
+      return res.status(400).json({ message: "user_ids must be a non-empty array" });
+    }
+
+    const group = await smswebhookRepo.findOne({ group_id: group_id, is_deleted: false});
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    const existingUserGroups = await userGroupsRepository.findByGroupId(group_id);
+    const existingUserIds = [
+      ...new Set(existingUserGroups.map((ug) => ug.user_id.toString()))
+    ];
+    const deleteUserIds = user_ids.filter((id) => existingUserIds.includes(id.toString()));
+
+    if (deleteUserIds.length === 0) {
+      return res.status(200).json({ message: "No users found in this group to delete" });
+    }
+
+    const deletedRows = await userGroupsRepository.hardDeleteManyByGroupAndUserId(deleteUserIds, group_id);
+
+    const userJourneyFields = {
+      module_name: MODULE_LABEL.GROUP,
+      action: "Bulk Delete From Users",
+      created_by: req?.user?.id,
+    };
+    await userJourneyRepo.create(userJourneyFields);
+
+    SuccessRespnose.message = "Users removed from group successfully";
+    SuccessRespnose.data = {
+      group_id,
+      deleted_users: deleteUserIds,
+      deletedCount: deletedRows,
+    };
+
+    Logger.info(`Bulk deleted users from group -> ${group_id}: ${deleteUserIds}`);
+    return res.status(StatusCodes.OK).json(SuccessRespnose);
+  } catch (error) {
+    Logger.error(
+      `BulkDeleteFromUsers failed for group: ${group_id}, data: ${JSON.stringify(
+        req.body
+      )}, error: ${error}`
+    );
+
+    return res.status(500).json({ message: error.message || "Something went wrong" });
+  }
+}
+
 module.exports = {
   createGroup,
   getAll,
   get,
   deleteGroup,
   updateGroup,
+  bulkAddToUsers,
+  bulkDeleteFromUsers,
 };

@@ -21,6 +21,18 @@ router.get("/", AuthMiddleware.validateUser, GroupsController.getAll);
 router.get("/:id", AuthMiddleware.validateUser, GroupsController.get);
 
 router.post(
+  "/bulk-add",
+  AuthMiddleware.validateUser,
+  GroupsController.bulkAddToUsers
+);
+
+router.post(
+  "/bulk-delete",
+  AuthMiddleware.validateUser,
+  GroupsController.bulkDeleteFromUsers
+);
+
+router.post(
   "/:id",
   AuthMiddleware.validateUser,
   GroupsController.updateGroup
