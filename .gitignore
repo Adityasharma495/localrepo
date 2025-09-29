@@ -9,7 +9,6 @@ dist/
 build/
 logs/
 assets/
-temp/
 
 # Compiled Java class files
 *.class
@@ -53,7 +52,4 @@ Thumbs.db
 *.wmv
 
 .env
-src/script/backups/*
-
-
-
+#hello 
